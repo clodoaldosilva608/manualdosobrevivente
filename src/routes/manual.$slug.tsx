@@ -31,7 +31,7 @@ function Entry() {
   useEffect(() => {
     if (!entry.checklist) return;
     Promise.all(
-      entry.checklist.map(async (_, i) => {
+      entry.checklist.map(async (_: string, i: number) => {
         const c = await getChecklist(`${entry.slug}/${i}`);
         return [i, c?.done ?? false] as const;
       }),
@@ -64,7 +64,7 @@ function Entry() {
             FIELD CHECKLIST
           </h3>
           <ul className="space-y-2">
-            {entry.checklist.map((item, i) => (
+            {entry.checklist.map((item: string, i: number) => (
               <li key={i}>
                 <button
                   onClick={() => toggle(i)}

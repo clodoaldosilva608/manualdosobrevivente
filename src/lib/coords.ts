@@ -1,11 +1,6 @@
-import * as mgrsNs from "mgrs";
-const mgrsMod = (mgrsNs as unknown as { default?: unknown; forward?: unknown; toPoint?: unknown });
-const impl = ((mgrsMod.forward ? mgrsMod : (mgrsMod.default as Record<string, unknown> | undefined)) ?? {}) as {
-  forward?: (lnglat: [number, number], precision?: number) => string;
-  toPoint?: (mgrs: string) => [number, number];
-};
-const forward = impl.forward!;
-const toPoint = impl.toPoint!;
+// Import the ESM build directly so it works in both SSR (Node ESM) and browser.
+// The default `mgrs` main is a UMD bundle whose named exports aren't visible to Node ESM.
+import { forward, toPoint } from "mgrs/dist/mgrs.esm.js";
 
 export type LngLat = [number, number]; // [lng, lat]
 

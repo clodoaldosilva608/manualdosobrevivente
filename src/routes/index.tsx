@@ -6,11 +6,11 @@ const MapShell = lazy(() => import("@/components/map/MapShell"));
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Tactical Map — TacticalGIS" },
+      { title: "Mapa Tático — TacticalGIS" },
       {
         name: "description",
         content:
-          "Full-screen tactical map with MGRS, multi-layer base maps, measurement tools, waypoints, and offline tiles.",
+          "Mapa tático em tela cheia com MGRS, múltiplas camadas base, ferramentas de medição, waypoints e tiles offline.",
       },
     ],
   }),
@@ -23,7 +23,7 @@ function Index() {
       fallback={
         <div className="absolute inset-0 flex items-center justify-center bg-background">
           <div className="mono text-tactical-orange text-sm tracking-widest animate-pulse">
-            INITIALIZING MAP…
+            INICIALIZANDO MAPA…
           </div>
         </div>
       }

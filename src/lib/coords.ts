@@ -1,4 +1,8 @@
-import { forward, toPoint } from "mgrs";
+import mgrs from "mgrs";
+const { forward, toPoint } = mgrs as unknown as {
+  forward: (lnglat: [number, number], precision?: number) => string;
+  toPoint: (mgrs: string) => [number, number];
+};
 
 export type LngLat = [number, number]; // [lng, lat]
 

@@ -10,22 +10,32 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/inventory")({
   head: () => ({
     meta: [
-      { title: "Bug-Out Bag — TacticalGIS" },
+      { title: "Mochila de Emergência — TacticalGIS" },
       {
         name: "description",
         content:
-          "Track gear, weight, and expirations for your bug-out bag and survival loadout.",
+          "Controle equipamentos, peso e validade da sua mochila de emergência (bug-out bag).",
       },
     ],
   }),
   component: Inventory,
 });
 
-const CATEGORIES = ["tools", "nutrition", "hydration", "medical", "warmth", "shelter"];
+const CATEGORIES = [
+  { id: "tools", label: "Ferramentas" },
+  { id: "nutrition", label: "Alimentação" },
+  { id: "hydration", label: "Hidratação" },
+  { id: "medical", label: "Médico" },
+  { id: "warmth", label: "Aquecimento" },
+  { id: "shelter", label: "Abrigo" },
+];
+const CATEGORY_LABEL: Record<string, string> = Object.fromEntries(
+  CATEGORIES.map((c) => [c.id, c.label]),
+);
 
 function Inventory() {
   const [items, setItems] = useState<LocalGearItem[]>([]);
-  const [threshold, setThreshold] = useState(12000); // grams
+  const [threshold, setThreshold] = useState(12000); // gramas
   const [draft, setDraft] = useState<Partial<LocalGearItem>>({
     category: "tools",
     quantity: 1,
@@ -54,7 +64,7 @@ function Inventory() {
 
   const add = async () => {
     if (!draft.name?.trim()) {
-      toast.error("Name required");
+      toast.error("Nome obrigatório");
       return;
     }
     const item: LocalGearItem = {
@@ -74,7 +84,7 @@ function Inventory() {
     await saveGear(item);
     setItems((x) => [...x, item]);
     setDraft({ category: draft.category, quantity: 1, weight_g: 100, packed: false });
-    toast.success("Added to inventory");
+    toast.success("Adicionado à mochila");
   };
 
   const togglePacked = async (i: LocalGearItem) => {
@@ -93,30 +103,30 @@ function Inventory() {
       <header className="flex items-center justify-between mb-6">
         <div>
           <h1 className="mono text-tactical-orange text-2xl md:text-3xl font-bold tracking-wider flex items-center gap-2">
-            <Backpack className="h-6 w-6" /> BUG-OUT BAG
+            <Backpack className="h-6 w-6" /> MOCHILA DE EMERGÊNCIA
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Inventory, weight tracking, and expiration alerts.
+            Inventário, controle de peso e alertas de validade.
           </p>
         </div>
       </header>
 
       <div className="grid md:grid-cols-3 gap-3 mb-6">
         <div className={`rounded-md border p-3 ${exceeded ? "border-destructive bg-destructive/10" : "border-border bg-card"}`}>
-          <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground">Packed weight</div>
+          <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground">Peso empacotado</div>
           <div className={`text-2xl font-bold mono ${exceeded ? "text-destructive" : "text-tactical-orange"}`}>
-            {(totalG / 1000).toFixed(2)} kg
+            {(totalG / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg
           </div>
           <div className="text-xs text-muted-foreground mono">
-            Threshold {(threshold / 1000).toFixed(1)} kg
+            Limite {(threshold / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} kg
           </div>
         </div>
         <div className="rounded-md border border-border bg-card p-3">
-          <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground">Items</div>
+          <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground">Itens</div>
           <div className="text-2xl font-bold mono">{items.length}</div>
         </div>
         <div className={`rounded-md border p-3 ${expiring.length ? "border-tactical-amber bg-tactical-amber/10" : "border-border bg-card"}`}>
-          <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground">Expiring (30d)</div>
+          <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground">Vencendo (30d)</div>
           <div className="text-2xl font-bold mono flex items-center gap-2">
             {expiring.length}
             {expiring.length > 0 && <AlertTriangle className="h-5 w-5 text-tactical-amber" />}
@@ -125,28 +135,30 @@ function Inventory() {
       </div>
 
       <div className="rounded-md border border-border bg-card p-4 mb-6">
-        <h3 className="mono text-xs uppercase tracking-widest text-muted-foreground mb-3">Add gear</h3>
+        <h3 className="mono text-xs uppercase tracking-widest text-muted-foreground mb-3">Adicionar equipamento</h3>
         <div className="grid md:grid-cols-5 gap-2">
           <div className="md:col-span-2">
-            <Label className="text-xs">Name</Label>
+            <Label className="text-xs">Nome</Label>
             <Input
               value={draft.name || ""}
               onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-              placeholder="Ferro rod"
+              placeholder="Ex: Ferro rod"
             />
           </div>
           <div>
-            <Label className="text-xs">Category</Label>
+            <Label className="text-xs">Categoria</Label>
             <select
               className="w-full bg-input rounded-md h-10 px-2 border border-border text-sm"
               value={draft.category}
               onChange={(e) => setDraft({ ...draft, category: e.target.value })}
             >
-              {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+              {CATEGORIES.map((c) => (
+                <option key={c.id} value={c.id}>{c.label}</option>
+              ))}
             </select>
           </div>
           <div>
-            <Label className="text-xs">Qty</Label>
+            <Label className="text-xs">Qtde</Label>
             <Input
               type="number"
               min={1}
@@ -155,7 +167,7 @@ function Inventory() {
             />
           </div>
           <div>
-            <Label className="text-xs">Weight (g)</Label>
+            <Label className="text-xs">Peso (g)</Label>
             <Input
               type="number"
               min={0}
@@ -164,7 +176,7 @@ function Inventory() {
             />
           </div>
           <div className="md:col-span-2">
-            <Label className="text-xs">Expires (optional)</Label>
+            <Label className="text-xs">Validade (opcional)</Label>
             <Input
               type="date"
               value={draft.expires_at || ""}
@@ -172,7 +184,7 @@ function Inventory() {
             />
           </div>
           <div className="md:col-span-2">
-            <Label className="text-xs">Threshold (kg)</Label>
+            <Label className="text-xs">Limite (kg)</Label>
             <Input
               type="number"
               value={threshold / 1000}
@@ -181,7 +193,7 @@ function Inventory() {
           </div>
           <div className="md:col-span-5">
             <Button onClick={add} className="w-full bg-tactical-orange text-background glove-tap">
-              <Plus className="h-4 w-4 mr-1" /> Add to bag
+              <Plus className="h-4 w-4 mr-1" /> Adicionar à mochila
             </Button>
           </div>
         </div>
@@ -202,13 +214,14 @@ function Inventory() {
             <div className="flex-1 min-w-0">
               <div className="font-semibold truncate">{i.name}</div>
               <div className="text-xs text-muted-foreground mono">
-                {i.category} · {i.quantity}× · {i.weight_g}g
-                {i.expires_at && ` · exp ${i.expires_at}`}
+                {CATEGORY_LABEL[i.category] ?? i.category} · {i.quantity}× · {i.weight_g}g
+                {i.expires_at && ` · val ${new Date(i.expires_at).toLocaleDateString("pt-BR")}`}
               </div>
             </div>
             <button
               onClick={() => remove(i.id)}
               className="tap-target text-muted-foreground hover:text-destructive"
+              aria-label="Remover"
             >
               <Trash2 className="h-4 w-4" />
             </button>
@@ -216,7 +229,7 @@ function Inventory() {
         ))}
         {items.length === 0 && (
           <li className="text-center text-muted-foreground py-8 text-sm">
-            No gear yet. Add your first item above.
+            Nenhum equipamento ainda. Adicione seu primeiro item acima.
           </li>
         )}
       </ul>

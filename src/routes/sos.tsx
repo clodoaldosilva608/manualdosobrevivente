@@ -12,20 +12,17 @@ export const Route = createFileRoute("/sos")({
       {
         name: "description",
         content:
-          "Emergency signaling: screen strobe SOS Morse, flashlight, and large-text coordinates for radio dictation.",
+          "Sinalização de emergência: estrobo SOS em código Morse, lanterna e coordenadas em texto grande para ditado por rádio.",
       },
     ],
   }),
   component: SOS,
 });
 
-// SOS in Morse: ... --- ... (dot=200ms, dash=600ms, gap=200ms, letter gap=600ms, word gap=1400ms)
+// SOS em Morse: ... --- ... (ponto=200ms, traço=600ms, intervalo=200ms, letra=600ms, palavra=1400ms)
 const SOS_PATTERN: Array<["on" | "off", number]> = [
-  // S
   ["on", 200], ["off", 200], ["on", 200], ["off", 200], ["on", 200], ["off", 600],
-  // O
   ["on", 600], ["off", 200], ["on", 600], ["off", 200], ["on", 600], ["off", 600],
-  // S
   ["on", 200], ["off", 200], ["on", 200], ["off", 200], ["on", 200], ["off", 1400],
 ];
 
@@ -96,13 +93,13 @@ function SOS() {
   useEffect(() => () => stopStrobe(), []);
 
   const shareLocation = async () => {
-    if (!pos) return toast.error("No GPS fix yet");
-    const text = `EMERGENCY LOCATION\n${formatDD(pos.lng, pos.lat)}\nMGRS ${formatMGRS(pos.lng, pos.lat)}`;
+    if (!pos) return toast.error("Sem posição GPS ainda");
+    const text = `LOCALIZAÇÃO DE EMERGÊNCIA\n${formatDD(pos.lng, pos.lat)}\nMGRS ${formatMGRS(pos.lng, pos.lat)}`;
     try {
-      if (navigator.share) await navigator.share({ title: "SOS Location", text });
+      if (navigator.share) await navigator.share({ title: "Localização SOS", text });
       else {
         await navigator.clipboard.writeText(text);
-        toast.success("Copied to clipboard");
+        toast.success("Copiado para a área de transferência");
       }
     } catch {}
   };
@@ -116,12 +113,12 @@ function SOS() {
           <Siren className="h-8 w-8" /> S.O.S
         </h1>
         <p className="text-muted-foreground text-sm mt-1 mb-6">
-          Emergency signaling and dictation-ready coordinates.
+          Sinalização de emergência e coordenadas prontas para ditado.
         </p>
 
         <div className="rounded-md border-2 border-destructive bg-card p-6 mb-4">
           <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
-            CURRENT POSITION
+            POSIÇÃO ATUAL
           </div>
           {pos ? (
             <div className="space-y-3 mono">
@@ -130,7 +127,7 @@ function SOS() {
               <Big label="MGRS" value={formatMGRS(pos.lng, pos.lat)} />
             </div>
           ) : (
-            <div className="text-muted-foreground">Acquiring GPS…</div>
+            <div className="text-muted-foreground">Obtendo GPS…</div>
           )}
         </div>
 
@@ -144,18 +141,18 @@ function SOS() {
             }`}
           >
             <Flashlight className="h-6 w-6 mr-2" />
-            {active ? "STOP SOS" : "START SOS"}
+            {active ? "PARAR SOS" : "INICIAR SOS"}
           </Button>
           <Button
             onClick={shareLocation}
             className="glove-tap h-20 text-lg font-bold mono bg-secondary text-foreground"
           >
             <Share2 className="h-6 w-6 mr-2" />
-            SHARE LOC
+            COMPARTILHAR
           </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-4 mono">
-          Strobe transmits S-O-S in Morse code. Flashlight torch used when available.
+          O estrobo transmite S-O-S em código Morse. A lanterna do celular é usada quando disponível.
         </p>
       </div>
     </div>

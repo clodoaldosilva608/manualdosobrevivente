@@ -23,15 +23,15 @@ function NotFoundComponent() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold mono text-tactical-orange">404</h1>
-        <h2 className="mt-4 text-xl font-semibold">Sector not found</h2>
+        <h2 className="mt-4 text-xl font-semibold">Setor não encontrado</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The route you're searching for is off the map.
+          A rota que você procura está fora do mapa.
         </p>
         <Link
           to="/"
           className="mt-6 inline-flex items-center justify-center rounded-md bg-tactical-orange px-4 py-2 text-sm font-medium text-background"
         >
-          Return to base
+          Voltar à base
         </Link>
       </div>
     </div>
@@ -44,7 +44,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold">Signal lost</h1>
+        <h1 className="text-xl font-semibold">Sinal perdido</h1>
         <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
         <button
           onClick={() => {
@@ -53,7 +53,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           }}
           className="mt-6 rounded-md bg-tactical-orange px-4 py-2 text-sm text-background"
         >
-          Re-establish
+          Restabelecer
         </button>
       </div>
     </div>
@@ -66,15 +66,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "theme-color", content: "#121212" },
-      { title: "TacticalGIS — Survival & Bushcraft Field App" },
+      { title: "TacticalGIS — Sobrevivência & Bushcraft de Campo" },
       {
         name: "description",
         content:
-          "Mobile-first tactical GIS for survivalists: offline maps, MGRS, waypoints, elevation profiles, and a built-in survival manual.",
+          "GIS tático mobile-first para sobrevivencialistas: mapas offline, MGRS, waypoints, perfis de elevação e manual de sobrevivência integrado.",
       },
       { property: "og:title", content: "TacticalGIS" },
-      { property: "og:description", content: "Tactical field GIS for bushcraft and survival." },
+      { property: "og:description", content: "GIS tático de campo para bushcraft e sobrevivência." },
       { property: "og:type", content: "website" },
+      { property: "og:locale", content: "pt_BR" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -97,7 +98,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="pt-BR" className="dark">
       <head>
         <HeadContent />
       </head>

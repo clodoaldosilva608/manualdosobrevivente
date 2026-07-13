@@ -50,26 +50,26 @@ const BASE_LAYERS: Record<
   { label: string; tiles: string; attribution: string; maxzoom?: number }
 > = {
   satellite: {
-    label: "Satellite",
+    label: "Satélite",
     tiles:
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     attribution: "Esri, Maxar, Earthstar Geographics",
     maxzoom: 19,
   },
   topo: {
-    label: "Topographic",
+    label: "Topográfico",
     tiles: "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
     attribution: "© OpenTopoMap (CC-BY-SA), © OpenStreetMap",
     maxzoom: 17,
   },
   streets: {
-    label: "Streets",
+    label: "Ruas",
     tiles: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-    attribution: "© OpenStreetMap contributors",
+    attribution: "© colaboradores do OpenStreetMap",
     maxzoom: 19,
   },
   dark: {
-    label: "Dark Tactical",
+    label: "Tático Escuro",
     tiles: "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
     attribution: "© CARTO, © OpenStreetMap",
     maxzoom: 19,
@@ -100,7 +100,7 @@ export default function MapShell() {
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [ready, setReady] = useState(false);
   const [baseLayer, setBaseLayer] = useState<BaseLayerId>("topo");
-  const [center, setCenter] = useState<[number, number]>([-105.2705, 40.0150]);
+  const [center, setCenter] = useState<[number, number]>([-47.8822, -15.7942]);
   const [heading, setHeading] = useState(0);
   const [tool, setTool] = useState<Tool>("none");
   const [drawCoords, setDrawCoords] = useState<[number, number][]>([]);
@@ -330,14 +330,14 @@ export default function MapShell() {
   const handleGoto = () => {
     const c = parseCoordinate(gotoInput);
     if (!c) {
-      toast.error("Could not parse coordinate", {
-        description: "Try DD (40.01, -105.27), DMS, or MGRS.",
+      toast.error("Não foi possível interpretar a coordenada", {
+        description: "Tente DD (-15.79, -47.88), DMS ou MGRS.",
       });
       return;
     }
     flyTo(c[0], c[1]);
     setOpenSheet(null);
-    toast.success("Target acquired");
+    toast.success("Alvo localizado");
   };
 
   const clearDraw = () => {
@@ -348,7 +348,7 @@ export default function MapShell() {
   const runElevation = async () => {
     if (drawCoords.length < 2) return;
     const sampled = samplePath(drawCoords, 50, 120);
-    toast.loading("Sampling elevation...", { id: "elev" });
+    toast.loading("Coletando elevação...", { id: "elev" });
     try {
       const { elevations } = await callFetchElev({ data: { points: sampled } });
       const data: Array<{ d: number; e: number }> = [];
@@ -364,9 +364,9 @@ export default function MapShell() {
         data.push({ d: Math.round(acc), e: Math.round(elevations[i] || 0) });
       }
       setElevationData(data);
-      toast.success("Elevation profile ready", { id: "elev" });
+      toast.success("Perfil de elevação pronto", { id: "elev" });
     } catch (e) {
-      toast.error("Elevation lookup failed", {
+      toast.error("Falha ao obter elevação", {
         id: "elev",
         description: e instanceof Error ? e.message : String(e),
       });
@@ -392,7 +392,7 @@ export default function MapShell() {
     setWaypoints((w) => [...w, wp]);
     setNewMarker(null);
     setTool("none");
-    toast.success("Waypoint dropped");
+    toast.success("Waypoint marcado");
   };
 
   const removeWaypoint = async (id: string) => {
@@ -412,7 +412,7 @@ export default function MapShell() {
       {/* Top HUD: coordinates */}
       <div className="absolute left-2 right-2 top-2 z-10 md:left-4 md:right-auto md:top-4 md:w-[360px] hud-panel rounded-md p-2 mono text-xs">
         <div className="flex items-center justify-between text-tactical-orange">
-          <span className="font-bold tracking-wider">CENTER</span>
+          <span className="font-bold tracking-wider">CENTRO</span>
           <span>Δ {decl >= 0 ? "+" : ""}{decl.toFixed(1)}°</span>
         </div>
         <div className="grid grid-cols-[60px_1fr] gap-x-2 mt-1 text-foreground">
@@ -442,22 +442,22 @@ export default function MapShell() {
 
       {/* Right-side action rail */}
       <div className="absolute right-2 top-32 md:top-36 z-10 flex flex-col gap-2">
-        <RailBtn icon={Layers} label="Layers" onClick={() => setOpenSheet("layers")} />
-        <RailBtn icon={Navigation2} label="Go to" onClick={() => setOpenSheet("goto")} />
-        <RailBtn icon={Ruler} label="Measure" onClick={() => setOpenSheet("measure")} />
+        <RailBtn icon={Layers} label="Camadas" onClick={() => setOpenSheet("layers")} />
+        <RailBtn icon={Navigation2} label="Ir para" onClick={() => setOpenSheet("goto")} />
+        <RailBtn icon={Ruler} label="Medir" onClick={() => setOpenSheet("measure")} />
         <RailBtn
           icon={MapPin}
-          label="Marker"
+          label="Marcador"
           active={tool === "marker"}
           onClick={() => {
             setTool(tool === "marker" ? "none" : "marker");
-            toast.message(tool === "marker" ? "Marker tool off" : "Tap map to drop a waypoint");
+            toast.message(tool === "marker" ? "Ferramenta de marcador desativada" : "Toque no mapa para marcar um waypoint");
           }}
         />
-        <RailBtn icon={Compass} label="Compass" onClick={() => setOpenSheet("compass")} />
+        <RailBtn icon={Compass} label="Bússola" onClick={() => setOpenSheet("compass")} />
       </div>
 
-      {/* Active tool readout */}
+      {/* Leitura da ferramenta ativa */}
       {(tool === "measure-line" || tool === "measure-area") && (
         <div className="absolute left-1/2 -translate-x-1/2 top-28 md:top-32 z-10 hud-panel rounded-md px-3 py-2 mono text-xs flex items-center gap-3">
           {tool === "measure-line" ? (
@@ -469,7 +469,7 @@ export default function MapShell() {
             </>
           ) : (
             <>
-              <span className="text-tactical-orange">AREA</span>
+              <span className="text-tactical-orange">ÁREA</span>
               <span>{areaFmt.m2}</span>
               <span className="text-muted-foreground">·</span>
               <span>{areaFmt.ha}</span>
@@ -487,7 +487,7 @@ export default function MapShell() {
       {elevationData.length > 1 && (
         <div className="absolute left-2 right-2 md:left-auto md:right-4 md:bottom-4 md:w-[420px] bottom-20 z-10 hud-panel rounded-md p-3">
           <div className="flex items-center justify-between mono text-xs mb-1">
-            <span className="text-tactical-orange font-bold">ELEVATION PROFILE</span>
+            <span className="text-tactical-orange font-bold">PERFIL DE ELEVAÇÃO</span>
             <button onClick={() => setElevationData([])}>
               <X className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
@@ -519,22 +519,22 @@ export default function MapShell() {
       {newMarker && (
         <div className="absolute inset-x-0 bottom-16 md:bottom-4 md:right-4 md:left-auto md:w-96 z-20 hud-panel rounded-md p-4 mx-2 md:mx-0 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="mono text-tactical-orange font-bold text-sm">NEW WAYPOINT</span>
+            <span className="mono text-tactical-orange font-bold text-sm">NOVO WAYPOINT</span>
             <button onClick={() => setNewMarker(null)}>
               <X className="h-4 w-4" />
             </button>
           </div>
           <div className="space-y-2">
-            <Label className="text-xs">Title</Label>
+            <Label className="text-xs">Título</Label>
             <Input
               autoFocus
               value={newMarker.title}
               onChange={(e) => setNewMarker({ ...newMarker, title: e.target.value })}
-              placeholder="Water source #3"
+              placeholder="Ex: Fonte de água #3"
             />
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-xs">Category</Label>
+                <Label className="text-xs">Categoria</Label>
                 <select
                   className="w-full bg-input text-foreground rounded-md h-10 px-2 border border-border text-sm"
                   value={newMarker.category}
@@ -546,13 +546,13 @@ export default function MapShell() {
                     })
                   }
                 >
-                  {Object.keys(CATEGORY_COLORS).map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                  {Object.entries(CATEGORY_LABELS_PT).map(([id, label]) => (
+                    <option key={id} value={id}>{label}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <Label className="text-xs">Color</Label>
+                <Label className="text-xs">Cor</Label>
                 <input
                   type="color"
                   value={newMarker.color}
@@ -565,7 +565,7 @@ export default function MapShell() {
               {formatDD(newMarker.lng, newMarker.lat)} · MGRS {formatMGRS(newMarker.lng, newMarker.lat)}
             </div>
             <Button onClick={saveNewMarker} className="w-full bg-tactical-orange text-background hover:bg-tactical-orange/90 glove-tap">
-              Drop waypoint
+              Salvar waypoint
             </Button>
           </div>
         </div>
@@ -575,7 +575,7 @@ export default function MapShell() {
       <Sheet open={openSheet === "layers"} onOpenChange={(o) => !o && setOpenSheet(null)}>
         <SheetContent side="bottom" className="bg-card border-border">
           <SheetHeader>
-            <SheetTitle className="mono text-tactical-orange">BASE LAYERS</SheetTitle>
+            <SheetTitle className="mono text-tactical-orange">CAMADAS BASE</SheetTitle>
           </SheetHeader>
           <div className="grid grid-cols-2 gap-2 mt-4">
             {(Object.keys(BASE_LAYERS) as BaseLayerId[]).map((k) => (
@@ -601,21 +601,21 @@ export default function MapShell() {
       <Sheet open={openSheet === "goto"} onOpenChange={(o) => !o && setOpenSheet(null)}>
         <SheetContent side="bottom" className="bg-card border-border">
           <SheetHeader>
-            <SheetTitle className="mono text-tactical-orange">GO TO COORDINATE</SheetTitle>
+            <SheetTitle className="mono text-tactical-orange">IR PARA COORDENADA</SheetTitle>
           </SheetHeader>
           <div className="mt-4 space-y-3">
             <Input
               autoFocus
-              placeholder="40.0150, -105.2705  ·  or  13TDE 1234 5678  ·  or  40°00'54&quot;N..."
+              placeholder="-15.7942, -47.8822  ·  ou  23KMR 1234 5678  ·  ou  15°47'39&quot;S..."
               value={gotoInput}
               onChange={(e) => setGotoInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleGoto()}
             />
             <Button onClick={handleGoto} className="w-full bg-tactical-orange text-background glove-tap">
-              Fly to target
+              Voar até o alvo
             </Button>
             <p className="text-xs text-muted-foreground mono">
-              Accepts DD, DMS, and MGRS formats.
+              Aceita formatos DD, DMS e MGRS.
             </p>
           </div>
         </SheetContent>
@@ -624,7 +624,7 @@ export default function MapShell() {
       <Sheet open={openSheet === "measure"} onOpenChange={(o) => !o && setOpenSheet(null)}>
         <SheetContent side="bottom" className="bg-card border-border">
           <SheetHeader>
-            <SheetTitle className="mono text-tactical-orange">MEASUREMENT</SheetTitle>
+            <SheetTitle className="mono text-tactical-orange">MEDIÇÃO</SheetTitle>
           </SheetHeader>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <Button
@@ -632,22 +632,22 @@ export default function MapShell() {
                 setTool("measure-line");
                 setDrawCoords([]);
                 setOpenSheet(null);
-                toast.message("Tap map to add points");
+                toast.message("Toque no mapa para adicionar pontos");
               }}
               className="glove-tap"
             >
-              Linear distance
+              Distância linear
             </Button>
             <Button
               onClick={() => {
                 setTool("measure-area");
                 setDrawCoords([]);
                 setOpenSheet(null);
-                toast.message("Tap map to draw polygon");
+                toast.message("Toque no mapa para desenhar o polígono");
               }}
               className="glove-tap"
             >
-              Polygon area
+              Área do polígono
             </Button>
             <Button
               variant="secondary"
@@ -658,7 +658,7 @@ export default function MapShell() {
               }}
               className="glove-tap col-span-2"
             >
-              Generate elevation profile
+              Gerar perfil de elevação
             </Button>
             <Button
               variant="destructive"
@@ -669,7 +669,7 @@ export default function MapShell() {
               }}
               className="glove-tap col-span-2"
             >
-              Clear & exit
+              Limpar e sair
             </Button>
           </div>
         </SheetContent>
@@ -678,7 +678,7 @@ export default function MapShell() {
       <Sheet open={openSheet === "compass"} onOpenChange={(o) => !o && setOpenSheet(null)}>
         <SheetContent side="bottom" className="bg-card border-border">
           <SheetHeader>
-            <SheetTitle className="mono text-tactical-orange">COMPASS</SheetTitle>
+            <SheetTitle className="mono text-tactical-orange">BÚSSOLA</SheetTitle>
           </SheetHeader>
           <CompassReadout heading={heading} declination={decl} center={center} waypoints={waypoints} />
         </SheetContent>
@@ -694,6 +694,15 @@ const CATEGORY_COLORS: Record<string, string> = {
   foraging: "#6BBF59",
   cache: "#F4A261",
   custom: "#FF6B35",
+};
+
+const CATEGORY_LABELS_PT: Record<string, string> = {
+  water: "Água",
+  shelter: "Abrigo",
+  danger: "Perigo",
+  foraging: "Coleta",
+  cache: "Cache",
+  custom: "Personalizado",
 };
 
 function RailBtn({
@@ -740,11 +749,11 @@ function CompassReadout({
     : null;
   return (
     <div className="mt-4 grid grid-cols-2 gap-4 mono">
-      <Readout label="HEADING (T)" value={`${trueHeading.toFixed(0)}°`} />
-      <Readout label="HEADING (M)" value={`${magneticHeading.toFixed(0)}°`} />
-      <Readout label="DECLINATION" value={`${declination >= 0 ? "+" : ""}${declination.toFixed(1)}°`} />
+      <Readout label="RUMO (V)" value={`${trueHeading.toFixed(0)}°`} />
+      <Readout label="RUMO (M)" value={`${magneticHeading.toFixed(0)}°`} />
+      <Readout label="DECLINAÇÃO" value={`${declination >= 0 ? "+" : ""}${declination.toFixed(1)}°`} />
       <Readout
-        label="BEARING TO WP"
+        label="AZIMUTE P/ WP"
         value={bearingToWp != null ? `${bearingToWp.toFixed(0)}°` : "—"}
       />
     </div>
@@ -762,7 +771,7 @@ function Readout({ label, value }: { label: string; value: string }) {
 
 function copy(t: string) {
   navigator.clipboard?.writeText(t);
-  toast.success("Copied", { description: t });
+  toast.success("Copiado", { description: t });
 }
 
 function emptyFC() {

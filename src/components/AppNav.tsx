@@ -2,11 +2,11 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Map, BookOpen, Backpack, Siren, Settings, LogIn } from "lucide-react";
 
 const items = [
-  { to: "/", label: "Map", icon: Map },
+  { to: "/", label: "Mapa", icon: Map },
   { to: "/manual", label: "Manual", icon: BookOpen },
-  { to: "/inventory", label: "BOB", icon: Backpack },
+  { to: "/inventory", label: "Mochila", icon: Backpack },
   { to: "/sos", label: "SOS", icon: Siren },
-  { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/settings", label: "Ajustes", icon: Settings },
 ] as const;
 
 export function AppNav() {
@@ -44,7 +44,7 @@ export function AppNav() {
             className="glove-tap flex items-center gap-2 px-3 text-muted-foreground hover:text-foreground mono text-[11px] md:text-sm uppercase"
           >
             <LogIn className="h-5 w-5" />
-            <span className="hidden md:inline">Account</span>
+            <span className="hidden md:inline">Conta</span>
           </Link>
         </li>
       </ul>

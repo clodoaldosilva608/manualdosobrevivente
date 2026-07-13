@@ -10,197 +10,197 @@ export interface ManualEntry {
 export const MANUAL: ManualEntry[] = [
   {
     slug: "wound-care",
-    title: "Wound Care & Bleeding Control",
+    title: "Cuidados com Feridas e Controle de Sangramento",
     category: "first-aid",
-    summary: "Stop bleeding fast and protect against infection in the field.",
-    body: `## Priorities
+    summary: "Estanque sangramentos rapidamente e proteja contra infecção em campo.",
+    body: `## Prioridades
 
-1. **Direct pressure** — apply firm, constant pressure with the cleanest cloth available.
-2. **Elevate** the limb above heart level when possible.
-3. **Pressure dressing** — wrap snugly; check pulse beyond the wound.
-4. **Tourniquet** — only for life-threatening limb hemorrhage you cannot otherwise control. Note the time on the device.
+1. **Pressão direta** — aplique pressão firme e constante com o pano mais limpo disponível.
+2. **Elevação** do membro acima do nível do coração, quando possível.
+3. **Curativo compressivo** — enrole com firmeza; verifique o pulso após a ferida.
+4. **Torniquete** — apenas para hemorragia grave de membro que você não conseguir controlar de outra forma. Anote o horário no dispositivo.
 
-## Cleaning
+## Limpeza
 
-- Irrigate with clean drinkable water for at least 1–2 minutes.
-- Remove visible debris; do not scrub muscle tissue.
-- Cover with sterile, non-stick dressing.
+- Irrigue com água potável limpa por pelo menos 1–2 minutos.
+- Remova detritos visíveis; não esfregue tecido muscular.
+- Cubra com curativo estéril e não aderente.
 
-## Signs of Infection
+## Sinais de Infecção
 
-Redness, swelling, warmth, pus, fever, red streaks. Seek evacuation.`,
+Vermelhidão, inchaço, calor, pus, febre, estrias vermelhas. Busque evacuação.`,
     checklist: [
-      "Pressure applied",
-      "Wound irrigated",
-      "Dressing secured",
-      "Pulse below wound checked",
-      "Tourniquet time recorded (if used)",
+      "Pressão aplicada",
+      "Ferida irrigada",
+      "Curativo fixado",
+      "Pulso abaixo da ferida verificado",
+      "Horário do torniquete anotado (se usado)",
     ],
   },
   {
     slug: "hypothermia",
-    title: "Hypothermia Response",
+    title: "Resposta à Hipotermia",
     category: "first-aid",
-    summary: "Recognize and rewarm a cold casualty without making things worse.",
-    body: `## Stages
+    summary: "Reconheça e reaqueça uma vítima com frio sem piorar o quadro.",
+    body: `## Estágios
 
-- **Mild**: shivering, clumsy, mumbling — *the umbles*.
-- **Moderate**: violent shivering stops, confused, drowsy.
-- **Severe**: rigid, weak pulse, may appear dead — handle gently.
+- **Leve**: tremores, desajeitado, fala arrastada.
+- **Moderado**: tremores intensos param, confuso, sonolento.
+- **Grave**: rígido, pulso fraco, pode parecer sem vida — manuseie com delicadeza.
 
-## Actions
+## Ações
 
-1. Get out of wind and wet.
-2. Remove wet layers; insulate from ground.
-3. Cover head and neck. Use a vapor barrier inside an insulating layer (the *hypothermia wrap*).
-4. Warm sugary fluids only if alert.
-5. **Do not** rub limbs or give alcohol.`,
+1. Saia do vento e do molhado.
+2. Retire roupas molhadas; isole do solo.
+3. Cubra cabeça e pescoço. Use uma barreira de vapor dentro de uma camada isolante (o *envelope de hipotermia*).
+4. Ofereça líquidos açucarados quentes apenas se a vítima estiver alerta.
+5. **Não** esfregue os membros nem ofereça álcool.`,
     checklist: [
-      "Casualty sheltered",
-      "Wet clothing removed",
-      "Insulated from ground",
-      "Head & neck covered",
-      "Warm fluids given (if alert)",
+      "Vítima abrigada",
+      "Roupas molhadas removidas",
+      "Isolamento do solo",
+      "Cabeça e pescoço cobertos",
+      "Líquidos quentes oferecidos (se alerta)",
     ],
   },
   {
     slug: "fire-starting",
-    title: "Fire Starting (Wet Conditions)",
+    title: "Fazer Fogo (Condições Úmidas)",
     category: "fire",
-    summary: "Get a flame going when everything is soaked.",
-    body: `## Tinder Sources
+    summary: "Consiga chama mesmo quando tudo está encharcado.",
+    body: `## Fontes de Isca
 
-- Inner bark of dead standing birch / cedar
-- Pitch wood / fatwood splinters
-- Char cloth, dryer lint, cotton ball + petroleum jelly
+- Casca interna de bétula/cedro morto em pé
+- Lascas resinosas / fatwood
+- Pano carbonizado, felpa de secadora, algodão com vaselina
 
-## Build the Lay
+## Monte a Fogueira
 
-1. Platform of dry sticks to keep tinder off wet ground.
-2. Pencil-lead → pencil → finger → wrist kindling sequence.
-3. Light tinder from underneath; feed slowly.
-4. Don't smother — fire needs oxygen between sticks.
+1. Plataforma de gravetos secos para manter a isca fora do solo molhado.
+2. Sequência: fino como grafite → lápis → dedo → punho.
+3. Acenda a isca por baixo; alimente devagar.
+4. Não sufoque — o fogo precisa de oxigênio entre os gravetos.
 
 ## Ferro Rod
 
-Hold rod still; pull the striker back toward you. Aim sparks into the tinder bundle, not the wind.`,
+Segure a haste firme e puxe o raspador em sua direção. Direcione as faíscas para o feixe de isca, não para o vento.`,
     checklist: [
-      "Dry platform laid",
-      "Tinder prepared",
-      "Kindling sequence sorted",
-      "Wind block in place",
-      "Backup ignition tested",
+      "Plataforma seca montada",
+      "Isca preparada",
+      "Sequência de gravetos separada",
+      "Anteparo contra o vento instalado",
+      "Ignição reserva testada",
     ],
   },
   {
     slug: "water-purification",
-    title: "Water Purification",
+    title: "Purificação de Água",
     category: "water",
-    summary: "Make found water safe to drink.",
-    body: `## Method Hierarchy (best → worst)
+    summary: "Torne segura a água encontrada em campo.",
+    body: `## Hierarquia de Métodos (melhor → pior)
 
-1. **Boiling** — rolling boil for 1 minute (3 min above 2000 m). Kills everything biological.
-2. **Filtering** — 0.2 micron pore filter removes bacteria + protozoa. Add chemical for viruses.
-3. **Chemical** — chlorine dioxide tabs, 30 min wait (4 h for *Cryptosporidium*).
-4. **UV** — clear water only. Stir during exposure.
+1. **Fervura** — fervura vigorosa por 1 minuto (3 min acima de 2000 m). Elimina tudo o que é biológico.
+2. **Filtragem** — filtro de 0,2 mícron remove bactérias e protozoários. Adicione produto químico contra vírus.
+3. **Químico** — pastilhas de dióxido de cloro, 30 min de espera (4 h para *Cryptosporidium*).
+4. **UV** — apenas água transparente. Agite durante a exposição.
 
-## Pre-Filter
+## Pré-filtragem
 
-Strain through a bandana or coffee filter to remove sediment — your filter or boil works better on clean water.`,
+Coe com uma bandana ou filtro de papel para remover sedimentos — o filtro ou a fervura funcionam melhor em água limpa.`,
     checklist: [
-      "Water pre-filtered",
-      "Treatment method selected",
-      "Wait time observed",
-      "Container sterilized",
+      "Água pré-filtrada",
+      "Método de tratamento escolhido",
+      "Tempo de espera cumprido",
+      "Recipiente esterilizado",
     ],
   },
   {
     slug: "tarp-shelter",
-    title: "Tarp Shelters",
+    title: "Abrigos com Lona",
     category: "shelter",
-    summary: "Fast configurations from a single tarp.",
-    body: `## A-Frame
+    summary: "Configurações rápidas a partir de uma única lona.",
+    body: `## A-Frame (Cumeeira)
 
-Ridgeline between two trees, tarp draped over, corners staked low. Best all-weather.
+Corda-guia entre duas árvores, lona por cima, cantos estacados baixos. Melhor para qualquer clima.
 
-## Lean-To
+## Meia-água (Lean-To)
 
-One edge high, opposite edge staked to ground. Open face away from wind, toward fire.
+Uma borda alta, borda oposta estacada ao chão. Face aberta contrária ao vento, voltada para o fogo.
 
-## Plow Point
+## Ponta de Arado (Plow Point)
 
-Single high point, three corners staked. Fastest in open ground.
+Um único ponto alto, três cantos estacados. Mais rápida em terreno aberto.
 
-## Site Selection
+## Escolha do Local
 
-- Above flood line, off game trails.
-- Not under standing dead trees (*widow makers*).
-- Wind block, water within 5 min walk.`,
+- Acima da linha de cheia, fora de trilhas de animais.
+- Longe de árvores mortas em pé (*viúvas*).
+- Anteparo contra vento; água a até 5 min de caminhada.`,
     checklist: [
-      "Site cleared of hazards",
-      "Ridgeline tight",
-      "Corners staked",
-      "Drainage trench dug (if wet)",
+      "Local sem riscos",
+      "Cumeeira esticada",
+      "Cantos estacados",
+      "Vala de drenagem cavada (se molhado)",
     ],
   },
   {
     slug: "core-knots",
-    title: "Five Essential Knots",
+    title: "Cinco Nós Essenciais",
     category: "knots",
-    summary: "If you only learn five, learn these.",
-    body: `## Bowline
+    summary: "Se aprender só cinco, aprenda estes.",
+    body: `## Lais-de-guia (Bowline)
 
-The "king of knots." A fixed loop that won't slip or jam. *Rabbit out, around the tree, back down the hole.*
+O "rei dos nós". Alça fixa que não desliza nem prende. *O coelho sai do buraco, dá a volta na árvore e volta pra dentro.*
 
-## Taut-Line Hitch
+## Volta do Fiel Ajustável (Taut-Line Hitch)
 
-Adjustable hitch for tent guy lines.
+Nó ajustável para tensores de barraca.
 
-## Clove Hitch
+## Volta do Fiel (Clove Hitch)
 
-Quick attachment to a post or branch. Easy to adjust; back up with a half-hitch.
+Fixação rápida em poste ou galho. Fácil de ajustar; reforce com meia-volta.
 
-## Trucker's Hitch
+## Volta do Caminhoneiro (Trucker's Hitch)
 
-Mechanical-advantage tensioning system for ridgelines and loads.
+Sistema com vantagem mecânica para tensionar cumeeiras e cargas.
 
-## Square Knot
+## Nó Direito (Square Knot)
 
-Joins two ropes of equal diameter — for bandages and bundles, *not* for life loads.`,
+Une duas cordas de mesmo diâmetro — para curativos e amarrados, *não* para cargas de vida.`,
     checklist: [
-      "Bowline (practice 5x)",
-      "Taut-line (practice 5x)",
-      "Clove hitch (practice 5x)",
-      "Trucker's hitch (practice 5x)",
-      "Square knot (practice 5x)",
+      "Lais-de-guia (praticar 5x)",
+      "Volta do fiel ajustável (praticar 5x)",
+      "Volta do fiel (praticar 5x)",
+      "Volta do caminhoneiro (praticar 5x)",
+      "Nó direito (praticar 5x)",
     ],
   },
   {
     slug: "land-navigation",
-    title: "Land Navigation Basics",
+    title: "Fundamentos de Navegação Terrestre",
     category: "navigation",
-    summary: "Map, compass, and terrain association.",
-    body: `## Orient the Map
+    summary: "Mapa, bússola e associação com o terreno.",
+    body: `## Orientar o Mapa
 
-Lay flat. Align magnetic north arrow on the compass with the map's magnetic-north reference (add or subtract declination for true-north maps).
+Coloque plano. Alinhe a seta do norte magnético da bússola com a referência de norte magnético do mapa (some ou subtraia a declinação em mapas de norte verdadeiro).
 
-## Terrain Association
+## Associação com o Terreno
 
-Match what you see on the map to what you see on the ground: ridges, drainages, saddles, knolls. Travel by *handrails* (linear features) and *catching features* (you've gone too far).
+Combine o que vê no mapa com o que vê no chão: cristas, drenagens, colos, morros. Ande por *linhas-guia* (feições lineares) e *feições de contenção* (avisam que você passou do ponto).
 
-## Pace Count
+## Contagem de Passos
 
-Know your pace count for 100 m on flat, uphill, and dense terrain. Track with ranger beads.
+Saiba sua contagem para 100 m em terreno plano, em subida e em vegetação densa. Registre com contas de ranger.
 
-## Backazimuth
+## Contra-azimute
 
-If you can shoot a heading to a point, you can return on heading ± 180°.`,
+Se você tirou um azimute até um ponto, pode voltar pelo azimute ± 180°.`,
     checklist: [
-      "Map oriented to north",
-      "Declination applied",
-      "Pace count established",
-      "Bearing recorded",
-      "Backazimuth noted",
+      "Mapa orientado ao norte",
+      "Declinação aplicada",
+      "Contagem de passos definida",
+      "Azimute registrado",
+      "Contra-azimute anotado",
     ],
   },
 ];
@@ -214,10 +214,10 @@ export const MANUAL_BY_CATEGORY = MANUAL.reduce<Record<string, ManualEntry[]>>(
 );
 
 export const CATEGORY_LABELS: Record<ManualEntry["category"], string> = {
-  "first-aid": "First Aid",
-  fire: "Fire",
-  water: "Water",
-  shelter: "Shelter",
-  knots: "Knots",
-  navigation: "Navigation",
+  "first-aid": "Primeiros Socorros",
+  fire: "Fogo",
+  water: "Água",
+  shelter: "Abrigo",
+  knots: "Nós",
+  navigation: "Navegação",
 };

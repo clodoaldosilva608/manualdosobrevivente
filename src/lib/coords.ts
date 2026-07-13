@@ -1,4 +1,6 @@
-import { forward, toPoint } from "mgrs";
+// Import the ESM build directly so it works in both SSR (Node ESM) and browser.
+// The default `mgrs` main is a UMD bundle whose named exports aren't visible to Node ESM.
+import { forward, toPoint } from "mgrs/dist/mgrs.esm.js";
 
 export type LngLat = [number, number]; // [lng, lat]
 

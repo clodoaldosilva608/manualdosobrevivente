@@ -21,7 +21,7 @@ export const Route = createFileRoute("/manual/$slug")({
     return { entry };
   },
   component: Entry,
-  notFoundComponent: () => <div className="p-8">Entry not found.</div>,
+  notFoundComponent: () => <div className="p-8">Verbete não encontrado.</div>,
 });
 
 function Entry() {
@@ -61,7 +61,7 @@ function Entry() {
       {entry.checklist && (
         <div className="mt-8 rounded-md border border-border p-4 bg-card">
           <h3 className="mono text-tactical-orange text-sm font-bold mb-3 tracking-widest">
-            FIELD CHECKLIST
+            CHECKLIST DE CAMPO
           </h3>
           <ul className="space-y-2">
             {entry.checklist.map((item: string, i: number) => (

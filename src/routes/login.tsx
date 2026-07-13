@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
-    meta: [{ title: "Sign in — TacticalGIS" }],
+    meta: [{ title: "Entrar — TacticalGIS" }],
   }),
   component: Login,
 });
@@ -28,7 +28,7 @@ function Login() {
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        toast.success("Signed in");
+        toast.success("Autenticado");
         nav({ to: "/" });
       } else {
         const { error } = await supabase.auth.signUp({
@@ -37,10 +37,10 @@ function Login() {
           options: { emailRedirectTo: `${window.location.origin}/` },
         });
         if (error) throw error;
-        toast.success("Check your email to confirm");
+        toast.success("Confira seu e-mail para confirmar a conta");
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed");
+      toast.error(err instanceof Error ? err.message : "Falha");
     } finally {
       setBusy(false);
     }
@@ -52,7 +52,7 @@ function Login() {
       redirect_uri: window.location.origin,
     });
     if (result.error) {
-      toast.error("Google sign-in failed");
+      toast.error("Falha ao entrar com Google");
       setBusy(false);
       return;
     }
@@ -67,11 +67,11 @@ function Login() {
           TACTICAL/GIS
         </h1>
         <p className="text-sm text-muted-foreground mb-6 mono">
-          {mode === "signin" ? "// Authenticate" : "// Create operator account"}
+          {mode === "signin" ? "// Autenticar operador" : "// Criar conta de operador"}
         </p>
         <form onSubmit={submit} className="space-y-3">
           <div>
-            <Label className="text-xs">Email</Label>
+            <Label className="text-xs">E-mail</Label>
             <Input
               type="email"
               autoComplete="email"
@@ -81,7 +81,7 @@ function Login() {
             />
           </div>
           <div>
-            <Label className="text-xs">Password</Label>
+            <Label className="text-xs">Senha</Label>
             <Input
               type="password"
               autoComplete={mode === "signin" ? "current-password" : "new-password"}
@@ -96,7 +96,7 @@ function Login() {
             disabled={busy}
             className="w-full glove-tap bg-tactical-orange text-background hover:bg-tactical-orange/90"
           >
-            {mode === "signin" ? "Sign in" : "Create account"}
+            {mode === "signin" ? "Entrar" : "Criar conta"}
           </Button>
         </form>
         <div className="relative my-4">
@@ -104,7 +104,7 @@ function Login() {
             <span className="w-full border-t border-border" />
           </div>
           <span className="relative bg-card px-2 text-xs text-muted-foreground mx-auto block w-fit mono">
-            OR
+            OU
           </span>
         </div>
         <Button
@@ -113,13 +113,13 @@ function Login() {
           variant="secondary"
           className="w-full glove-tap"
         >
-          Continue with Google
+          Continuar com Google
         </Button>
         <button
           onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
           className="w-full mt-4 text-sm text-muted-foreground hover:text-foreground"
         >
-          {mode === "signin" ? "Need an account? Sign up" : "Have an account? Sign in"}
+          {mode === "signin" ? "Não tem conta? Cadastre-se" : "Já tem conta? Entrar"}
         </button>
       </div>
     </div>

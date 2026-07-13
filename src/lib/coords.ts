@@ -1,8 +1,11 @@
-import mgrs from "mgrs";
-const { forward, toPoint } = mgrs as unknown as {
-  forward: (lnglat: [number, number], precision?: number) => string;
-  toPoint: (mgrs: string) => [number, number];
+import * as mgrsNs from "mgrs";
+const mgrsMod = (mgrsNs as unknown as { default?: unknown; forward?: unknown; toPoint?: unknown });
+const impl = ((mgrsMod.forward ? mgrsMod : (mgrsMod.default as Record<string, unknown> | undefined)) ?? {}) as {
+  forward?: (lnglat: [number, number], precision?: number) => string;
+  toPoint?: (mgrs: string) => [number, number];
 };
+const forward = impl.forward!;
+const toPoint = impl.toPoint!;
 
 export type LngLat = [number, number]; // [lng, lat]
 

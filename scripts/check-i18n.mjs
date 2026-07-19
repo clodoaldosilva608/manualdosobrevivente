@@ -13,6 +13,7 @@ const ALLOW = new Set([
   "m","km","ha","kg","g","nm","nmi","ac","m²","ok","id","url","json","png","jpg","svg",
   "utf","viewport","charset","width","height","initial","scale","href","content","type","name","rel","property",
   "app","bug","out","bag","fatwood","cryptosporidium","ranger","frame","point","plow","lean","to","a",
+  "waypoint","waypoints","slide","sidebar","title",
   // categoria/enum keys internas
   "water","shelter","danger","foraging","cache","custom","tools","nutrition","hydration","medical","warmth",
   "first-aid","fire","knots","navigation",

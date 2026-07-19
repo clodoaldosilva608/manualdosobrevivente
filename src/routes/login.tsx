@@ -40,7 +40,7 @@ function Login() {
         toast.success("Confira seu e-mail para confirmar a conta");
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha");
+      toast.error(err instanceof Error ? err.message : "Falha na autenticação");
     } finally {
       setBusy(false);
     }

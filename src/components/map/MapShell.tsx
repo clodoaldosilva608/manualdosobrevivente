@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import type maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 import {
   Layers,
   Crosshair,
@@ -407,7 +408,9 @@ export default function MapShell() {
 
   return (
     <div className="absolute inset-0 bg-background">
-      <div ref={containerRef} className="absolute inset-0" />
+      <div className="absolute inset-0">
+        <div ref={containerRef} className="h-full w-full" />
+      </div>
 
       {/* Top HUD: coordinates */}
       <div className="absolute left-2 right-2 top-2 z-10 md:left-4 md:right-auto md:top-4 md:w-[360px] hud-panel rounded-md p-2 mono text-xs">
@@ -505,7 +508,7 @@ export default function MapShell() {
                 <YAxis tick={{ fontSize: 10, fill: "#aaa" }} stroke="#444" />
                 <Tooltip
                   contentStyle={{ background: "#1a1a1a", border: "1px solid #333", fontSize: 11 }}
-                  formatter={(v: number) => [`${v} m`, "Elev"]}
+                  formatter={(v: number) => [`${v} m`, "Elevação"]}
                   labelFormatter={(d) => `${d} m`}
                 />
                 <Area type="monotone" dataKey="e" stroke="#FF6B35" fill="url(#elev)" strokeWidth={2} />

@@ -6,22 +6,21 @@ import { lineString, point, polygon } from "@turf/helpers";
 
 export type LngLat = [number, number];
 
+const nf = (min: number, max: number) =>
+  new Intl.NumberFormat("pt-BR", { minimumFractionDigits: min, maximumFractionDigits: max });
+
 export function pathLengthMeters(coords: LngLat[]): number {
   if (coords.length < 2) return 0;
-  const ls = lineString(coords);
-  return length(ls, { units: "meters" });
+  return length(lineString(coords), { units: "meters" });
 }
 
 export function polygonAreaSqMeters(coords: LngLat[]): number {
   if (coords.length < 3) return 0;
-  const ring = [...coords, coords[0]];
-  const poly = polygon([ring]);
-  return area(poly);
+  return area(polygon([[...coords, coords[0]]]));
 }
 
 export function bearingDeg(from: LngLat, to: LngLat): number {
-  const b = bearing(point(from), point(to));
-  return (b + 360) % 360;
+  return (bearing(point(from), point(to)) + 360) % 360;
 }
 
 export function distanceMeters(from: LngLat, to: LngLat): number {
@@ -29,27 +28,22 @@ export function distanceMeters(from: LngLat, to: LngLat): number {
 }
 
 export function formatMeters(m: number): string {
-  if (m < 1000) return `${m.toFixed(1)} m`;
-  return `${(m / 1000).toFixed(2)} km`;
+  if (m < 1000) return `${nf(1, 1).format(m)} m`;
+  return `${nf(2, 2).format(m / 1000)} km`;
 }
 
 export function formatNauticalMiles(m: number): string {
-  return `${(m / 1852).toFixed(2)} nmi`;
+  return `${nf(2, 2).format(m / 1852)} NM`;
 }
 
-export function formatArea(sqm: number): {
-  m2: string;
-  ha: string;
-  acres: string;
-} {
+export function formatArea(sqm: number): { m2: string; ha: string; acres: string } {
   return {
-    m2: `${sqm.toFixed(1)} m²`,
-    ha: `${(sqm / 10000).toFixed(3)} ha`,
-    acres: `${(sqm / 4046.8564224).toFixed(3)} ac`,
+    m2: `${nf(1, 1).format(sqm)} m²`,
+    ha: `${nf(3, 3).format(sqm / 10000)} ha`,
+    acres: `${nf(3, 3).format(sqm / 4046.8564224)} ac`,
   };
 }
 
-/** Sample a polyline at fixed interval (meters). Returns LngLat array. */
 export function samplePath(coords: LngLat[], intervalM = 50, maxSamples = 200): LngLat[] {
   if (coords.length < 2) return coords.slice();
   const total = pathLengthMeters(coords);

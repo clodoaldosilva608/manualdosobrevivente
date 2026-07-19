@@ -408,7 +408,7 @@ export default function MapShell() {
 
   return (
     <div className="absolute inset-0 bg-background">
-      <div ref={containerRef} className="absolute inset-0" />
+      <div ref={containerRef} className="absolute inset-0" style={{ width: "100%", height: "100%" }} />
 
       {/* Top HUD: coordinates */}
       <div className="absolute left-2 right-2 top-2 z-10 md:left-4 md:right-auto md:top-4 md:w-[360px] hud-panel rounded-md p-2 mono text-xs">

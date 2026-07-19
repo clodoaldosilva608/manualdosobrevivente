@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import type maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 import {
   Layers,
   Crosshair,
@@ -505,7 +506,7 @@ export default function MapShell() {
                 <YAxis tick={{ fontSize: 10, fill: "#aaa" }} stroke="#444" />
                 <Tooltip
                   contentStyle={{ background: "#1a1a1a", border: "1px solid #333", fontSize: 11 }}
-                  formatter={(v: number) => [`${v} m`, "Elev"]}
+                  formatter={(v: number) => [`${v} m`, "Elevação"]}
                   labelFormatter={(d) => `${d} m`}
                 />
                 <Area type="monotone" dataKey="e" stroke="#FF6B35" fill="url(#elev)" strokeWidth={2} />

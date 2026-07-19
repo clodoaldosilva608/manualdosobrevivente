@@ -1,28 +1,30 @@
 export function renderErrorPage(): string {
   return `<!doctype html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
-    <title>This page didn't load</title>
+    <title>Esta página não carregou</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
-      body { font: 15px/1.5 system-ui, -apple-system, sans-serif; background: #fafafa; color: #111; display: grid; place-items: center; min-height: 100vh; margin: 0; padding: 1.5rem; }
-      .card { max-width: 28rem; width: 100%; text-align: center; padding: 2rem; }
-      h1 { font-size: 1.25rem; margin: 0 0 0.5rem; }
-      p { color: #4b5563; margin: 0 0 1.5rem; }
-      .actions { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
-      a, button { padding: 0.5rem 1rem; border-radius: 0.375rem; font: inherit; cursor: pointer; text-decoration: none; border: 1px solid transparent; }
-      .primary { background: #111; color: #fff; }
-      .secondary { background: #fff; color: #111; border-color: #d1d5db; }
+      :root { color-scheme: dark; }
+      body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+        font-family: -apple-system, system-ui, Segoe UI, Roboto, sans-serif; background: #121212; color: #f5f5f5; padding: 24px; }
+      .card { max-width: 480px; text-align: center; }
+      h1 { color: #FF6B35; font-size: 1.5rem; margin: 0 0 12px; letter-spacing: 0.05em; }
+      p { color: #a1a1a1; line-height: 1.5; margin: 0 0 24px; }
+      .row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+      a, button { font: inherit; padding: 10px 16px; border-radius: 6px; text-decoration: none; cursor: pointer; border: none; }
+      .primary { background: #FF6B35; color: #121212; font-weight: 600; }
+      .secondary { background: transparent; color: #f5f5f5; border: 1px solid #333; }
     </style>
   </head>
   <body>
     <div class="card">
-      <h1>This page didn't load</h1>
-      <p>Something went wrong on our end. You can try refreshing or head back home.</p>
-      <div class="actions">
-        <button class="primary" onclick="location.reload()">Try again</button>
-        <a class="secondary" href="/">Go home</a>
+      <h1>Esta página não carregou</h1>
+      <p>Algo deu errado do nosso lado. Você pode tentar atualizar ou voltar para o início.</p>
+      <div class="row">
+        <button class="primary" onclick="location.reload()">Atualizar</button>
+        <a class="secondary" href="/">Voltar ao início</a>
       </div>
     </div>
   </body>

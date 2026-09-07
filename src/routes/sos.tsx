@@ -93,16 +93,35 @@ function SOS() {
   useEffect(() => () => stopStrobe(), []);
 
   const shareLocation = async () => {
-    if (!pos) return toast.error("Sem posição GPS ainda");
-    const text = `LOCALIZAÇÃO DE EMERGÊNCIA\n${formatDD(pos.lng, pos.lat)}\nMGRS ${formatMGRS(pos.lng, pos.lat)}`;
-    try {
-      if (navigator.share) await navigator.share({ title: "Localização SOS", text });
-      else {
-        await navigator.clipboard.writeText(text);
-        toast.success("Copiado para a área de transferência");
+    const text = pos
+      ? `LOCALIZAÇÃO DE EMERGÊNCIA\n${formatDD(pos.lng, pos.lat)}\nMGRS ${formatMGRS(pos.lng, pos.lat)}`
+      : "LOCALIZAÇÃO DE EMERGÊNCIA\nPosição GPS ainda não obtida.";
+    if (!pos) toast.message("Sem posição GPS ainda — compartilhando aviso");
+
+    // 1) compartilhamento nativo
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title: "Localização SOS", text });
+        return;
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
       }
-    } catch {}
+    }
+    // 2) área de transferência
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Copiado para a área de transferência");
+      return;
+    } catch {
+      /* sem permissão de área de transferência */
+    }
+    // 3) último recurso: exibir para cópia manual
+    setManualShare(text);
+    toast.error("Não foi possível compartilhar automaticamente", {
+      description: "Copie o texto exibido na tela.",
+    });
   };
+
 
   return (
     <div

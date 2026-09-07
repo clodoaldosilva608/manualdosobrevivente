@@ -18,24 +18,28 @@ export const Route = createFileRoute("/manual/$slug")({
   loader: ({ params }) => {
     const entry = MANUAL.find((e) => e.slug === params.slug);
     if (!entry) throw notFound();
-    return { entry };
+    return { slug: entry.slug };
   },
   component: Entry,
   notFoundComponent: () => <div className="p-8">Verbete não encontrado.</div>,
 });
 
 function Entry() {
-  const { entry } = Route.useLoaderData();
+  const { slug } = Route.useParams();
+  const entry = MANUAL.find((e) => e.slug === slug)!;
   const [checks, setChecks] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    if (!entry.checklist) return;
+    const list = entry?.checklist;
+    if (!list) return;
     Promise.all(
-      entry.checklist.map(async (_: string, i: number) => {
+      list.map(async (_: string, i: number): Promise<[number, boolean]> => {
         const c = await getChecklist(`${entry.slug}/${i}`);
-        return [i, c?.done ?? false] as const;
+        return [i, c?.done ?? false];
       }),
-    ).then((pairs) => setChecks(Object.fromEntries(pairs.map(([i, v]) => [String(i), v]))));
+    ).then((pairs) =>
+      setChecks(Object.fromEntries(pairs.map(([i, v]) => [String(i), v]))),
+    );
   }, [entry]);
 
   const toggle = async (i: number) => {

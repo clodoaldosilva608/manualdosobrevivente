@@ -1,67 +1,67 @@
-## Diagnóstico do problema do mapa
+# Correções de páginas + bússola 3D + qualidade automatizada
 
-O mapa aparece em branco (só HUD visível, sem tiles) porque **o CSS do MapLibre GL nunca é importado**. Sem `maplibre-gl.css`, o container `.maplibregl-map` fica sem `position/height` corretos e nenhum tile é pintado, mesmo com os PNGs sendo baixados com sucesso (200 OK). Confirmado via screenshot Playwright e inspeção do `src/components/map/MapShell.tsx` (linha 2 importa só `type maplibregl`, sem o CSS).
+## O que verifiquei antes deste plano
 
-## Correções
+- Todas as rotas (`/`, `/settings`, `/manual`, `/manual/fire-starting`, `/sos`) respondem 200 no servidor e já vêm com `lang="pt-BR"`.
+- No navegador em modo de desenvolvimento (tela 390 px) as páginas Ajustes, Manual e SOS carregam **sem erro** e o clique em "Fazer Fogo (Condições Úmidas)" navega corretamente.
+- O registro de erros do preview publicado mostra `ReferenceError: v is not defined` — um erro que só ocorre na versão compilada/minificada. É a causa mais provável de "nada funciona ao clicar": a página trava logo após carregar e todos os botões (Ajustes, compartilhar no SOS, itens do Manual) param de responder. **Diagnóstico ainda não confirmado** — confirmar é o primeiro passo.
+- O mapa hoje sempre abre em Brasília (coordenada fixa) e o painel "Bússola" existe, mas é um painel simples, sem bússola 3D.
 
-### 1. Corrigir renderização do mapa
+## 1. Confirmar e corrigir o travamento da versão publicada
 
-- `src/components/map/MapShell.tsx`: adicionar `import "maplibre-gl/dist/maplibre-gl.css";` no topo do arquivo, ao lado dos outros imports do maplibre. Isso resolve a tela preta e habilita os controles nativos (zoom, escala, geolocalização, atribuição).
+- Gerar uma compilação de produção e abri-la em navegador real, reproduzindo `v is not defined` com o rastreamento de origem ativado para identificar o trecho responsável (suspeitas iniciais: gráfico de elevação/recharts e a importação dinâmica do mapa).
+- Corrigir a causa encontrada e revalidar Ajustes, SOS e Manual na versão compilada.
 
-### 2. Auditoria final PT-BR (strings remanescentes em inglês)
+## 2. SOS — compartilhamento
 
-- `src/lib/error-page.ts`: traduzir a página HTML de fallback SSR:
-  - `<title>` → "Esta página não carregou"
-  - `<h1>` → "Esta página não carregou"
-  - Parágrafo → "Algo deu errado do nosso lado. Você pode tentar atualizar ou voltar para o início."
-  - Link "Go home" → "Voltar ao início"
-  - Botão de refresh → "Atualizar"
-- `src/components/map/MapShell.tsx`:
-  - Tooltip do gráfico de elevação: `formatter={(v) => [\`${v} m\`, "Elev"]}` → rótulo `"Elevação"`.
-  - `aria-label="Remover"` já em PT; revisar demais tooltips e toasts.
-- `src/routes/inventory.tsx`: rótulo do input `"Qtde"` mantido; conferir toasts.
-- `src/routes/login.tsx`: mensagem `"Falha"` → `"Falha na autenticação"`.
+- Tornar o compartilhamento resistente a falhas: usar o compartilhamento nativo quando disponível, cair para cópia na área de transferência e, se ambos falharem, mostrar o texto selecionável em uma caixa com aviso claro.
+- Manter o botão sempre acionável mesmo sem GPS: compartilhar o que houver e avisar que a posição ainda não foi obtida.
 
-### 3. Padronização de números, unidades e datas
+## 3. Mapa — abrir na localização do usuário
 
-- `src/lib/geo.ts`: reescrever formatadores para usar `Intl.NumberFormat("pt-BR")`:
-  - `formatMeters`: `"1.234,5 m"` / `"12,34 km"`.
-  - `formatNauticalMiles`: `"12,34 NM"`.
-  - `formatArea`: `"1.234,5 m²"`, `"1,234 ha"`, `"1,234 ac"`.
-- `src/components/map/MapShell.tsx`: coordenadas DD já usam ponto (padrão geodésico internacional — manter); rótulo do eixo Y do gráfico de elevação exibindo `${v} m` com locale PT-BR.
-- Datas: `toLocaleDateString("pt-BR")` já aplicado em `inventory.tsx`; verificar `manual.$slug.tsx` (não usa datas — OK).
+- Ao abrir o mapa, pedir a posição do aparelho e centralizar nela (zoom ~14). Se o usuário negar ou a posição demorar, manter Brasília como reserva, sem travar a tela.
+- Guardar a última posição conhecida para abrir mais rápido nas próximas vezes.
 
-### 4. Teste automatizado de idioma (checklist anti-inglês)
+## 4. Bússola 3D na aba "Bússola"
 
-Criar `scripts/check-i18n.mjs` — script Node puro, sem dependências novas — que:
+- Nova peça visual: rosa dos ventos em 3D (CSS 3D com leve inclinação e sombra), girando de forma suave conforme a direção do aparelho/mapa.
+- Interativa: arrastar/tocar gira a bússola e ajusta a rotação do mapa; tocar no centro volta ao norte; toque duplo alterna entre norte magnético e norte verdadeiro (já existe cálculo de declinação no projeto).
+- Totalmente responsiva (dimensiona pelo menor lado disponível), com leitura numérica de rumo, cardeais em português e desativação da animação quando o sistema pede menos movimento.
 
-1. Percorre `src/routes/**`, `src/components/**`, `src/lib/manual-content.ts` e `src/lib/error-page.ts`.
-2. Extrai literais de string JSX (`>Texto<`), atributos `placeholder=`, `title=`, `aria-label=`, argumentos de `toast.success/error/message(...)` e valores string dentro de `meta`/`head()`.
-3. Ignora: nomes técnicos permitidos (allowlist: `MGRS`, `DD`, `DMS`, `GPX`, `KML`, `WMS`, `WMTS`, `SOS`, `GPS`, `HUD`, `TACTICAL/GIS`, `Google`, `E-mail`, unidades `m`, `km`, `ha`, `kg`, `g`, `NM`, `nmi`, `ac`, `m²`, IDs de categoria em inglês usados como chaves internas).
-4. Marca como suspeitos tokens que casem `\b(the|and|for|with|save|load|search|weight|expires|download|upload|export|import|layer|waypoint|compass|flashlight|inventory|login|error|success|loading|cancel|confirm|delete|edit|home|about|profile|account|password|submit|send|reset|update|create|remove|category|name|title|description|notes|date|time|today|distance|speed|altitude|elevation|heading|bearing|north|south|east|west|route|track|marker|tools|settings|menu)\b` fora da allowlist.
-5. Falha com `process.exit(1)` e lista arquivo:linha:trecho quando encontra suspeitos.
-6. Também abre `src/routes/__root.tsx` e valida que existe `lang="pt-BR"` no `<html>` e `og:locale = pt_BR` no head.
+## 5. Manual — garantir abertura de todos os verbetes
 
-Adicionar em `package.json` (`scripts`):
+- Após a correção do item 1, validar por teste automatizado a abertura dos sete verbetes (feridas, hipotermia, fogo, água, lona, nós, navegação), incluindo o carregamento do texto e do checklist.
 
-```json
-"check:i18n": "node scripts/check-i18n.mjs"
-```
+## 6. Utilitário único de formatação pt-BR
 
-Rodar `bun run check:i18n` após as correções e iterar até o script passar.
+- Criar `src/lib/format.ts` como fonte única para: datas e horas, números, distâncias (m/km), náuticas, áreas (m²/ha/ac), pesos (g/kg), coordenadas e porcentagens — tudo com `Intl` em `pt-BR`.
+- Migrar mapa, mochila, SOS, ajustes e manual para usar apenas esse utilitário; `src/lib/geo.ts` passa a delegar para ele.
+- Regra de lint que proíbe `toLocaleString`/`toFixed` diretos em telas, obrigando o utilitário.
 
-### 5. Validação SSR de `lang="pt-BR"`
+## 7. Verificações automáticas antes de compilar
 
-Após o script passar, executar via Playwright em `http://localhost:8080/`:
+- Regra ESLint própria (`no-english-literals`) que detecta textos visíveis em inglês em JSX, `placeholder`, `aria-label`, `title` e toasts, reaproveitando a lista de exceções já usada no script atual.
+- `bun run build` passa a executar antes: `lint` + `check:i18n`, bloqueando a compilação em caso de falha.
 
-```js
-const html = await page.content();
-assert(html.match(/<html[^>]*lang="pt-BR"/));
-```
+## 8. Testes automatizados
 
-Incorporar essa checagem no mesmo `scripts/check-i18n.mjs` como etapa opcional (se `PLAYWRIGHT=1`), fazendo requisição HTTP a `http://localhost:8080/` com `fetch` e validando por regex no HTML SSR — sem depender do Playwright no CI.
+- Instalar Vitest + Playwright como dependências de desenvolvimento.
+- **Responsividade do mapa**: teste que abre o mapa em 390x800, 768x1024 e 1440x900, verifica que a tela do mapa ocupa o espaço disponível (sem sobrar faixa preta), que a barra inferior não cobre os controles, e que após redimensionar a janela o mapa se reajusta.
+- **E2E de SSR**: teste que busca o HTML de `/` e `/login` direto do servidor e confirma `lang="pt-BR"`, `og:locale=pt_BR` e ausência de palavras em inglês no texto visível; e uma passagem em navegador que percorre mapa, manual, mochila, SOS, ajustes e login capturando qualquer erro de execução.
+- Scripts: `test`, `test:e2e`, e `check:all` (lint + i18n + testes).
 
-## Fora de escopo desta etapa
+## 9. CI bloqueando merges
 
-- Cache de tiles offline, sincronização em nuvem, bússola nativa (permanecem para uma fase seguinte, conforme já planejado em `.lovable/plan.md`).
-- Framework de i18n multilíngue (aplicação continua PT-BR único).
+- Adicionar workflow do GitHub Actions (`.github/workflows/ci.yml`) rodando em cada pull request: instala dependências com bun, executa `bun run lint`, `bun run check:i18n`, `bun run test`, `bun run test:e2e` e `bun run build`.
+- Instruções curtas no `README` para marcar o job como obrigatório na proteção de branch (isso é ajuste no GitHub, feito por você).
+
+## Detalhes técnicos
+
+- Bússola: componente `src/components/map/Compass3D.tsx`, `transform: perspective() rotateX() rotateZ()`, `DeviceOrientationEvent` com pedido de permissão no iOS, sincronizado com `map.getBearing()`/`map.rotateTo()`.
+- Geolocalização inicial: `navigator.geolocation.getCurrentPosition` em efeito no cliente, com tempo limite de 5 s e `map.jumpTo` para não brigar com interação do usuário.
+- Testes de responsividade e E2E via Playwright contra o servidor de desenvolvimento local; sem dependência de conta autenticada.
+
+## Fora de escopo
+
+- Cache de tiles offline e sincronização em nuvem (fase seguinte).
+- Suporte a outros idiomas.

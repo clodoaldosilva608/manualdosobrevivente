@@ -81,10 +81,20 @@ function EntryRow({ entry }: { entry: (typeof MANUAL)[number] }) {
       <Link
         to="/manual/$slug"
         params={{ slug: entry.slug }}
-        className="block rounded-md border border-border hover:border-tactical-orange/60 bg-card p-3 transition-colors"
+        className="flex gap-3 rounded-md border border-border hover:border-tactical-orange/60 bg-card p-3 transition-colors"
       >
-        <div className="font-semibold">{entry.title}</div>
-        <div className="text-xs text-muted-foreground mt-0.5">{entry.summary}</div>
+        <img
+          src={entry.image}
+          alt={entry.imageAlt}
+          loading="lazy"
+          width={1024}
+          height={576}
+          className="h-16 w-24 shrink-0 rounded object-cover border border-border"
+        />
+        <div className="min-w-0">
+          <div className="font-semibold">{entry.title}</div>
+          <div className="text-xs text-muted-foreground mt-0.5">{entry.summary}</div>
+        </div>
       </Link>
     </li>
   );

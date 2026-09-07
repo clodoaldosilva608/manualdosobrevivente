@@ -4,6 +4,7 @@ import { Siren, Flashlight, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDD, formatDMS, formatMGRS } from "@/lib/coords";
 import { toast } from "sonner";
+import { ShareSheet } from "@/components/ShareSheet";
 
 export const Route = createFileRoute("/sos")({
   head: () => ({
@@ -45,7 +46,7 @@ function SOS() {
   const [pos, setPos] = useState<{ lng: number; lat: number } | null>(null);
   const [strobeOn, setStrobeOn] = useState(false);
   const [active, setActive] = useState(false);
-  const [manualShare, setManualShare] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const torchTrackRef = useRef<MediaStreamTrack | null>(null);
   const timerRef = useRef<number | null>(null);
 
@@ -114,34 +115,16 @@ function SOS() {
 
   useEffect(() => () => stopStrobe(), []);
 
-  const shareLocation = async () => {
-    const text = pos
-      ? `LOCALIZAÇÃO DE EMERGÊNCIA\n${formatDD(pos.lng, pos.lat)}\nMGRS ${formatMGRS(pos.lng, pos.lat)}`
-      : "LOCALIZAÇÃO DE EMERGÊNCIA\nPosição GPS ainda não obtida.";
-    if (!pos) toast.message("Sem posição GPS ainda — compartilhando aviso");
+  const shareText = pos
+    ? `LOCALIZAÇÃO DE EMERGÊNCIA\nDD ${formatDD(pos.lng, pos.lat)}\nDMS ${formatDMS(pos.lng, pos.lat)}\nMGRS ${formatMGRS(pos.lng, pos.lat)}`
+    : "LOCALIZAÇÃO DE EMERGÊNCIA\nPosição GPS ainda não obtida.";
+  const mapUrl = pos
+    ? `https://www.google.com/maps/search/?api=1&query=${pos.lat.toFixed(6)},${pos.lng.toFixed(6)}`
+    : null;
 
-    // 1) compartilhamento nativo
-    if (typeof navigator !== "undefined" && navigator.share) {
-      try {
-        await navigator.share({ title: "Localização SOS", text });
-        return;
-      } catch (err) {
-        if (err instanceof DOMException && err.name === "AbortError") return;
-      }
-    }
-    // 2) área de transferência
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success("Copiado para a área de transferência");
-      return;
-    } catch {
-      /* sem permissão de área de transferência */
-    }
-    // 3) último recurso: exibir para cópia manual
-    setManualShare(text);
-    toast.error("Não foi possível compartilhar automaticamente", {
-      description: "Copie o texto exibido na tela.",
-    });
+  const shareLocation = () => {
+    if (!pos) toast.message("Sem posição GPS ainda — o aviso será enviado sem coordenadas");
+    setShareOpen(true);
   };
 
   return (
@@ -189,25 +172,13 @@ function SOS() {
             COMPARTILHAR
           </Button>
         </div>
-        {manualShare && (
-          <div className="mt-4 rounded-md border border-tactical-amber bg-card p-3">
-            <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
-              Copie manualmente
-            </div>
-            <textarea
-              readOnly
-              value={manualShare}
-              onFocus={(e) => e.currentTarget.select()}
-              className="w-full h-24 bg-background border border-border rounded-md p-2 mono text-sm"
-            />
-            <button
-              onClick={() => setManualShare(null)}
-              className="mt-2 text-xs text-muted-foreground underline"
-            >
-              Fechar
-            </button>
-          </div>
-        )}
+        <ShareSheet
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          title="Localização SOS"
+          text={shareText}
+          mapUrl={mapUrl}
+        />
         <p className="text-xs text-muted-foreground mt-4 mono">
           O estrobo transmite S-O-S em código Morse. A lanterna do celular é usada quando
           disponível.

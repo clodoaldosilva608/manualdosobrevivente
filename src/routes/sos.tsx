@@ -45,7 +45,7 @@ function SOS() {
   const [pos, setPos] = useState<{ lng: number; lat: number } | null>(null);
   const [strobeOn, setStrobeOn] = useState(false);
   const [active, setActive] = useState(false);
-  const [manualShare, setManualShare] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const torchTrackRef = useRef<MediaStreamTrack | null>(null);
   const timerRef = useRef<number | null>(null);
 

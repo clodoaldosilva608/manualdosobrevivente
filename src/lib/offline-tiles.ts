@@ -69,7 +69,7 @@ export async function downloadAreaTiles(
               cached_at: Date.now(),
             });
           }
-        } catch {}
+        } catch { /* ignora falha não crítica */ }
         done++;
         if (done % 8 === 0 || done === total) onProgress({ done, total, bytes });
       }

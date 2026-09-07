@@ -39,7 +39,7 @@ export function parseCoordinate(input: string): LngLat | null {
     try {
       const [lng, lat] = toPoint(t.replace(/\s+/g, ""));
       if (isFinite(lng) && isFinite(lat)) return [lng, lat];
-    } catch {}
+    } catch { /* ignora falha não crítica */ }
   }
   // DMS: try to capture both lat and lng
   const dmsRe =

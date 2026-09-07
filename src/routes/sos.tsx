@@ -59,7 +59,7 @@ function SOS() {
       } else {
         track.stop();
       }
-    } catch {}
+    } catch { /* ignora falha não crítica */ }
     let i = 0;
     const tick = () => {
       const [state, ms] = SOS_PATTERN[i % SOS_PATTERN.length];
@@ -69,7 +69,7 @@ function SOS() {
         try {
           // @ts-expect-error torch constraint not in lib.dom.d.ts
           torchTrackRef.current.applyConstraints({ advanced: [{ torch: on }] });
-        } catch {}
+        } catch { /* ignora falha não crítica */ }
       }
       i++;
       timerRef.current = window.setTimeout(tick, ms);
@@ -85,7 +85,7 @@ function SOS() {
       try {
         // @ts-expect-error torch constraint
         torchTrackRef.current.applyConstraints({ advanced: [{ torch: false }] });
-      } catch {}
+      } catch { /* ignora falha não crítica */ }
       torchTrackRef.current.stop();
       torchTrackRef.current = null;
     }

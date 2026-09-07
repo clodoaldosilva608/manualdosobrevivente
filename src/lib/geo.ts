@@ -7,7 +7,6 @@ import { formatDistance, formatNautical, formatAreaAll } from "@/lib/format";
 
 export type LngLat = [number, number];
 
-
 export function pathLengthMeters(coords: LngLat[]): number {
   if (coords.length < 2) return 0;
   return length(lineString(coords), { units: "meters" });
@@ -37,7 +36,6 @@ export function formatNauticalMiles(m: number): string {
 export function formatArea(sqm: number): { m2: string; ha: string; acres: string } {
   return formatAreaAll(sqm);
 }
-
 
 export function samplePath(coords: LngLat[], intervalM = 50, maxSamples = 200): LngLat[] {
   if (coords.length < 2) return coords.slice();

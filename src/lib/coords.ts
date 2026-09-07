@@ -5,7 +5,7 @@ import { forward, toPoint } from "mgrs/dist/mgrs.esm.js";
 export type LngLat = [number, number]; // [lng, lat]
 
 export function ddToDms(dd: number, isLat: boolean): string {
-  const dir = isLat ? (dd >= 0 ? "N" : "S") : (dd >= 0 ? "E" : "W");
+  const dir = isLat ? (dd >= 0 ? "N" : "S") : dd >= 0 ? "E" : "W";
   const abs = Math.abs(dd);
   const d = Math.floor(abs);
   const mFloat = (abs - d) * 60;
@@ -39,7 +39,9 @@ export function parseCoordinate(input: string): LngLat | null {
     try {
       const [lng, lat] = toPoint(t.replace(/\s+/g, ""));
       if (isFinite(lng) && isFinite(lat)) return [lng, lat];
-    } catch {}
+    } catch {
+      /* ignora falha não crítica */
+    }
   }
   // DMS: try to capture both lat and lng
   const dmsRe =
@@ -75,7 +77,10 @@ export function parseCoordinate(input: string): LngLat | null {
     }
   }
   // Plain decimal "lat, lng"
-  const parts = t.split(/[, ]+/).map((p) => parseFloat(p)).filter((n) => !isNaN(n));
+  const parts = t
+    .split(/[, ]+/)
+    .map((p) => parseFloat(p))
+    .filter((n) => !isNaN(n));
   if (parts.length === 2) {
     const [lat, lng] = parts;
     if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return [lng, lat];

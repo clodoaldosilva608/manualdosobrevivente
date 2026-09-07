@@ -56,8 +56,8 @@ export function waypointsToGPX(waypoints: LocalWaypoint[]): string {
           name: w.title,
           desc: w.description ?? "",
           ele: w.elevation ?? undefined,
-        })
-    )
+        }),
+    ),
   );
   return buildGPX(builder.toObject());
 }

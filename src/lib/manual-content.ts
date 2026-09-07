@@ -205,13 +205,10 @@ Se você tirou um azimute até um ponto, pode voltar pelo azimute ± 180°.`,
   },
 ];
 
-export const MANUAL_BY_CATEGORY = MANUAL.reduce<Record<string, ManualEntry[]>>(
-  (acc, e) => {
-    (acc[e.category] = acc[e.category] || []).push(e);
-    return acc;
-  },
-  {},
-);
+export const MANUAL_BY_CATEGORY = MANUAL.reduce<Record<string, ManualEntry[]>>((acc, e) => {
+  (acc[e.category] = acc[e.category] || []).push(e);
+  return acc;
+}, {});
 
 export const CATEGORY_LABELS: Record<ManualEntry["category"], string> = {
   "first-aid": "Primeiros Socorros",

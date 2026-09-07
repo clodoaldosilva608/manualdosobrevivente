@@ -44,9 +44,7 @@ function Settings() {
       </header>
 
       <section className="rounded-md border border-border bg-card p-4">
-        <h2 className="mono text-xs uppercase tracking-widest text-muted-foreground mb-2">
-          Conta
-        </h2>
+        <h2 className="mono text-xs uppercase tracking-widest text-muted-foreground mb-2">Conta</h2>
         {email ? (
           <div className="flex items-center justify-between gap-3">
             <span className="mono text-sm truncate">{email}</span>
@@ -66,9 +64,7 @@ function Settings() {
       </section>
 
       <section className="rounded-md border border-border bg-card p-4 space-y-3">
-        <h2 className="mono text-xs uppercase tracking-widest text-muted-foreground">
-          Dados
-        </h2>
+        <h2 className="mono text-xs uppercase tracking-widest text-muted-foreground">Dados</h2>
         <Button onClick={exportGPX} className="w-full glove-tap">
           Exportar waypoints em GPX
         </Button>

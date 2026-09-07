@@ -27,12 +27,7 @@ export interface Compass3DProps {
   onReset?: () => void;
 }
 
-export default function Compass3D({
-  heading,
-  declination,
-  onRotate,
-  onReset,
-}: Compass3DProps) {
+export default function Compass3D({ heading, declination, onRotate, onReset }: Compass3DProps) {
   const ref = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startAngle: number; startHeading: number } | null>(null);
   const [magnetic, setMagnetic] = useState(false);
@@ -52,9 +47,9 @@ export default function Compass3D({
     type OrientationCtor = typeof DeviceOrientationEvent & {
       requestPermission?: () => Promise<"granted" | "denied">;
     };
-    const ctor = (typeof DeviceOrientationEvent !== "undefined"
-      ? DeviceOrientationEvent
-      : undefined) as OrientationCtor | undefined;
+    const ctor = (
+      typeof DeviceOrientationEvent !== "undefined" ? DeviceOrientationEvent : undefined
+    ) as OrientationCtor | undefined;
     if (!ctor) return;
     if (typeof ctor.requestPermission === "function") {
       try {
@@ -78,8 +73,7 @@ export default function Compass3D({
       }
     };
     window.addEventListener("deviceorientation", handler as EventListener, true);
-    return () =>
-      window.removeEventListener("deviceorientation", handler as EventListener, true);
+    return () => window.removeEventListener("deviceorientation", handler as EventListener, true);
   }, [sensorOn]);
 
   const trueHeading = norm(deviceHeading ?? heading);
@@ -150,8 +144,7 @@ export default function Compass3D({
           <div
             className="absolute inset-0 rounded-full"
             style={{
-              background:
-                "radial-gradient(circle at 50% 35%, hsl(20 8% 18%), hsl(20 10% 8%) 70%)",
+              background: "radial-gradient(circle at 50% 35%, hsl(20 8% 18%), hsl(20 10% 8%) 70%)",
               boxShadow:
                 "0 26px 40px rgba(0,0,0,.65), inset 0 0 0 2px rgba(255,107,53,.35), inset 0 -14px 28px rgba(0,0,0,.7)",
               transform: "translateZ(-18px)",

@@ -46,10 +46,7 @@ export const deleteWaypointRemote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ context, data }) => {
-    const { error } = await context.supabase
-      .from("waypoints")
-      .delete()
-      .eq("id", data.id);
+    const { error } = await context.supabase.from("waypoints").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -68,10 +65,7 @@ const GearInput = z.object({
 export const listGearRemote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
-      .from("gear_items")
-      .select("*")
-      .order("category");
+    const { data, error } = await context.supabase.from("gear_items").select("*").order("category");
     if (error) throw new Error(error.message);
     return { items: data ?? [] };
   });
@@ -94,10 +88,7 @@ export const deleteGearRemote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ context, data }) => {
-    const { error } = await context.supabase
-      .from("gear_items")
-      .delete()
-      .eq("id", data.id);
+    const { error } = await context.supabase.from("gear_items").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });

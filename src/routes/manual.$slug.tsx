@@ -35,9 +35,7 @@ function Entry() {
         const c = await getChecklist(`${entry.slug}/${i}`);
         return [i, c?.done ?? false] as const;
       }),
-    ).then((pairs) =>
-      setChecks(Object.fromEntries(pairs.map(([i, v]) => [String(i), v]))),
-    );
+    ).then((pairs) => setChecks(Object.fromEntries(pairs.map(([i, v]) => [String(i), v]))));
   }, [entry]);
 
   const toggle = async (i: number) => {
@@ -48,7 +46,10 @@ function Entry() {
 
   return (
     <div className="container max-w-3xl mx-auto p-4 md:p-8">
-      <Link to="/manual" className="inline-flex items-center text-sm text-muted-foreground mb-4 hover:text-foreground">
+      <Link
+        to="/manual"
+        className="inline-flex items-center text-sm text-muted-foreground mb-4 hover:text-foreground"
+      >
         <ChevronLeft className="h-4 w-4" /> Manual
       </Link>
       <h1 className="text-2xl md:text-3xl font-bold mb-2">{entry.title}</h1>

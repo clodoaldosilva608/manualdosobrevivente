@@ -21,15 +21,31 @@ export const Route = createFileRoute("/sos")({
 
 // SOS em Morse: ... --- ... (ponto=200ms, traço=600ms, intervalo=200ms, letra=600ms, palavra=1400ms)
 const SOS_PATTERN: Array<["on" | "off", number]> = [
-  ["on", 200], ["off", 200], ["on", 200], ["off", 200], ["on", 200], ["off", 600],
-  ["on", 600], ["off", 200], ["on", 600], ["off", 200], ["on", 600], ["off", 600],
-  ["on", 200], ["off", 200], ["on", 200], ["off", 200], ["on", 200], ["off", 1400],
+  ["on", 200],
+  ["off", 200],
+  ["on", 200],
+  ["off", 200],
+  ["on", 200],
+  ["off", 600],
+  ["on", 600],
+  ["off", 200],
+  ["on", 600],
+  ["off", 200],
+  ["on", 600],
+  ["off", 600],
+  ["on", 200],
+  ["off", 200],
+  ["on", 200],
+  ["off", 200],
+  ["on", 200],
+  ["off", 1400],
 ];
 
 function SOS() {
   const [pos, setPos] = useState<{ lng: number; lat: number } | null>(null);
   const [strobeOn, setStrobeOn] = useState(false);
   const [active, setActive] = useState(false);
+  const [manualShare, setManualShare] = useState<string | null>(null);
   const torchTrackRef = useRef<MediaStreamTrack | null>(null);
   const timerRef = useRef<number | null>(null);
 
@@ -58,7 +74,9 @@ function SOS() {
       } else {
         track.stop();
       }
-    } catch {}
+    } catch {
+      /* ignora falha não crítica */
+    }
     let i = 0;
     const tick = () => {
       const [state, ms] = SOS_PATTERN[i % SOS_PATTERN.length];
@@ -68,7 +86,9 @@ function SOS() {
         try {
           // @ts-expect-error torch constraint not in lib.dom.d.ts
           torchTrackRef.current.applyConstraints({ advanced: [{ torch: on }] });
-        } catch {}
+        } catch {
+          /* ignora falha não crítica */
+        }
       }
       i++;
       timerRef.current = window.setTimeout(tick, ms);
@@ -84,7 +104,9 @@ function SOS() {
       try {
         // @ts-expect-error torch constraint
         torchTrackRef.current.applyConstraints({ advanced: [{ torch: false }] });
-      } catch {}
+      } catch {
+        /* ignora falha não crítica */
+      }
       torchTrackRef.current.stop();
       torchTrackRef.current = null;
     }
@@ -93,21 +115,37 @@ function SOS() {
   useEffect(() => () => stopStrobe(), []);
 
   const shareLocation = async () => {
-    if (!pos) return toast.error("Sem posição GPS ainda");
-    const text = `LOCALIZAÇÃO DE EMERGÊNCIA\n${formatDD(pos.lng, pos.lat)}\nMGRS ${formatMGRS(pos.lng, pos.lat)}`;
-    try {
-      if (navigator.share) await navigator.share({ title: "Localização SOS", text });
-      else {
-        await navigator.clipboard.writeText(text);
-        toast.success("Copiado para a área de transferência");
+    const text = pos
+      ? `LOCALIZAÇÃO DE EMERGÊNCIA\n${formatDD(pos.lng, pos.lat)}\nMGRS ${formatMGRS(pos.lng, pos.lat)}`
+      : "LOCALIZAÇÃO DE EMERGÊNCIA\nPosição GPS ainda não obtida.";
+    if (!pos) toast.message("Sem posição GPS ainda — compartilhando aviso");
+
+    // 1) compartilhamento nativo
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title: "Localização SOS", text });
+        return;
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
       }
-    } catch {}
+    }
+    // 2) área de transferência
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Copiado para a área de transferência");
+      return;
+    } catch {
+      /* sem permissão de área de transferência */
+    }
+    // 3) último recurso: exibir para cópia manual
+    setManualShare(text);
+    toast.error("Não foi possível compartilhar automaticamente", {
+      description: "Copie o texto exibido na tela.",
+    });
   };
 
   return (
-    <div
-      className={`min-h-screen transition-colors ${strobeOn ? "bg-white" : "bg-background"}`}
-    >
+    <div className={`min-h-screen transition-colors ${strobeOn ? "bg-white" : "bg-background"}`}>
       <div className="container max-w-2xl mx-auto p-4 md:p-8">
         <h1 className="mono text-destructive text-3xl md:text-4xl font-bold tracking-widest flex items-center gap-3">
           <Siren className="h-8 w-8" /> S.O.S
@@ -151,8 +189,28 @@ function SOS() {
             COMPARTILHAR
           </Button>
         </div>
+        {manualShare && (
+          <div className="mt-4 rounded-md border border-tactical-amber bg-card p-3">
+            <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
+              Copie manualmente
+            </div>
+            <textarea
+              readOnly
+              value={manualShare}
+              onFocus={(e) => e.currentTarget.select()}
+              className="w-full h-24 bg-background border border-border rounded-md p-2 mono text-sm"
+            />
+            <button
+              onClick={() => setManualShare(null)}
+              className="mt-2 text-xs text-muted-foreground underline"
+            >
+              Fechar
+            </button>
+          </div>
+        )}
         <p className="text-xs text-muted-foreground mt-4 mono">
-          O estrobo transmite S-O-S em código Morse. A lanterna do celular é usada quando disponível.
+          O estrobo transmite S-O-S em código Morse. A lanterna do celular é usada quando
+          disponível.
         </p>
       </div>
     </div>

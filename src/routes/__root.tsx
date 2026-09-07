@@ -1,9 +1,5 @@
 import { useEffect } from "react";
-import {
-  QueryClient,
-  QueryClientProvider,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
@@ -73,13 +69,29 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Mapa tático em tela cheia com MGRS, múltiplas camadas base, ferramentas de medição, waypoints e tiles offline.",
       },
       { property: "og:title", content: "Mapa Tático — TacticalGIS" },
-      { property: "og:description", content: "Mapa tático em tela cheia com MGRS, múltiplas camadas base, ferramentas de medição, waypoints e tiles offline." },
+      {
+        property: "og:description",
+        content:
+          "Mapa tático em tela cheia com MGRS, múltiplas camadas base, ferramentas de medição, waypoints e tiles offline.",
+      },
       { property: "og:type", content: "website" },
       { property: "og:locale", content: "pt_BR" },
       { name: "twitter:title", content: "Mapa Tático — TacticalGIS" },
-      { name: "twitter:description", content: "Mapa tático em tela cheia com MGRS, múltiplas camadas base, ferramentas de medição, waypoints e tiles offline." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/c7cdb4b1-efb3-45b4-8b83-bcb5897a78bc" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/c7cdb4b1-efb3-45b4-8b83-bcb5897a78bc" },
+      {
+        name: "twitter:description",
+        content:
+          "Mapa tático em tela cheia com MGRS, múltiplas camadas base, ferramentas de medição, waypoints e tiles offline.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/c7cdb4b1-efb3-45b4-8b83-bcb5897a78bc",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/c7cdb4b1-efb3-45b4-8b83-bcb5897a78bc",
+      },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [

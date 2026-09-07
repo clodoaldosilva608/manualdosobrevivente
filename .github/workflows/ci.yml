@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Instalar dependências
+        run: bun install --frozen-lockfile
+
+      - name: Lint (inclui detecção de strings em inglês)
+        run: bun run lint
+
+      - name: Checklist pt-BR
+        run: bun run check:i18n
+
+      - name: Testes de formatação
+        run: bunx vitest run tests/format.spec.ts
+
+      - name: Navegador para testes E2E
+        run: bunx playwright install --with-deps chromium
+
+      - name: Subir aplicação
+        run: |
+          bun run dev &
+          for i in $(seq 1 60); do curl -sf -o /dev/null http://localhost:8080/ && break; sleep 2; done
+
+      - name: Testes E2E (SSR pt-BR e responsividade do mapa)
+        run: bunx vitest run tests/i18n-ssr.spec.ts tests/map-responsive.spec.ts
+
+      - name: Build
+        run: bun run build

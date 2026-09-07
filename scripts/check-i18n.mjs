@@ -5,21 +5,102 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const ROOT = process.cwd();
-const TARGETS = ["src/routes", "src/components", "src/lib/manual-content.ts", "src/lib/error-page.ts"];
+const TARGETS = [
+  "src/routes",
+  "src/components",
+  "src/lib/manual-content.ts",
+  "src/lib/error-page.ts",
+];
 
 const ALLOW = new Set([
-  "mgrs","dd","dms","gpx","kml","wms","wmts","sos","gps","hud","tactical","gis",
-  "google","email","e-mail","open","sans","regular","arial","unicode","ms",
-  "m","km","ha","kg","g","nm","nmi","ac","m²","ok","id","url","json","png","jpg","svg",
-  "utf","viewport","charset","width","height","initial","scale","href","content","type","name","rel","property",
-  "app","bug","out","bag","fatwood","cryptosporidium","ranger","frame","point","plow","lean","to","a",
-  "waypoint","waypoints","slide","sidebar","title",
+  "mgrs",
+  "dd",
+  "dms",
+  "gpx",
+  "kml",
+  "wms",
+  "wmts",
+  "sos",
+  "gps",
+  "hud",
+  "tactical",
+  "gis",
+  "google",
+  "email",
+  "e-mail",
+  "open",
+  "sans",
+  "regular",
+  "arial",
+  "unicode",
+  "ms",
+  "m",
+  "km",
+  "ha",
+  "kg",
+  "g",
+  "nm",
+  "nmi",
+  "ac",
+  "m²",
+  "ok",
+  "id",
+  "url",
+  "json",
+  "png",
+  "jpg",
+  "svg",
+  "utf",
+  "viewport",
+  "charset",
+  "width",
+  "height",
+  "initial",
+  "scale",
+  "href",
+  "content",
+  "type",
+  "name",
+  "rel",
+  "property",
+  "app",
+  "bug",
+  "out",
+  "bag",
+  "fatwood",
+  "cryptosporidium",
+  "ranger",
+  "frame",
+  "point",
+  "plow",
+  "lean",
+  "to",
+  "a",
+  "waypoint",
+  "waypoints",
+  "slide",
+  "sidebar",
+  "title",
   // categoria/enum keys internas
-  "water","shelter","danger","foraging","cache","custom","tools","nutrition","hydration","medical","warmth",
-  "first-aid","fire","knots","navigation",
+  "water",
+  "shelter",
+  "danger",
+  "foraging",
+  "cache",
+  "custom",
+  "tools",
+  "nutrition",
+  "hydration",
+  "medical",
+  "warmth",
+  "first-aid",
+  "fire",
+  "knots",
+  "navigation",
 ]);
 
-const BAD = /\b(the|and|for|with|save|load|search|weight|expires|download|upload|export|import|layer|waypoint|compass|flashlight|inventory|login|logout|error|success|loading|cancel|confirm|delete|edit|home|about|profile|account|password|submit|send|reset|update|create|remove|category|title|description|notes|date|time|today|distance|speed|altitude|elevation|heading|bearing|north|south|east|west|route|track|marker|menu|back|next|previous|open|close)\b/i;
+const BAD =
+  /\b(the|and|for|with|save|load|search|weight|expires|download|upload|export|import|layer|waypoint|compass|flashlight|inventory|login|logout|error|success|loading|cancel|confirm|delete|edit|home|about|profile|account|password|submit|send|reset|update|create|remove|category|title|description|notes|date|time|today|distance|speed|altitude|elevation|heading|bearing|north|south|east|west|route|track|marker|menu|back|next|previous|open|close)\b/i;
 
 function walk(p) {
   const s = statSync(p);
@@ -59,10 +140,20 @@ for (const file of files) {
 // Verificar lang="pt-BR" no root
 const root = readFileSync(join(ROOT, "src/routes/__root.tsx"), "utf8");
 if (!/lang=["']pt-BR["']/.test(root)) {
-  findings.push({ file: "src/routes/__root.tsx", line: 0, text: 'missing lang="pt-BR"', suspects: ["lang"] });
+  findings.push({
+    file: "src/routes/__root.tsx",
+    line: 0,
+    text: 'missing lang="pt-BR"',
+    suspects: ["lang"],
+  });
 }
 if (!/og:locale[^]*pt_BR/.test(root)) {
-  findings.push({ file: "src/routes/__root.tsx", line: 0, text: "missing og:locale pt_BR", suspects: ["og:locale"] });
+  findings.push({
+    file: "src/routes/__root.tsx",
+    line: 0,
+    text: "missing og:locale pt_BR",
+    suspects: ["og:locale"],
+  });
 }
 
 if (findings.length) {

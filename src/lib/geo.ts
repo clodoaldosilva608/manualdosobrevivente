@@ -3,11 +3,10 @@ import area from "@turf/area";
 import bearing from "@turf/bearing";
 import distance from "@turf/distance";
 import { lineString, point, polygon } from "@turf/helpers";
+import { formatDistance, formatNautical, formatAreaAll } from "@/lib/format";
 
 export type LngLat = [number, number];
 
-const nf = (min: number, max: number) =>
-  new Intl.NumberFormat("pt-BR", { minimumFractionDigits: min, maximumFractionDigits: max });
 
 export function pathLengthMeters(coords: LngLat[]): number {
   if (coords.length < 2) return 0;
@@ -28,21 +27,17 @@ export function distanceMeters(from: LngLat, to: LngLat): number {
 }
 
 export function formatMeters(m: number): string {
-  if (m < 1000) return `${nf(1, 1).format(m)} m`;
-  return `${nf(2, 2).format(m / 1000)} km`;
+  return formatDistance(m);
 }
 
 export function formatNauticalMiles(m: number): string {
-  return `${nf(2, 2).format(m / 1852)} NM`;
+  return formatNautical(m);
 }
 
 export function formatArea(sqm: number): { m2: string; ha: string; acres: string } {
-  return {
-    m2: `${nf(1, 1).format(sqm)} m²`,
-    ha: `${nf(3, 3).format(sqm / 10000)} ha`,
-    acres: `${nf(3, 3).format(sqm / 4046.8564224)} ac`,
-  };
+  return formatAreaAll(sqm);
 }
+
 
 export function samplePath(coords: LngLat[], intervalM = 50, maxSamples = 200): LngLat[] {
   if (coords.length < 2) return coords.slice();

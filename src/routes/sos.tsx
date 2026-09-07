@@ -30,6 +30,7 @@ function SOS() {
   const [pos, setPos] = useState<{ lng: number; lat: number } | null>(null);
   const [strobeOn, setStrobeOn] = useState(false);
   const [active, setActive] = useState(false);
+  const [manualShare, setManualShare] = useState<string | null>(null);
   const torchTrackRef = useRef<MediaStreamTrack | null>(null);
   const timerRef = useRef<number | null>(null);
 
@@ -170,6 +171,25 @@ function SOS() {
             COMPARTILHAR
           </Button>
         </div>
+        {manualShare && (
+          <div className="mt-4 rounded-md border border-tactical-amber bg-card p-3">
+            <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground mb-2">
+              Copie manualmente
+            </div>
+            <textarea
+              readOnly
+              value={manualShare}
+              onFocus={(e) => e.currentTarget.select()}
+              className="w-full h-24 bg-background border border-border rounded-md p-2 mono text-sm"
+            />
+            <button
+              onClick={() => setManualShare(null)}
+              className="mt-2 text-xs text-muted-foreground underline"
+            >
+              Fechar
+            </button>
+          </div>
+        )}
         <p className="text-xs text-muted-foreground mt-4 mono">
           O estrobo transmite S-O-S em código Morse. A lanterna do celular é usada quando disponível.
         </p>

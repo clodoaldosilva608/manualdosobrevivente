@@ -35,7 +35,10 @@ import {
   type LocalWaypoint,
 } from "@/lib/db";
 import { fetchElevations } from "@/lib/elevation.functions";
+import Compass3D from "@/components/map/Compass3D";
+import { formatDegrees, formatSignedDegrees, formatElevation } from "@/lib/format";
 import { useServerFn } from "@tanstack/react-start";
+
 import {
   AreaChart,
   Area,
@@ -737,12 +740,21 @@ export default function MapShell() {
       </Sheet>
 
       <Sheet open={openSheet === "compass"} onOpenChange={(o) => !o && setOpenSheet(null)}>
-        <SheetContent side="bottom" className="bg-card border-border">
+        <SheetContent side="bottom" className="bg-card border-border max-h-[92vh] overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="mono text-tactical-orange">BÚSSOLA</SheetTitle>
           </SheetHeader>
+          <div className="mt-4 flex justify-center">
+            <Compass3D
+              heading={heading}
+              declination={decl}
+              onRotate={(h) => mapRef.current?.rotateTo(h, { duration: 0 })}
+              onReset={() => mapRef.current?.rotateTo(0, { duration: 400 })}
+            />
+          </div>
           <CompassReadout heading={heading} declination={decl} center={center} waypoints={waypoints} />
         </SheetContent>
+
       </Sheet>
     </div>
   );

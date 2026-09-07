@@ -4,9 +4,10 @@ import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
+import i18nPtBr from "./eslint-rules/i18n-pt-br.js";
 
 export default tseslint.config(
-  { ignores: ["dist", ".output", ".vinxi"] },
+  { ignores: ["dist", ".output", ".vinxi", "src/routeTree.gen.ts", "src/components/ui/**"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
@@ -17,7 +18,9 @@ export default tseslint.config(
     plugins: {
       "react-hooks": reactHooks,
       "react-refresh": reactRefresh,
+      "i18n-pt-br": i18nPtBr,
     },
+
     rules: {
       ...reactHooks.configs.recommended.rules,
       "no-restricted-imports": [

@@ -54,7 +54,7 @@ export function getCelestial(lat: number, lng: number, date = new Date()): Celes
   const moonPos = SunCalc.getMoonPosition(date, lat, lng);
   const illum = SunCalc.getMoonIllumination(date);
 
-  const valid = (d: Date | undefined) => (d && !Number.isNaN(d.getTime()) ? d : null);
+  const valid = (d: Date | null | undefined) => (d && !Number.isNaN(d.getTime()) ? d : null);
   const isDay = sunPos.altitude > 0;
   const hemisphere: "N" | "S" = lat >= 0 ? "N" : "S";
 

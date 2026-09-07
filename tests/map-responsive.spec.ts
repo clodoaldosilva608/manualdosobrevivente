@@ -6,7 +6,7 @@ const BASE = process.env["TEST_BASE_URL"] ?? "http://localhost:8080";
 let browser: Browser;
 
 beforeAll(async () => {
-  browser = await chromium.launch();
+  browser = await chromium.launch({ channel: "chromium" });
 }, 120_000);
 
 afterAll(async () => {

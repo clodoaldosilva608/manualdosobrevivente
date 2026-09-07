@@ -30,7 +30,7 @@ import {
 import { magneticDeclination } from "@/lib/declination";
 import { listWaypoints, saveWaypoint, deleteWaypoint, type LocalWaypoint } from "@/lib/db";
 import { fetchElevations } from "@/lib/elevation.functions";
-import Compass3D from "@/components/map/Compass3D";
+import CompassRose from "@/components/map/CompassRose";
 import { formatDegrees, formatSignedDegrees, formatElevation } from "@/lib/format";
 import { useServerFn } from "@tanstack/react-start";
 
@@ -746,19 +746,20 @@ export default function MapShell() {
             <SheetTitle className="mono text-tactical-orange">BÚSSOLA</SheetTitle>
           </SheetHeader>
           <div className="mt-4 flex justify-center">
-            <Compass3D
+            <CompassRose
               heading={heading}
               declination={decl}
+              center={center}
+              bearingToWaypoint={
+                waypoints[0]
+                  ? bearingDeg(center, [waypoints[0].longitude, waypoints[0].latitude])
+                  : null
+              }
+              waypointLabel={waypoints[0]?.title ?? null}
               onRotate={(h) => mapRef.current?.rotateTo(h, { duration: 0 })}
               onReset={() => mapRef.current?.rotateTo(0, { duration: 400 })}
             />
           </div>
-          <CompassReadout
-            heading={heading}
-            declination={decl}
-            center={center}
-            waypoints={waypoints}
-          />
         </SheetContent>
       </Sheet>
     </div>

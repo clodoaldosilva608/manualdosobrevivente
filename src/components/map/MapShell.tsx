@@ -147,11 +147,15 @@ export default function MapShell() {
         }),
         "top-right",
       );
+      map.on("dragstart", () => {
+        userMovedRef.current = true;
+      });
       map.on("move", () => {
         const c = map.getCenter();
         setCenter([c.lng, c.lat]);
         setHeading(map.getBearing());
       });
+
       map.on("load", () => {
         // sources for drawing + markers
         map.addSource("draw", { type: "geojson", data: emptyFC() });

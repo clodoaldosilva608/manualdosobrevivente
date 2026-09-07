@@ -1,389 +1,397 @@
-export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5";
-  };
+    PostgrestVersion: "14.5"
+  }
   public: {
     Tables: {
       custom_tile_sources: {
         Row: {
-          attribution: string | null;
-          created_at: string;
-          id: string;
-          kind: string;
-          max_zoom: number;
-          min_zoom: number;
-          name: string;
-          url: string;
-          user_id: string;
-        };
+          attribution: string | null
+          created_at: string
+          id: string
+          kind: string
+          max_zoom: number
+          min_zoom: number
+          name: string
+          url: string
+          user_id: string
+        }
         Insert: {
-          attribution?: string | null;
-          created_at?: string;
-          id?: string;
-          kind?: string;
-          max_zoom?: number;
-          min_zoom?: number;
-          name: string;
-          url: string;
-          user_id: string;
-        };
+          attribution?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          max_zoom?: number
+          min_zoom?: number
+          name: string
+          url: string
+          user_id: string
+        }
         Update: {
-          attribution?: string | null;
-          created_at?: string;
-          id?: string;
-          kind?: string;
-          max_zoom?: number;
-          min_zoom?: number;
-          name?: string;
-          url?: string;
-          user_id?: string;
-        };
-        Relationships: [];
-      };
+          attribution?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          max_zoom?: number
+          min_zoom?: number
+          name?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       gear_items: {
         Row: {
-          category: string;
-          created_at: string;
-          expires_at: string | null;
-          id: string;
-          name: string;
-          notes: string | null;
-          packed: boolean;
-          quantity: number;
-          updated_at: string;
-          user_id: string;
-          weight_g: number;
-        };
+          category: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          name: string
+          notes: string | null
+          packed: boolean
+          quantity: number
+          updated_at: string
+          user_id: string
+          weight_g: number
+        }
         Insert: {
-          category?: string;
-          created_at?: string;
-          expires_at?: string | null;
-          id?: string;
-          name: string;
-          notes?: string | null;
-          packed?: boolean;
-          quantity?: number;
-          updated_at?: string;
-          user_id: string;
-          weight_g?: number;
-        };
+          category?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          packed?: boolean
+          quantity?: number
+          updated_at?: string
+          user_id: string
+          weight_g?: number
+        }
         Update: {
-          category?: string;
-          created_at?: string;
-          expires_at?: string | null;
-          id?: string;
-          name?: string;
-          notes?: string | null;
-          packed?: boolean;
-          quantity?: number;
-          updated_at?: string;
-          user_id?: string;
-          weight_g?: number;
-        };
-        Relationships: [];
-      };
+          category?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          packed?: boolean
+          quantity?: number
+          updated_at?: string
+          user_id?: string
+          weight_g?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
-          avatar_url: string | null;
-          created_at: string;
-          display_name: string | null;
-          id: string;
-          units: string;
-          updated_at: string;
-        };
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          units: string
+          updated_at: string
+        }
         Insert: {
-          avatar_url?: string | null;
-          created_at?: string;
-          display_name?: string | null;
-          id: string;
-          units?: string;
-          updated_at?: string;
-        };
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          units?: string
+          updated_at?: string
+        }
         Update: {
-          avatar_url?: string | null;
-          created_at?: string;
-          display_name?: string | null;
-          id?: string;
-          units?: string;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          units?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       routes: {
         Row: {
-          created_at: string;
-          description: string | null;
-          distance_m: number | null;
-          elevation_gain_m: number | null;
-          geometry: Json;
-          id: string;
-          name: string;
-          updated_at: string;
-          user_id: string;
-        };
+          created_at: string
+          description: string | null
+          distance_m: number | null
+          elevation_gain_m: number | null
+          geometry: Json
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
         Insert: {
-          created_at?: string;
-          description?: string | null;
-          distance_m?: number | null;
-          elevation_gain_m?: number | null;
-          geometry: Json;
-          id?: string;
-          name: string;
-          updated_at?: string;
-          user_id: string;
-        };
+          created_at?: string
+          description?: string | null
+          distance_m?: number | null
+          elevation_gain_m?: number | null
+          geometry: Json
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
         Update: {
-          created_at?: string;
-          description?: string | null;
-          distance_m?: number | null;
-          elevation_gain_m?: number | null;
-          geometry?: Json;
-          id?: string;
-          name?: string;
-          updated_at?: string;
-          user_id?: string;
-        };
-        Relationships: [];
-      };
+          created_at?: string
+          description?: string | null
+          distance_m?: number | null
+          elevation_gain_m?: number | null
+          geometry?: Json
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       saved_maps: {
         Row: {
-          active_layer: string;
-          center_lat: number;
-          center_lng: number;
-          created_at: string;
-          id: string;
-          name: string;
-          user_id: string;
-          zoom: number;
-        };
+          active_layer: string
+          center_lat: number
+          center_lng: number
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+          zoom: number
+        }
         Insert: {
-          active_layer?: string;
-          center_lat: number;
-          center_lng: number;
-          created_at?: string;
-          id?: string;
-          name: string;
-          user_id: string;
-          zoom?: number;
-        };
+          active_layer?: string
+          center_lat: number
+          center_lng: number
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+          zoom?: number
+        }
         Update: {
-          active_layer?: string;
-          center_lat?: number;
-          center_lng?: number;
-          created_at?: string;
-          id?: string;
-          name?: string;
-          user_id?: string;
-          zoom?: number;
-        };
-        Relationships: [];
-      };
+          active_layer?: string
+          center_lat?: number
+          center_lng?: number
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+          zoom?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
-          created_at: string;
-          id: string;
-          role: Database["public"]["Enums"]["app_role"];
-          user_id: string;
-        };
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
         Insert: {
-          created_at?: string;
-          id?: string;
-          role?: Database["public"]["Enums"]["app_role"];
-          user_id: string;
-        };
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
         Update: {
-          created_at?: string;
-          id?: string;
-          role?: Database["public"]["Enums"]["app_role"];
-          user_id?: string;
-        };
-        Relationships: [];
-      };
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       waypoints: {
         Row: {
-          category: string;
-          color: string;
-          created_at: string;
-          description: string | null;
-          elevation: number | null;
-          icon: string | null;
-          id: string;
-          latitude: number;
-          longitude: number;
-          title: string;
-          updated_at: string;
-          user_id: string;
-        };
+          category: string
+          color: string
+          created_at: string
+          description: string | null
+          elevation: number | null
+          icon: string | null
+          id: string
+          latitude: number
+          longitude: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
         Insert: {
-          category?: string;
-          color?: string;
-          created_at?: string;
-          description?: string | null;
-          elevation?: number | null;
-          icon?: string | null;
-          id?: string;
-          latitude: number;
-          longitude: number;
-          title: string;
-          updated_at?: string;
-          user_id: string;
-        };
+          category?: string
+          color?: string
+          created_at?: string
+          description?: string | null
+          elevation?: number | null
+          icon?: string | null
+          id?: string
+          latitude: number
+          longitude: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
         Update: {
-          category?: string;
-          color?: string;
-          created_at?: string;
-          description?: string | null;
-          elevation?: number | null;
-          icon?: string | null;
-          id?: string;
-          latitude?: number;
-          longitude?: number;
-          title?: string;
-          updated_at?: string;
-          user_id?: string;
-        };
-        Relationships: [];
-      };
-    };
+          category?: string
+          color?: string
+          created_at?: string
+          description?: string | null
+          elevation?: number | null
+          icon?: string | null
+          id?: string
+          latitude?: number
+          longitude?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+    }
     Views: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     Functions: {
       has_role: {
         Args: {
-          _role: Database["public"]["Enums"]["app_role"];
-          _user_id: string;
-        };
-        Returns: boolean;
-      };
-    };
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+    }
     Enums: {
-      app_role: "admin" | "user";
-    };
+      app_role: "admin" | "user"
+    }
     CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
-};
+      [_ in never]: never
+    }
+  }
+}
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R;
+      Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R;
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
       }
       ? R
       : never
-    : never;
+    : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I;
+      Insert: infer I
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I;
+        Insert: infer I
       }
       ? I
       : never
-    : never;
+    : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U;
+      Update: infer U
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U;
+        Update: infer U
       }
       ? U
       : never
-    : never;
+    : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never;
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never;
+    : never
 
 export const Constants = {
   public: {
@@ -391,4 +399,4 @@ export const Constants = {
       app_role: ["admin", "user"],
     },
   },
-} as const;
+} as const

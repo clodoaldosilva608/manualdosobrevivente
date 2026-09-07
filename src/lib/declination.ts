@@ -41,8 +41,8 @@ const samples: Array<{ lat: number; lng: number; dec: number }> = [
 export function magneticDeclination(lat: number, lng: number): number {
   // inverse-distance weighted average of the nearest 4
   const dists = samples.map((s) => {
-    const dlat = (s.lat - lat);
-    const dlng = (((s.lng - lng) + 540) % 360) - 180;
+    const dlat = s.lat - lat;
+    const dlng = ((s.lng - lng + 540) % 360) - 180;
     return { s, d: Math.sqrt(dlat * dlat + dlng * dlng) };
   });
   dists.sort((a, b) => a.d - b.d);

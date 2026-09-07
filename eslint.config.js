@@ -45,8 +45,6 @@ export default tseslint.config(
     // Telas: números/datas sempre pelo utilitário único pt-BR.
     files: ["src/routes/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}"],
     rules: { "i18n-pt-br/use-format-util": "error" },
-
-
   },
   eslintPluginPrettier,
 );

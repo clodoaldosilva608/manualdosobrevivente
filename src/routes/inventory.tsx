@@ -113,9 +113,15 @@ function Inventory() {
       </header>
 
       <div className="grid md:grid-cols-3 gap-3 mb-6">
-        <div className={`rounded-md border p-3 ${exceeded ? "border-destructive bg-destructive/10" : "border-border bg-card"}`}>
-          <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground">Peso empacotado</div>
-          <div className={`text-2xl font-bold mono ${exceeded ? "text-destructive" : "text-tactical-orange"}`}>
+        <div
+          className={`rounded-md border p-3 ${exceeded ? "border-destructive bg-destructive/10" : "border-border bg-card"}`}
+        >
+          <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Peso empacotado
+          </div>
+          <div
+            className={`text-2xl font-bold mono ${exceeded ? "text-destructive" : "text-tactical-orange"}`}
+          >
             {formatKilograms(totalG)}
           </div>
           <div className="text-xs text-muted-foreground mono">
@@ -123,11 +129,17 @@ function Inventory() {
           </div>
         </div>
         <div className="rounded-md border border-border bg-card p-3">
-          <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground">Itens</div>
+          <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Itens
+          </div>
           <div className="text-2xl font-bold mono">{items.length}</div>
         </div>
-        <div className={`rounded-md border p-3 ${expiring.length ? "border-tactical-amber bg-tactical-amber/10" : "border-border bg-card"}`}>
-          <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground">Vencendo (30d)</div>
+        <div
+          className={`rounded-md border p-3 ${expiring.length ? "border-tactical-amber bg-tactical-amber/10" : "border-border bg-card"}`}
+        >
+          <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Vencendo (30d)
+          </div>
           <div className="text-2xl font-bold mono flex items-center gap-2">
             {expiring.length}
             {expiring.length > 0 && <AlertTriangle className="h-5 w-5 text-tactical-amber" />}
@@ -136,7 +148,9 @@ function Inventory() {
       </div>
 
       <div className="rounded-md border border-border bg-card p-4 mb-6">
-        <h3 className="mono text-xs uppercase tracking-widest text-muted-foreground mb-3">Adicionar equipamento</h3>
+        <h3 className="mono text-xs uppercase tracking-widest text-muted-foreground mb-3">
+          Adicionar equipamento
+        </h3>
         <div className="grid md:grid-cols-5 gap-2">
           <div className="md:col-span-2">
             <Label className="text-xs">Nome</Label>
@@ -154,7 +168,9 @@ function Inventory() {
               onChange={(e) => setDraft({ ...draft, category: e.target.value })}
             >
               {CATEGORIES.map((c) => (
-                <option key={c.id} value={c.id}>{c.label}</option>
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
               ))}
             </select>
           </div>
@@ -215,7 +231,8 @@ function Inventory() {
             <div className="flex-1 min-w-0">
               <div className="font-semibold truncate">{i.name}</div>
               <div className="text-xs text-muted-foreground mono">
-                {CATEGORY_LABEL[i.category] ?? i.category} · {i.quantity}× · {formatWeight(i.weight_g)}
+                {CATEGORY_LABEL[i.category] ?? i.category} · {i.quantity}× ·{" "}
+                {formatWeight(i.weight_g)}
                 {i.expires_at && ` · val ${formatDate(i.expires_at)}`}
               </div>
             </div>

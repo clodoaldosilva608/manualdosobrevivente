@@ -107,12 +107,7 @@ function Login() {
             OU
           </span>
         </div>
-        <Button
-          onClick={google}
-          disabled={busy}
-          variant="secondary"
-          className="w-full glove-tap"
-        >
+        <Button onClick={google} disabled={busy} variant="secondary" className="w-full glove-tap">
           Continuar com Google
         </Button>
         <button

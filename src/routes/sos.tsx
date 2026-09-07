@@ -21,9 +21,24 @@ export const Route = createFileRoute("/sos")({
 
 // SOS em Morse: ... --- ... (ponto=200ms, traço=600ms, intervalo=200ms, letra=600ms, palavra=1400ms)
 const SOS_PATTERN: Array<["on" | "off", number]> = [
-  ["on", 200], ["off", 200], ["on", 200], ["off", 200], ["on", 200], ["off", 600],
-  ["on", 600], ["off", 200], ["on", 600], ["off", 200], ["on", 600], ["off", 600],
-  ["on", 200], ["off", 200], ["on", 200], ["off", 200], ["on", 200], ["off", 1400],
+  ["on", 200],
+  ["off", 200],
+  ["on", 200],
+  ["off", 200],
+  ["on", 200],
+  ["off", 600],
+  ["on", 600],
+  ["off", 200],
+  ["on", 600],
+  ["off", 200],
+  ["on", 600],
+  ["off", 600],
+  ["on", 200],
+  ["off", 200],
+  ["on", 200],
+  ["off", 200],
+  ["on", 200],
+  ["off", 1400],
 ];
 
 function SOS() {
@@ -59,7 +74,9 @@ function SOS() {
       } else {
         track.stop();
       }
-    } catch { /* ignora falha não crítica */ }
+    } catch {
+      /* ignora falha não crítica */
+    }
     let i = 0;
     const tick = () => {
       const [state, ms] = SOS_PATTERN[i % SOS_PATTERN.length];
@@ -69,7 +86,9 @@ function SOS() {
         try {
           // @ts-expect-error torch constraint not in lib.dom.d.ts
           torchTrackRef.current.applyConstraints({ advanced: [{ torch: on }] });
-        } catch { /* ignora falha não crítica */ }
+        } catch {
+          /* ignora falha não crítica */
+        }
       }
       i++;
       timerRef.current = window.setTimeout(tick, ms);
@@ -85,7 +104,9 @@ function SOS() {
       try {
         // @ts-expect-error torch constraint
         torchTrackRef.current.applyConstraints({ advanced: [{ torch: false }] });
-      } catch { /* ignora falha não crítica */ }
+      } catch {
+        /* ignora falha não crítica */
+      }
       torchTrackRef.current.stop();
       torchTrackRef.current = null;
     }
@@ -123,11 +144,8 @@ function SOS() {
     });
   };
 
-
   return (
-    <div
-      className={`min-h-screen transition-colors ${strobeOn ? "bg-white" : "bg-background"}`}
-    >
+    <div className={`min-h-screen transition-colors ${strobeOn ? "bg-white" : "bg-background"}`}>
       <div className="container max-w-2xl mx-auto p-4 md:p-8">
         <h1 className="mono text-destructive text-3xl md:text-4xl font-bold tracking-widest flex items-center gap-3">
           <Siren className="h-8 w-8" /> S.O.S
@@ -191,7 +209,8 @@ function SOS() {
           </div>
         )}
         <p className="text-xs text-muted-foreground mt-4 mono">
-          O estrobo transmite S-O-S em código Morse. A lanterna do celular é usada quando disponível.
+          O estrobo transmite S-O-S em código Morse. A lanterna do celular é usada quando
+          disponível.
         </p>
       </div>
     </div>

@@ -27,9 +27,7 @@ export function AppNav() {
               <Link
                 to={it.to}
                 className={`glove-tap flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 md:px-4 py-2 mono text-[11px] md:text-sm uppercase tracking-wide transition-colors ${
-                  active
-                    ? "text-tactical-orange"
-                    : "text-muted-foreground hover:text-foreground"
+                  active ? "text-tactical-orange" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Icon className="h-5 w-5" />

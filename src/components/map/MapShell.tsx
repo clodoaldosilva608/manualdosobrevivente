@@ -28,25 +28,13 @@ import {
   bearingDeg,
 } from "@/lib/geo";
 import { magneticDeclination } from "@/lib/declination";
-import {
-  listWaypoints,
-  saveWaypoint,
-  deleteWaypoint,
-  type LocalWaypoint,
-} from "@/lib/db";
+import { listWaypoints, saveWaypoint, deleteWaypoint, type LocalWaypoint } from "@/lib/db";
 import { fetchElevations } from "@/lib/elevation.functions";
 import Compass3D from "@/components/map/Compass3D";
 import { formatDegrees, formatSignedDegrees, formatElevation } from "@/lib/format";
 import { useServerFn } from "@tanstack/react-start";
 
-import {
-  AreaChart,
-  Area,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  Tooltip,
-} from "recharts";
+import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 
 type BaseLayerId = "satellite" | "topo" | "streets" | "dark";
 const BASE_LAYERS: Record<
@@ -122,9 +110,7 @@ export default function MapShell() {
     category: string;
     color: string;
   } | null>(null);
-  const [elevationData, setElevationData] = useState<
-    Array<{ d: number; e: number }>
-  >([]);
+  const [elevationData, setElevationData] = useState<Array<{ d: number; e: number }>>([]);
   const callFetchElev = useServerFn(fetchElevations);
 
   // Init map (client only)
@@ -246,10 +232,7 @@ export default function MapShell() {
             const c: [number, number] = [pos.coords.longitude, pos.coords.latitude];
             map.jumpTo({ center: c, zoom: 14 });
             try {
-              localStorage.setItem(
-                "tgis:last-position",
-                JSON.stringify({ lng: c[0], lat: c[1] }),
-              );
+              localStorage.setItem("tgis:last-position", JSON.stringify({ lng: c[0], lat: c[1] }));
             } catch {
               /* armazenamento indisponível */
             }
@@ -284,7 +267,6 @@ export default function MapShell() {
       window.removeEventListener("orientationchange", onResize);
     };
   }, []);
-
 
   // Layer swap
   useEffect(() => {
@@ -341,7 +323,9 @@ export default function MapShell() {
 
   // Load waypoints from local DB
   useEffect(() => {
-    listWaypoints().then(setWaypoints).catch(() => {});
+    listWaypoints()
+      .then(setWaypoints)
+      .catch(() => {});
   }, []);
 
   // Sync waypoints source
@@ -515,7 +499,11 @@ export default function MapShell() {
           active={tool === "marker"}
           onClick={() => {
             setTool(tool === "marker" ? "none" : "marker");
-            toast.message(tool === "marker" ? "Ferramenta de marcador desativada" : "Toque no mapa para marcar um waypoint");
+            toast.message(
+              tool === "marker"
+                ? "Ferramenta de marcador desativada"
+                : "Toque no mapa para marcar um waypoint",
+            );
           }}
         />
         <RailBtn icon={Compass} label="Bússola" onClick={() => setOpenSheet("compass")} />
@@ -572,7 +560,13 @@ export default function MapShell() {
                   formatter={(v: number) => [formatElevation(v), "Elevação"]}
                   labelFormatter={(d) => formatElevation(Number(d))}
                 />
-                <Area type="monotone" dataKey="e" stroke="#FF6B35" fill="url(#elev)" strokeWidth={2} />
+                <Area
+                  type="monotone"
+                  dataKey="e"
+                  stroke="#FF6B35"
+                  fill="url(#elev)"
+                  strokeWidth={2}
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -611,7 +605,9 @@ export default function MapShell() {
                   }
                 >
                   {Object.entries(CATEGORY_LABELS_PT).map(([id, label]) => (
-                    <option key={id} value={id}>{label}</option>
+                    <option key={id} value={id}>
+                      {label}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -626,9 +622,13 @@ export default function MapShell() {
               </div>
             </div>
             <div className="mono text-xs text-muted-foreground">
-              {formatDD(newMarker.lng, newMarker.lat)} · MGRS {formatMGRS(newMarker.lng, newMarker.lat)}
+              {formatDD(newMarker.lng, newMarker.lat)} · MGRS{" "}
+              {formatMGRS(newMarker.lng, newMarker.lat)}
             </div>
-            <Button onClick={saveNewMarker} className="w-full bg-tactical-orange text-background hover:bg-tactical-orange/90 glove-tap">
+            <Button
+              onClick={saveNewMarker}
+              className="w-full bg-tactical-orange text-background hover:bg-tactical-orange/90 glove-tap"
+            >
               Salvar waypoint
             </Button>
           </div>
@@ -675,12 +675,13 @@ export default function MapShell() {
               onChange={(e) => setGotoInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleGoto()}
             />
-            <Button onClick={handleGoto} className="w-full bg-tactical-orange text-background glove-tap">
+            <Button
+              onClick={handleGoto}
+              className="w-full bg-tactical-orange text-background glove-tap"
+            >
               Voar até o alvo
             </Button>
-            <p className="text-xs text-muted-foreground mono">
-              Aceita formatos DD, DMS e MGRS.
-            </p>
+            <p className="text-xs text-muted-foreground mono">Aceita formatos DD, DMS e MGRS.</p>
           </div>
         </SheetContent>
       </Sheet>
@@ -752,9 +753,13 @@ export default function MapShell() {
               onReset={() => mapRef.current?.rotateTo(0, { duration: 400 })}
             />
           </div>
-          <CompassReadout heading={heading} declination={decl} center={center} waypoints={waypoints} />
+          <CompassReadout
+            heading={heading}
+            declination={decl}
+            center={center}
+            waypoints={waypoints}
+          />
         </SheetContent>
-
       </Sheet>
     </div>
   );
@@ -815,11 +820,9 @@ function CompassReadout({
   waypoints: LocalWaypoint[];
 }) {
   const trueHeading = ((heading % 360) + 360) % 360;
-  const magneticHeading = ((trueHeading - declination + 360) % 360);
+  const magneticHeading = (trueHeading - declination + 360) % 360;
   const nearest = waypoints[0];
-  const bearingToWp = nearest
-    ? bearingDeg(center, [nearest.longitude, nearest.latitude])
-    : null;
+  const bearingToWp = nearest ? bearingDeg(center, [nearest.longitude, nearest.latitude]) : null;
   return (
     <div className="mt-4 grid grid-cols-2 gap-4 mono">
       <Readout label="RUMO (V)" value={formatDegrees(trueHeading)} />

@@ -14,8 +14,7 @@ import { pushAll, pullAll } from "@/lib/sync.functions";
 
 export const LAST_SYNC_KEY = "last-sync-at";
 
-type PushFn = (args: { data: Parameters<typeof pushAll>[0] extends never ? never : never }) => never;
-void (0 as unknown as PushFn);
+
 
 export interface SyncCounts {
   waypoints: number;

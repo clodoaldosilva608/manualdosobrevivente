@@ -99,9 +99,11 @@ const styleFor = (layer: BaseLayerId): maplibregl.StyleSpecification => {
 export default function MapShell() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  const userMovedRef = useRef(false);
   const [ready, setReady] = useState(false);
   const [baseLayer, setBaseLayer] = useState<BaseLayerId>("topo");
   const [center, setCenter] = useState<[number, number]>([-47.8822, -15.7942]);
+
   const [heading, setHeading] = useState(0);
   const [tool, setTool] = useState<Tool>("none");
   const [drawCoords, setDrawCoords] = useState<[number, number][]>([]);
@@ -145,11 +147,15 @@ export default function MapShell() {
         }),
         "top-right",
       );
+      map.on("dragstart", () => {
+        userMovedRef.current = true;
+      });
       map.on("move", () => {
         const c = map.getCenter();
         setCenter([c.lng, c.lat]);
         setHeading(map.getBearing());
       });
+
       map.on("load", () => {
         // sources for drawing + markers
         map.addSource("draw", { type: "geojson", data: emptyFC() });
@@ -216,6 +222,41 @@ export default function MapShell() {
         setReady(true);
       });
       mapRef.current = map;
+
+      // Abrir na última posição conhecida (imediato) e depois no GPS atual.
+      try {
+        const raw = localStorage.getItem("tgis:last-position");
+        if (raw) {
+          const p = JSON.parse(raw) as { lng: number; lat: number };
+          if (Number.isFinite(p.lng) && Number.isFinite(p.lat)) {
+            map.jumpTo({ center: [p.lng, p.lat], zoom: 14 });
+          }
+        }
+      } catch {
+        /* posição salva inválida — segue com o padrão */
+      }
+
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            if (cancelled || userMovedRef.current) return;
+            const c: [number, number] = [pos.coords.longitude, pos.coords.latitude];
+            map.jumpTo({ center: c, zoom: 14 });
+            try {
+              localStorage.setItem(
+                "tgis:last-position",
+                JSON.stringify({ lng: c[0], lat: c[1] }),
+              );
+            } catch {
+              /* armazenamento indisponível */
+            }
+          },
+          () => {
+            /* permissão negada — mantém a posição padrão */
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 },
+        );
+      }
     })();
     return () => {
       cancelled = true;
@@ -224,6 +265,23 @@ export default function MapShell() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Redimensionamento: garante que o mapa acompanhe o container em qualquer tela
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => mapRef.current?.resize());
+    ro.observe(el);
+    const onResize = () => mapRef.current?.resize();
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
+    };
+  }, []);
+
 
   // Layer swap
   useEffect(() => {

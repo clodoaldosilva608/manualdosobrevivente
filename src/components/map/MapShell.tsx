@@ -809,42 +809,6 @@ function RailBtn({
   );
 }
 
-function CompassReadout({
-  heading,
-  declination,
-  center,
-  waypoints,
-}: {
-  heading: number;
-  declination: number;
-  center: [number, number];
-  waypoints: LocalWaypoint[];
-}) {
-  const trueHeading = ((heading % 360) + 360) % 360;
-  const magneticHeading = (trueHeading - declination + 360) % 360;
-  const nearest = waypoints[0];
-  const bearingToWp = nearest ? bearingDeg(center, [nearest.longitude, nearest.latitude]) : null;
-  return (
-    <div className="mt-4 grid grid-cols-2 gap-4 mono">
-      <Readout label="RUMO (V)" value={formatDegrees(trueHeading)} />
-      <Readout label="RUMO (M)" value={formatDegrees(magneticHeading)} />
-      <Readout label="DECLINAÇÃO" value={formatSignedDegrees(declination)} />
-      <Readout
-        label="AZIMUTE P/ WP"
-        value={bearingToWp != null ? formatDegrees(bearingToWp) : "—"}
-      />
-    </div>
-  );
-}
-
-function Readout({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-md border border-border p-3 bg-background/50">
-      <div className="text-[10px] text-muted-foreground tracking-wider">{label}</div>
-      <div className="text-2xl text-tactical-orange font-bold">{value}</div>
-    </div>
-  );
-}
 
 function copy(t: string) {
   navigator.clipboard?.writeText(t);

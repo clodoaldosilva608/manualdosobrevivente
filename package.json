@@ -5,12 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
+    "build": "bun run check:all && vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
     "check:i18n": "node scripts/check-i18n.mjs",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test": "vitest run tests/format.spec.ts",
+    "test:e2e": "vitest run tests/i18n-ssr.spec.ts tests/map-responsive.spec.ts",
+    "check:all": "bun run lint && bun run check:i18n && bun run test"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.25.5",

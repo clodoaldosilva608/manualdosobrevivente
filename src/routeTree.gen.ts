@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SosRouteImport } from './routes/sos'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as OfflineRouteImport } from './routes/offline'
 import { Route as ManualRouteImport } from './routes/manual'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as InventoryRouteImport } from './routes/inventory'
@@ -26,6 +27,11 @@ const SosRoute = SosRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OfflineRoute = OfflineRouteImport.update({
+  id: '/offline',
+  path: '/offline',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ManualRoute = ManualRouteImport.update({
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/inventory': typeof InventoryRoute
   '/login': typeof LoginRoute
   '/manual': typeof ManualRouteWithChildren
+  '/offline': typeof OfflineRoute
   '/settings': typeof SettingsRoute
   '/sos': typeof SosRoute
   '/manual/$slug': typeof ManualSlugRoute
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/inventory': typeof InventoryRoute
   '/login': typeof LoginRoute
+  '/offline': typeof OfflineRoute
   '/settings': typeof SettingsRoute
   '/sos': typeof SosRoute
   '/manual/$slug': typeof ManualSlugRoute
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/inventory': typeof InventoryRoute
   '/login': typeof LoginRoute
   '/manual': typeof ManualRouteWithChildren
+  '/offline': typeof OfflineRoute
   '/settings': typeof SettingsRoute
   '/sos': typeof SosRoute
   '/manual/$slug': typeof ManualSlugRoute
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/login'
     | '/manual'
+    | '/offline'
     | '/settings'
     | '/sos'
     | '/manual/$slug'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
     | '/'
     | '/inventory'
     | '/login'
+    | '/offline'
     | '/settings'
     | '/sos'
     | '/manual/$slug'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/login'
     | '/manual'
+    | '/offline'
     | '/settings'
     | '/sos'
     | '/manual/$slug'
@@ -126,6 +138,7 @@ export interface RootRouteChildren {
   InventoryRoute: typeof InventoryRoute
   LoginRoute: typeof LoginRoute
   ManualRoute: typeof ManualRouteWithChildren
+  OfflineRoute: typeof OfflineRoute
   SettingsRoute: typeof SettingsRoute
   SosRoute: typeof SosRoute
 }
@@ -144,6 +157,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/offline': {
+      id: '/offline'
+      path: '/offline'
+      fullPath: '/offline'
+      preLoaderRoute: typeof OfflineRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/manual': {
@@ -209,6 +229,7 @@ const rootRouteChildren: RootRouteChildren = {
   InventoryRoute: InventoryRoute,
   LoginRoute: LoginRoute,
   ManualRoute: ManualRouteWithChildren,
+  OfflineRoute: OfflineRoute,
   SettingsRoute: SettingsRoute,
   SosRoute: SosRoute,
 }

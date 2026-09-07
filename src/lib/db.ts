@@ -71,6 +71,14 @@ export interface ChecklistState {
   updated_at: number;
 }
 
+export interface ManualAsset {
+  slug: string;
+  title: string;
+  html_body: string;
+  image_blob?: Blob;
+  saved_at: number;
+}
+
 interface TacticalDB extends DBSchema {
   waypoints: { key: string; value: LocalWaypoint; indexes: { by_user: string } };
   gear: { key: string; value: LocalGearItem; indexes: { by_user: string } };
@@ -78,6 +86,7 @@ interface TacticalDB extends DBSchema {
   tiles: { key: string; value: CachedTile; indexes: { by_source: string } };
   areas: { key: string; value: CachedArea };
   checklist: { key: string; value: ChecklistState };
+  manual_assets: { key: string; value: ManualAsset };
   settings: { key: string; value: unknown };
 }
 
@@ -88,23 +97,59 @@ export function getDB() {
     return Promise.reject(new Error("IndexedDB not available on server"));
   }
   if (!dbPromise) {
-    dbPromise = openDB<TacticalDB>("tactical-gis", 1, {
-      upgrade(db) {
-        const wp = db.createObjectStore("waypoints", { keyPath: "id" });
-        wp.createIndex("by_user", "user_id");
-        const gr = db.createObjectStore("gear", { keyPath: "id" });
-        gr.createIndex("by_user", "user_id");
-        db.createObjectStore("tile_sources", { keyPath: "id" });
-        const tl = db.createObjectStore("tiles", { keyPath: "key" });
-        tl.createIndex("by_source", "source_id");
-        db.createObjectStore("areas", { keyPath: "id" });
-        db.createObjectStore("checklist", { keyPath: "key" });
-        db.createObjectStore("settings");
+    dbPromise = openDB<TacticalDB>("tactical-gis", 2, {
+      upgrade(db, oldVersion) {
+        if (oldVersion < 1) {
+          const wp = db.createObjectStore("waypoints", { keyPath: "id" });
+          wp.createIndex("by_user", "user_id");
+          const gr = db.createObjectStore("gear", { keyPath: "id" });
+          gr.createIndex("by_user", "user_id");
+          db.createObjectStore("tile_sources", { keyPath: "id" });
+          const tl = db.createObjectStore("tiles", { keyPath: "key" });
+          tl.createIndex("by_source", "source_id");
+          db.createObjectStore("areas", { keyPath: "id" });
+          db.createObjectStore("checklist", { keyPath: "key" });
+          db.createObjectStore("settings");
+        }
+        if (oldVersion < 2 && !db.objectStoreNames.contains("manual_assets")) {
+          db.createObjectStore("manual_assets", { keyPath: "slug" });
+        }
       },
     });
   }
   return dbPromise;
 }
+
+export async function listChecklist(): Promise<ChecklistState[]> {
+  const db = await getDB();
+  return db.getAll("checklist");
+}
+
+export async function putChecklistState(s: ChecklistState) {
+  const db = await getDB();
+  await db.put("checklist", s);
+}
+
+export async function listManualAssets(): Promise<ManualAsset[]> {
+  const db = await getDB();
+  return db.getAll("manual_assets");
+}
+
+export async function saveManualAsset(a: ManualAsset) {
+  const db = await getDB();
+  await db.put("manual_assets", a);
+}
+
+export async function deleteManualAssets() {
+  const db = await getDB();
+  await db.clear("manual_assets");
+}
+
+export async function clearLocalData() {
+  const db = await getDB();
+  await Promise.all([db.clear("waypoints"), db.clear("gear"), db.clear("checklist")]);
+}
+
 
 export async function listWaypoints(): Promise<LocalWaypoint[]> {
   const db = await getDB();

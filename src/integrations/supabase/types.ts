@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      checklist_state: {
+        Row: {
+          done: boolean
+          id: string
+          key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          done?: boolean
+          id?: string
+          key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          done?: boolean
+          id?: string
+          key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       custom_tile_sources: {
         Row: {
           attribution: string | null

@@ -92,3 +92,93 @@ export const deleteGearRemote = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+const ChecklistInput = z.object({
+  items: z
+    .array(
+      z.object({
+        key: z.string().min(1).max(120),
+        done: z.boolean(),
+        updated_at: z.string(),
+      }),
+    )
+    .max(2000),
+});
+
+export const listChecklistRemote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase.from("checklist_state").select("*");
+    if (error) throw new Error(error.message);
+    return { items: data ?? [] };
+  });
+
+export const pushChecklistRemote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => ChecklistInput.parse(input))
+  .handler(async ({ context, data }) => {
+    if (!data.items.length) return { count: 0 };
+    const rows = data.items.map((i) => ({ ...i, user_id: context.userId }));
+    const { error } = await context.supabase
+      .from("checklist_state")
+      .upsert(rows, { onConflict: "user_id,key" });
+    if (error) throw new Error(error.message);
+    return { count: rows.length };
+  });
+
+const BulkInput = z.object({
+  waypoints: z.array(WaypointInput).max(2000),
+  gear: z.array(GearInput).max(2000),
+  checklist: z
+    .array(z.object({ key: z.string().min(1).max(120), done: z.boolean(), updated_at: z.string() }))
+    .max(2000),
+});
+
+/** Envia tudo o que está no aparelho para a nuvem (o mais recente vence). */
+export const pushAll = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => BulkInput.parse(input))
+  .handler(async ({ context, data }) => {
+    const uid = context.userId;
+    if (data.waypoints.length) {
+      const { error } = await context.supabase
+        .from("waypoints")
+        .upsert(data.waypoints.map((w) => ({ ...w, user_id: uid })));
+      if (error) throw new Error(error.message);
+    }
+    if (data.gear.length) {
+      const { error } = await context.supabase
+        .from("gear_items")
+        .upsert(data.gear.map((g) => ({ ...g, user_id: uid })));
+      if (error) throw new Error(error.message);
+    }
+    if (data.checklist.length) {
+      const { error } = await context.supabase
+        .from("checklist_state")
+        .upsert(
+          data.checklist.map((c) => ({ ...c, user_id: uid })),
+          { onConflict: "user_id,key" },
+        );
+      if (error) throw new Error(error.message);
+    }
+    return {
+      waypoints: data.waypoints.length,
+      gear: data.gear.length,
+      checklist: data.checklist.length,
+    };
+  });
+
+/** Traz tudo da nuvem para o aparelho. */
+export const pullAll = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const [wp, gi, cs] = await Promise.all([
+      context.supabase.from("waypoints").select("*"),
+      context.supabase.from("gear_items").select("*"),
+      context.supabase.from("checklist_state").select("*"),
+    ]);
+    if (wp.error) throw new Error(wp.error.message);
+    if (gi.error) throw new Error(gi.error.message);
+    if (cs.error) throw new Error(cs.error.message);
+    return { waypoints: wp.data ?? [], gear: gi.data ?? [], checklist: cs.data ?? [] };
+  });

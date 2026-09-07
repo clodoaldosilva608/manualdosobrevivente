@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { listGear, saveGear, deleteGear, type LocalGearItem } from "@/lib/db";
 import { toast } from "sonner";
+import { formatDate, formatKilograms, formatWeight } from "@/lib/format";
 
 export const Route = createFileRoute("/inventory")({
   head: () => ({
@@ -115,10 +116,10 @@ function Inventory() {
         <div className={`rounded-md border p-3 ${exceeded ? "border-destructive bg-destructive/10" : "border-border bg-card"}`}>
           <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground">Peso empacotado</div>
           <div className={`text-2xl font-bold mono ${exceeded ? "text-destructive" : "text-tactical-orange"}`}>
-            {(totalG / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg
+            {formatKilograms(totalG)}
           </div>
           <div className="text-xs text-muted-foreground mono">
-            Limite {(threshold / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} kg
+            Limite {formatKilograms(threshold, 1)}
           </div>
         </div>
         <div className="rounded-md border border-border bg-card p-3">
@@ -214,8 +215,8 @@ function Inventory() {
             <div className="flex-1 min-w-0">
               <div className="font-semibold truncate">{i.name}</div>
               <div className="text-xs text-muted-foreground mono">
-                {CATEGORY_LABEL[i.category] ?? i.category} · {i.quantity}× · {i.weight_g}g
-                {i.expires_at && ` · val ${new Date(i.expires_at).toLocaleDateString("pt-BR")}`}
+                {CATEGORY_LABEL[i.category] ?? i.category} · {i.quantity}× · {formatWeight(i.weight_g)}
+                {i.expires_at && ` · val ${formatDate(i.expires_at)}`}
               </div>
             </div>
             <button

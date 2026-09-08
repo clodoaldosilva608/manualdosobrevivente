@@ -136,25 +136,28 @@ function Settings() {
     try {
       const text = await file.text();
       const features = parseGpxOrKml(text, file.name);
-      if (!features.length) return toast.error("Nenhum ponto encontrado no arquivo");
+      const points = features.filter((f) => f.coords.length > 0);
+      if (!points.length) return toast.error("Nenhum ponto encontrado no arquivo");
       const now = new Date().toISOString();
-      for (const f of features) {
+      for (const f of points) {
+        const [lng, lat] = f.coords[0]!;
         const wp: LocalWaypoint = {
           id: crypto.randomUUID(),
           user_id: null,
-          title: f.name || "Ponto importado",
+          title: f.title || "Ponto importado",
           description: f.description ?? null,
           category: "custom",
           color: "#FF6B35",
-          latitude: f.lat,
-          longitude: f.lng,
+          latitude: lat,
+          longitude: lng,
           created_at: now,
           updated_at: now,
           dirty: true,
         };
         await saveWaypoint(wp);
       }
-      toast.success(`${formatInteger(features.length)} pontos importados`);
+      toast.success(`${formatInteger(points.length)} pontos importados`);
+
       void refresh();
     } catch {
       toast.error("Não foi possível ler o arquivo");

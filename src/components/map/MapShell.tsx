@@ -31,7 +31,12 @@ import { magneticDeclination } from "@/lib/declination";
 import { listWaypoints, saveWaypoint, deleteWaypoint, type LocalWaypoint } from "@/lib/db";
 import { fetchElevations } from "@/lib/elevation.functions";
 import CompassRose from "@/components/map/CompassRose";
-import { formatDegrees, formatSignedDegrees, formatElevation } from "@/lib/format";
+import {
+  formatDegrees,
+  formatSignedDegrees,
+  formatElevation,
+  formatDecimalDegrees,
+} from "@/lib/format";
 import { useServerFn } from "@tanstack/react-start";
 
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
@@ -111,6 +116,12 @@ export default function MapShell() {
     color: string;
   } | null>(null);
   const [elevationData, setElevationData] = useState<Array<{ d: number; e: number }>>([]);
+  const [userPos, setUserPos] = useState<{
+    lng: number;
+    lat: number;
+    alt: number | null;
+    acc: number;
+  } | null>(null);
   const callFetchElev = useServerFn(fetchElevations);
 
   // Init map (client only)
@@ -267,6 +278,82 @@ export default function MapShell() {
       window.removeEventListener("orientationchange", onResize);
     };
   }, []);
+
+  // Acompanha a posição do usuário em tempo real
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) return;
+    const id = navigator.geolocation.watchPosition(
+      (pos) => {
+        const p = {
+          lng: pos.coords.longitude,
+          lat: pos.coords.latitude,
+          alt: pos.coords.altitude,
+          acc: pos.coords.accuracy,
+        };
+        setUserPos(p);
+        try {
+          localStorage.setItem(
+            "tgis:last-position",
+            JSON.stringify({ lng: p.lng, lat: p.lat, alt: p.alt, at: Date.now() }),
+          );
+        } catch {
+          /* armazenamento indisponível */
+        }
+      },
+      () => {
+        /* sem permissão de localização */
+      },
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 },
+    );
+    return () => navigator.geolocation.clearWatch(id);
+  }, []);
+
+  // Desenha a marcação fixa da posição atual
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !userPos) return;
+    const data: GeoJSON.FeatureCollection = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          properties: {},
+          geometry: { type: "Point", coordinates: [userPos.lng, userPos.lat] },
+        },
+      ],
+    };
+    const src = map.getSource("user-position") as maplibregl.GeoJSONSource | undefined;
+    if (src) {
+      src.setData(data);
+    } else {
+      map.addSource("user-position", { type: "geojson", data });
+      map.addLayer({
+        id: "user-position-accuracy",
+        type: "circle",
+        source: "user-position",
+        paint: {
+          "circle-radius": 22,
+          "circle-color": "#38BDF8",
+          "circle-opacity": 0.15,
+          "circle-stroke-color": "#38BDF8",
+          "circle-stroke-width": 1,
+        },
+      });
+      map.addLayer({
+        id: "user-position-dot",
+        type: "circle",
+        source: "user-position",
+        paint: {
+          "circle-radius": 7,
+          "circle-color": "#38BDF8",
+          "circle-stroke-color": "#0B0B0B",
+          "circle-stroke-width": 2,
+        },
+      });
+    }
+  }, [ready, userPos]);
+
+
 
   // Layer swap
   useEffect(() => {
@@ -487,6 +574,54 @@ export default function MapShell() {
           </button>
         </div>
       </div>
+
+      {/* Posição atual do usuário */}
+      <div className="absolute left-2 right-2 top-[122px] z-10 md:left-4 md:right-auto md:top-[150px] md:w-[360px] hud-panel rounded-md p-2 mono text-xs">
+        <div className="flex items-center justify-between text-sky-400">
+          <span className="font-bold tracking-wider">MINHA POSIÇÃO</span>
+          <span>
+            {userPos ? `± ${formatElevation(userPos.acc)}` : "aguardando sinal"}
+          </span>
+        </div>
+        <div className="mt-1 grid grid-cols-3 gap-2 text-foreground">
+          <Cell label="Latitude" value={userPos ? formatDecimalDegrees(userPos.lat) : "—"} />
+          <Cell label="Longitude" value={userPos ? formatDecimalDegrees(userPos.lng) : "—"} />
+          <Cell
+            label="Altitude"
+            value={userPos && userPos.alt != null ? formatElevation(userPos.alt) : "—"}
+          />
+        </div>
+        <div className="mt-2 flex gap-2">
+          <button
+            type="button"
+            className="glove-tap flex-1 rounded border border-sky-400/60 text-sky-400 py-1 uppercase tracking-wider"
+            onClick={() => {
+              if (!userPos) return toast.error("Sem localização disponível");
+              mapRef.current?.flyTo({ center: [userPos.lng, userPos.lat], zoom: 15 });
+            }}
+          >
+            Centrar em mim
+          </button>
+          <button
+            type="button"
+            className="glove-tap flex-1 rounded border border-border text-muted-foreground py-1 uppercase tracking-wider"
+            onClick={() => {
+              try {
+                const raw = localStorage.getItem("tgis:last-position");
+                if (!raw) return toast.error("Nenhum local salvo");
+                const p = JSON.parse(raw) as { lng: number; lat: number };
+                mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 14 });
+              } catch {
+                toast.error("Nenhum local salvo");
+              }
+            }}
+          >
+            Último local
+          </button>
+        </div>
+      </div>
+
+
 
       {/* Right-side action rail */}
       <div className="absolute right-2 top-32 md:top-36 z-10 flex flex-col gap-2">
@@ -849,4 +984,13 @@ function drawFC(coords: [number, number][], tool: Tool) {
     });
   }
   return { type: "FeatureCollection" as const, features };
+}
+
+function Cell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded border border-border bg-background/50 px-2 py-1">
+      <div className="text-[9px] uppercase tracking-widest text-muted-foreground">{label}</div>
+      <div className="truncate text-[11px] text-foreground">{value}</div>
+    </div>
+  );
 }

@@ -268,6 +268,82 @@ export default function MapShell() {
     };
   }, []);
 
+  // Acompanha a posição do usuário em tempo real
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) return;
+    const id = navigator.geolocation.watchPosition(
+      (pos) => {
+        const p = {
+          lng: pos.coords.longitude,
+          lat: pos.coords.latitude,
+          alt: pos.coords.altitude,
+          acc: pos.coords.accuracy,
+        };
+        setUserPos(p);
+        try {
+          localStorage.setItem(
+            "tgis:last-position",
+            JSON.stringify({ lng: p.lng, lat: p.lat, alt: p.alt, at: Date.now() }),
+          );
+        } catch {
+          /* armazenamento indisponível */
+        }
+      },
+      () => {
+        /* sem permissão de localização */
+      },
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 },
+    );
+    return () => navigator.geolocation.clearWatch(id);
+  }, []);
+
+  // Desenha a marcação fixa da posição atual
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !userPos) return;
+    const data: GeoJSON.FeatureCollection = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          properties: {},
+          geometry: { type: "Point", coordinates: [userPos.lng, userPos.lat] },
+        },
+      ],
+    };
+    const src = map.getSource("user-position") as maplibregl.GeoJSONSource | undefined;
+    if (src) {
+      src.setData(data);
+    } else {
+      map.addSource("user-position", { type: "geojson", data });
+      map.addLayer({
+        id: "user-position-accuracy",
+        type: "circle",
+        source: "user-position",
+        paint: {
+          "circle-radius": 22,
+          "circle-color": "#38BDF8",
+          "circle-opacity": 0.15,
+          "circle-stroke-color": "#38BDF8",
+          "circle-stroke-width": 1,
+        },
+      });
+      map.addLayer({
+        id: "user-position-dot",
+        type: "circle",
+        source: "user-position",
+        paint: {
+          "circle-radius": 7,
+          "circle-color": "#38BDF8",
+          "circle-stroke-color": "#0B0B0B",
+          "circle-stroke-width": 2,
+        },
+      });
+    }
+  }, [ready, userPos]);
+
+
+
   // Layer swap
   useEffect(() => {
     if (!mapRef.current || !ready) return;

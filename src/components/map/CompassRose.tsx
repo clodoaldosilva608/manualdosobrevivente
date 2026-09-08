@@ -92,7 +92,37 @@ export default function CompassRose({
   }, [sensorOn]);
 
   const trueHeading = norm(deviceHeading ?? heading);
-  const shown = magnetic ? norm(trueHeading - declination) : trueHeading;
+  const target = magnetic ? norm(trueHeading - declination) : trueHeading;
+
+  // Ponteiro girando em tempo real: interpolação suave pelo caminho mais curto
+  const [shown, setShown] = useState(target);
+  const shownRef = useRef(target);
+  const targetRef = useRef(target);
+  targetRef.current = target;
+  useEffect(() => {
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) {
+      shownRef.current = targetRef.current;
+      setShown(targetRef.current);
+      return;
+    }
+    let raf = 0;
+    const step = () => {
+      const cur = shownRef.current;
+      let diff = ((targetRef.current - cur + 540) % 360) - 180;
+      if (Math.abs(diff) < 0.05) diff = 0;
+      const next = norm(cur + diff * 0.18);
+      if (diff !== 0) {
+        shownRef.current = next;
+        setShown(next);
+      }
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   const [lng, lat] = center;
   const celestial = useMemo(() => getCelestial(lat, lng, now), [lat, lng, now]);
@@ -136,7 +166,19 @@ export default function CompassRose({
 
   return (
     <div className="flex flex-col items-center gap-4 w-full">
-      <div className="relative w-full max-w-[min(82vw,22rem)] aspect-square select-none touch-none">
+      <div
+        className="relative w-full max-w-[min(82vw,22rem)] aspect-square select-none touch-none"
+        style={{ perspective: "900px" }}
+      >
+        <div
+          aria-hidden
+          className="absolute inset-[6%] rounded-full bg-black/70 blur-xl"
+          style={{ transform: "translateY(6%) scale(0.94)" }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{ transform: "rotateX(16deg)", transformStyle: "preserve-3d" }}
+        >
         <svg
           ref={ref}
           viewBox="0 0 200 200"
@@ -301,6 +343,7 @@ export default function CompassRose({
             strokeWidth="0.8"
           />
         </svg>
+        </div>
 
         <button
           type="button"

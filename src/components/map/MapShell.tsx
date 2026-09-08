@@ -111,6 +111,12 @@ export default function MapShell() {
     color: string;
   } | null>(null);
   const [elevationData, setElevationData] = useState<Array<{ d: number; e: number }>>([]);
+  const [userPos, setUserPos] = useState<{
+    lng: number;
+    lat: number;
+    alt: number | null;
+    acc: number;
+  } | null>(null);
   const callFetchElev = useServerFn(fetchElevations);
 
   // Init map (client only)

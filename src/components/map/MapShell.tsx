@@ -31,7 +31,12 @@ import { magneticDeclination } from "@/lib/declination";
 import { listWaypoints, saveWaypoint, deleteWaypoint, type LocalWaypoint } from "@/lib/db";
 import { fetchElevations } from "@/lib/elevation.functions";
 import CompassRose from "@/components/map/CompassRose";
-import { formatDegrees, formatSignedDegrees, formatElevation } from "@/lib/format";
+import {
+  formatDegrees,
+  formatSignedDegrees,
+  formatElevation,
+  formatDecimalDegrees,
+} from "@/lib/format";
 import { useServerFn } from "@tanstack/react-start";
 
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
@@ -979,4 +984,13 @@ function drawFC(coords: [number, number][], tool: Tool) {
     });
   }
   return { type: "FeatureCollection" as const, features };
+}
+
+function Cell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded border border-border bg-background/50 px-2 py-1">
+      <div className="text-[9px] uppercase tracking-widest text-muted-foreground">{label}</div>
+      <div className="truncate text-[11px] text-foreground">{value}</div>
+    </div>
+  );
 }

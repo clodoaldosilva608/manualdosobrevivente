@@ -570,6 +570,54 @@ export default function MapShell() {
         </div>
       </div>
 
+      {/* Posição atual do usuário */}
+      <div className="absolute left-2 right-2 top-[122px] z-10 md:left-4 md:right-auto md:top-[150px] md:w-[360px] hud-panel rounded-md p-2 mono text-xs">
+        <div className="flex items-center justify-between text-sky-400">
+          <span className="font-bold tracking-wider">MINHA POSIÇÃO</span>
+          <span>
+            {userPos ? `± ${formatElevation(userPos.acc)}` : "aguardando sinal"}
+          </span>
+        </div>
+        <div className="mt-1 grid grid-cols-3 gap-2 text-foreground">
+          <Cell label="Latitude" value={userPos ? formatDecimalDegrees(userPos.lat) : "—"} />
+          <Cell label="Longitude" value={userPos ? formatDecimalDegrees(userPos.lng) : "—"} />
+          <Cell
+            label="Altitude"
+            value={userPos && userPos.alt != null ? formatElevation(userPos.alt) : "—"}
+          />
+        </div>
+        <div className="mt-2 flex gap-2">
+          <button
+            type="button"
+            className="glove-tap flex-1 rounded border border-sky-400/60 text-sky-400 py-1 uppercase tracking-wider"
+            onClick={() => {
+              if (!userPos) return toast.error("Sem localização disponível");
+              mapRef.current?.flyTo({ center: [userPos.lng, userPos.lat], zoom: 15 });
+            }}
+          >
+            Centrar em mim
+          </button>
+          <button
+            type="button"
+            className="glove-tap flex-1 rounded border border-border text-muted-foreground py-1 uppercase tracking-wider"
+            onClick={() => {
+              try {
+                const raw = localStorage.getItem("tgis:last-position");
+                if (!raw) return toast.error("Nenhum local salvo");
+                const p = JSON.parse(raw) as { lng: number; lat: number };
+                mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 14 });
+              } catch {
+                toast.error("Nenhum local salvo");
+              }
+            }}
+          >
+            Último local
+          </button>
+        </div>
+      </div>
+
+
+
       {/* Right-side action rail */}
       <div className="absolute right-2 top-32 md:top-36 z-10 flex flex-col gap-2">
         <RailBtn icon={Layers} label="Camadas" onClick={() => setOpenSheet("layers")} />

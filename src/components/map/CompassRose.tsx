@@ -35,6 +35,7 @@ export interface CompassRoseProps {
   heading: number;
   declination: number;
   center: [number, number];
+  altitude?: number | null;
   bearingToWaypoint?: number | null;
   waypointLabel?: string | null;
   onRotate?: (heading: number) => void;
@@ -45,6 +46,7 @@ export default function CompassRose({
   heading,
   declination,
   center,
+  altitude,
   bearingToWaypoint,
   waypointLabel,
   onRotate,
@@ -54,8 +56,10 @@ export default function CompassRose({
   const dragRef = useRef<{ startAngle: number; startHeading: number } | null>(null);
   const [magnetic, setMagnetic] = useState(false);
   const [deviceHeading, setDeviceHeading] = useState<number | null>(null);
+  const [tilt, setTilt] = useState<{ beta: number; gamma: number } | null>(null);
   const [sensorOn, setSensorOn] = useState(false);
   const [now, setNow] = useState(() => new Date());
+
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 30000);

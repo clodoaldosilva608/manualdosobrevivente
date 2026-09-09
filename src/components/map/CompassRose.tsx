@@ -90,10 +90,14 @@ export default function CompassRose({
       const wk = e.webkitCompassHeading;
       if (typeof wk === "number") setDeviceHeading(norm(wk));
       else if (typeof e.alpha === "number") setDeviceHeading(norm(360 - e.alpha));
+      if (typeof e.beta === "number" && typeof e.gamma === "number") {
+        setTilt({ beta: e.beta, gamma: e.gamma });
+      }
     };
     window.addEventListener("deviceorientation", handler as EventListener, true);
     return () => window.removeEventListener("deviceorientation", handler as EventListener, true);
   }, [sensorOn]);
+
 
   const trueHeading = norm(deviceHeading ?? heading);
   const target = magnetic ? norm(trueHeading - declination) : trueHeading;

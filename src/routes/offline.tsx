@@ -137,7 +137,7 @@ function OfflinePage() {
       setName("");
       void refresh();
     } catch (e) {
-      toast.error("Falha no download", { description: e instanceof Error ? e.message : undefined });
+      toast.error("Falha ao baixar a área", { description: e instanceof Error ? e.message : undefined });
     } finally {
       setProgress(null);
     }

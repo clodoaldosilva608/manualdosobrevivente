@@ -340,6 +340,57 @@ export default function CompassRose({
               )}
             </g>
 
+            {/* leste, nascente e poente */}
+            <g>
+              <circle cx={eastPt.x} cy={eastPt.y} r="3" fill="#FFD166" />
+              <text
+                x={eastPt.x}
+                y={eastPt.y + 10}
+                textAnchor="middle"
+                fontSize="5.5"
+                fill="#FFD166"
+                transform={`rotate(90 ${eastPt.x} ${eastPt.y})`}
+              >
+                LESTE
+              </text>
+              {sunrisePt && (
+                <text x={sunrisePt.x} y={sunrisePt.y + 3} textAnchor="middle" fontSize="7" fill="#F4A261">
+                  ↑☀
+                </text>
+              )}
+              {sunsetPt && (
+                <text x={sunsetPt.x} y={sunsetPt.y + 3} textAnchor="middle" fontSize="7" fill="#E76F51">
+                  ↓☀
+                </text>
+              )}
+            </g>
+
+            {/* vento: seta partindo da origem do vento em direção ao centro */}
+            {windOuter && windInner && (
+              <g className="wind-flow">
+                <line
+                  x1={windOuter.x}
+                  y1={windOuter.y}
+                  x2={windInner.x}
+                  y2={windInner.y}
+                  stroke="#7FD1E8"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <circle cx={windInner.x} cy={windInner.y} r="3" fill="#7FD1E8" />
+                <text
+                  x={windOuter.x}
+                  y={windOuter.y - 4}
+                  textAnchor="middle"
+                  fontSize="6"
+                  fill="#7FD1E8"
+                >
+                  {windSpeed != null ? formatSpeed(windSpeed) : "vento"}
+                </text>
+              </g>
+            )}
+
+
             {/* agulha */}
             <polygon points="100,28 106,100 94,100" fill="url(#needleN)" />
             <polygon points="100,172 106,100 94,100" fill="url(#needleS)" />

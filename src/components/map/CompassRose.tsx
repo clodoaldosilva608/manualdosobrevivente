@@ -35,6 +35,7 @@ export interface CompassRoseProps {
   heading: number;
   declination: number;
   center: [number, number];
+  altitude?: number | null;
   bearingToWaypoint?: number | null;
   waypointLabel?: string | null;
   onRotate?: (heading: number) => void;
@@ -45,6 +46,7 @@ export default function CompassRose({
   heading,
   declination,
   center,
+  altitude,
   bearingToWaypoint,
   waypointLabel,
   onRotate,
@@ -54,8 +56,10 @@ export default function CompassRose({
   const dragRef = useRef<{ startAngle: number; startHeading: number } | null>(null);
   const [magnetic, setMagnetic] = useState(false);
   const [deviceHeading, setDeviceHeading] = useState<number | null>(null);
+  const [tilt, setTilt] = useState<{ beta: number; gamma: number } | null>(null);
   const [sensorOn, setSensorOn] = useState(false);
   const [now, setNow] = useState(() => new Date());
+
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 30000);
@@ -86,10 +90,14 @@ export default function CompassRose({
       const wk = e.webkitCompassHeading;
       if (typeof wk === "number") setDeviceHeading(norm(wk));
       else if (typeof e.alpha === "number") setDeviceHeading(norm(360 - e.alpha));
+      if (typeof e.beta === "number" && typeof e.gamma === "number") {
+        setTilt({ beta: e.beta, gamma: e.gamma });
+      }
     };
     window.addEventListener("deviceorientation", handler as EventListener, true);
     return () => window.removeEventListener("deviceorientation", handler as EventListener, true);
   }, [sensorOn]);
+
 
   const trueHeading = norm(deviceHeading ?? heading);
   const target = magnetic ? norm(trueHeading - declination) : trueHeading;
@@ -163,6 +171,22 @@ export default function CompassRose({
   const starPt = markerAt(celestial.starAzimuth, 72);
   const coastPt = markerAt(coast.bearing, 82);
   const wpPt = bearingToWaypoint != null ? markerAt(bearingToWaypoint, 42) : null;
+  const eastPt = markerAt(90, 88);
+  const sunsetAz = celestial.sunsetAzimuth;
+  const sunriseAz = celestial.sunriseAzimuth;
+  const sunsetPt = sunsetAz != null ? markerAt(sunsetAz, 88) : null;
+  const sunrisePt = sunriseAz != null ? markerAt(sunriseAz, 88) : null;
+  const windFrom = weather?.windDirection ?? null;
+  const windOuter = windFrom != null ? markerAt(windFrom, 86) : null;
+  const windInner = windFrom != null ? markerAt(windFrom, 58) : null;
+  const windSpeed = weather?.windSpeed ?? null;
+  // Nível de bolha: desloca a bolha conforme a inclinação do aparelho (limitada a ±30°)
+  const clamp = (v: number, m: number) => Math.max(-m, Math.min(m, v));
+  const bubbleX = tilt ? clamp(tilt.gamma, 30) / 30 : 0;
+  const bubbleY = tilt ? clamp(tilt.beta, 30) / 30 : 0;
+  const tiltTotal = tilt ? Math.min(90, Math.hypot(tilt.beta, tilt.gamma)) : null;
+  const leveled = tiltTotal != null && tiltTotal < 2.5;
+
 
   return (
     <div className="flex flex-col items-center gap-4 w-full">
@@ -316,6 +340,57 @@ export default function CompassRose({
               )}
             </g>
 
+            {/* leste, nascente e poente */}
+            <g>
+              <circle cx={eastPt.x} cy={eastPt.y} r="3" fill="#FFD166" />
+              <text
+                x={eastPt.x}
+                y={eastPt.y + 10}
+                textAnchor="middle"
+                fontSize="5.5"
+                fill="#FFD166"
+                transform={`rotate(90 ${eastPt.x} ${eastPt.y})`}
+              >
+                LESTE
+              </text>
+              {sunrisePt && (
+                <text x={sunrisePt.x} y={sunrisePt.y + 3} textAnchor="middle" fontSize="7" fill="#F4A261">
+                  ↑☀
+                </text>
+              )}
+              {sunsetPt && (
+                <text x={sunsetPt.x} y={sunsetPt.y + 3} textAnchor="middle" fontSize="7" fill="#E76F51">
+                  ↓☀
+                </text>
+              )}
+            </g>
+
+            {/* vento: seta partindo da origem do vento em direção ao centro */}
+            {windOuter && windInner && (
+              <g className="wind-flow">
+                <line
+                  x1={windOuter.x}
+                  y1={windOuter.y}
+                  x2={windInner.x}
+                  y2={windInner.y}
+                  stroke="#7FD1E8"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <circle cx={windInner.x} cy={windInner.y} r="3" fill="#7FD1E8" />
+                <text
+                  x={windOuter.x}
+                  y={windOuter.y - 4}
+                  textAnchor="middle"
+                  fontSize="6"
+                  fill="#7FD1E8"
+                >
+                  {windSpeed != null ? formatSpeed(windSpeed) : "vento"}
+                </text>
+              </g>
+            )}
+
+
             {/* agulha */}
             <polygon points="100,28 106,100 94,100" fill="url(#needleN)" />
             <polygon points="100,172 106,100 94,100" fill="url(#needleS)" />
@@ -360,6 +435,58 @@ export default function CompassRose({
       <div className="mono text-4xl font-bold text-tactical-orange leading-none">
         {formatDegrees(shown)} <span className="text-lg">{compassPoint(shown)}</span>
       </div>
+
+      {/* nível de bolha + nível do mar */}
+      <div className="grid grid-cols-2 gap-2 w-full">
+        <div className="rounded-md border border-border bg-background/50 p-2.5 flex flex-col items-center gap-1">
+          <div className="mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            Nível de bolha
+          </div>
+          <div
+            className={`relative h-24 w-24 rounded-full border-2 ${
+              leveled ? "border-tactical-green" : "border-border"
+            } bg-background/70`}
+          >
+            <div className="absolute left-1/2 top-0 h-full w-px bg-border" />
+            <div className="absolute top-1/2 left-0 w-full h-px bg-border" />
+            <div className="absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full border border-tactical-orange/50" />
+            <div
+              className="absolute left-1/2 top-1/2 h-5 w-5 rounded-full bg-tactical-orange/80 shadow-lg transition-transform duration-150 ease-out"
+              style={{
+                transform: `translate(calc(-50% + ${bubbleX * 38}px), calc(-50% + ${bubbleY * 38}px))`,
+              }}
+            />
+          </div>
+          <div className="mono text-[10px] text-muted-foreground">
+            {tiltTotal != null
+              ? `Inclinação ${formatDegrees(tiltTotal)}${leveled ? " · nivelado" : ""}`
+              : "Ative o sensor do aparelho"}
+          </div>
+        </div>
+
+        <div className="rounded-md border border-border bg-background/50 p-2.5 flex flex-col gap-1">
+          <div className="mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            Nível do mar
+          </div>
+          <div className="relative flex-1 min-h-[6rem] overflow-hidden rounded bg-background/70 border border-border">
+            <div
+              className="absolute left-0 right-0 bottom-0 bg-tactical-blue/25"
+              style={{
+                height: `${Math.max(8, Math.min(92, 50 - (altitude ?? 0) / 40))}%`,
+              }}
+            >
+              <div className="sea-wave absolute left-0 top-0 h-1.5 w-[200%] bg-tactical-blue/60" />
+            </div>
+            <div className="absolute left-1 right-1 top-1 mono text-[10px] text-tactical-orange font-bold">
+              {altitude != null ? `${formatNumber(altitude, 0)} m` : "—"}
+            </div>
+            <div className="absolute left-1 bottom-1 mono text-[9px] text-muted-foreground">
+              acima do mar
+            </div>
+          </div>
+        </div>
+      </div>
+
 
       <div className="flex flex-wrap items-center justify-center gap-2">
         <button

@@ -43,6 +43,9 @@
   --color-tactical-orange: var(--tactical-orange);
   --color-tactical-red: var(--tactical-red);
   --color-tactical-amber: var(--tactical-amber);
+  --color-tactical-blue: oklch(0.66 0.12 230);
+  --color-tactical-green: oklch(0.68 0.15 145);
+
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);

@@ -1,6 +1,6 @@
 import { kml, gpx } from "@tmcw/togeojson";
-import { buildGPX, BaseBuilder } from "gpx-builder";
 import type { LocalWaypoint } from "./db";
+
 
 export interface ImportedFeature {
   title: string;
@@ -45,31 +45,47 @@ export function parseGpxOrKml(text: string, filename = ""): ImportedFeature[] {
   return out;
 }
 
-export function waypointsToGPX(waypoints: LocalWaypoint[]): string {
-  const { Point, Metadata } = BaseBuilder.MODELS;
-  const builder = new BaseBuilder();
-  builder.setMetadata(new Metadata({ name: "TacticalGIS Waypoints", time: new Date() }));
-  builder.setWayPoints(
-    waypoints.map(
-      (w) =>
-        new Point(w.latitude, w.longitude, {
-          name: w.title,
-          desc: w.description ?? "",
-          ele: w.elevation ?? undefined,
-        }),
-    ),
+function esc(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function gpxDoc(name: string, body: string): string {
+  return (
+    `<?xml version="1.0" encoding="UTF-8"?>\n` +
+    `<gpx version="1.1" creator="TacticalGIS" xmlns="http://www.topografix.com/GPX/1/1">\n` +
+    `  <metadata><name>${esc(name)}</name><time>${new Date().toISOString()}</time></metadata>\n` +
+    body +
+    `</gpx>\n`
   );
-  return buildGPX(builder.toObject());
+}
+
+export function waypointsToGPX(waypoints: LocalWaypoint[]): string {
+  const body = waypoints
+    .map((w) => {
+      const ele = w.elevation != null ? `    <ele>${w.elevation}</ele>\n` : "";
+      const desc = w.description ? `    <desc>${esc(w.description)}</desc>\n` : "";
+      return (
+        `  <wpt lat="${w.latitude}" lon="${w.longitude}">\n` +
+        ele +
+        `    <name>${esc(w.title)}</name>\n` +
+        desc +
+        `  </wpt>\n`
+      );
+    })
+    .join("");
+  return gpxDoc("TacticalGIS Waypoints", body);
 }
 
 export function pathToGPX(name: string, coords: [number, number][]): string {
-  const { Point, Track, Segment, Metadata } = BaseBuilder.MODELS;
-  const builder = new BaseBuilder();
-  builder.setMetadata(new Metadata({ name, time: new Date() }));
-  const seg = new Segment(coords.map(([lng, lat]) => new Point(lat, lng)));
-  builder.setTracks([new Track([seg], { name })]);
-  return buildGPX(builder.toObject());
+  const pts = coords.map(([lng, lat]) => `      <trkpt lat="${lat}" lon="${lng}"></trkpt>\n`).join("");
+  const body = `  <trk><name>${esc(name)}</name><trkseg>\n${pts}    </trkseg></trk>\n`;
+  return gpxDoc(name, body);
 }
+
 
 export function downloadText(filename: string, content: string, mime = "application/gpx+xml") {
   const blob = new Blob([content], { type: mime });

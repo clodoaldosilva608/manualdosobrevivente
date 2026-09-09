@@ -70,6 +70,13 @@ export function getCelestial(lat: number, lng: number, date = new Date()): Celes
     dusk: valid(times.dusk),
     solarNoon: valid(times.solarNoon),
     sunAzimuth: norm(toDeg(sunPos.azimuth) + 180),
+    sunriseAzimuth: valid(times.sunrise)
+      ? norm(toDeg(SunCalc.getPosition(times.sunrise, lat, lng).azimuth) + 180)
+      : null,
+    sunsetAzimuth: valid(times.sunset)
+      ? norm(toDeg(SunCalc.getPosition(times.sunset, lat, lng).azimuth) + 180)
+      : null,
+
     sunAltitude: toDeg(sunPos.altitude),
     moonAzimuth: norm(toDeg(moonPos.azimuth) + 180),
     moonAltitude: toDeg(moonPos.altitude),

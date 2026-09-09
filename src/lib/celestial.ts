@@ -9,7 +9,10 @@ export interface CelestialInfo {
   dusk: Date | null;
   solarNoon: Date | null;
   sunAzimuth: number | null;
+  sunriseAzimuth: number | null;
+  sunsetAzimuth: number | null;
   sunAltitude: number;
+
   moonAzimuth: number;
   moonAltitude: number;
   moonPhase: number;

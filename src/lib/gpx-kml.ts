@@ -1,6 +1,6 @@
 import { kml, gpx } from "@tmcw/togeojson";
-import { buildGPX, BaseBuilder } from "gpx-builder";
 import type { LocalWaypoint } from "./db";
+
 
 export interface ImportedFeature {
   title: string;

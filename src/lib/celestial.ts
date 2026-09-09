@@ -60,22 +60,23 @@ export function getCelestial(lat: number, lng: number, date = new Date()): Celes
   const valid = (d: Date | null | undefined) => (d && !Number.isNaN(d.getTime()) ? d : null);
   const isDay = sunPos.altitude > 0;
   const hemisphere: "N" | "S" = lat >= 0 ? "N" : "S";
+  const sunriseAt = valid(times.sunrise);
+  const sunsetAt = valid(times.sunset);
+  const azAt = (d: Date | null) =>
+    d ? norm(toDeg(SunCalc.getPosition(d, lat, lng).azimuth) + 180) : null;
 
   return {
     isDay,
     phaseLabel: dayPhaseLabel(sunPos.altitude, isDay),
-    sunrise: valid(times.sunrise),
-    sunset: valid(times.sunset),
+    sunrise: sunriseAt,
+    sunset: sunsetAt,
     dawn: valid(times.dawn),
     dusk: valid(times.dusk),
     solarNoon: valid(times.solarNoon),
     sunAzimuth: norm(toDeg(sunPos.azimuth) + 180),
-    sunriseAzimuth: valid(times.sunrise)
-      ? norm(toDeg(SunCalc.getPosition(times.sunrise, lat, lng).azimuth) + 180)
-      : null,
-    sunsetAzimuth: valid(times.sunset)
-      ? norm(toDeg(SunCalc.getPosition(times.sunset, lat, lng).azimuth) + 180)
-      : null,
+    sunriseAzimuth: azAt(sunriseAt),
+    sunsetAzimuth: azAt(sunsetAt),
+
 
     sunAltitude: toDeg(sunPos.altitude),
     moonAzimuth: norm(toDeg(moonPos.azimuth) + 180),

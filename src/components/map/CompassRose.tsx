@@ -171,6 +171,22 @@ export default function CompassRose({
   const starPt = markerAt(celestial.starAzimuth, 72);
   const coastPt = markerAt(coast.bearing, 82);
   const wpPt = bearingToWaypoint != null ? markerAt(bearingToWaypoint, 42) : null;
+  const eastPt = markerAt(90, 88);
+  const sunsetAz = celestial.sunsetAzimuth;
+  const sunriseAz = celestial.sunriseAzimuth;
+  const sunsetPt = sunsetAz != null ? markerAt(sunsetAz, 88) : null;
+  const sunrisePt = sunriseAz != null ? markerAt(sunriseAz, 88) : null;
+  const windFrom = weather?.windDirection ?? null;
+  const windOuter = windFrom != null ? markerAt(windFrom, 86) : null;
+  const windInner = windFrom != null ? markerAt(windFrom, 58) : null;
+  const windSpeed = weather?.windSpeed ?? null;
+  // Nível de bolha: desloca a bolha conforme a inclinação do aparelho (limitada a ±30°)
+  const clamp = (v: number, m: number) => Math.max(-m, Math.min(m, v));
+  const bubbleX = tilt ? clamp(tilt.gamma, 30) / 30 : 0;
+  const bubbleY = tilt ? clamp(tilt.beta, 30) / 30 : 0;
+  const tiltTotal = tilt ? Math.min(90, Math.hypot(tilt.beta, tilt.gamma)) : null;
+  const leveled = tiltTotal != null && tiltTotal < 2.5;
+
 
   return (
     <div className="flex flex-col items-center gap-4 w-full">

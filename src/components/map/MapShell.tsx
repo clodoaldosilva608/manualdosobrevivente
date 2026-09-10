@@ -885,6 +885,8 @@ export default function MapShell() {
               heading={heading}
               declination={decl}
               center={center}
+              altitude={userPos?.alt ?? null}
+
               bearingToWaypoint={
                 waypoints[0]
                   ? bearingDeg(center, [waypoints[0].longitude, waypoints[0].latitude])

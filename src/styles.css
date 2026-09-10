@@ -193,3 +193,25 @@
 .maplibregl-popup-tip {
   border-top-color: var(--color-card) !important;
 }
+
+/* Bússola: fluxo do vento e onda do nível do mar */
+@keyframes wind-flow-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+@keyframes sea-wave-slide {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.wind-flow {
+  animation: wind-flow-pulse 1.8s ease-in-out infinite;
+}
+.sea-wave {
+  animation: sea-wave-slide 4s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wind-flow,
+  .sea-wave {
+    animation: none;
+  }
+}

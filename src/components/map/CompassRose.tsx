@@ -136,7 +136,7 @@ export default function CompassRose({
 
   const getWeather = useServerFn(fetchWeather);
   const { data: weather } = useQuery({
-    queryKey: ["weather", lat.toFixed(2), lng.toFixed(2)],
+    queryKey: ["weather", Math.round(lat * 100) / 100, Math.round(lng * 100) / 100],
     queryFn: () => getWeather({ data: { lng, lat } }),
     staleTime: 10 * 60 * 1000,
     retry: 1,

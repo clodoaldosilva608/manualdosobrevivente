@@ -17,7 +17,13 @@ import { listAreas, deleteArea } from "@/lib/offline-tiles";
 import { waypointsToGPX, downloadText, parseGpxOrKml } from "@/lib/gpx-kml";
 import { formatInteger, formatDateTime, formatNumber } from "@/lib/format";
 import { usePreferences } from "@/hooks/usePreferences";
-import { pushLocalToCloud, pullCloudToLocal, getLastSyncAt, pushAll, pullAll } from "@/lib/cloud-sync";
+import {
+  pushLocalToCloud,
+  pullCloudToLocal,
+  getLastSyncAt,
+  pushAll,
+  pullAll,
+} from "@/lib/cloud-sync";
 import { CloudUpload, CloudDownload, Trash2, Upload, Download } from "lucide-react";
 
 export const Route = createFileRoute("/settings")({
@@ -286,7 +292,10 @@ function Settings() {
         <div className="grid grid-cols-2 gap-3">
           <Stat label="Waypoints" value={counts ? formatInteger(counts.waypoints) : "—"} />
           <Stat label="Itens da mochila" value={counts ? formatInteger(counts.gear) : "—"} />
-          <Stat label="Checklist concluído" value={counts ? formatInteger(counts.checklist) : "—"} />
+          <Stat
+            label="Checklist concluído"
+            value={counts ? formatInteger(counts.checklist) : "—"}
+          />
           <Stat label="Tópicos baixados" value={counts ? formatInteger(counts.manual) : "—"} />
           <Stat label="Áreas de mapa" value={counts ? formatInteger(counts.areas) : "—"} />
           <Stat

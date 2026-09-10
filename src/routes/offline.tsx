@@ -137,7 +137,9 @@ function OfflinePage() {
       setName("");
       void refresh();
     } catch (e) {
-      toast.error("Falha ao baixar a área", { description: e instanceof Error ? e.message : undefined });
+      toast.error("Falha ao baixar a área", {
+        description: e instanceof Error ? e.message : undefined,
+      });
     } finally {
       setProgress(null);
     }
@@ -183,8 +185,7 @@ function OfflinePage() {
       toast.error("Libere as janelas para gerar o PDF");
       return;
     }
-    const esc = (s: string) =>
-      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const body = MANUAL.map(
       (e) =>
         `<section><h2>${esc(e.title)}</h2><p><em>${esc(e.summary)}</em></p>` +
@@ -206,7 +207,6 @@ function OfflinePage() {
     w.focus();
     setTimeout(() => w.print(), 600);
   };
-
 
   return (
     <div className="container max-w-2xl mx-auto p-4 md:p-8 space-y-6">

@@ -1,7 +1,6 @@
 import { kml, gpx } from "@tmcw/togeojson";
 import type { LocalWaypoint } from "./db";
 
-
 export interface ImportedFeature {
   title: string;
   description?: string;
@@ -81,11 +80,12 @@ export function waypointsToGPX(waypoints: LocalWaypoint[]): string {
 }
 
 export function pathToGPX(name: string, coords: [number, number][]): string {
-  const pts = coords.map(([lng, lat]) => `      <trkpt lat="${lat}" lon="${lng}"></trkpt>\n`).join("");
+  const pts = coords
+    .map(([lng, lat]) => `      <trkpt lat="${lat}" lon="${lng}"></trkpt>\n`)
+    .join("");
   const body = `  <trk><name>${esc(name)}</name><trkseg>\n${pts}    </trkseg></trk>\n`;
   return gpxDoc(name, body);
 }
-
 
 export function downloadText(filename: string, content: string, mime = "application/gpx+xml") {
   const blob = new Blob([content], { type: mime });

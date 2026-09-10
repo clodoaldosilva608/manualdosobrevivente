@@ -46,7 +46,10 @@ describe("SSR em pt-BR", () => {
 
     it(`${path} não mostra texto em inglês`, async () => {
       const html = await get(path);
-      const words = visibleText(html).toLowerCase().match(/[a-zà-ÿ']+/g) ?? [];
+      const words =
+        visibleText(html)
+          .toLowerCase()
+          .match(/[a-zà-ÿ']+/g) ?? [];
       const bad = [...new Set(words.filter((w) => ENGLISH.test(w) && !ALLOW.has(w)))];
       expect(bad).toEqual([]);
     });

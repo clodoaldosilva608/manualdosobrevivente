@@ -77,7 +77,6 @@ export function getCelestial(lat: number, lng: number, date = new Date()): Celes
     sunriseAzimuth: azAt(sunriseAt),
     sunsetAzimuth: azAt(sunsetAt),
 
-
     sunAltitude: toDeg(sunPos.altitude),
     moonAzimuth: norm(toDeg(moonPos.azimuth) + 180),
     moonAltitude: toDeg(moonPos.altitude),

@@ -150,7 +150,6 @@ export async function clearLocalData() {
   await Promise.all([db.clear("waypoints"), db.clear("gear"), db.clear("checklist")]);
 }
 
-
 export async function listWaypoints(): Promise<LocalWaypoint[]> {
   const db = await getDB();
   return db.getAll("waypoints");

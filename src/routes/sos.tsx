@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Siren, Flashlight, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDD, formatDMS, formatMGRS } from "@/lib/coords";
+import { formatDecimalDegrees } from "@/lib/format";
 import { toast } from "sonner";
 import { ShareSheet } from "@/components/ShareSheet";
 
@@ -119,7 +120,7 @@ function SOS() {
     ? `LOCALIZAÇÃO DE EMERGÊNCIA\nDD ${formatDD(pos.lng, pos.lat)}\nDMS ${formatDMS(pos.lng, pos.lat)}\nMGRS ${formatMGRS(pos.lng, pos.lat)}`
     : "LOCALIZAÇÃO DE EMERGÊNCIA\nPosição GPS ainda não obtida.";
   const mapUrl = pos
-    ? `https://www.google.com/maps/search/?api=1&query=${pos.lat.toFixed(6)},${pos.lng.toFixed(6)}`
+    ? `https://www.google.com/maps/search/?api=1&query=${formatDecimalDegrees(pos.lat, 6)},${formatDecimalDegrees(pos.lng, 6)}`
     : null;
 
   const shareLocation = () => {

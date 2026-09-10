@@ -20,7 +20,6 @@ const items = [
   { to: "/settings", label: "Ajustes", icon: Settings },
 ] as const;
 
-
 export function AppNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   return (

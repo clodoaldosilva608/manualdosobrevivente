@@ -353,8 +353,6 @@ export default function MapShell() {
     }
   }, [ready, userPos]);
 
-
-
   // Layer swap
   useEffect(() => {
     if (!mapRef.current || !ready) return;
@@ -579,9 +577,7 @@ export default function MapShell() {
       <div className="absolute left-2 right-2 top-[122px] z-10 md:left-4 md:right-auto md:top-[150px] md:w-[360px] hud-panel rounded-md p-2 mono text-xs">
         <div className="flex items-center justify-between text-sky-400">
           <span className="font-bold tracking-wider">MINHA POSIÇÃO</span>
-          <span>
-            {userPos ? `± ${formatElevation(userPos.acc)}` : "aguardando sinal"}
-          </span>
+          <span>{userPos ? `± ${formatElevation(userPos.acc)}` : "aguardando sinal"}</span>
         </div>
         <div className="mt-1 grid grid-cols-3 gap-2 text-foreground">
           <Cell label="Latitude" value={userPos ? formatDecimalDegrees(userPos.lat) : "—"} />
@@ -620,8 +616,6 @@ export default function MapShell() {
           </button>
         </div>
       </div>
-
-
 
       {/* Right-side action rail */}
       <div className="absolute right-2 top-32 md:top-36 z-10 flex flex-col gap-2">
@@ -886,7 +880,6 @@ export default function MapShell() {
               declination={decl}
               center={center}
               altitude={userPos?.alt ?? null}
-
               bearingToWaypoint={
                 waypoints[0]
                   ? bearingDeg(center, [waypoints[0].longitude, waypoints[0].latitude])
@@ -945,7 +938,6 @@ function RailBtn({
     </button>
   );
 }
-
 
 function copy(t: string) {
   navigator.clipboard?.writeText(t);

@@ -7,7 +7,16 @@ import tseslint from "typescript-eslint";
 import i18nPtBr from "./eslint-rules/i18n-pt-br.js";
 
 export default tseslint.config(
-  { ignores: ["dist", ".output", ".vinxi", "src/routeTree.gen.ts", "src/components/ui/**", "src/integrations/**"] },
+  {
+    ignores: [
+      "dist",
+      ".output",
+      ".vinxi",
+      "src/routeTree.gen.ts",
+      "src/components/ui/**",
+      "src/integrations/**",
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],

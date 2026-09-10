@@ -14,8 +14,6 @@ import { pushAll, pullAll } from "@/lib/sync.functions";
 
 export const LAST_SYNC_KEY = "last-sync-at";
 
-
-
 export interface SyncCounts {
   waypoints: number;
   gear: number;

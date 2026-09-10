@@ -99,7 +99,13 @@ export function snapshotToCSV(s: Snapshot): string {
     ]);
   }
   for (const c of s.checklist) {
-    rows.push(["checklist", c.key, c.done ? "concluído" : "pendente", formatDateTime(c.updated_at), ""]);
+    rows.push([
+      "checklist",
+      c.key,
+      c.done ? "concluído" : "pendente",
+      formatDateTime(c.updated_at),
+      "",
+    ]);
   }
   for (const [k, v] of Object.entries(s.prefs)) {
     rows.push(["ajuste", k, String(v ?? "padrão"), "", ""]);
@@ -127,9 +133,18 @@ ${rows(
     (w) => `${w.title} — ${formatNumber(w.latitude, 5)}, ${formatNumber(w.longitude, 5)}`,
   ),
 )}
-${rows("Mochila", s.gear.map((g) => `${g.name} — ${g.quantity} un — ${g.weight_g} g`))}
-${rows("Checklist", s.checklist.map((c) => `${c.key} — ${c.done ? "concluído" : "pendente"}`))}
-${rows("Ajustes", Object.entries(s.prefs).map(([k, v]) => `${k}: ${String(v ?? "padrão")}`))}
+${rows(
+  "Mochila",
+  s.gear.map((g) => `${g.name} — ${g.quantity} un — ${g.weight_g} g`),
+)}
+${rows(
+  "Checklist",
+  s.checklist.map((c) => `${c.key} — ${c.done ? "concluído" : "pendente"}`),
+)}
+${rows(
+  "Ajustes",
+  Object.entries(s.prefs).map(([k, v]) => `${k}: ${String(v ?? "padrão")}`),
+)}
 </body></html>`;
 }
 
@@ -154,7 +169,11 @@ function Dashboard() {
 
   const exportCSV = () => {
     if (!snap) return;
-    downloadText("relatorio-tacticalgis.csv", "\uFEFF" + snapshotToCSV(snap), "text/csv;charset=utf-8");
+    downloadText(
+      "relatorio-tacticalgis.csv",
+      "\uFEFF" + snapshotToCSV(snap),
+      "text/csv;charset=utf-8",
+    );
     toast.success("Planilha CSV gerada");
   };
 

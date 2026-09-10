@@ -60,7 +60,6 @@ export default function CompassRose({
   const [sensorOn, setSensorOn] = useState(false);
   const [now, setNow] = useState(() => new Date());
 
-
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 30000);
     return () => window.clearInterval(id);
@@ -97,7 +96,6 @@ export default function CompassRose({
     window.addEventListener("deviceorientation", handler as EventListener, true);
     return () => window.removeEventListener("deviceorientation", handler as EventListener, true);
   }, [sensorOn]);
-
 
   const trueHeading = norm(deviceHeading ?? heading);
   const target = magnetic ? norm(trueHeading - declination) : trueHeading;
@@ -138,7 +136,7 @@ export default function CompassRose({
 
   const getWeather = useServerFn(fetchWeather);
   const { data: weather } = useQuery({
-    queryKey: ["weather", lat.toFixed(2), lng.toFixed(2)],
+    queryKey: ["weather", Math.round(lat * 100) / 100, Math.round(lng * 100) / 100],
     queryFn: () => getWeather({ data: { lng, lat } }),
     staleTime: 10 * 60 * 1000,
     retry: 1,
@@ -187,7 +185,6 @@ export default function CompassRose({
   const tiltTotal = tilt ? Math.min(90, Math.hypot(tilt.beta, tilt.gamma)) : null;
   const leveled = tiltTotal != null && tiltTotal < 2.5;
 
-
   return (
     <div className="flex flex-col items-center gap-4 w-full">
       <div
@@ -203,221 +200,251 @@ export default function CompassRose({
           className="absolute inset-0"
           style={{ transform: "rotateX(16deg)", transformStyle: "preserve-3d" }}
         >
-        <svg
-          ref={ref}
-          viewBox="0 0 200 200"
-          role="slider"
-          tabIndex={0}
-          aria-label="Bússola tática"
-          aria-valuemin={0}
-          aria-valuemax={359}
-          aria-valuenow={Math.round(shown)}
-          className="absolute inset-0 h-full w-full cursor-grab active:cursor-grabbing"
-          onPointerDown={(e) => {
-            if (!onRotate) return;
-            (e.target as Element).setPointerCapture?.(e.pointerId);
-            dragRef.current = {
-              startAngle: angleFromEvent(e.clientX, e.clientY),
-              startHeading: trueHeading,
-            };
-          }}
-          onPointerMove={(e) => {
-            const d = dragRef.current;
-            if (!d || !onRotate) return;
-            const a = angleFromEvent(e.clientX, e.clientY);
-            onRotate(norm(d.startHeading - (a - d.startAngle)));
-          }}
-          onPointerUp={() => (dragRef.current = null)}
-          onPointerCancel={() => (dragRef.current = null)}
-          onKeyDown={(e) => {
-            if (!onRotate) return;
-            if (e.key === "ArrowLeft") onRotate(norm(trueHeading - 5));
-            if (e.key === "ArrowRight") onRotate(norm(trueHeading + 5));
-            if (e.key === "Home") onReset?.();
-          }}
-        >
-          <defs>
-            <radialGradient id="dial" cx="50%" cy="38%">
-              <stop offset="0%" stopColor="#22201d" />
-              <stop offset="70%" stopColor="#141312" />
-              <stop offset="100%" stopColor="#0b0a09" />
-            </radialGradient>
-            <linearGradient id="needleN" x1="0" y1="1" x2="0" y2="0">
-              <stop offset="0%" stopColor="#8c2f16" />
-              <stop offset="100%" stopColor="#FF6B35" />
-            </linearGradient>
-            <linearGradient id="needleS" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#e6e6e6" />
-              <stop offset="100%" stopColor="#8a8a8a" />
-            </linearGradient>
-          </defs>
+          <svg
+            ref={ref}
+            viewBox="0 0 200 200"
+            role="slider"
+            tabIndex={0}
+            aria-label="Bússola tática"
+            aria-valuemin={0}
+            aria-valuemax={359}
+            aria-valuenow={Math.round(shown)}
+            className="absolute inset-0 h-full w-full cursor-grab active:cursor-grabbing"
+            onPointerDown={(e) => {
+              if (!onRotate) return;
+              (e.target as Element).setPointerCapture?.(e.pointerId);
+              dragRef.current = {
+                startAngle: angleFromEvent(e.clientX, e.clientY),
+                startHeading: trueHeading,
+              };
+            }}
+            onPointerMove={(e) => {
+              const d = dragRef.current;
+              if (!d || !onRotate) return;
+              const a = angleFromEvent(e.clientX, e.clientY);
+              onRotate(norm(d.startHeading - (a - d.startAngle)));
+            }}
+            onPointerUp={() => (dragRef.current = null)}
+            onPointerCancel={() => (dragRef.current = null)}
+            onKeyDown={(e) => {
+              if (!onRotate) return;
+              if (e.key === "ArrowLeft") onRotate(norm(trueHeading - 5));
+              if (e.key === "ArrowRight") onRotate(norm(trueHeading + 5));
+              if (e.key === "Home") onReset?.();
+            }}
+          >
+            <defs>
+              <radialGradient id="dial" cx="50%" cy="38%">
+                <stop offset="0%" stopColor="#22201d" />
+                <stop offset="70%" stopColor="#141312" />
+                <stop offset="100%" stopColor="#0b0a09" />
+              </radialGradient>
+              <linearGradient id="needleN" x1="0" y1="1" x2="0" y2="0">
+                <stop offset="0%" stopColor="#8c2f16" />
+                <stop offset="100%" stopColor="#FF6B35" />
+              </linearGradient>
+              <linearGradient id="needleS" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#e6e6e6" />
+                <stop offset="100%" stopColor="#8a8a8a" />
+              </linearGradient>
+            </defs>
 
-          {/* caixa */}
-          <circle cx="100" cy="100" r="98" fill="#0d0d0c" stroke="#3E4A3D" strokeWidth="3" />
-          <circle cx="100" cy="100" r="90" fill="url(#dial)" stroke="#FF6B35" strokeOpacity="0.35" />
+            {/* caixa */}
+            <circle cx="100" cy="100" r="98" fill="#0d0d0c" stroke="#3E4A3D" strokeWidth="3" />
+            <circle
+              cx="100"
+              cy="100"
+              r="90"
+              fill="url(#dial)"
+              stroke="#FF6B35"
+              strokeOpacity="0.35"
+            />
 
-          {/* limbo rotativo */}
-          <g style={{ transform: `rotate(${-shown}deg)`, transformOrigin: "100px 100px" }}>
-            {ticks.map((t) => {
-              const len = t.major ? 12 : t.mid ? 8 : 4;
-              const a = ((t.deg - 90) * Math.PI) / 180;
-              const r1 = 88;
-              const r2 = 88 - len;
-              return (
-                <line
-                  key={t.deg}
-                  x1={100 + r1 * Math.cos(a)}
-                  y1={100 + r1 * Math.sin(a)}
-                  x2={100 + r2 * Math.cos(a)}
-                  y2={100 + r2 * Math.sin(a)}
-                  stroke={t.major ? "#FF6B35" : t.mid ? "#cfcfcf" : "#7d7d7d"}
-                  strokeWidth={t.major ? 1.6 : 0.8}
-                />
-              );
-            })}
-            {ticks
-              .filter((t) => t.major)
-              .map((t) => {
-                const p = markerAt(t.deg, 68);
+            {/* limbo rotativo */}
+            <g style={{ transform: `rotate(${-shown}deg)`, transformOrigin: "100px 100px" }}>
+              {ticks.map((t) => {
+                const len = t.major ? 12 : t.mid ? 8 : 4;
+                const a = ((t.deg - 90) * Math.PI) / 180;
+                const r1 = 88;
+                const r2 = 88 - len;
+                return (
+                  <line
+                    key={t.deg}
+                    x1={100 + r1 * Math.cos(a)}
+                    y1={100 + r1 * Math.sin(a)}
+                    x2={100 + r2 * Math.cos(a)}
+                    y2={100 + r2 * Math.sin(a)}
+                    stroke={t.major ? "#FF6B35" : t.mid ? "#cfcfcf" : "#7d7d7d"}
+                    strokeWidth={t.major ? 1.6 : 0.8}
+                  />
+                );
+              })}
+              {ticks
+                .filter((t) => t.major)
+                .map((t) => {
+                  const p = markerAt(t.deg, 68);
+                  return (
+                    <text
+                      key={`n${t.deg}`}
+                      x={p.x}
+                      y={p.y + 3}
+                      textAnchor="middle"
+                      fontSize="8"
+                      fill="#d7d3cc"
+                      className="mono"
+                      transform={`rotate(${t.deg} ${p.x} ${p.y})`}
+                    >
+                      {t.deg}
+                    </text>
+                  );
+                })}
+              {CARDINALS.map((c) => {
+                const p = markerAt(c.deg, 78);
                 return (
                   <text
-                    key={`n${t.deg}`}
+                    key={c.label}
                     x={p.x}
-                    y={p.y + 3}
+                    y={p.y + 4}
                     textAnchor="middle"
-                    fontSize="8"
-                    fill="#d7d3cc"
-                    className="mono"
-                    transform={`rotate(${t.deg} ${p.x} ${p.y})`}
+                    fontSize={c.label.length === 1 ? "13" : "9"}
+                    fontWeight="bold"
+                    fill={c.label === "N" ? "#FF6B35" : "#e8e4dd"}
+                    transform={`rotate(${c.deg} ${p.x} ${p.y})`}
                   >
-                    {t.deg}
+                    {c.label}
                   </text>
                 );
               })}
-            {CARDINALS.map((c) => {
-              const p = markerAt(c.deg, 78);
-              return (
+
+              {/* referências celestes e geográficas */}
+              <g>
+                <circle cx={sunPt.x} cy={sunPt.y} r="6" fill="#F4A261" opacity="0.9" />
+                <text x={sunPt.x} y={sunPt.y + 3} textAnchor="middle" fontSize="7" fill="#1a1a1a">
+                  ☀
+                </text>
+                <circle cx={moonPt.x} cy={moonPt.y} r="5.5" fill="#cbd5e1" opacity="0.9" />
                 <text
-                  key={c.label}
-                  x={p.x}
-                  y={p.y + 4}
-                  textAnchor="middle"
-                  fontSize={c.label.length === 1 ? "13" : "9"}
-                  fontWeight="bold"
-                  fill={c.label === "N" ? "#FF6B35" : "#e8e4dd"}
-                  transform={`rotate(${c.deg} ${p.x} ${p.y})`}
-                >
-                  {c.label}
-                </text>
-              );
-            })}
-
-            {/* referências celestes e geográficas */}
-            <g>
-              <circle cx={sunPt.x} cy={sunPt.y} r="6" fill="#F4A261" opacity="0.9" />
-              <text x={sunPt.x} y={sunPt.y + 3} textAnchor="middle" fontSize="7" fill="#1a1a1a">
-                ☀
-              </text>
-              <circle cx={moonPt.x} cy={moonPt.y} r="5.5" fill="#cbd5e1" opacity="0.9" />
-              <text x={moonPt.x} y={moonPt.y + 2.5} textAnchor="middle" fontSize="6" fill="#1a1a1a">
-                ☾
-              </text>
-              <text x={starPt.x} y={starPt.y + 3} textAnchor="middle" fontSize="9" fill="#8ecae6">
-                ✦
-              </text>
-              <text x={coastPt.x} y={coastPt.y + 3} textAnchor="middle" fontSize="8" fill="#3FA9F5">
-                ≈
-              </text>
-              {wpPt && (
-                <circle
-                  cx={wpPt.x}
-                  cy={wpPt.y}
-                  r="4"
-                  fill="none"
-                  stroke="#6BBF59"
-                  strokeWidth="2"
-                />
-              )}
-            </g>
-
-            {/* leste, nascente e poente */}
-            <g>
-              <circle cx={eastPt.x} cy={eastPt.y} r="3" fill="#FFD166" />
-              <text
-                x={eastPt.x}
-                y={eastPt.y + 10}
-                textAnchor="middle"
-                fontSize="5.5"
-                fill="#FFD166"
-                transform={`rotate(90 ${eastPt.x} ${eastPt.y})`}
-              >
-                LESTE
-              </text>
-              {sunrisePt && (
-                <text x={sunrisePt.x} y={sunrisePt.y + 3} textAnchor="middle" fontSize="7" fill="#F4A261">
-                  ↑☀
-                </text>
-              )}
-              {sunsetPt && (
-                <text x={sunsetPt.x} y={sunsetPt.y + 3} textAnchor="middle" fontSize="7" fill="#E76F51">
-                  ↓☀
-                </text>
-              )}
-            </g>
-
-            {/* vento: seta partindo da origem do vento em direção ao centro */}
-            {windOuter && windInner && (
-              <g className="wind-flow">
-                <line
-                  x1={windOuter.x}
-                  y1={windOuter.y}
-                  x2={windInner.x}
-                  y2={windInner.y}
-                  stroke="#7FD1E8"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-                <circle cx={windInner.x} cy={windInner.y} r="3" fill="#7FD1E8" />
-                <text
-                  x={windOuter.x}
-                  y={windOuter.y - 4}
+                  x={moonPt.x}
+                  y={moonPt.y + 2.5}
                   textAnchor="middle"
                   fontSize="6"
-                  fill="#7FD1E8"
+                  fill="#1a1a1a"
                 >
-                  {windSpeed != null ? formatSpeed(windSpeed) : "vento"}
+                  ☾
                 </text>
+                <text x={starPt.x} y={starPt.y + 3} textAnchor="middle" fontSize="9" fill="#8ecae6">
+                  ✦
+                </text>
+                <text
+                  x={coastPt.x}
+                  y={coastPt.y + 3}
+                  textAnchor="middle"
+                  fontSize="8"
+                  fill="#3FA9F5"
+                >
+                  ≈
+                </text>
+                {wpPt && (
+                  <circle
+                    cx={wpPt.x}
+                    cy={wpPt.y}
+                    r="4"
+                    fill="none"
+                    stroke="#6BBF59"
+                    strokeWidth="2"
+                  />
+                )}
               </g>
-            )}
 
+              {/* leste, nascente e poente */}
+              <g>
+                <circle cx={eastPt.x} cy={eastPt.y} r="3" fill="#FFD166" />
+                <text
+                  x={eastPt.x}
+                  y={eastPt.y + 10}
+                  textAnchor="middle"
+                  fontSize="5.5"
+                  fill="#FFD166"
+                  transform={`rotate(90 ${eastPt.x} ${eastPt.y})`}
+                >
+                  LESTE
+                </text>
+                {sunrisePt && (
+                  <text
+                    x={sunrisePt.x}
+                    y={sunrisePt.y + 3}
+                    textAnchor="middle"
+                    fontSize="7"
+                    fill="#F4A261"
+                  >
+                    ↑☀
+                  </text>
+                )}
+                {sunsetPt && (
+                  <text
+                    x={sunsetPt.x}
+                    y={sunsetPt.y + 3}
+                    textAnchor="middle"
+                    fontSize="7"
+                    fill="#E76F51"
+                  >
+                    ↓☀
+                  </text>
+                )}
+              </g>
 
-            {/* agulha */}
-            <polygon points="100,28 106,100 94,100" fill="url(#needleN)" />
-            <polygon points="100,172 106,100 94,100" fill="url(#needleS)" />
-          </g>
+              {/* vento: seta partindo da origem do vento em direção ao centro */}
+              {windOuter && windInner && (
+                <g className="wind-flow">
+                  <line
+                    x1={windOuter.x}
+                    y1={windOuter.y}
+                    x2={windInner.x}
+                    y2={windInner.y}
+                    stroke="#7FD1E8"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                  <circle cx={windInner.x} cy={windInner.y} r="3" fill="#7FD1E8" />
+                  <text
+                    x={windOuter.x}
+                    y={windOuter.y - 4}
+                    textAnchor="middle"
+                    fontSize="6"
+                    fill="#7FD1E8"
+                  >
+                    {windSpeed != null ? formatSpeed(windSpeed) : "vento"}
+                  </text>
+                </g>
+              )}
 
-          {/* linha de fé fixa */}
-          <line x1="100" y1="6" x2="100" y2="26" stroke="#FF6B35" strokeWidth="2.5" />
-          <polygon points="100,4 94,-4 106,-4" fill="#FF6B35" />
-          <line
-            x1="100"
-            y1="34"
-            x2="100"
-            y2="166"
-            stroke="#FF6B35"
-            strokeOpacity="0.22"
-            strokeWidth="0.8"
-          />
-          <line
-            x1="34"
-            y1="100"
-            x2="166"
-            y2="100"
-            stroke="#FF6B35"
-            strokeOpacity="0.22"
-            strokeWidth="0.8"
-          />
-        </svg>
+              {/* agulha */}
+              <polygon points="100,28 106,100 94,100" fill="url(#needleN)" />
+              <polygon points="100,172 106,100 94,100" fill="url(#needleS)" />
+            </g>
+
+            {/* linha de fé fixa */}
+            <line x1="100" y1="6" x2="100" y2="26" stroke="#FF6B35" strokeWidth="2.5" />
+            <polygon points="100,4 94,-4 106,-4" fill="#FF6B35" />
+            <line
+              x1="100"
+              y1="34"
+              x2="100"
+              y2="166"
+              stroke="#FF6B35"
+              strokeOpacity="0.22"
+              strokeWidth="0.8"
+            />
+            <line
+              x1="34"
+              y1="100"
+              x2="166"
+              y2="100"
+              stroke="#FF6B35"
+              strokeOpacity="0.22"
+              strokeWidth="0.8"
+            />
+          </svg>
         </div>
 
         <button
@@ -487,7 +514,6 @@ export default function CompassRose({
         </div>
       </div>
 
-
       <div className="flex flex-wrap items-center justify-center gap-2">
         <button
           type="button"
@@ -519,9 +545,7 @@ export default function CompassRose({
         <Cell
           icon={<Thermometer className="h-3.5 w-3.5" />}
           label="Temperatura"
-          value={
-            weather?.temperature != null ? `${formatNumber(weather.temperature, 1)} °C` : "—"
-          }
+          value={weather?.temperature != null ? `${formatNumber(weather.temperature, 1)} °C` : "—"}
           hint={
             weather
               ? `${weather.condition}${

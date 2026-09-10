@@ -153,12 +153,10 @@ export const pushAll = createServerFn({ method: "POST" })
       if (error) throw new Error(error.message);
     }
     if (data.checklist.length) {
-      const { error } = await context.supabase
-        .from("checklist_state")
-        .upsert(
-          data.checklist.map((c) => ({ ...c, user_id: uid })),
-          { onConflict: "user_id,key" },
-        );
+      const { error } = await context.supabase.from("checklist_state").upsert(
+        data.checklist.map((c) => ({ ...c, user_id: uid })),
+        { onConflict: "user_id,key" },
+      );
       if (error) throw new Error(error.message);
     }
     return {

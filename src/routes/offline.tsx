@@ -177,6 +177,37 @@ function OfflinePage() {
     void refresh();
   };
 
+  const printManual = () => {
+    const w = window.open("", "_blank");
+    if (!w) {
+      toast.error("Libere as janelas para gerar o PDF");
+      return;
+    }
+    const esc = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const body = MANUAL.map(
+      (e) =>
+        `<section><h2>${esc(e.title)}</h2><p><em>${esc(e.summary)}</em></p>` +
+        `<img src="${new URL(e.image, window.location.origin).href}" alt="${esc(e.imageAlt)}" />` +
+        `<pre>${esc(e.body)}</pre>` +
+        (e.checklist?.length
+          ? `<ul>${e.checklist.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>`
+          : "") +
+        `</section>`,
+    ).join("");
+    w.document.write(
+      `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Manual de Sobrevivência</title>` +
+        `<style>body{font-family:system-ui,sans-serif;margin:28px;color:#111}h1{color:#c2410c}` +
+        `section{page-break-after:always}img{max-width:100%;border-radius:8px}` +
+        `pre{white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:1.5}</style></head>` +
+        `<body><h1>Manual de Sobrevivência</h1>${body}</body></html>`,
+    );
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 600);
+  };
+
+
   return (
     <div className="container max-w-2xl mx-auto p-4 md:p-8 space-y-6">
       <header>

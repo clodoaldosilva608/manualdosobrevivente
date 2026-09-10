@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Download, Trash2, Map as MapIcon, BookOpen } from "lucide-react";
+import { Download, Trash2, Map as MapIcon, BookOpen, FileText } from "lucide-react";
 import {
   tileCountForBbox,
   downloadAreaTiles,
@@ -177,6 +177,37 @@ function OfflinePage() {
     void refresh();
   };
 
+  const printManual = () => {
+    const w = window.open("", "_blank");
+    if (!w) {
+      toast.error("Libere as janelas para gerar o PDF");
+      return;
+    }
+    const esc = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const body = MANUAL.map(
+      (e) =>
+        `<section><h2>${esc(e.title)}</h2><p><em>${esc(e.summary)}</em></p>` +
+        `<img src="${new URL(e.image, window.location.origin).href}" alt="${esc(e.imageAlt)}" />` +
+        `<pre>${esc(e.body)}</pre>` +
+        (e.checklist?.length
+          ? `<ul>${e.checklist.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>`
+          : "") +
+        `</section>`,
+    ).join("");
+    w.document.write(
+      `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Manual de Sobrevivência</title>` +
+        `<style>body{font-family:system-ui,sans-serif;margin:28px;color:#111}h1{color:#c2410c}` +
+        `section{page-break-after:always}img{max-width:100%;border-radius:8px}` +
+        `pre{white-space:pre-wrap;font-family:inherit;font-size:14px;line-height:1.5}</style></head>` +
+        `<body><h1>Manual de Sobrevivência</h1>${body}</body></html>`,
+    );
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 600);
+  };
+
+
   return (
     <div className="container max-w-2xl mx-auto p-4 md:p-8 space-y-6">
       <header>
@@ -318,15 +349,19 @@ function OfflinePage() {
           <Button onClick={downloadManual} disabled={manualBusy} className="w-full glove-tap">
             <Download className="h-4 w-4" /> Baixar manual completo
           </Button>
+          <Button variant="outline" onClick={printManual} className="w-full glove-tap">
+            <FileText className="h-4 w-4" /> Gerar PDF do manual
+          </Button>
           <Button
             variant="secondary"
             onClick={removeManual}
             disabled={manualBusy || manualSaved.length === 0}
-            className="w-full glove-tap"
+            className="w-full glove-tap sm:col-span-2"
           >
             <Trash2 className="h-4 w-4" /> Remover manual offline
           </Button>
         </div>
+
         <ul className="mono text-[11px] text-muted-foreground space-y-1">
           {MANUAL.map((e) => (
             <li key={e.slug} className="flex items-center justify-between gap-2">

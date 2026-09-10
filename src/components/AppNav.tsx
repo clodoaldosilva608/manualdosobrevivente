@@ -1,20 +1,31 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Map, BookOpen, Backpack, Siren, Settings, LogIn, DownloadCloud } from "lucide-react";
+import {
+  Map,
+  BookOpen,
+  Backpack,
+  Siren,
+  Settings,
+  LogIn,
+  DownloadCloud,
+  LayoutDashboard,
+} from "lucide-react";
 
 const items = [
   { to: "/", label: "Mapa", icon: Map },
   { to: "/manual", label: "Manual", icon: BookOpen },
   { to: "/inventory", label: "Mochila", icon: Backpack },
   { to: "/sos", label: "SOS", icon: Siren },
+  { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
   { to: "/offline", label: "Offline", icon: DownloadCloud },
   { to: "/settings", label: "Ajustes", icon: Settings },
 ] as const;
+
 
 export function AppNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 hud-panel border-t md:top-0 md:bottom-auto md:border-t-0 md:border-b">
-      <ul className="flex items-stretch justify-around md:justify-start md:gap-1 md:px-3">
+      <ul className="flex items-stretch justify-around overflow-x-auto md:justify-start md:gap-1 md:px-3">
         <li className="hidden md:flex items-center pr-3 mr-2 border-r border-border">
           <span className="mono text-tactical-orange text-sm font-bold tracking-wider">
             TACTICAL/GIS

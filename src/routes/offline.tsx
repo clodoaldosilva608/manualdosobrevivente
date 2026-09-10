@@ -318,15 +318,19 @@ function OfflinePage() {
           <Button onClick={downloadManual} disabled={manualBusy} className="w-full glove-tap">
             <Download className="h-4 w-4" /> Baixar manual completo
           </Button>
+          <Button variant="outline" onClick={printManual} className="w-full glove-tap">
+            <FileText className="h-4 w-4" /> Gerar PDF do manual
+          </Button>
           <Button
             variant="secondary"
             onClick={removeManual}
             disabled={manualBusy || manualSaved.length === 0}
-            className="w-full glove-tap"
+            className="w-full glove-tap sm:col-span-2"
           >
             <Trash2 className="h-4 w-4" /> Remover manual offline
           </Button>
         </div>
+
         <ul className="mono text-[11px] text-muted-foreground space-y-1">
           {MANUAL.map((e) => (
             <li key={e.slug} className="flex items-center justify-between gap-2">

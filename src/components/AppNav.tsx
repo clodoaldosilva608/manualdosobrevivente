@@ -1,14 +1,25 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Map, BookOpen, Backpack, Siren, Settings, LogIn, DownloadCloud } from "lucide-react";
+import {
+  Map,
+  BookOpen,
+  Backpack,
+  Siren,
+  Settings,
+  LogIn,
+  DownloadCloud,
+  LayoutDashboard,
+} from "lucide-react";
 
 const items = [
   { to: "/", label: "Mapa", icon: Map },
   { to: "/manual", label: "Manual", icon: BookOpen },
   { to: "/inventory", label: "Mochila", icon: Backpack },
   { to: "/sos", label: "SOS", icon: Siren },
+  { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
   { to: "/offline", label: "Offline", icon: DownloadCloud },
   { to: "/settings", label: "Ajustes", icon: Settings },
 ] as const;
+
 
 export function AppNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Siren, Flashlight, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDD, formatDMS, formatMGRS } from "@/lib/coords";
+import { formatDecimalDegrees } from "@/lib/format";
 import { toast } from "sonner";
 import { ShareSheet } from "@/components/ShareSheet";
 

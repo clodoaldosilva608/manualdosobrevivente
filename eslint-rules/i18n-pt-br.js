@@ -89,6 +89,7 @@ const ALLOW = new Set([
   "fire",
   "knots",
   "navigation",
+  "altitude",
 ]);
 
 const BAD =

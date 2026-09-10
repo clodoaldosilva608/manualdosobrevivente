@@ -20,6 +20,7 @@ const ALLOW = new Set([
   "bug",
   "out",
   "bag",
+  "altitude",
 ]);
 
 function visibleText(html: string): string {

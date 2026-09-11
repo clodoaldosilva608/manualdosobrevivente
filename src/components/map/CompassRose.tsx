@@ -31,6 +31,8 @@ function norm(deg: number) {
   return ((deg % 360) + 360) % 360;
 }
 
+export type CompassVariant = "mini" | "panel" | "full";
+
 export interface CompassRoseProps {
   heading: number;
   declination: number;
@@ -38,6 +40,7 @@ export interface CompassRoseProps {
   altitude?: number | null;
   bearingToWaypoint?: number | null;
   waypointLabel?: string | null;
+  variant?: CompassVariant;
   onRotate?: (heading: number) => void;
   onReset?: () => void;
 }
@@ -49,6 +52,7 @@ export default function CompassRose({
   altitude,
   bearingToWaypoint,
   waypointLabel,
+  variant = "full",
   onRotate,
   onReset,
 }: CompassRoseProps) {
@@ -185,10 +189,15 @@ export default function CompassRose({
   const tiltTotal = tilt ? Math.min(90, Math.hypot(tilt.beta, tilt.gamma)) : null;
   const leveled = tiltTotal != null && tiltTotal < 2.5;
 
+  const isMini = variant === "mini";
+  const isFull = variant === "full";
+
   return (
-    <div className="flex flex-col items-center gap-4 w-full">
+    <div className={`flex flex-col items-center w-full ${isMini ? "gap-1" : "gap-4"}`}>
       <div
-        className="relative w-full max-w-[min(82vw,22rem)] aspect-square select-none touch-none"
+        className={`relative w-full aspect-square select-none touch-none ${
+          isMini ? "max-w-[5.5rem]" : isFull ? "max-w-[min(82vw,22rem)]" : "max-w-[min(52vw,13rem)]"
+        }`}
         style={{ perspective: "900px" }}
       >
         <div
@@ -447,171 +456,190 @@ export default function CompassRose({
           </svg>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onReset?.()}
-          onDoubleClick={() => setMagnetic((m) => !m)}
-          title="Tocar: alinhar ao norte · Toque duplo: alternar norte magnético"
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-16 w-16 rounded-full bg-background/90 border border-tactical-orange/60 mono text-[10px] font-bold text-tactical-orange flex flex-col items-center justify-center glove-tap"
-        >
-          <CompassIcon className="h-4 w-4" />
-          {magnetic ? "MAG" : "VERD"}
-        </button>
-      </div>
-
-      <div className="mono text-4xl font-bold text-tactical-orange leading-none">
-        {formatDegrees(shown)} <span className="text-lg">{compassPoint(shown)}</span>
-      </div>
-
-      {/* nível de bolha + nível do mar */}
-      <div className="grid grid-cols-2 gap-2 w-full">
-        <div className="rounded-md border border-border bg-background/50 p-2.5 flex flex-col items-center gap-1">
-          <div className="mono text-[10px] uppercase tracking-wider text-muted-foreground">
-            Nível de bolha
-          </div>
-          <div
-            className={`relative h-24 w-24 rounded-full border-2 ${
-              leveled ? "border-tactical-green" : "border-border"
-            } bg-background/70`}
-          >
-            <div className="absolute left-1/2 top-0 h-full w-px bg-border" />
-            <div className="absolute top-1/2 left-0 w-full h-px bg-border" />
-            <div className="absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full border border-tactical-orange/50" />
-            <div
-              className="absolute left-1/2 top-1/2 h-5 w-5 rounded-full bg-tactical-orange/80 shadow-lg transition-transform duration-150 ease-out"
-              style={{
-                transform: `translate(calc(-50% + ${bubbleX * 38}px), calc(-50% + ${bubbleY * 38}px))`,
-              }}
-            />
-          </div>
-          <div className="mono text-[10px] text-muted-foreground">
-            {tiltTotal != null
-              ? `Inclinação ${formatDegrees(tiltTotal)}${leveled ? " · nivelado" : ""}`
-              : "Ative o sensor do aparelho"}
-          </div>
-        </div>
-
-        <div className="rounded-md border border-border bg-background/50 p-2.5 flex flex-col gap-1">
-          <div className="mono text-[10px] uppercase tracking-wider text-muted-foreground">
-            Nível do mar
-          </div>
-          <div className="relative flex-1 min-h-[6rem] overflow-hidden rounded bg-background/70 border border-border">
-            <div
-              className="absolute left-0 right-0 bottom-0 bg-tactical-blue/25"
-              style={{
-                height: `${Math.max(8, Math.min(92, 50 - (altitude ?? 0) / 40))}%`,
-              }}
-            >
-              <div className="sea-wave absolute left-0 top-0 h-1.5 w-[200%] bg-tactical-blue/60" />
-            </div>
-            <div className="absolute left-1 right-1 top-1 mono text-[10px] text-tactical-orange font-bold">
-              {altitude != null ? `${formatNumber(altitude, 0)} m` : "—"}
-            </div>
-            <div className="absolute left-1 bottom-1 mono text-[9px] text-muted-foreground">
-              acima do mar
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        <button
-          type="button"
-          onClick={() => setMagnetic((m) => !m)}
-          className="glove-tap rounded-md border border-border px-3 py-1 mono text-[11px] uppercase tracking-widest"
-        >
-          {magnetic ? "Norte magnético" : "Norte verdadeiro"}
-        </button>
-        {!sensorOn && (
+        {!isMini && (
           <button
             type="button"
-            onClick={enableSensor}
-            className="glove-tap rounded-md border border-tactical-orange/60 text-tactical-orange px-3 py-1 mono text-[11px] uppercase tracking-widest"
+            onClick={() => onReset?.()}
+            onDoubleClick={() => setMagnetic((m) => !m)}
+            title="Tocar: alinhar ao norte · Toque duplo: alternar norte magnético"
+            className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-background/90 border border-tactical-orange/60 mono text-[10px] font-bold text-tactical-orange flex flex-col items-center justify-center glove-tap ${
+              isFull ? "h-16 w-16" : "h-12 w-12"
+            }`}
           >
-            Usar sensor do aparelho
+            <CompassIcon className="h-4 w-4" />
+            {magnetic ? "MAG" : "VERD"}
           </button>
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-2 w-full mono">
-        <Cell label="Rumo verdadeiro" value={formatDegrees(trueHeading)} />
-        <Cell label="Rumo magnético" value={formatDegrees(norm(trueHeading - declination))} />
-        <Cell label="Declinação" value={formatSignedDegrees(declination)} />
-        <Cell
-          label="Azimute p/ waypoint"
-          value={bearingToWaypoint != null ? formatDegrees(bearingToWaypoint) : "—"}
-          hint={waypointLabel ?? undefined}
-        />
-        <Cell
-          icon={<Thermometer className="h-3.5 w-3.5" />}
-          label="Temperatura"
-          value={weather?.temperature != null ? `${formatNumber(weather.temperature, 1)} °C` : "—"}
-          hint={
-            weather
-              ? `${weather.condition}${
-                  weather.apparent != null
-                    ? ` · sensação ${formatNumber(weather.apparent, 1)} °C`
-                    : ""
-                }`
-              : "Sem dados de tempo"
-          }
-        />
-        <Cell
-          icon={<Wind className="h-3.5 w-3.5" />}
-          label="Vento"
-          value={weather?.windSpeed != null ? formatSpeed(weather.windSpeed) : "—"}
-          hint={
-            weather?.windDirection != null
-              ? `de ${compassPoint(weather.windDirection)} (${formatDegrees(weather.windDirection)})`
-              : undefined
-          }
-        />
-        <Cell
-          icon={<Sun className="h-3.5 w-3.5" />}
-          label={celestial.isDay ? "Dia" : "Noite"}
-          value={celestial.phaseLabel}
-          hint={`Nascer ${formatTime(celestial.sunrise ?? now)} · Pôr ${formatTime(
-            celestial.sunset ?? now,
-          )}`}
-        />
-        <Cell
-          icon={<Sun className="h-3.5 w-3.5" />}
-          label="Sol"
-          value={
-            celestial.sunAzimuth != null
-              ? `${formatDegrees(celestial.sunAzimuth)} ${compassPoint(celestial.sunAzimuth)}`
-              : "—"
-          }
-          hint={`Altura ${formatDegrees(celestial.sunAltitude)} · crepúsculo ${formatTime(
-            celestial.dusk ?? now,
-          )}`}
-        />
-        <Cell
-          icon={<Moon className="h-3.5 w-3.5" />}
-          label="Lua"
-          value={`${formatDegrees(celestial.moonAzimuth)} ${compassPoint(celestial.moonAzimuth)}`}
-          hint={`${celestial.moonPhaseLabel} · ${formatPercent(celestial.moonIllumination)} iluminada · ${
-            celestial.moonUp ? "acima do horizonte" : "abaixo do horizonte"
-          }`}
-        />
-        <Cell
-          icon={<Star className="h-3.5 w-3.5" />}
-          label="Referência estelar"
-          value={celestial.starName}
-          hint={celestial.starHint}
-        />
-        <Cell
-          icon={<Waves className="h-3.5 w-3.5" />}
-          label="Sentido do mar"
-          value={`${coast.point} (${formatDegrees(coast.bearing)})`}
-          hint={`Litoral a cerca de ${formatDistance(coast.distanceMeters)}`}
-        />
-        <Cell
-          label="Hemisfério"
-          value={celestial.hemisphereLabel}
-          hint={`${formatDecimalDegrees(lat)}, ${formatDecimalDegrees(lng)}`}
-        />
+      <div
+        className={`mono font-bold text-tactical-orange leading-none ${
+          isMini ? "text-sm" : isFull ? "text-4xl" : "text-2xl"
+        }`}
+      >
+        {formatDegrees(shown)}{" "}
+        <span className={isMini ? "text-[10px]" : isFull ? "text-lg" : "text-sm"}>
+          {compassPoint(shown)}
+        </span>
       </div>
+
+      {!isMini && (
+        <>
+          {/* nível de bolha + nível do mar */}
+          <div className="grid grid-cols-2 gap-2 w-full">
+            <div className="rounded-md border border-border bg-background/50 p-2.5 flex flex-col items-center gap-1">
+              <div className="mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                Nível de bolha
+              </div>
+              <div
+                className={`relative h-24 w-24 rounded-full border-2 ${
+                  leveled ? "border-tactical-green" : "border-border"
+                } bg-background/70`}
+              >
+                <div className="absolute left-1/2 top-0 h-full w-px bg-border" />
+                <div className="absolute top-1/2 left-0 w-full h-px bg-border" />
+                <div className="absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full border border-tactical-orange/50" />
+                <div
+                  className="absolute left-1/2 top-1/2 h-5 w-5 rounded-full bg-tactical-orange/80 shadow-lg transition-transform duration-150 ease-out"
+                  style={{
+                    transform: `translate(calc(-50% + ${bubbleX * 38}px), calc(-50% + ${bubbleY * 38}px))`,
+                  }}
+                />
+              </div>
+              <div className="mono text-[10px] text-muted-foreground">
+                {tiltTotal != null
+                  ? `Inclinação ${formatDegrees(tiltTotal)}${leveled ? " · nivelado" : ""}`
+                  : "Ative o sensor do aparelho"}
+              </div>
+            </div>
+
+            <div className="rounded-md border border-border bg-background/50 p-2.5 flex flex-col gap-1">
+              <div className="mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                Nível do mar
+              </div>
+              <div className="relative flex-1 min-h-[6rem] overflow-hidden rounded bg-background/70 border border-border">
+                <div
+                  className="absolute left-0 right-0 bottom-0 bg-tactical-blue/25"
+                  style={{
+                    height: `${Math.max(8, Math.min(92, 50 - (altitude ?? 0) / 40))}%`,
+                  }}
+                >
+                  <div className="sea-wave absolute left-0 top-0 h-1.5 w-[200%] bg-tactical-blue/60" />
+                </div>
+                <div className="absolute left-1 right-1 top-1 mono text-[10px] text-tactical-orange font-bold">
+                  {altitude != null ? `${formatNumber(altitude, 0)} m` : "—"}
+                </div>
+                <div className="absolute left-1 bottom-1 mono text-[9px] text-muted-foreground">
+                  acima do mar
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => setMagnetic((m) => !m)}
+              className="glove-tap rounded-md border border-border px-3 py-1 mono text-[11px] uppercase tracking-widest"
+            >
+              {magnetic ? "Norte magnético" : "Norte verdadeiro"}
+            </button>
+            {!sensorOn && (
+              <button
+                type="button"
+                onClick={enableSensor}
+                className="glove-tap rounded-md border border-tactical-orange/60 text-tactical-orange px-3 py-1 mono text-[11px] uppercase tracking-widest"
+              >
+                Usar sensor do aparelho
+              </button>
+            )}
+          </div>
+
+          <div
+            className={`grid grid-cols-2 gap-2 w-full mono ${isFull ? "" : "max-h-40 overflow-y-auto"}`}
+          >
+            <Cell label="Rumo verdadeiro" value={formatDegrees(trueHeading)} />
+            <Cell label="Rumo magnético" value={formatDegrees(norm(trueHeading - declination))} />
+            <Cell label="Declinação" value={formatSignedDegrees(declination)} />
+            <Cell
+              label="Azimute p/ waypoint"
+              value={bearingToWaypoint != null ? formatDegrees(bearingToWaypoint) : "—"}
+              hint={waypointLabel ?? undefined}
+            />
+            <Cell
+              icon={<Thermometer className="h-3.5 w-3.5" />}
+              label="Temperatura"
+              value={
+                weather?.temperature != null ? `${formatNumber(weather.temperature, 1)} °C` : "—"
+              }
+              hint={
+                weather
+                  ? `${weather.condition}${
+                      weather.apparent != null
+                        ? ` · sensação ${formatNumber(weather.apparent, 1)} °C`
+                        : ""
+                    }`
+                  : "Sem dados de tempo"
+              }
+            />
+            <Cell
+              icon={<Wind className="h-3.5 w-3.5" />}
+              label="Vento"
+              value={weather?.windSpeed != null ? formatSpeed(weather.windSpeed) : "—"}
+              hint={
+                weather?.windDirection != null
+                  ? `de ${compassPoint(weather.windDirection)} (${formatDegrees(weather.windDirection)})`
+                  : undefined
+              }
+            />
+            <Cell
+              icon={<Sun className="h-3.5 w-3.5" />}
+              label={celestial.isDay ? "Dia" : "Noite"}
+              value={celestial.phaseLabel}
+              hint={`Nascer ${formatTime(celestial.sunrise ?? now)} · Pôr ${formatTime(
+                celestial.sunset ?? now,
+              )}`}
+            />
+            <Cell
+              icon={<Sun className="h-3.5 w-3.5" />}
+              label="Sol"
+              value={
+                celestial.sunAzimuth != null
+                  ? `${formatDegrees(celestial.sunAzimuth)} ${compassPoint(celestial.sunAzimuth)}`
+                  : "—"
+              }
+              hint={`Altura ${formatDegrees(celestial.sunAltitude)} · crepúsculo ${formatTime(
+                celestial.dusk ?? now,
+              )}`}
+            />
+            <Cell
+              icon={<Moon className="h-3.5 w-3.5" />}
+              label="Lua"
+              value={`${formatDegrees(celestial.moonAzimuth)} ${compassPoint(celestial.moonAzimuth)}`}
+              hint={`${celestial.moonPhaseLabel} · ${formatPercent(celestial.moonIllumination)} iluminada · ${
+                celestial.moonUp ? "acima do horizonte" : "abaixo do horizonte"
+              }`}
+            />
+            <Cell
+              icon={<Star className="h-3.5 w-3.5" />}
+              label="Referência estelar"
+              value={celestial.starName}
+              hint={celestial.starHint}
+            />
+            <Cell
+              icon={<Waves className="h-3.5 w-3.5" />}
+              label="Sentido do mar"
+              value={`${coast.point} (${formatDegrees(coast.bearing)})`}
+              hint={`Litoral a cerca de ${formatDistance(coast.distanceMeters)}`}
+            />
+            <Cell
+              label="Hemisfério"
+              value={celestial.hemisphereLabel}
+              hint={`${formatDecimalDegrees(lat)}, ${formatDecimalDegrees(lng)}`}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 }

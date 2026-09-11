@@ -107,9 +107,22 @@ export default function MapShell() {
   const [tool, setTool] = useState<Tool>("none");
   const [drawCoords, setDrawCoords] = useState<[number, number][]>([]);
   const [waypoints, setWaypoints] = useState<LocalWaypoint[]>([]);
-  const [openSheet, setOpenSheet] = useState<
-    null | "layers" | "goto" | "measure" | "markers" | "compass"
-  >(null);
+  const [openSheet, setOpenSheet] = useState<null | "layers" | "goto" | "measure" | "markers">(
+    null,
+  );
+  const [compassMode, setCompassModeState] = useState<"mini" | "panel" | "full">("mini");
+  useEffect(() => {
+    const saved = localStorage.getItem("tgis:compass-mode");
+    if (saved === "mini" || saved === "panel" || saved === "full") setCompassModeState(saved);
+  }, []);
+  const setCompassMode = useCallback((m: "mini" | "panel" | "full") => {
+    setCompassModeState(m);
+    try {
+      localStorage.setItem("tgis:compass-mode", m);
+    } catch {
+      /* armazenamento indisponível */
+    }
+  }, []);
   const [gotoInput, setGotoInput] = useState("");
   const [newMarker, setNewMarker] = useState<{
     lng: number;

@@ -483,7 +483,8 @@ export default function CompassRose({
         </span>
       </div>
 
-      {isMini && null}
+      {!isMini && (
+        <>
 
       {/* nível de bolha + nível do mar */}
       <div className="grid grid-cols-2 gap-2 w-full">

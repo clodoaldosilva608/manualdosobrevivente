@@ -556,7 +556,9 @@ export default function CompassRose({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-2 w-full mono">
+      <div
+        className={`grid grid-cols-2 gap-2 w-full mono ${isFull ? "" : "max-h-40 overflow-y-auto"}`}
+      >
         <Cell label="Rumo verdadeiro" value={formatDegrees(trueHeading)} />
         <Cell label="Rumo magnético" value={formatDegrees(norm(trueHeading - declination))} />
         <Cell label="Declinação" value={formatSignedDegrees(declination)} />

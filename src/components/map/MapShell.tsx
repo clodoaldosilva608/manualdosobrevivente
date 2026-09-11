@@ -872,17 +872,83 @@ export default function MapShell() {
         </SheetContent>
       </Sheet>
 
-      <Sheet open={openSheet === "compass"} onOpenChange={(o) => !o && setOpenSheet(null)}>
-        <SheetContent side="bottom" className="bg-card border-border max-h-[92vh] overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle className="mono text-tactical-orange">BÚSSOLA</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4 flex justify-center">
+      {/* Bússola flutuante sobre o mapa */}
+      <div
+        className={
+          compassMode === "full"
+            ? "absolute inset-0 z-30 flex items-start justify-center bg-background/70 backdrop-blur-sm overflow-y-auto p-3 pb-24"
+            : "absolute right-2 bottom-24 md:bottom-6 z-30"
+        }
+      >
+        <div
+          className={
+            compassMode === "mini"
+              ? "hud-panel rounded-full p-1.5 shadow-lg"
+              : compassMode === "panel"
+                ? "hud-panel rounded-lg p-2 w-[58vw] max-w-[16rem] shadow-xl"
+                : "hud-panel rounded-lg p-3 w-full max-w-md shadow-xl"
+          }
+        >
+          <div className="flex items-center justify-between gap-1 mb-1">
+            <span className="mono text-[10px] uppercase tracking-widest text-tactical-orange">
+              {compassMode === "mini" ? "" : "Bússola"}
+            </span>
+            <div className="flex items-center gap-1">
+              {compassMode !== "mini" && (
+                <button
+                  type="button"
+                  aria-label="Minimizar bússola"
+                  className="glove-tap rounded border border-border p-1 text-muted-foreground"
+                  onClick={() => setCompassMode("mini")}
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                </button>
+              )}
+              {compassMode === "panel" && (
+                <button
+                  type="button"
+                  aria-label="Ver bússola em tela cheia"
+                  className="glove-tap rounded border border-tactical-orange/60 p-1 text-tactical-orange"
+                  onClick={() => setCompassMode("full")}
+                >
+                  <Maximize2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+              {compassMode === "full" && (
+                <button
+                  type="button"
+                  aria-label="Reduzir bússola"
+                  className="glove-tap rounded border border-tactical-orange/60 p-1 text-tactical-orange"
+                  onClick={() => setCompassMode("panel")}
+                >
+                  <Minimize2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            aria-label="Abrir bússola"
+            className={compassMode === "mini" ? "block glove-tap" : "hidden"}
+            onClick={() => setCompassMode("panel")}
+          >
             <CompassRose
               heading={heading}
               declination={decl}
               center={center}
               altitude={userPos?.alt ?? null}
+              variant="mini"
+            />
+          </button>
+
+          {compassMode !== "mini" && (
+            <CompassRose
+              heading={heading}
+              declination={decl}
+              center={center}
+              altitude={userPos?.alt ?? null}
+              variant={compassMode}
               bearingToWaypoint={
                 waypoints[0]
                   ? bearingDeg(center, [waypoints[0].longitude, waypoints[0].latitude])
@@ -892,9 +958,9 @@ export default function MapShell() {
               onRotate={(h) => mapRef.current?.rotateTo(h, { duration: 0 })}
               onReset={() => mapRef.current?.rotateTo(0, { duration: 400 })}
             />
-          </div>
-        </SheetContent>
-      </Sheet>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

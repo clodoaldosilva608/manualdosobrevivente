@@ -11,6 +11,9 @@ import {
   Navigation2,
   X,
   Trash2,
+  Maximize2,
+  Minimize2,
+  Minus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";

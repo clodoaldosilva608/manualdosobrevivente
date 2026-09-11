@@ -31,6 +31,8 @@ function norm(deg: number) {
   return ((deg % 360) + 360) % 360;
 }
 
+export type CompassVariant = "mini" | "panel" | "full";
+
 export interface CompassRoseProps {
   heading: number;
   declination: number;
@@ -38,6 +40,7 @@ export interface CompassRoseProps {
   altitude?: number | null;
   bearingToWaypoint?: number | null;
   waypointLabel?: string | null;
+  variant?: CompassVariant;
   onRotate?: (heading: number) => void;
   onReset?: () => void;
 }
@@ -49,6 +52,7 @@ export default function CompassRose({
   altitude,
   bearingToWaypoint,
   waypointLabel,
+  variant = "full",
   onRotate,
   onReset,
 }: CompassRoseProps) {

@@ -456,21 +456,34 @@ export default function CompassRose({
           </svg>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onReset?.()}
-          onDoubleClick={() => setMagnetic((m) => !m)}
-          title="Tocar: alinhar ao norte · Toque duplo: alternar norte magnético"
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-16 w-16 rounded-full bg-background/90 border border-tactical-orange/60 mono text-[10px] font-bold text-tactical-orange flex flex-col items-center justify-center glove-tap"
-        >
-          <CompassIcon className="h-4 w-4" />
-          {magnetic ? "MAG" : "VERD"}
-        </button>
+        {!isMini && (
+          <button
+            type="button"
+            onClick={() => onReset?.()}
+            onDoubleClick={() => setMagnetic((m) => !m)}
+            title="Tocar: alinhar ao norte · Toque duplo: alternar norte magnético"
+            className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-background/90 border border-tactical-orange/60 mono text-[10px] font-bold text-tactical-orange flex flex-col items-center justify-center glove-tap ${
+              isFull ? "h-16 w-16" : "h-12 w-12"
+            }`}
+          >
+            <CompassIcon className="h-4 w-4" />
+            {magnetic ? "MAG" : "VERD"}
+          </button>
+        )}
       </div>
 
-      <div className="mono text-4xl font-bold text-tactical-orange leading-none">
-        {formatDegrees(shown)} <span className="text-lg">{compassPoint(shown)}</span>
+      <div
+        className={`mono font-bold text-tactical-orange leading-none ${
+          isMini ? "text-sm" : isFull ? "text-4xl" : "text-2xl"
+        }`}
+      >
+        {formatDegrees(shown)}{" "}
+        <span className={isMini ? "text-[10px]" : isFull ? "text-lg" : "text-sm"}>
+          {compassPoint(shown)}
+        </span>
       </div>
+
+      {isMini && null}
 
       {/* nível de bolha + nível do mar */}
       <div className="grid grid-cols-2 gap-2 w-full">

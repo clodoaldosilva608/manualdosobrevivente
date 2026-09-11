@@ -189,10 +189,15 @@ export default function CompassRose({
   const tiltTotal = tilt ? Math.min(90, Math.hypot(tilt.beta, tilt.gamma)) : null;
   const leveled = tiltTotal != null && tiltTotal < 2.5;
 
+  const isMini = variant === "mini";
+  const isFull = variant === "full";
+
   return (
-    <div className="flex flex-col items-center gap-4 w-full">
+    <div className={`flex flex-col items-center w-full ${isMini ? "gap-1" : "gap-4"}`}>
       <div
-        className="relative w-full max-w-[min(82vw,22rem)] aspect-square select-none touch-none"
+        className={`relative w-full aspect-square select-none touch-none ${
+          isMini ? "max-w-[5.5rem]" : isFull ? "max-w-[min(82vw,22rem)]" : "max-w-[min(52vw,13rem)]"
+        }`}
         style={{ perspective: "900px" }}
       >
         <div

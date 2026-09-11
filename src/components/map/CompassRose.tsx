@@ -637,6 +637,8 @@ export default function CompassRose({
           hint={`${formatDecimalDegrees(lat)}, ${formatDecimalDegrees(lng)}`}
         />
       </div>
+        </>
+      )}
     </div>
   );
 }

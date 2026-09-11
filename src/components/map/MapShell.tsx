@@ -651,7 +651,12 @@ export default function MapShell() {
             );
           }}
         />
-        <RailBtn icon={Compass} label="Bússola" onClick={() => setOpenSheet("compass")} />
+        <RailBtn
+          icon={Compass}
+          label="Bússola"
+          active={compassMode !== "mini"}
+          onClick={() => setCompassMode(compassMode === "mini" ? "panel" : "mini")}
+        />
       </div>
 
       {/* Leitura da ferramenta ativa */}

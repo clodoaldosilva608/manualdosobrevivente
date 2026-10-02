@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_preferences: {
+        Row: {
+          coord_format: string
+          north_ref: string
+          units: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          coord_format?: string
+          north_ref?: string
+          units?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          coord_format?: string
+          north_ref?: string
+          units?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       checklist_state: {
         Row: {
           done: boolean
@@ -140,6 +164,42 @@ export type Database = {
           id?: string
           units?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      report_delivery_history: {
+        Row: {
+          checklist_count: number
+          error_message: string | null
+          gear_count: number
+          id: string
+          recipient_email: string
+          sent_at: string
+          status: string
+          user_id: string
+          waypoint_count: number
+        }
+        Insert: {
+          checklist_count?: number
+          error_message?: string | null
+          gear_count?: number
+          id?: string
+          recipient_email: string
+          sent_at?: string
+          status: string
+          user_id: string
+          waypoint_count?: number
+        }
+        Update: {
+          checklist_count?: number
+          error_message?: string | null
+          gear_count?: number
+          id?: string
+          recipient_email?: string
+          sent_at?: string
+          status?: string
+          user_id?: string
+          waypoint_count?: number
         }
         Relationships: []
       }
@@ -275,6 +335,42 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      weekly_report_settings: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          last_sent_at: string | null
+          local_time: string
+          recipient_email: string
+          timezone: string
+          updated_at: string
+          user_id: string
+          weekday: number
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          last_sent_at?: string | null
+          local_time?: string
+          recipient_email: string
+          timezone?: string
+          updated_at?: string
+          user_id: string
+          weekday?: number
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          last_sent_at?: string | null
+          local_time?: string
+          recipient_email?: string
+          timezone?: string
+          updated_at?: string
+          user_id?: string
+          weekday?: number
         }
         Relationships: []
       }

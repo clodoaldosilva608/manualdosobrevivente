@@ -132,6 +132,13 @@ const BulkInput = z.object({
   checklist: z
     .array(z.object({ key: z.string().min(1).max(120), done: z.boolean(), updated_at: z.string() }))
     .max(2000),
+  preferences: z
+    .object({
+      units: z.enum(["metric", "nautical"]),
+      coord_format: z.enum(["DD", "DMS", "MGRS"]),
+      north_ref: z.enum(["true", "magnetic"]),
+    })
+    .optional(),
 });
 
 /** Envia tudo o que está no aparelho para a nuvem (o mais recente vence). */
@@ -159,6 +166,12 @@ export const pushAll = createServerFn({ method: "POST" })
       );
       if (error) throw new Error(error.message);
     }
+    if (data.preferences) {
+      const { error } = await context.supabase
+        .from("app_preferences")
+        .upsert({ ...data.preferences, user_id: uid }, { onConflict: "user_id" });
+      if (error) throw new Error(error.message);
+    }
     return {
       waypoints: data.waypoints.length,
       gear: data.gear.length,
@@ -170,13 +183,20 @@ export const pushAll = createServerFn({ method: "POST" })
 export const pullAll = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const [wp, gi, cs] = await Promise.all([
+    const [wp, gi, cs, preferences] = await Promise.all([
       context.supabase.from("waypoints").select("*"),
       context.supabase.from("gear_items").select("*"),
       context.supabase.from("checklist_state").select("*"),
+      context.supabase.from("app_preferences").select("*").maybeSingle(),
     ]);
     if (wp.error) throw new Error(wp.error.message);
     if (gi.error) throw new Error(gi.error.message);
     if (cs.error) throw new Error(cs.error.message);
-    return { waypoints: wp.data ?? [], gear: gi.data ?? [], checklist: cs.data ?? [] };
+    if (preferences.error) throw new Error(preferences.error.message);
+    return {
+      waypoints: wp.data ?? [],
+      gear: gi.data ?? [],
+      checklist: cs.data ?? [],
+      preferences: preferences.data,
+    };
   });

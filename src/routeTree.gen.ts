@@ -19,6 +19,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ManualIndexRouteImport } from './routes/manual.index'
 import { Route as ManualSlugRouteImport } from './routes/manual.$slug'
+import { Route as ApiPublicReportsWeeklyRouteImport } from './routes/api/public/reports-weekly'
 
 const SosRoute = SosRouteImport.update({
   id: '/sos',
@@ -70,6 +71,11 @@ const ManualSlugRoute = ManualSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => ManualRoute,
 } as any)
+const ApiPublicReportsWeeklyRoute = ApiPublicReportsWeeklyRouteImport.update({
+  id: '/api/public/reports-weekly',
+  path: '/api/public/reports-weekly',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/sos': typeof SosRoute
   '/manual/$slug': typeof ManualSlugRoute
   '/manual/': typeof ManualIndexRoute
+  '/api/public/reports-weekly': typeof ApiPublicReportsWeeklyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/sos': typeof SosRoute
   '/manual/$slug': typeof ManualSlugRoute
   '/manual': typeof ManualIndexRoute
+  '/api/public/reports-weekly': typeof ApiPublicReportsWeeklyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/sos': typeof SosRoute
   '/manual/$slug': typeof ManualSlugRoute
   '/manual/': typeof ManualIndexRoute
+  '/api/public/reports-weekly': typeof ApiPublicReportsWeeklyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/sos'
     | '/manual/$slug'
     | '/manual/'
+    | '/api/public/reports-weekly'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
     | '/sos'
     | '/manual/$slug'
     | '/manual'
+    | '/api/public/reports-weekly'
   id:
     | '__root__'
     | '/'
@@ -143,6 +154,7 @@ export interface FileRouteTypes {
     | '/sos'
     | '/manual/$slug'
     | '/manual/'
+    | '/api/public/reports-weekly'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -154,6 +166,7 @@ export interface RootRouteChildren {
   OfflineRoute: typeof OfflineRoute
   SettingsRoute: typeof SettingsRoute
   SosRoute: typeof SosRoute
+  ApiPublicReportsWeeklyRoute: typeof ApiPublicReportsWeeklyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -228,6 +241,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManualSlugRouteImport
       parentRoute: typeof ManualRoute
     }
+    '/api/public/reports-weekly': {
+      id: '/api/public/reports-weekly'
+      path: '/api/public/reports-weekly'
+      fullPath: '/api/public/reports-weekly'
+      preLoaderRoute: typeof ApiPublicReportsWeeklyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -253,6 +273,7 @@ const rootRouteChildren: RootRouteChildren = {
   OfflineRoute: OfflineRoute,
   SettingsRoute: SettingsRoute,
   SosRoute: SosRoute,
+  ApiPublicReportsWeeklyRoute: ApiPublicReportsWeeklyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

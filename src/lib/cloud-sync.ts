@@ -29,6 +29,11 @@ export async function pushLocalToCloud(
     listGear(),
     listChecklist(),
   ]);
+  const preferences = await getSetting<{
+    units: "metric" | "nautical";
+    coordFormat: "DD" | "DMS" | "MGRS";
+    northRef: "true" | "magnetic";
+  }>("preferences");
   const payload = {
     waypoints: waypoints.map((w) => ({
       id: w.id,
@@ -56,6 +61,13 @@ export async function pushLocalToCloud(
       done: c.done,
       updated_at: new Date(c.updated_at).toISOString(),
     })),
+    preferences: preferences
+      ? {
+          units: preferences.units,
+          coord_format: preferences.coordFormat,
+          north_ref: preferences.northRef,
+        }
+      : undefined,
   };
   await call({ data: payload });
   await setSetting(LAST_SYNC_KEY, Date.now());
@@ -70,6 +82,11 @@ interface RemoteBundle {
   waypoints: Array<Record<string, unknown>>;
   gear: Array<Record<string, unknown>>;
   checklist: Array<{ key: string; done: boolean; updated_at: string }>;
+  preferences: {
+    units: "metric" | "nautical";
+    coord_format: "DD" | "DMS" | "MGRS";
+    north_ref: "true" | "magnetic";
+  } | null;
 }
 
 /** Traz da nuvem e mescla no aparelho — o registro mais recente vence. */
@@ -111,6 +128,14 @@ export async function pullCloudToLocal(
     if (local && local.updated_at >= at) continue;
     await putChecklistState({ key: c.key, done: c.done, updated_at: at });
     checkCount++;
+  }
+
+  if (remote.preferences) {
+    await setSetting("preferences", {
+      units: remote.preferences.units,
+      coordFormat: remote.preferences.coord_format,
+      northRef: remote.preferences.north_ref,
+    });
   }
 
   await setSetting(LAST_SYNC_KEY, Date.now());

@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -25,6 +27,28 @@ import {
   pullAll,
 } from "@/lib/cloud-sync";
 import { CloudUpload, CloudDownload, Trash2, Upload, Download } from "lucide-react";
+import {
+  getReportSettings,
+  saveReportSettings,
+  sendReportNow,
+} from "@/lib/report.functions";
+
+interface ReportForm {
+  enabled: boolean;
+  weekday: number;
+  local_time: string;
+  timezone: string;
+  recipient_email: string;
+}
+
+interface ReportHistoryItem {
+  id: string;
+  sent_at: string;
+  status: string;
+  waypoint_count: number;
+  gear_count: number;
+  checklist_count: number;
+}
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -62,10 +86,21 @@ function Settings() {
   const [counts, setCounts] = useState<Counts | null>(null);
   const [lastSync, setLastSync] = useState<number | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [reportForm, setReportForm] = useState<ReportForm>({
+    enabled: false,
+    weekday: 1,
+    local_time: "08:00",
+    timezone: "America/Sao_Paulo",
+    recipient_email: "",
+  });
+  const [reportHistory, setReportHistory] = useState<ReportHistoryItem[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const { prefs, update } = usePreferences();
   const callPush = useServerFn(pushAll);
   const callPull = useServerFn(pullAll);
+  const callGetReports = useServerFn(getReportSettings);
+  const callSaveReports = useServerFn(saveReportSettings);
+  const callSendReport = useServerFn(sendReportNow);
 
   useEffect(() => {
     let alive = true;
@@ -84,6 +119,31 @@ function Settings() {
       sub.subscription.unsubscribe();
     };
   }, []);
+
+  const refreshReports = useCallback(async () => {
+    if (!email) return;
+    try {
+      const result = await callGetReports();
+      if (result.settings) {
+        setReportForm({
+          enabled: result.settings.enabled,
+          weekday: result.settings.weekday,
+          local_time: result.settings.local_time.slice(0, 5),
+          timezone: result.settings.timezone,
+          recipient_email: result.settings.recipient_email,
+        });
+      } else {
+        setReportForm((current) => ({ ...current, recipient_email: email }));
+      }
+      setReportHistory(result.history);
+    } catch {
+      toast.error("Não foi possível carregar os relatórios");
+    }
+  }, [callGetReports, email]);
+
+  useEffect(() => {
+    void refreshReports();
+  }, [refreshReports]);
 
   const refresh = useCallback(async () => {
     try {
@@ -225,6 +285,37 @@ function Settings() {
     toast.success("Sessão encerrada");
   };
 
+  const saveReports = async () => {
+    setBusy("reports-save");
+    try {
+      await callSaveReports({ data: reportForm });
+      toast.success("Relatório semanal configurado");
+      await refreshReports();
+    } catch (error) {
+      toast.error("Não foi possível salvar o relatório", {
+        description: error instanceof Error ? error.message : undefined,
+      });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const sendReport = async () => {
+    setBusy("reports-send");
+    try {
+      await callSaveReports({ data: reportForm });
+      await callSendReport();
+      toast.success("Relatório enviado por e-mail");
+      await refreshReports();
+    } catch (error) {
+      toast.error("Não foi possível enviar o relatório", {
+        description: error instanceof Error ? error.message : undefined,
+      });
+    } finally {
+      setBusy(null);
+    }
+  };
+
   return (
     <div className="container max-w-2xl mx-auto p-4 md:p-8 space-y-6">
       <header>
@@ -337,6 +428,10 @@ function Settings() {
             ? `Última sincronização: ${formatDateTime(lastSync)}`
             : "Nada sincronizado ainda."}
         </p>
+        <p className="text-xs text-muted-foreground">
+          Alterações em waypoints, mochila, checklist e preferências também são salvas
+          automaticamente quando houver conexão.
+        </p>
         <div className="grid gap-2 sm:grid-cols-2">
           <Button onClick={doPush} disabled={busy !== null} className="glove-tap w-full">
             <CloudUpload className="h-4 w-4" /> Enviar para a nuvem
@@ -351,6 +446,106 @@ function Settings() {
           </Button>
         </div>
       </Section>
+
+      {email && (
+        <Section title="Relatório semanal por e-mail">
+          <label className="flex items-center gap-3 text-sm">
+            <Checkbox
+              checked={reportForm.enabled}
+              onCheckedChange={(checked) =>
+                setReportForm((current) => ({ ...current, enabled: checked === true }))
+              }
+              aria-label="Ativar relatório semanal"
+            />
+            Enviar relatório automaticamente
+          </label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="space-y-1">
+              <span className="mono text-[10px] uppercase text-muted-foreground">Dia da semana</span>
+              <select
+                value={reportForm.weekday}
+                onChange={(event) =>
+                  setReportForm((current) => ({
+                    ...current,
+                    weekday: Number(event.target.value),
+                  }))
+                }
+                className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value={0}>Domingo</option>
+                <option value={1}>Segunda-feira</option>
+                <option value={2}>Terça-feira</option>
+                <option value={3}>Quarta-feira</option>
+                <option value={4}>Quinta-feira</option>
+                <option value={5}>Sexta-feira</option>
+                <option value={6}>Sábado</option>
+              </select>
+            </label>
+            <label className="space-y-1">
+              <span className="mono text-[10px] uppercase text-muted-foreground">Horário</span>
+              <Input
+                type="time"
+                value={reportForm.local_time}
+                onChange={(event) =>
+                  setReportForm((current) => ({ ...current, local_time: event.target.value }))
+                }
+              />
+            </label>
+            <label className="space-y-1 sm:col-span-2">
+              <span className="mono text-[10px] uppercase text-muted-foreground">Destinatário</span>
+              <Input
+                type="email"
+                value={reportForm.recipient_email}
+                onChange={(event) =>
+                  setReportForm((current) => ({
+                    ...current,
+                    recipient_email: event.target.value,
+                  }))
+                }
+                placeholder="voce@exemplo.com"
+              />
+            </label>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Button
+              type="button"
+              onClick={saveReports}
+              disabled={busy !== null || !reportForm.recipient_email}
+            >
+              Salvar programação
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={sendReport}
+              disabled={busy !== null || !reportForm.recipient_email}
+            >
+              Enviar agora
+            </Button>
+          </div>
+          <div className="space-y-2">
+            <h3 className="mono text-[10px] uppercase text-muted-foreground">Histórico recente</h3>
+            {reportHistory.length ? (
+              reportHistory.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex flex-wrap items-center justify-between gap-2 border-t border-border py-2 text-xs"
+                >
+                  <span>{formatDateTime(item.sent_at)}</span>
+                  <span className={item.status === "sent" ? "text-tactical-green" : "text-destructive"}>
+                    {item.status === "sent" ? "Enviado" : "Falhou"}
+                  </span>
+                  <span className="w-full text-muted-foreground">
+                    {formatInteger(item.waypoint_count)} waypoints · {formatInteger(item.gear_count)} itens · {formatInteger(item.checklist_count)} concluídos
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-muted-foreground">Nenhum envio registrado.</p>
+            )}
+          </div>
+        </Section>
+      )}
 
       <Section title="Limpeza">
         <div className="grid gap-2 sm:grid-cols-2">

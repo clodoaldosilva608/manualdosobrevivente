@@ -1,5 +1,11 @@
 import { openDB, type IDBPDatabase, type DBSchema } from "idb";
 
+const CLOUD_SYNC_EVENT = "tactical-gis:local-data-changed";
+
+function notifyLocalChange() {
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(CLOUD_SYNC_EVENT));
+}
+
 export interface LocalWaypoint {
   id: string;
   user_id: string | null;
@@ -128,6 +134,7 @@ export async function listChecklist(): Promise<ChecklistState[]> {
 export async function putChecklistState(s: ChecklistState) {
   const db = await getDB();
   await db.put("checklist", s);
+  notifyLocalChange();
 }
 
 export async function listManualAssets(): Promise<ManualAsset[]> {
@@ -157,10 +164,12 @@ export async function listWaypoints(): Promise<LocalWaypoint[]> {
 export async function saveWaypoint(w: LocalWaypoint) {
   const db = await getDB();
   await db.put("waypoints", w);
+  notifyLocalChange();
 }
 export async function deleteWaypoint(id: string) {
   const db = await getDB();
   await db.delete("waypoints", id);
+  notifyLocalChange();
 }
 
 export async function listGear(): Promise<LocalGearItem[]> {
@@ -170,10 +179,12 @@ export async function listGear(): Promise<LocalGearItem[]> {
 export async function saveGear(g: LocalGearItem) {
   const db = await getDB();
   await db.put("gear", g);
+  notifyLocalChange();
 }
 export async function deleteGear(id: string) {
   const db = await getDB();
   await db.delete("gear", id);
+  notifyLocalChange();
 }
 
 export async function getChecklist(key: string) {
@@ -183,6 +194,7 @@ export async function getChecklist(key: string) {
 export async function setChecklist(key: string, done: boolean) {
   const db = await getDB();
   await db.put("checklist", { key, done, updated_at: Date.now() });
+  notifyLocalChange();
 }
 
 export async function setSetting(key: string, value: unknown) {

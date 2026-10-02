@@ -36,7 +36,9 @@ export function usePreferences() {
   const update = useCallback(async (patch: Partial<Preferences>) => {
     setPrefs((p) => {
       const next = { ...p, ...patch };
-      void setSetting(KEY, next).catch(() => {});
+      void setSetting(KEY, next)
+        .then(() => window.dispatchEvent(new Event("tactical-gis:local-data-changed")))
+        .catch(() => {});
       return next;
     });
   }, []);

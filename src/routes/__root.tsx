@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 import appCss from "../styles.css?url";
 import { AppNav } from "@/components/AppNav";
+import { AutoCloudSync } from "@/components/AutoCloudSync";
 
 function NotFoundComponent() {
   return (
@@ -145,6 +146,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthListener />
+      <AutoCloudSync />
       <div className="flex min-h-screen flex-col md:pt-14 pb-16 md:pb-0">
         <main className="flex-1 relative">
           <Outlet />

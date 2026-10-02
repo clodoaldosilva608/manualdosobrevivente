@@ -903,11 +903,15 @@ export default function MapShell() {
             compassMode === "mini"
               ? "hud-panel rounded-full p-1.5 shadow-lg"
               : compassMode === "panel"
-                ? "hud-panel rounded-lg p-2 w-[58vw] max-w-[16rem] shadow-xl"
+                ? "hud-panel rounded-lg w-[min(72vw,18rem)] max-h-[calc(100dvh-8rem)] overflow-hidden shadow-xl"
                 : "hud-panel rounded-lg p-3 w-full max-w-md shadow-xl"
           }
         >
-          <div className="flex items-center justify-between gap-1 mb-1">
+          <div
+            className={`flex items-center justify-between gap-1 ${
+              compassMode === "panel" ? "sticky top-0 z-10 bg-card/95 p-2" : "mb-1"
+            }`}
+          >
             <span className="mono text-[10px] uppercase tracking-widest text-tactical-orange">
               {compassMode === "mini" ? "" : "Bússola"}
             </span>
@@ -961,21 +965,23 @@ export default function MapShell() {
           </button>
 
           {compassMode !== "mini" && (
-            <CompassRose
-              heading={heading}
-              declination={decl}
-              center={center}
-              altitude={userPos?.alt ?? null}
-              variant={compassMode}
-              bearingToWaypoint={
-                waypoints[0]
-                  ? bearingDeg(center, [waypoints[0].longitude, waypoints[0].latitude])
-                  : null
-              }
-              waypointLabel={waypoints[0]?.title ?? null}
-              onRotate={(h) => mapRef.current?.rotateTo(h, { duration: 0 })}
-              onReset={() => mapRef.current?.rotateTo(0, { duration: 400 })}
-            />
+            <div className={compassMode === "panel" ? "overflow-y-auto p-2 pt-0 max-h-[calc(100dvh-11rem)]" : ""}>
+              <CompassRose
+                heading={heading}
+                declination={decl}
+                center={center}
+                altitude={userPos?.alt ?? null}
+                variant={compassMode}
+                bearingToWaypoint={
+                  waypoints[0]
+                    ? bearingDeg(center, [waypoints[0].longitude, waypoints[0].latitude])
+                    : null
+                }
+                waypointLabel={waypoints[0]?.title ?? null}
+                onRotate={(h) => mapRef.current?.rotateTo(h, { duration: 0 })}
+                onReset={() => mapRef.current?.rotateTo(0, { duration: 400 })}
+              />
+            </div>
           )}
         </div>
       </div>

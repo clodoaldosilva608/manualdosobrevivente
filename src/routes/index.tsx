@@ -12,6 +12,14 @@ export const Route = createFileRoute("/")({
         content:
           "Mapa tático em tela cheia com MGRS, múltiplas camadas base, ferramentas de medição, waypoints e tiles offline.",
       },
+      { property: "og:title", content: "Mapa Tático — TacticalGIS" },
+      {
+        property: "og:description",
+        content:
+          "Mapa tático em tela cheia com MGRS, múltiplas camadas base, ferramentas de medição, waypoints e tiles offline.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Index,

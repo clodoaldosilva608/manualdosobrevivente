@@ -12,6 +12,7 @@
  * atrás do aviso com as camadas de inteligência do app.
  */
 import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, ExternalLink, Globe, Info, Layers, MonitorX, RefreshCw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -20,6 +21,7 @@ import {
   urlGloboOsiris,
   type VisOsiris,
 } from "@/components/map/visao-osiris-camadas";
+import { verificarEmbedOsiris } from "@/lib/embed-osiris.functions";
 
 export interface VisaoOsirisProps {
   vis: VisOsiris;
@@ -40,6 +42,7 @@ export function VisaoOsiris({ vis, onToggle, onSetTodas, onVoltar }: VisaoOsiris
   const [camadasAbertas, setCamadasAbertas] = useState(false);
   const [estadoGlobo, setEstadoGlobo] = useState<EstadoGlobo>("carregando");
   const [tentativa, setTentativa] = useState(0);
+  const sondar = useServerFn(verificarEmbedOsiris);
 
   const url = useMemo(() => urlGloboOsiris(vis), [vis]);
   const ativas = CAMADAS_OSIRIS.filter((c) => vis[c.id]).length;
@@ -55,16 +58,30 @@ export function VisaoOsiris({ vis, onToggle, onSetTodas, onVoltar }: VisaoOsiris
   }, [camadasAbertas]);
 
   // Detecção de bloqueio por CSP (frame-ancestors): quando o navegador impede
-  // a incorporação, o iframe nunca dispara o evento load. Um tempo generoso
-  // cobre o arranque a frio da instância na Vercel.
+  // a incorporação, o Chrome AINDA dispara o evento load no iframe — por isso
+  // a detecção não pode depender só dele. Uma sonda no servidor lê o header
+  // Content-Security-Policy da instância e verifica a origem deste app de
+  // forma determinística; o timeout de 9 s segue como rede de segurança para
+  // o caso de nem o load nem a sonda responderem (arranque a frio coberto).
   useEffect(() => {
     setEstadoGlobo("carregando");
+    let cancelado = false;
+    sondar({ data: { origem: window.location.origin } })
+      .then((r) => {
+        if (!cancelado && !r.autorizado) setEstadoGlobo("bloqueado");
+      })
+      .catch(() => {
+        /* sonda indisponível: o fluxo normal (load/timeout) segue valendo */
+      });
     const t = window.setTimeout(
       () => setEstadoGlobo((s) => (s === "carregando" ? "bloqueado" : s)),
       9_000,
     );
-    return () => window.clearTimeout(t);
-  }, [url, tentativa]);
+    return () => {
+      cancelado = true;
+      window.clearTimeout(t);
+    };
+  }, [url, tentativa, sondar]);
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col bg-background">

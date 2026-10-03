@@ -10,7 +10,7 @@
  * Bump de versão: altere VERSAO ao mudar a lógica deste arquivo — os caches
  * antigos são apagados na ativação.
  */
-const VERSAO = "v3";
+const VERSAO = "v4";
 const CACHE_SHELL = `shell-${VERSAO}`;
 const CACHE_ASSETS = `assets-${VERSAO}`;
 const CACHE_RUNTIME = `runtime-${VERSAO}`;
@@ -22,7 +22,6 @@ const MAX_RUNTIME = 400;
 const HOSTS_DE_TILES = [
   "tile.opentopomap.org",
   "openstreetmap.org",
-  "basemaps.cartocdn.com",
   "server.arcgisonline.com",
 ];
 

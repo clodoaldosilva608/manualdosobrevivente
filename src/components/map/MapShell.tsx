@@ -113,9 +113,12 @@ const BASE_LAYERS: Record<
   },
   dark: {
     label: "Tático Escuro",
-    tiles: "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
-    attribution: "© CARTO, © OpenStreetMap",
-    maxzoom: 19,
+    // Esri Dark Gray Canvas — sem chave de API (a CARTO passou a exigir apikey
+    // e devolve tiles com marca d'água "API KEY REQUIRED").
+    tiles:
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Esri, HERE, Garmin, FAO, NOAA, USGS",
+    maxzoom: 16,
   },
 };
 
@@ -123,6 +126,16 @@ type Tool = "none" | "measure-line" | "measure-area" | "marker";
 
 const styleFor = (layer: BaseLayerId): maplibregl.StyleSpecification => {
   const l = BASE_LAYERS[layer];
+  // O Tático Escuro soma uma camada de referência (rótulos de cidades/ruas).
+  const referencia =
+    layer === "dark"
+      ? {
+          source: "ref",
+          tiles: [
+            "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
+          ],
+        }
+      : null;
   return {
     version: 8,
     sources: {
@@ -133,8 +146,22 @@ const styleFor = (layer: BaseLayerId): maplibregl.StyleSpecification => {
         maxzoom: l.maxzoom ?? 19,
         attribution: l.attribution,
       },
+      ...(referencia
+        ? {
+            ref: {
+              type: "raster" as const,
+              tiles: referencia.tiles,
+              tileSize: 256,
+              maxzoom: 16,
+              attribution: "",
+            },
+          }
+        : {}),
     },
-    layers: [{ id: "base", type: "raster", source: "base" }],
+    layers: [
+      { id: "base", type: "raster", source: "base" },
+      ...(referencia ? [{ id: "ref", type: "raster" as const, source: "ref" }] : []),
+    ],
   };
 };
 

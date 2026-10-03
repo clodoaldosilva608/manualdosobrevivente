@@ -177,6 +177,75 @@ const VISAO_GLOBAL = {
   padding: 24,
 };
 
+/**
+ * Fontes e camadas de desenho/waypoints — idempotente (pode ser chamada mais
+ * de uma vez: load, timer de segurança e trocas de estilo via styledata).
+ */
+function adicionarFontesDesenho(map: maplibregl.Map) {
+  if (map.getSource("draw")) return;
+  map.addSource("draw", { type: "geojson", data: emptyFC() });
+  map.addLayer({
+    id: "draw-line",
+    type: "line",
+    source: "draw",
+    filter: ["==", "$type", "LineString"],
+    paint: {
+      "line-color": "#FF6B35",
+      "line-width": 3,
+      "line-dasharray": [2, 1],
+    },
+  });
+  map.addLayer({
+    id: "draw-fill",
+    type: "fill",
+    source: "draw",
+    filter: ["==", "$type", "Polygon"],
+    paint: { "fill-color": "#FF6B35", "fill-opacity": 0.2 },
+  });
+  map.addLayer({
+    id: "draw-points",
+    type: "circle",
+    source: "draw",
+    filter: ["==", "$type", "Point"],
+    paint: {
+      "circle-radius": 5,
+      "circle-color": "#FF6B35",
+      "circle-stroke-color": "#121212",
+      "circle-stroke-width": 2,
+    },
+  });
+  map.addSource("waypoints", { type: "geojson", data: emptyFC() });
+  map.addLayer({
+    id: "wp-circles",
+    type: "circle",
+    source: "waypoints",
+    paint: {
+      "circle-radius": 8,
+      "circle-color": ["coalesce", ["get", "color"], "#FF6B35"],
+      "circle-stroke-color": "#121212",
+      "circle-stroke-width": 2,
+    },
+  });
+  map.addLayer({
+    id: "wp-labels",
+    type: "symbol",
+    source: "waypoints",
+    layout: {
+      "text-field": ["get", "title"],
+      "text-size": 11,
+      "text-offset": [0, 1.2],
+      "text-anchor": "top",
+      "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+      "text-allow-overlap": false,
+    },
+    paint: {
+      "text-color": "#FFF",
+      "text-halo-color": "#121212",
+      "text-halo-width": 2,
+    },
+  });
+}
+
 export default function MapShell() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -278,6 +347,7 @@ export default function MapShell() {
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
     let cancelled = false;
+    let liberarSemTiles: number | undefined;
     (async () => {
       const ml = await import("maplibre-gl");
       if (cancelled || !containerRef.current) return;
@@ -307,74 +377,23 @@ export default function MapShell() {
       });
 
       map.on("load", () => {
-        // sources for drawing + markers
-        map.addSource("draw", { type: "geojson", data: emptyFC() });
-        map.addLayer({
-          id: "draw-line",
-          type: "line",
-          source: "draw",
-          filter: ["==", "$type", "LineString"],
-          paint: {
-            "line-color": "#FF6B35",
-            "line-width": 3,
-            "line-dasharray": [2, 1],
-          },
-        });
-        map.addLayer({
-          id: "draw-fill",
-          type: "fill",
-          source: "draw",
-          filter: ["==", "$type", "Polygon"],
-          paint: { "fill-color": "#FF6B35", "fill-opacity": 0.2 },
-        });
-        map.addLayer({
-          id: "draw-points",
-          type: "circle",
-          source: "draw",
-          filter: ["==", "$type", "Point"],
-          paint: {
-            "circle-radius": 5,
-            "circle-color": "#FF6B35",
-            "circle-stroke-color": "#121212",
-            "circle-stroke-width": 2,
-          },
-        });
-        map.addSource("waypoints", { type: "geojson", data: emptyFC() });
-        map.addLayer({
-          id: "wp-circles",
-          type: "circle",
-          source: "waypoints",
-          paint: {
-            "circle-radius": 8,
-            "circle-color": ["coalesce", ["get", "color"], "#FF6B35"],
-            "circle-stroke-color": "#121212",
-            "circle-stroke-width": 2,
-          },
-        });
-        map.addLayer({
-          id: "wp-labels",
-          type: "symbol",
-          source: "waypoints",
-          layout: {
-            "text-field": ["get", "title"],
-            "text-size": 11,
-            "text-offset": [0, 1.2],
-            "text-anchor": "top",
-            "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
-            "text-allow-overlap": false,
-          },
-          paint: {
-            "text-color": "#FFF",
-            "text-halo-color": "#121212",
-            "text-halo-width": 2,
-          },
-        });
+        // sources for drawing + markers (idempotente: o timer de segurança
+        // pode liberar o app antes do load e o styledata já ter criado tudo)
+        adicionarFontesDesenho(map);
         setReady(true);
       });
       mapRef.current = map;
 
       // Instância exposta para os testes automatizados (Playwright).
       (window as unknown as { __tacticalMap?: maplibregl.Map }).__tacticalMap = map;
+
+      // O evento "load" só dispara quando TODOS os tiles iniciais do estilo
+      // terminam de carregar — um tile travado (rede lenta, provedor
+      // engargalado) atrasava o app indefinidamente: sem camadas de
+      // inteligência, sem troca de estilo e sem visão global. O timer abaixo
+      // libera a interface usando apenas a definição do estilo (os tiles
+      // aparecem quando terminarem de carregar).
+      liberarSemTiles = window.setTimeout(() => setReady(true), 3000);
 
       // Após qualquer troca de estilo, reconstrói as camadas de inteligência.
       map.on("styledata", () => {
@@ -392,7 +411,6 @@ export default function MapShell() {
         });
       });
 
-      // Popups das entidades de inteligência (sismos, eventos, conflitos, focos).
       map.on("load", () => {
         registrarPopupsIntel(map);
       });
@@ -431,6 +449,7 @@ export default function MapShell() {
     })();
     return () => {
       cancelled = true;
+      if (liberarSemTiles !== undefined) window.clearTimeout(liberarSemTiles);
       delete (window as unknown as { __tacticalMap?: unknown }).__tacticalMap;
       mapRef.current?.remove();
       mapRef.current = null;
@@ -487,6 +506,7 @@ export default function MapShell() {
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready || !userPos) return;
+    if (!map.isStyleLoaded()) return; // o styledata do estilo inicial reexecuta via userPos
     const data: GeoJSON.FeatureCollection = {
       type: "FeatureCollection",
       features: [
@@ -535,51 +555,9 @@ export default function MapShell() {
     // re-add custom sources after style swap
     mapRef.current.once("styledata", () => {
       const map = mapRef.current!;
-      if (!map.getSource("draw")) {
-        map.addSource("draw", { type: "geojson", data: drawFC(drawCoords, tool) });
-        map.addLayer({
-          id: "draw-line",
-          type: "line",
-          source: "draw",
-          filter: ["==", "$type", "LineString"],
-          paint: { "line-color": "#FF6B35", "line-width": 3, "line-dasharray": [2, 1] },
-        });
-        map.addLayer({
-          id: "draw-fill",
-          type: "fill",
-          source: "draw",
-          filter: ["==", "$type", "Polygon"],
-          paint: { "fill-color": "#FF6B35", "fill-opacity": 0.2 },
-        });
-        map.addLayer({
-          id: "draw-points",
-          type: "circle",
-          source: "draw",
-          filter: ["==", "$type", "Point"],
-          paint: {
-            "circle-radius": 5,
-            "circle-color": "#FF6B35",
-            "circle-stroke-color": "#121212",
-            "circle-stroke-width": 2,
-          },
-        });
-      }
-      if (!map.getSource("waypoints")) {
-        map.addSource("waypoints", { type: "geojson", data: waypointsFC(waypoints) });
-        map.addLayer({
-          id: "wp-circles",
-          type: "circle",
-          source: "waypoints",
-          paint: {
-            "circle-radius": 8,
-            "circle-color": ["coalesce", ["get", "color"], "#FF6B35"],
-            "circle-stroke-color": "#121212",
-            "circle-stroke-width": 2,
-          },
-        });
-      }
+      adicionarFontesDesenho(map);
     });
-  }, [baseEfetiva, ready]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [baseEfetiva, ready]);
 
   // Liga/desliga e alimenta as camadas de inteligência conforme o modo.
   useEffect(() => {
@@ -589,6 +567,9 @@ export default function MapShell() {
       removerCamadasIntel(map);
       return;
     }
+    // Se o estilo ainda está processando (o app já foi liberado pelo timer
+    // de segurança), o listener "styledata" sincroniza quando estiver pronto.
+    if (!map.isStyleLoaded()) return;
     sincronizarCamadasIntel(map, {
       snapshot: intel,
       conflitos: CONFLITOS,

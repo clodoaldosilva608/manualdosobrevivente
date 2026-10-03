@@ -14,6 +14,8 @@ import {
   Maximize2,
   Minimize2,
   Minus,
+  Newspaper,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -31,7 +33,14 @@ import {
   bearingDeg,
 } from "@/lib/geo";
 import { magneticDeclination } from "@/lib/declination";
-import { listWaypoints, saveWaypoint, deleteWaypoint, type LocalWaypoint } from "@/lib/db";
+import {
+  listWaypoints,
+  saveWaypoint,
+  deleteWaypoint,
+  getSetting,
+  setSetting,
+  type LocalWaypoint,
+} from "@/lib/db";
 import { fetchElevations } from "@/lib/elevation.functions";
 import CompassRose from "@/components/map/CompassRose";
 import {
@@ -39,13 +48,34 @@ import {
   formatSignedDegrees,
   formatElevation,
   formatDecimalDegrees,
+  formatDateTime,
+  formatInteger,
+  formatNumber,
+  formatTime,
 } from "@/lib/format";
 import { useServerFn } from "@tanstack/react-start";
 import { usePreferences } from "@/hooks/usePreferences";
 import { fetchIntelSnapshot } from "@/lib/intel.functions";
+import {
+  fetchVoos,
+  fetchIss,
+  fetchAlertas,
+  fetchNoticias,
+  fetchAr,
+} from "@/lib/intel-v2.functions";
+import { conectarAis, type StatusAis } from "@/lib/ais";
 import { CONFLITOS } from "@/lib/intel-conflicts";
 import { poligonoNoturno } from "@/lib/intel-night";
-import type { IntelSnapshot, IntelVisibilidade } from "@/lib/intel.types";
+import type {
+  IntelAlerta,
+  IntelAr,
+  IntelIss,
+  IntelNavio,
+  IntelNoticia,
+  IntelSnapshot,
+  IntelVisibilidade,
+  IntelVoo,
+} from "@/lib/intel.types";
 import {
   sincronizarCamadasIntel,
   removerCamadasIntel,
@@ -120,9 +150,9 @@ export default function MapShell() {
   const [tool, setTool] = useState<Tool>("none");
   const [drawCoords, setDrawCoords] = useState<[number, number][]>([]);
   const [waypoints, setWaypoints] = useState<LocalWaypoint[]>([]);
-  const [openSheet, setOpenSheet] = useState<null | "layers" | "goto" | "measure" | "markers">(
-    null,
-  );
+  const [openSheet, setOpenSheet] = useState<
+    null | "layers" | "goto" | "measure" | "markers" | "boletim"
+  >(null);
   const [compassMode, setCompassModeState] = useState<"mini" | "panel" | "full">("mini");
   useEffect(() => {
     const saved = localStorage.getItem("tgis:compass-mode");
@@ -160,7 +190,20 @@ export default function MapShell() {
   const [intel, setIntel] = useState<IntelSnapshot | null>(null);
   const [intelStatus, setIntelStatus] = useState<StatusIntel>("idle");
   const [noite, setNoite] = useState<GeoJSON.Feature | null>(null);
+  const [voos, setVoos] = useState<IntelVoo[] | null>(null);
+  const [iss, setIss] = useState<IntelIss | null>(null);
+  const [alertas, setAlertas] = useState<IntelAlerta[] | null>(null);
+  const [noticias, setNoticias] = useState<IntelNoticia[] | null>(null);
+  const [ar, setAr] = useState<IntelAr | null>(null);
+  const [navios, setNavios] = useState<IntelNavio[]>([]);
+  const [statusAis, setStatusAis] = useState<StatusAis | "off">("off");
+  const [boletimEm, setBoletimEm] = useState(0);
   const callIntel = useServerFn(fetchIntelSnapshot);
+  const callVoos = useServerFn(fetchVoos);
+  const callIss = useServerFn(fetchIss);
+  const callAlertas = useServerFn(fetchAlertas);
+  const callNoticias = useServerFn(fetchNoticias);
+  const callAr = useServerFn(fetchAr);
 
   // No modo Osiris o mapa usa o estilo Tático Escuro como base.
   const baseEfetiva: BaseLayerId = modoMapa === "osiris" ? "dark" : baseLayer;
@@ -172,10 +215,23 @@ export default function MapShell() {
     snapshot: null as IntelSnapshot | null,
     noite: null as GeoJSON.Feature | null,
     vis: prefs.intelVis,
+    voos: null as IntelVoo[] | null,
+    iss: null as IntelIss | null,
+    alertas: null as IntelAlerta[] | null,
+    navios: [] as IntelNavio[],
   });
   useEffect(() => {
-    intelRef.current = { modo: modoMapa, snapshot: intel, noite, vis: intelVis };
-  }, [modoMapa, intel, noite, intelVis]);
+    intelRef.current = {
+      modo: modoMapa,
+      snapshot: intel,
+      noite,
+      vis: intelVis,
+      voos,
+      iss,
+      alertas,
+      navios,
+    };
+  }, [modoMapa, intel, noite, intelVis, voos, iss, alertas, navios]);
 
   // Init map (client only)
   useEffect(() => {
@@ -288,6 +344,10 @@ export default function MapShell() {
           conflitos: CONFLITOS,
           noite: s.noite,
           vis: s.vis,
+          voos: s.voos,
+          iss: s.iss,
+          alertas: s.alertas,
+          navios: s.navios,
         });
       });
 
@@ -493,27 +553,40 @@ export default function MapShell() {
       conflitos: CONFLITOS,
       noite,
       vis: intelVis,
+      voos,
+      iss,
+      alertas,
+      navios,
     });
-  }, [ready, modoMapa, intel, noite, intelVis]);
+  }, [ready, modoMapa, intel, noite, intelVis, voos, iss, alertas, navios]);
 
-  // Coleta periódica dos dados de inteligência enquanto o modo Osiris está ativo.
+  // Coleta periódica dos dados de inteligência enquanto o modo Osiris está
+  // ativo: snapshot consolidado (sismos/eventos/focos/Kp) + voos + alertas.
   useEffect(() => {
     if (modoMapa !== "osiris") return;
     let vivo = true;
+    const offline = typeof navigator !== "undefined" && navigator.onLine === false;
     const carregar = async () => {
-      if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      if (offline) {
         setIntelStatus("erro");
         return;
       }
       setIntelStatus((s) => (s === "ok" ? "ok" : "carregando"));
-      try {
-        const snap = await callIntel();
-        if (!vivo) return;
-        setIntel(snap);
+      const chaveFirms = prefs.intelKeys.firms.trim();
+      const [snapR, voosR, alertasR] = await Promise.allSettled([
+        callIntel({ data: { firmsKey: chaveFirms || undefined } }),
+        callVoos({ data: { lat: center[1], lng: center[0] } }),
+        callAlertas(),
+      ]);
+      if (!vivo) return;
+      if (snapR.status === "fulfilled") {
+        setIntel(snapR.value);
         setIntelStatus("ok");
-      } catch {
-        if (vivo) setIntelStatus("erro");
+      } else {
+        setIntelStatus("erro");
       }
+      if (voosR.status === "fulfilled") setVoos(voosR.value.voos);
+      if (alertasR.status === "fulfilled") setAlertas(alertasR.value.alertas);
     };
     void carregar();
     const timer = window.setInterval(() => void carregar(), 90_000);
@@ -524,7 +597,132 @@ export default function MapShell() {
       window.clearInterval(timer);
       window.removeEventListener("online", aoVoltar);
     };
-  }, [modoMapa, callIntel]);
+  }, [modoMapa, callIntel, callVoos, callAlertas, prefs.intelKeys.firms, center]);
+
+  // ISS: atualização rápida (posição muda ~7 km/s).
+  useEffect(() => {
+    if (modoMapa !== "osiris") return;
+    let vivo = true;
+    const carregar = () => {
+      void callIss()
+        .then((v) => {
+          if (vivo) setIss(v);
+        })
+        .catch(() => {});
+    };
+    carregar();
+    const timer = window.setInterval(carregar, 45_000);
+    return () => {
+      vivo = false;
+      window.clearInterval(timer);
+    };
+  }, [modoMapa, callIss]);
+
+  // Manchetes globais (GDELT): ciclo lento — a fonte tem limite de requisições.
+  useEffect(() => {
+    if (modoMapa !== "osiris") return;
+    let vivo = true;
+    const carregar = () => {
+      void callNoticias()
+        .then((v) => {
+          if (vivo) setNoticias(v.noticias);
+        })
+        .catch(() => {});
+    };
+    carregar();
+    const timer = window.setInterval(carregar, 300_000);
+    return () => {
+      vivo = false;
+      window.clearInterval(timer);
+    };
+  }, [modoMapa, callNoticias]);
+
+  // Cache offline: hidrata do IndexedDB ao entrar no modo e salva após coletas.
+  const hidratadoRef = useRef(false);
+  useEffect(() => {
+    if (modoMapa !== "osiris") return;
+    if (intel || voos || alertas || hidratadoRef.current) return;
+    hidratadoRef.current = true;
+    void getSetting<{
+      intel: IntelSnapshot | null;
+      voos: IntelVoo[] | null;
+      iss: IntelIss | null;
+      alertas: IntelAlerta[] | null;
+      noticias: IntelNoticia[] | null;
+    }>("intel-cache")
+      .then((v) => {
+        if (!v) return;
+        if (v.intel && !intel) {
+          setIntel(v.intel);
+          setIntelStatus("ok");
+        }
+        if (v.voos && !voos) setVoos(v.voos);
+        if (v.iss && !iss) setIss(v.iss);
+        if (v.alertas && !alertas) setAlertas(v.alertas);
+        if (v.noticias && !noticias) setNoticias(v.noticias);
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modoMapa]);
+
+  useEffect(() => {
+    if (modoMapa !== "osiris" || !intel) return;
+    void setSetting("intel-cache", { intel, voos, iss, alertas, noticias }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [intel]);
+
+  // Navios ao vivo (AIS): só conecta com chave do usuário e camada ligada.
+  useEffect(() => {
+    const chave = prefs.intelKeys.ais.trim();
+    if (modoMapa !== "osiris" || !intelVis.navios || !chave || !ready) {
+      setStatusAis("off");
+      return;
+    }
+    const map = mapRef.current;
+    const bounds = map?.getBounds();
+    const spanLat = 25;
+    const spanLng = 40;
+    const sul = Math.max(-85, (bounds?.getSouth() ?? 0) - spanLat / 2);
+    const norte = Math.min(85, (bounds?.getNorth() ?? 0) + spanLat / 2);
+    const oeste = Math.max(-179, (bounds?.getWest() ?? 0) - spanLng / 2);
+    const leste = Math.min(179, (bounds?.getEast() ?? 0) + spanLng / 2);
+    const fechar = conectarAis({
+      chave,
+      bbox: [
+        [sul, oeste],
+        [norte, leste],
+      ],
+      onNavios: (lista) => setNavios(lista),
+      onStatus: (s) => setStatusAis(s),
+    });
+    let fecharAtual: () => void = fechar;
+    // Refaz a inscrição a cada 15 min para acompanhar a área visível.
+    const refresh = window.setInterval(() => {
+      setNavios([]);
+      fecharAtual();
+      const b2 = mapRef.current?.getBounds();
+      fecharAtual = conectarAis({
+        chave,
+        bbox: [
+          [
+            Math.max(-85, (b2?.getSouth() ?? 0) - spanLat / 2),
+            Math.max(-179, (b2?.getWest() ?? 0) - spanLng / 2),
+          ],
+          [
+            Math.min(85, (b2?.getNorth() ?? 0) + spanLat / 2),
+            Math.min(179, (b2?.getEast() ?? 0) + spanLng / 2),
+          ],
+        ],
+        onNavios: (lista) => setNavios(lista),
+        onStatus: (s) => setStatusAis(s),
+      });
+    }, 900_000);
+    return () => {
+      window.clearInterval(refresh);
+      fecharAtual();
+      setNavios([]);
+    };
+  }, [modoMapa, intelVis.navios, prefs.intelKeys.ais, ready]);
 
   // Terminador dia/noite recalculado a cada 10 minutos no modo Osiris.
   useEffect(() => {
@@ -603,6 +801,45 @@ export default function MapShell() {
     setDrawCoords([]);
     setElevationData([]);
   };
+
+  // Boletim de inteligência: garante dados frescos ao abrir o painel.
+  const carregarBoletim = useCallback(() => {
+    setBoletimEm(Date.now());
+    void callAr({ data: { lat: center[1], lng: center[0] } })
+      .then(setAr)
+      .catch(() => {});
+    if (!noticias) {
+      void callNoticias()
+        .then((v) => setNoticias(v.noticias))
+        .catch(() => {});
+    }
+    if (!alertas) {
+      void callAlertas()
+        .then((v) => setAlertas(v.alertas))
+        .catch(() => {});
+    }
+    if (!iss)
+      void callIss()
+        .then(setIss)
+        .catch(() => {});
+    if (!intel) {
+      void callIntel({ data: { firmsKey: prefs.intelKeys.firms.trim() || undefined } })
+        .then(setIntel)
+        .catch(() => {});
+    }
+  }, [
+    callAr,
+    callNoticias,
+    callAlertas,
+    callIss,
+    callIntel,
+    center,
+    noticias,
+    alertas,
+    iss,
+    intel,
+    prefs.intelKeys.firms,
+  ]);
 
   const runElevation = async () => {
     if (drawCoords.length < 2) return;
@@ -694,7 +931,16 @@ export default function MapShell() {
           }}
         />
         {modoMapa === "osiris" && (
-          <IntelStatusStrip snapshot={intel} status={intelStatus} vis={intelVis} />
+          <IntelStatusStrip
+            snapshot={intel}
+            status={intelStatus}
+            vis={intelVis}
+            voos={voos}
+            iss={iss}
+            alertas={alertas}
+            navios={navios}
+            statusAis={statusAis}
+          />
         )}
         {(tool === "measure-line" || tool === "measure-area") && (
           <LeituraMedicao tool={tool} lineLen={lineLen} areaFmt={areaFmt} onClear={clearDraw} />
@@ -735,13 +981,30 @@ export default function MapShell() {
         <MapModeSwitch modo={modoMapa} onTrocar={(m) => updatePrefs({ mapMode: m })} />
       </div>
       {modoMapa === "osiris" && (
-        <div className="absolute right-4 top-[64px] z-10 hidden w-[min(70vw,420px)] md:block">
-          <IntelStatusStrip snapshot={intel} status={intelStatus} vis={intelVis} />
+        <div className="absolute right-4 top-[64px] z-10 hidden w-[min(70vw,460px)] md:block">
+          <IntelStatusStrip
+            snapshot={intel}
+            status={intelStatus}
+            vis={intelVis}
+            voos={voos}
+            iss={iss}
+            alertas={alertas}
+            navios={navios}
+            statusAis={statusAis}
+          />
         </div>
       )}
 
       {/* Right-side action rail */}
       <div className="absolute right-2 top-[max(0.5rem,env(safe-area-inset-top))] z-10 flex flex-col gap-2 md:top-36">
+        <RailBtn
+          icon={Newspaper}
+          label="Boletim"
+          onClick={() => {
+            setOpenSheet("boletim");
+            carregarBoletim();
+          }}
+        />
         <RailBtn icon={Layers} label="Camadas" onClick={() => setOpenSheet("layers")} />
         <RailBtn icon={Navigation2} label="Ir para" onClick={() => setOpenSheet("goto")} />
         <RailBtn icon={Ruler} label="Medir" onClick={() => setOpenSheet("measure")} />
@@ -911,8 +1174,8 @@ export default function MapShell() {
               <MapModeSwitch modo={modoMapa} onTrocar={(m) => updatePrefs({ mapMode: m })} />
               <p className="mt-2 text-xs text-muted-foreground">
                 {modoMapa === "osiris"
-                  ? "No modo Osiris o mapa usa o estilo Tático Escuro e acrescenta camadas de inteligência global atualizadas a cada 90 segundos."
-                  : "Navegação clássica: bússola, MGRS, medições e waypoints. Mude para o modo Osiris para ver sismos, eventos naturais e zonas de conflito."}
+                  ? "No modo Osiris o mapa usa o estilo Tático Escuro e acrescenta 11 camadas de inteligência (ao vivo e curadas) atualizadas a cada 45–90 segundos. Abra o Boletim para o resumo consolidado."
+                  : "Navegação clássica: bússola, MGRS, medições e waypoints. Mude para o modo Osiris para ver sismos, voos, ISS, alertas oficiais, rotas marítimas e zonas de conflito."}
               </p>
             </section>
 
@@ -934,7 +1197,7 @@ export default function MapShell() {
                           <div className="text-sm">{linha.nome}</div>
                           <div className="truncate text-[10px] text-muted-foreground">
                             {desabilitada
-                              ? "Requer chave gratuita NASA FIRMS (FIRMS_MAP_KEY) no servidor"
+                              ? "Cadastre uma chave gratuita NASA FIRMS em Ajustes"
                               : linha.dica}
                           </div>
                         </div>
@@ -1035,6 +1298,215 @@ export default function MapShell() {
             >
               Limpar e sair
             </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={openSheet === "boletim"} onOpenChange={(o) => !o && setOpenSheet(null)}>
+        <SheetContent side="bottom" className="bg-card border-border">
+          <SheetHeader>
+            <SheetTitle className="mono text-tactical-orange">BOLETIM DE INTELIGÊNCIA</SheetTitle>
+          </SheetHeader>
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <span className="mono text-[10px] text-muted-foreground">
+              {boletimEm ? `Conferido às ${formatTime(boletimEm)} · centro do mapa` : ""}
+            </span>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="glove-tap mono text-[11px]"
+              onClick={carregarBoletim}
+            >
+              <RefreshCw className="mr-1 h-3.5 w-3.5" /> Atualizar
+            </Button>
+          </div>
+
+          <div className="mt-3 max-h-[62dvh] space-y-3 overflow-y-auto pr-1">
+            <SecaoBoletim titulo="CLIMA ESPACIAL" fonte="NOAA SWPC">
+              {intel?.climaEspacial ? (
+                <div>
+                  <span
+                    className={
+                      intel.climaEspacial.nivel === "tempestade"
+                        ? "text-red-400"
+                        : intel.climaEspacial.nivel === "instavel"
+                          ? "text-amber-400"
+                          : "text-emerald-400"
+                    }
+                  >
+                    KP {formatNumber(intel.climaEspacial.kp, 1)}
+                  </span>{" "}
+                  — {intel.climaEspacial.classificacao}
+                  {intel.climaEspacial.medidoEm && (
+                    <div className="text-[10px] text-muted-foreground">
+                      Medição {formatDateTime(new Date(intel.climaEspacial.medidoEm).getTime())}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <SemDados />
+              )}
+            </SecaoBoletim>
+
+            <SecaoBoletim titulo="QUALIDADE DO AR" fonte="Open-Meteo">
+              {ar ? (
+                <div>
+                  <span
+                    className={
+                      ar.nivel === "boa" || ar.nivel === "razoavel"
+                        ? "text-emerald-400"
+                        : ar.nivel === "moderada"
+                          ? "text-yellow-300"
+                          : "text-red-400"
+                    }
+                  >
+                    IQAr {formatInteger(ar.aqiEuropeu)}
+                  </span>{" "}
+                  — {ar.classificacao}
+                  <div className="text-[10px] text-muted-foreground">
+                    PM2,5 {formatNumber(ar.pm25, 1)} · PM10 {formatNumber(ar.pm10, 1)} · Ozônio{" "}
+                    {formatInteger(ar.ozonio)} µg/m³
+                  </div>
+                </div>
+              ) : (
+                <SemDados />
+              )}
+            </SecaoBoletim>
+
+            <SecaoBoletim titulo="ALERTAS OFICIAIS FORTES" fonte="GDACS (UE/ONU)">
+              {(alertas ?? []).filter((a) => a.nivel !== "Green").length > 0 ? (
+                <div className="space-y-1">
+                  {(alertas ?? [])
+                    .filter((a) => a.nivel !== "Green")
+                    .slice(0, 6)
+                    .map((a) => (
+                      <button
+                        key={a.id}
+                        type="button"
+                        className="block w-full rounded px-1 py-0.5 text-left hover:bg-background/60"
+                        onClick={() => {
+                          flyTo(a.lng, a.lat, 6);
+                          setOpenSheet(null);
+                        }}
+                      >
+                        <span className={a.nivel === "Red" ? "text-red-400" : "text-amber-400"}>
+                          ●
+                        </span>{" "}
+                        <span className="font-bold">{a.tipo}</span> — {a.pais}: {a.nome}
+                      </button>
+                    ))}
+                </div>
+              ) : (
+                <div className="text-muted-foreground">
+                  {alertas ? "Nenhum alerta laranja/vermelho ativo agora." : <SemDados />}
+                </div>
+              )}
+            </SecaoBoletim>
+
+            <SecaoBoletim titulo="SISMOS SIGNIFICATIVOS" fonte="USGS · M4,5+ nas últimas 24 h">
+              {(intel?.sismos ?? []).filter((s) => s.mag >= 4.5).length > 0 ? (
+                <div className="space-y-1">
+                  {[...(intel?.sismos ?? [])]
+                    .filter((s) => s.mag >= 4.5)
+                    .sort((a, b) => b.mag - a.mag)
+                    .slice(0, 6)
+                    .map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        className="block w-full rounded px-1 py-0.5 text-left hover:bg-background/60"
+                        onClick={() => {
+                          flyTo(s.lng, s.lat, 6);
+                          setOpenSheet(null);
+                        }}
+                      >
+                        <span className="font-bold text-tactical-orange">
+                          M{formatNumber(s.mag, 1)}
+                        </span>{" "}
+                        {s.lugar}
+                        <span className="text-[10px] text-muted-foreground">
+                          {" "}
+                          · {formatDateTime(s.hora)}
+                        </span>
+                      </button>
+                    ))}
+                </div>
+              ) : (
+                <div className="text-muted-foreground">Nenhum sismo M4,5+ nas últimas 24 h.</div>
+              )}
+            </SecaoBoletim>
+
+            <SecaoBoletim titulo="EVENTOS NATURAIS ATIVOS" fonte="NASA EONET">
+              {(intel?.eventos ?? []).length > 0 ? (
+                <div className="space-y-1">
+                  {[...(intel?.eventos ?? [])]
+                    .sort((a, b) => b.hora - a.hora)
+                    .slice(0, 5)
+                    .map((e) => (
+                      <button
+                        key={e.id}
+                        type="button"
+                        className="block w-full rounded px-1 py-0.5 text-left hover:bg-background/60"
+                        onClick={() => {
+                          flyTo(e.lng, e.lat, 6);
+                          setOpenSheet(null);
+                        }}
+                      >
+                        <span className="font-bold text-amber-400">{e.categoria}</span> — {e.titulo}
+                      </button>
+                    ))}
+                </div>
+              ) : (
+                <SemDados />
+              )}
+            </SecaoBoletim>
+
+            <SecaoBoletim titulo="ISS — ESTAÇÃO ESPACIAL INTERNACIONAL" fonte="WhereTheISS.at">
+              {iss ? (
+                <div>
+                  Altitude {formatInteger(iss.altitudeKm)} km · {formatInteger(iss.velocidadeKmh)}{" "}
+                  km/h · {iss.visibilidade === "daylight" ? "iluminada" : "na sombra da Terra"}
+                  <div className="text-[10px] text-muted-foreground">
+                    Posição {formatDecimalDegrees(iss.lat)}, {formatDecimalDegrees(iss.lng)} ·
+                    camada ativa no mapa mostra a trajetória.
+                  </div>
+                </div>
+              ) : (
+                <SemDados />
+              )}
+            </SecaoBoletim>
+
+            <SecaoBoletim titulo="MANCHETES GLOBAIS DE EMERGÊNCIA" fonte="GDELT · últimas 24 h">
+              {(noticias ?? []).length > 0 ? (
+                <div className="space-y-1.5">
+                  {(noticias ?? []).slice(0, 8).map((n, i) => (
+                    <a
+                      key={`${n.url}-${i}`}
+                      href={n.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block rounded px-1 py-0.5 hover:bg-background/60"
+                    >
+                      {n.titulo}
+                      <span className="text-[10px] text-muted-foreground">
+                        {" "}
+                        · {n.fonte}
+                        {n.hora ? ` · ${formatTime(n.hora)}` : ""}
+                      </span>
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <SemDados />
+              )}
+            </SecaoBoletim>
+
+            <p className="text-[10px] leading-relaxed text-muted-foreground">
+              Fontes ao vivo: USGS · NASA EONET/FIRMS · NOAA SWPC · GDACS · GDELT · WhereTheISS.at ·
+              Open-Meteo · rede ADS-B (adsb.lol) · AISStream (opcional). Referências curadas: zonas
+              de conflito, centrais nucleares e pontos marítimos estratégicos — não são feeds em
+              tempo real.
+            </p>
           </div>
         </SheetContent>
       </Sheet>
@@ -1174,7 +1646,37 @@ const LINHAS_INTEL: Array<{ id: keyof IntelVisibilidade; nome: string; dica: str
     dica: "NASA FIRMS · satélite VIIRS, últimas 24 horas",
   },
   { id: "conflitos", nome: "Zonas de conflito", dica: "Referência curada — não é feed ao vivo" },
+  {
+    id: "voos",
+    nome: "Voos ao vivo",
+    dica: "Rede ADS-B · militares no mundo + civis perto do centro",
+  },
+  {
+    id: "satelites",
+    nome: "ISS (satélite)",
+    dica: "Estação Espacial Internacional · posição, trajetória e pegada",
+  },
+  {
+    id: "alertas",
+    nome: "Alertas oficiais",
+    dica: "GDACS (UE/ONU) · terremotos, ciclones, vulcões, enchentes, incêndios",
+  },
+  {
+    id: "maritimo",
+    nome: "Rotas marítimas",
+    dica: "Estreitos estratégicos e maiores portos — referência curada",
+  },
+  {
+    id: "nuclear",
+    nome: "Centrais nucleares",
+    dica: "~100 instalações no mundo — referência curada",
+  },
   { id: "noite", nome: "Dia e noite", dica: "Terminador solar em tempo real" },
+  {
+    id: "navios",
+    nome: "Navios ao vivo (AIS)",
+    dica: "Requer chave gratuita aisstream.io — cadastre em Ajustes",
+  },
 ];
 
 function RailBtn({
@@ -1377,4 +1879,31 @@ function Cell({ label, value }: { label: string; value: string }) {
       <div className="truncate text-[11px] text-foreground">{value}</div>
     </div>
   );
+}
+
+/** Seção do boletim com cabeçalho tático e fonte citada. */
+function SecaoBoletim({
+  titulo,
+  fonte,
+  children,
+}: {
+  titulo: string;
+  fonte: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-md border border-border bg-background/40 p-3">
+      <div className="mono mb-1 flex items-baseline justify-between gap-2">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-tactical-orange">
+          {titulo}
+        </span>
+        <span className="text-[9px] text-muted-foreground">{fonte}</span>
+      </div>
+      <div className="mono text-xs leading-relaxed">{children}</div>
+    </section>
+  );
+}
+
+function SemDados() {
+  return <span className="text-muted-foreground">Aguardando coleta… toque em Atualizar.</span>;
 }

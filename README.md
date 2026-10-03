@@ -30,9 +30,14 @@ sem conexão — e os dados sincronizam na nuvem quando uma conta está conectad
 - **Modo Osiris (inteligência global)** — alterne o mapa entre "Tático" e
   "Osiris" e sobreponha camadas ao vivo ao basemap Tático Escuro: sismos M2,5+
   (USGS), eventos naturais (NASA EONET), focos de calor (NASA FIRMS, opcional),
-  zonas de conflito (referência curada) e terminador dia/noite em tempo real,
-  com índice Kp de clima espacial (NOAA SWPC) e atualização automática a cada
-  90 segundos. Sem internet, as camadas exibem os últimos dados coletados.
+  zonas de conflito (referência curada), terminador dia/noite em tempo real,
+  voos ao vivo militares e civis (ADS-B), ISS com trajetória e pegada,
+  alertas oficiais de desastre (GDACS), rotas marítimas estratégicas, centrais
+  nucleares (referência curada) e navios ao vivo via AIS (opcional) — com
+  índice Kp de clima espacial (NOAA SWPC), **Boletim de inteligência**
+  consolidado (incluindo qualidade do ar e manchetes globais) e atualização
+  automática a cada 45–90 segundos. Sem internet, as camadas exibem os
+  últimos dados coletados (cache no aparelho).
 - **Manual de sobrevivência offline** — base de conhecimento categorizada e
   pesquisável (primeiros socorros, fogo, água, abrigos, nós) com
   renderização markdown e checklists interativos.
@@ -146,7 +151,7 @@ gateway de e-mail (ver seção abaixo) e agende o POST para
 | `MAIL_GATEWAY_URL`             | Servidor   | Endpoint compatível com a API do Gmail                |
 | `MAIL_GATEWAY_KEY`             | Servidor   | Token Bearer do gateway de e-mail                     |
 | `MAIL_CONNECTION_KEY`          | Servidor   | Chave de conexão do gateway (`X-Connection-Api-Key`)  |
-| `FIRMS_MAP_KEY`                | Servidor   | Opcional — chave gratuita NASA FIRMS para a camada de focos de calor do modo Osiris |
+| `FIRMS_MAP_KEY`                | Servidor   | Opcional — chave gratuita NASA FIRMS para a camada de focos de calor do modo Osiris (o usuário também pode cadastrar a própria chave em Ajustes, salva só no aparelho) |
 
 Consulte `.env.example` para o modelo completo. **Nunca versione o arquivo
 `.env`** — ele está no `.gitignore` por padrão.
@@ -188,17 +193,48 @@ O mapa tem dois modos alternáveis pelo usuário (botão no topo do HUD ou em
 - **Tático** — navegação clássica (bússola, MGRS, medições, waypoints) com
   qualquer camada base.
 - **Osiris** — basemap Tático Escuro + camadas de inteligência global com
-  atualização automática a cada 90 segundos: **sismos** M2,5+ das últimas 24 h
-  (USGS), **eventos naturais** ativos (NASA EONET), **focos de calor**
-  (NASA FIRMS/VIIRS, requer `FIRMS_MAP_KEY` gratuita), **zonas de conflito**
-  (dataset curado em `src/lib/intel-conflicts.ts`), **terminador dia/noite**
-  (SunCalc) e **clima espacial** com índice Kp (NOAA SWPC).
+  atualização automática (45–90 s conforme a fonte):
 
-As fontes são acessadas apenas por server functions (`src/lib/intel.functions.ts`)
-com cache em memória de 60 s e fallback para os últimos dados bons — o
-navegador nunca chama as fontes diretamente (evita CORS e expõe chaves). A
-escolha do modo e das camadas é persistida no banco local (IndexedDB) junto
-das demais preferências.
+  | Camada | Fonte | Tipo |
+  |--------|-------|------|
+  | Sismos M2,5+ (24 h) | USGS | ao vivo |
+  | Eventos naturais | NASA EONET | ao vivo |
+  | Focos de calor (VIIRS) | NASA FIRMS | ao vivo · requer chave (ver abaixo) |
+  | Zonas de conflito | dataset curado (`intel-conflicts.ts`) | referência |
+  | Terminador dia/noite | SunCalc | calculado no cliente |
+  | Clima espacial (Kp) | NOAA SWPC | ao vivo |
+  | Voos ao vivo (militares + civis) | rede ADS-B (adsb.lol) | ao vivo |
+  | ISS — posição, trajetória e pegada | WhereTheISS.at | ao vivo |
+  | Alertas oficiais de desastre | GDACS (UE/ONU) | ao vivo |
+  | Rotas marítimas (12 estreitos + 22 portos) | dataset curado (`intel-maritimo.ts`) | referência |
+  | Centrais nucleares (~100 instalações) | dataset curado (`intel-nuclear.ts`) | referência |
+  | Navios ao vivo (AIS) | AISStream.io | ao vivo · requer chave (ver abaixo) |
+
+- **Boletim de inteligência** — painel consolidado (botão no rail do mapa) com
+  clima espacial, qualidade do ar no centro do mapa (Open-Meteo), alertas
+  laranja/vermelhos do GDACS, sismos M4,5+, eventos ativos, manchetes globais
+  de emergência (GDELT) e situação da ISS — tudo clicável, voando até o ponto
+  no mapa.
+
+As fontes são acessadas apenas por server functions
+(`src/lib/intel.functions.ts` e `src/lib/intel-v2.functions.ts`) com cache em
+memória (45–300 s conforme a fonte) e fallback para os últimos dados bons — o
+navegador nunca chama as fontes diretamente (evita CORS e expõe chaves). O
+último snapshot bem-sucedido fica salvo no IndexedDB (`intel-cache`) e é
+hidratado ao abrir o modo offline. A escolha do modo e das camadas é
+persistida no banco local (IndexedDB) junto das demais preferências.
+
+### Chaves opcionais do usuário (Ajustes → Chaves de inteligência)
+
+As chaves ficam **somente no aparelho** (IndexedDB) e podem ser cadastradas
+sem envolver o servidor:
+
+- **NASA FIRMS** (`firms.modaps.eosdis.nasa.gov`, conta Earthdata gratuita) —
+  ativa a camada de focos de calor; alternativa à variável `FIRMS_MAP_KEY` do
+  servidor.
+- **AISStream.io** (registro gratuito) — conecta o WebSocket de AIS no
+  navegador e mostra navios ao redor da área visível do mapa (camada
+  "Navios ao vivo").
 
 ## PWA, modo local e pasta de backup
 

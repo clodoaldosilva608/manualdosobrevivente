@@ -75,6 +75,18 @@ export interface IntelVisibilidade {
   conflitos: boolean;
   noite: boolean;
   incendios: boolean;
+  /** Voos ao vivo (ADS-B) — militares globais + civis perto do centro. */
+  voos: boolean;
+  /** Estação Espacial Internacional (posição, trajetória e pegada). */
+  satelites: boolean;
+  /** Alertas oficiais de desastre (GDACS). */
+  alertas: boolean;
+  /** Centrais nucleares (referência curada). */
+  nuclear: boolean;
+  /** Pontos marítimos estratégicos (chokepoints e portos, referência curada). */
+  maritimo: boolean;
+  /** Navios ao vivo via AIS (requer chave gratuita do usuário). */
+  navios: boolean;
 }
 
 export const INTEL_VIS_PADRAO: IntelVisibilidade = {
@@ -83,4 +95,122 @@ export const INTEL_VIS_PADRAO: IntelVisibilidade = {
   conflitos: true,
   noite: false,
   incendios: true,
+  voos: true,
+  satelites: true,
+  alertas: true,
+  nuclear: false,
+  maritimo: true,
+  navios: false,
 };
+
+/** Chaves de serviço do usuário — ficam somente no aparelho (IndexedDB). */
+export interface IntelChaves {
+  /** NASA FIRMS (gratuita em firms.modaps.eosdis.nasa.gov). */
+  firms: string;
+  /** AISStream.io (gratuita em aisstream.io). */
+  ais: string;
+}
+
+export const INTEL_CHAVES_PADRAO: IntelChaves = { firms: "", ais: "" };
+
+// ---------------------------------------------------------------------------
+// Fase 2 — fontes adicionais (avião, espaço, alertas, notícias, ar, marítimo)
+// ---------------------------------------------------------------------------
+
+/** Aeronave ao vivo captada pela rede ADS-B (adsb.lol). */
+export interface IntelVoo {
+  /** Endereço ICAO 24 bits (hex) — identificador único da aeronave. */
+  id: string;
+  /** Indicativo de chamada (callsign), ex.: "TAM3565". */
+  indicativo: string;
+  /** Código do modelo (ex.: "A321", "B738"), pode ser vazio. */
+  tipo: string;
+  /** Matrícula (ex.: "PT-XPJ"), pode ser vazia. */
+  matricula: string;
+  lng: number;
+  lat: number;
+  /** Altitude barométrica em pés; null quando a aeronave está no solo. */
+  altitude: number | null;
+  /** Velocidade sobre o solo em nós. */
+  velocidade: number | null;
+  /** Rumo em graus verdadeiros. */
+  rumo: number | null;
+  militar: boolean;
+  /** Emergência informada pelo transponder ("none" quando normal). */
+  emergencia: string;
+}
+
+/** Posição atual da ISS com trajetória prevista e pegada de visibilidade. */
+export interface IntelIss {
+  lng: number;
+  lat: number;
+  /** Altitude orbital em km. */
+  altitudeKm: number;
+  /** Velocidade orbital em km/h. */
+  velocidadeKmh: number;
+  /** "daylight" (iluminada) ou "eclipsed" (sombra da Terra). */
+  visibilidade: string;
+  /** Raio da pegada de visibilidade a partir do ponto em km. */
+  pegadaKm: number;
+  /** Unix em milissegundos da posição. */
+  hora: number;
+  /** Trajetória prevista (lng, lat) para as próximas ~3 órbitas. */
+  trajetoria: Array<[number, number]>;
+}
+
+/** Alerta oficial de desastre do GDACS (sistema da UE/ONU). */
+export interface IntelAlerta {
+  id: string;
+  tipoId: string;
+  /** Tipo em pt-BR ("Terremoto", "Ciclone tropical"…). */
+  tipo: string;
+  nome: string;
+  /** País (nome ou código ISO3). */
+  pais: string;
+  nivel: "Green" | "Orange" | "Red";
+  lng: number;
+  lat: number;
+  /** Data de início em ISO 8601. */
+  inicio: string;
+  url: string;
+}
+
+/** Manchete global do GDELT (notícias de emergência, 24 h). */
+export interface IntelNoticia {
+  titulo: string;
+  url: string;
+  /** Domínio do veículo (ex.: "reuters.com"). */
+  fonte: string;
+  /** Código do país de origem da veículo. */
+  pais: string;
+  /** Unix em milissegundos da publicação. */
+  hora: number;
+}
+
+/** Qualidade do ar no ponto central do mapa (Open-Meteo). */
+export interface IntelAr {
+  /** Índice europeu de qualidade do ar (0–100+; menor é melhor). */
+  aqiEuropeu: number;
+  usAqi: number;
+  pm25: number;
+  pm10: number;
+  /** Ozônio em µg/m³. */
+  ozonio: number;
+  classificacao: string;
+  nivel: "boa" | "razoavel" | "moderada" | "pobre" | "muito-pobre" | "extrema";
+  medidoEm: string;
+}
+
+/** Navio ao vivo recebido via AIS (aisstream.io, WebSocket do navegador). */
+export interface IntelNavio {
+  mmsi: string;
+  nome: string;
+  lng: number;
+  lat: number;
+  /** Velocidade sobre o solo em nós. */
+  velocidade: number | null;
+  /** Rumo sobre o solo em graus. */
+  rumo: number | null;
+  /** Unix em milissegundos do último relato. */
+  hora: number;
+}

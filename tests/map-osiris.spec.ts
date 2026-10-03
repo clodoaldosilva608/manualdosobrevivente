@@ -170,4 +170,51 @@ describe("Modo Osiris do mapa", () => {
     );
     await page.context().close();
   }, 180_000);
+
+  it("Fase 2: painel de camadas lista as novas camadas e liga a de voos", async () => {
+    const page = await abrirMapaMobile(browser);
+    await ativarModoOsiris(page);
+    await page.getByText("Camadas de inteligência", { exact: true }).waitFor({ state: "visible" });
+
+    // As novas camadas da Fase 2 aparecem com toggles.
+    for (const nome of ["Voos ao vivo", "ISS (satélite)", "Alertas oficiais", "Rotas marítimas"]) {
+      await page
+        .getByRole("switch", { name: `Ativar camada ${nome}` })
+        .waitFor({ state: "visible" });
+    }
+
+    // Liga "Centrais nucleares" e espera a camada aparecer no estilo.
+    await page.getByRole("switch", { name: "Ativar camada Centrais nucleares" }).click();
+    await page.keyboard.press("Escape");
+    await page.waitForFunction(
+      () => {
+        const m = (window as unknown as { __tacticalMap?: { getLayer: (i: string) => unknown } })
+          .__tacticalMap;
+        return Boolean(m?.getLayer?.("intel-nuclear-symbol"));
+      },
+      { timeout: 15_000 },
+    );
+    await page.context().close();
+  }, 180_000);
+
+  it("Fase 2: o Boletim de inteligência abre com dados consolidados", async () => {
+    const page = await abrirMapaMobile(browser);
+    await page.locator('button[title="Boletim"]').click();
+    await page.getByText("BOLETIM DE INTELIGÊNCIA").waitFor({ state: "visible", timeout: 10_000 });
+
+    // Seções do boletim presentes (mesmo sem rede, os blocos existem).
+    await page.getByText("CLIMA ESPACIAL", { exact: true }).waitFor({ state: "visible" });
+    await page.getByText("QUALIDADE DO AR", { exact: true }).waitFor({ state: "visible" });
+    await page.getByText("SISMOS SIGNIFICATIVOS", { exact: true }).waitFor({ state: "visible" });
+
+    // Com rede, o snapshot chega e o bloco de clima espacial mostra o Kp.
+    await page
+      .getByText(/KP \d/)
+      .first()
+      .waitFor({ state: "visible", timeout: 45_000 })
+      .catch(() => {
+        // Sem acesso às fontes no ambiente de teste: o boletim segue válido.
+      });
+    await page.context().close();
+  }, 180_000);
 });

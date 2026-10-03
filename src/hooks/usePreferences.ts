@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { getSetting, setSetting } from "@/lib/db";
-import { INTEL_VIS_PADRAO, type IntelVisibilidade } from "@/lib/intel.types";
+import {
+  INTEL_CHAVES_PADRAO,
+  INTEL_VIS_PADRAO,
+  type IntelChaves,
+  type IntelVisibilidade,
+} from "@/lib/intel.types";
 
 export type ModoMapa = "tatico" | "osiris";
 
@@ -12,6 +17,8 @@ export interface Preferences {
   mapMode: ModoMapa;
   /** Visibilidade persistida das camadas de inteligência do modo Osiris. */
   intelVis: IntelVisibilidade;
+  /** Chaves de serviço do usuário (FIRMS/AIS) — ficam só no aparelho. */
+  intelKeys: IntelChaves;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -20,6 +27,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   northRef: "true",
   mapMode: "tatico",
   intelVis: INTEL_VIS_PADRAO,
+  intelKeys: INTEL_CHAVES_PADRAO,
 };
 
 const KEY = "preferences";
@@ -37,6 +45,7 @@ export function usePreferences() {
           ...DEFAULT_PREFERENCES,
           ...(v ?? {}),
           intelVis: { ...INTEL_VIS_PADRAO, ...(v?.intelVis ?? {}) },
+          intelKeys: { ...INTEL_CHAVES_PADRAO, ...(v?.intelKeys ?? {}) },
         });
         setLoaded(true);
       })

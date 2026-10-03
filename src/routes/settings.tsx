@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -28,7 +29,7 @@ import {
   pushAll,
   pullAll,
 } from "@/lib/cloud-sync";
-import { CloudUpload, CloudDownload, Trash2, Upload, Download } from "lucide-react";
+import { CloudUpload, CloudDownload, Trash2, Upload, Download, KeyRound } from "lucide-react";
 import { getReportSettings, saveReportSettings, sendReportNow } from "@/lib/report.functions";
 import { BackupFolderCard } from "@/components/BackupFolderCard";
 import { usePwaInstall } from "@/lib/pwa";
@@ -401,6 +402,45 @@ function Settings() {
           ]}
           onChange={(v) => update({ northRef: v as "true" | "magnetic" })}
         />
+      </Section>
+
+      <Section title="Chaves de inteligência (opcional)">
+        <p className="text-xs text-muted-foreground">
+          Chaves gratuitas para habilitar as camadas extras do modo Osiris. Ficam salvas apenas
+          neste aparelho e são usadas só para consultar as fontes oficiais.
+        </p>
+        <div className="space-y-1">
+          <Label htmlFor="chave-firms">NASA FIRMS — focos de calor</Label>
+          <Input
+            id="chave-firms"
+            autoComplete="off"
+            placeholder="Cole aqui sua MAP_KEY da NASA FIRMS"
+            value={prefs.intelKeys.firms}
+            onChange={(e) => update({ intelKeys: { ...prefs.intelKeys, firms: e.target.value } })}
+          />
+          <p className="text-[10px] text-muted-foreground">
+            Cadastre grátis em firms.modaps.eosdis.nasa.gov (conta NASA Earthdata). A camada "Focos
+            de calor" ativa em poucos minutos.
+          </p>
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="chave-ais">AISStream.io — navios ao vivo</Label>
+          <Input
+            id="chave-ais"
+            autoComplete="off"
+            placeholder="Cole aqui sua chave do AISStream.io"
+            value={prefs.intelKeys.ais}
+            onChange={(e) => update({ intelKeys: { ...prefs.intelKeys, ais: e.target.value } })}
+          />
+          <p className="text-[10px] text-muted-foreground">
+            Cadastre grátis em aisstream.io. Os navios aparecem ao redor da área visível do mapa,
+            com o modo Osiris e a camada "Navios" ligados.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+          <KeyRound className="h-3.5 w-3.5 shrink-0" />
+          Nenhum dado destas chaves sai do seu aparelho além da consulta direta à fonte.
+        </div>
       </Section>
 
       <Section title="Dados no aparelho">

@@ -3,11 +3,13 @@
  *
  * Reúne fontes públicas oficiais e keyless — USGS (sismos), NASA EONET
  * (eventos naturais), NASA FIRMS (focos de calor, requer chave gratuita
- * opcional) e NOAA SWPC (clima espacial/Kp) — em um único instantâneo JSON
- * com cache em memória (60 s) e fallback para os últimos dados bons em caso
- * de falha upstream. O cliente nunca acessa as fontes diretamente.
+ * opcional — do servidor ou do usuário, salva no aparelho) e NOAA SWPC
+ * (clima espacial/Kp) — em um único instantâneo JSON com cache em memória
+ * (60 s) e fallback para os últimos dados bons em caso de falha upstream.
+ * O cliente nunca acessa as fontes diretamente.
  */
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import type {
   IntelClimaEspacial,
   IntelEvento,
@@ -24,6 +26,8 @@ const MAX_INCENDIOS = 3000;
 interface EstadoCache {
   ultimo: IntelSnapshot | null;
   em: number;
+  /** Chave FIRMS usada na coleta do snapshot em cache (invalida se mudar). */
+  chaveFirms: string;
   bons: {
     sismos?: IntelSismo[];
     eventos?: IntelEvento[];
@@ -33,7 +37,12 @@ interface EstadoCache {
 }
 
 const G = globalThis as typeof globalThis & { __msIntelCache?: EstadoCache };
-const cache: EstadoCache = (G.__msIntelCache ??= { ultimo: null, em: 0, bons: {} });
+const cache: EstadoCache = (G.__msIntelCache ??= {
+  ultimo: null,
+  em: 0,
+  chaveFirms: "",
+  bons: {},
+});
 
 /** Busca JSON com tempo limite para não travar a resposta do servidor. */
 async function buscarJson<T>(url: string, timeoutMs = 12_000): Promise<T> {
@@ -149,8 +158,8 @@ interface FirmsResultado {
 }
 
 /** CSV do FIRMS (VIIRS SNPP, últimas 24 h, mundo). Requer chave gratuita. */
-async function buscarIncendios(): Promise<FirmsResultado> {
-  const chave = process.env["FIRMS_MAP_KEY"];
+async function buscarIncendios(chavePessoal?: string): Promise<FirmsResultado> {
+  const chave = (chavePessoal ?? "").trim() || process.env["FIRMS_MAP_KEY"];
   if (!chave) return { disponivel: false, pontos: [] };
   const url =
     `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${encodeURIComponent(chave)}` +
@@ -223,17 +232,23 @@ async function buscarClimaEspacial(): Promise<IntelClimaEspacial | null> {
   };
 }
 
-export const fetchIntelSnapshot = createServerFn({ method: "GET" }).handler(
-  async (): Promise<IntelSnapshot> => {
+const SnapInputSchema = z.object({ firmsKey: z.string().max(200).optional() }).default({});
+
+export const fetchIntelSnapshot = createServerFn({ method: "GET" })
+  .inputValidator((input) => SnapInputSchema.parse(input))
+  .handler(async ({ data }): Promise<IntelSnapshot> => {
+    const chaveFirms = (data?.firmsKey ?? "").trim();
     const agora = Date.now();
-    if (cache.ultimo && agora - cache.em < TTL_SNAPSHOT) return cache.ultimo;
+    if (cache.ultimo && agora - cache.em < TTL_SNAPSHOT && cache.chaveFirms === chaveFirms) {
+      return cache.ultimo;
+    }
 
     const falhas: string[] = [];
 
     const [sismosR, eventosR, incendiosR, climaR] = await Promise.allSettled([
       buscarSismos(),
       buscarEventos(),
-      buscarIncendios(),
+      buscarIncendios(chaveFirms || undefined),
       buscarClimaEspacial(),
     ]);
 
@@ -286,6 +301,6 @@ export const fetchIntelSnapshot = createServerFn({ method: "GET" }).handler(
     };
     cache.ultimo = snapshot;
     cache.em = agora;
+    cache.chaveFirms = chaveFirms;
     return snapshot;
-  },
-);
+  });

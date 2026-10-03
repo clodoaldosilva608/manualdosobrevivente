@@ -27,11 +27,7 @@ import {
   pullAll,
 } from "@/lib/cloud-sync";
 import { CloudUpload, CloudDownload, Trash2, Upload, Download } from "lucide-react";
-import {
-  getReportSettings,
-  saveReportSettings,
-  sendReportNow,
-} from "@/lib/report.functions";
+import { getReportSettings, saveReportSettings, sendReportNow } from "@/lib/report.functions";
 
 interface ReportForm {
   enabled: boolean;
@@ -317,7 +313,7 @@ function Settings() {
   };
 
   return (
-    <div className="container max-w-2xl mx-auto p-4 md:p-8 space-y-6">
+    <div className="container mx-auto max-w-2xl space-y-6 p-4 pb-8 md:p-8">
       <header>
         <h1 className="mono text-tactical-orange text-2xl md:text-3xl font-bold tracking-wider">
           AJUSTES
@@ -461,7 +457,9 @@ function Settings() {
           </label>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="space-y-1">
-              <span className="mono text-[10px] uppercase text-muted-foreground">Dia da semana</span>
+              <span className="mono text-[10px] uppercase text-muted-foreground">
+                Dia da semana
+              </span>
               <select
                 value={reportForm.weekday}
                 onChange={(event) =>
@@ -532,11 +530,15 @@ function Settings() {
                   className="flex flex-wrap items-center justify-between gap-2 border-t border-border py-2 text-xs"
                 >
                   <span>{formatDateTime(item.sent_at)}</span>
-                  <span className={item.status === "sent" ? "text-tactical-green" : "text-destructive"}>
+                  <span
+                    className={item.status === "sent" ? "text-tactical-green" : "text-destructive"}
+                  >
                     {item.status === "sent" ? "Enviado" : "Falhou"}
                   </span>
-                  <span className="w-full text-muted-foreground">
-                    {formatInteger(item.waypoint_count)} waypoints · {formatInteger(item.gear_count)} itens · {formatInteger(item.checklist_count)} concluídos
+                  <span className="w-full break-words text-muted-foreground">
+                    {formatInteger(item.waypoint_count)} waypoints ·{" "}
+                    {formatInteger(item.gear_count)} itens · {formatInteger(item.checklist_count)}{" "}
+                    concluídos
                   </span>
                 </div>
               ))

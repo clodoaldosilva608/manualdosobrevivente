@@ -35,7 +35,7 @@ function ManualIndex() {
   const results = q.trim() ? fuse.search(q).map((r) => r.item) : MANUAL;
 
   return (
-    <div className="container max-w-4xl mx-auto p-4 md:p-8">
+    <div className="container mx-auto max-w-4xl p-4 pb-8 md:p-8">
       <header className="mb-6">
         <h1 className="mono text-tactical-orange text-2xl md:text-3xl font-bold tracking-wider">
           MANUAL DE SOBREVIVÊNCIA
@@ -99,7 +99,7 @@ function EntryRow({ entry }: { entry: (typeof MANUAL)[number] }) {
           className="h-16 w-24 shrink-0 rounded object-cover border border-border"
         />
         <div className="min-w-0">
-          <div className="font-semibold">{entry.title}</div>
+          <div className="break-words font-semibold">{entry.title}</div>
           <div className="text-xs text-muted-foreground mt-0.5">{entry.summary}</div>
         </div>
       </Link>

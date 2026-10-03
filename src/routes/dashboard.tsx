@@ -189,11 +189,11 @@ function Dashboard() {
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 pb-28 pt-6">
-      <header className="flex items-center justify-between gap-3">
-        <h1 className="mono text-xl font-bold text-tactical-orange uppercase tracking-widest">
+      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+        <h1 className="mono min-w-0 break-words text-lg font-bold uppercase tracking-widest text-tactical-orange sm:text-xl">
           Painel de dados
         </h1>
-        <Button variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>
+        <Button className="shrink-0" variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>
           <RefreshCw className="h-4 w-4 mr-1" /> Atualizar
         </Button>
       </header>

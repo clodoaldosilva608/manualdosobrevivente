@@ -13,7 +13,9 @@ function base64Url(value: string): string {
 }
 
 function encodedHeader(value: string): string {
-  return /^[\x00-\x7F]*$/.test(value) ? value : `=?UTF-8?B?${base64Url(value)}?=`;
+  return Array.from(value).every((char) => char.charCodeAt(0) <= 127)
+    ? value
+    : `=?UTF-8?B?${base64Url(value)}?=`;
 }
 
 function reportBody(counts: { waypoints: number; gear: number; checklist: number }): string {
@@ -77,7 +79,8 @@ export async function sendWeeklyReport(
       },
       body: JSON.stringify({ raw }),
     });
-    if (!response.ok) throw new Error(`Falha no envio (${response.status}): ${await response.text()}`);
+    if (!response.ok)
+      throw new Error(`Falha no envio (${response.status}): ${await response.text()}`);
   } catch (error) {
     status = "failed";
     errorMessage = error instanceof Error ? error.message.slice(0, 1000) : "Falha desconhecida";
@@ -93,11 +96,12 @@ export async function sendWeeklyReport(
     error_message: errorMessage,
   });
   if (historyError) throw new Error(historyError.message);
-  if (status === "failed") throw new Error(errorMessage ?? "Falha no envio");
-  await admin
+  const { error: updateError } = await admin
     .from("weekly_report_settings")
     .update({ last_sent_at: new Date().toISOString() })
     .eq("user_id", settings.user_id);
+  if (updateError) throw new Error(updateError.message);
+  if (status === "failed") throw new Error(errorMessage ?? "Falha no envio");
 }
 
 export function isReportDue(settings: ReportSettings, now = new Date()): boolean {

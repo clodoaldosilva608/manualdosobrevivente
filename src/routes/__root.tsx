@@ -147,7 +147,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthListener />
       <AutoCloudSync />
-      <div className="flex min-h-screen flex-col md:pt-14 pb-16 md:pb-0">
+      <div className="flex min-h-screen flex-col pb-14 md:pb-0 md:pt-14">
         <main className="flex-1 relative">
           <Outlet />
         </main>

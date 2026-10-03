@@ -17,6 +17,13 @@ export const Route = createFileRoute("/inventory")({
         content:
           "Controle equipamentos, peso e validade da sua mochila de emergência (bug-out bag).",
       },
+      { property: "og:title", content: "Mochila de Emergência — TacticalGIS" },
+      {
+        property: "og:description",
+        content: "Controle equipamentos, peso e validade da sua mochila de emergência.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Inventory,
@@ -100,11 +107,12 @@ function Inventory() {
   };
 
   return (
-    <div className="container max-w-4xl mx-auto p-4 md:p-8">
-      <header className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="mono text-tactical-orange text-2xl md:text-3xl font-bold tracking-wider flex items-center gap-2">
-            <Backpack className="h-6 w-6" /> MOCHILA DE EMERGÊNCIA
+    <div className="container mx-auto max-w-4xl p-4 pb-8 md:p-8">
+      <header className="mb-6 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+        <div className="min-w-0">
+          <h1 className="mono flex min-w-0 items-start gap-2 text-xl font-bold tracking-wider text-tactical-orange sm:text-2xl md:text-3xl">
+            <Backpack className="mt-0.5 h-6 w-6 shrink-0" />
+            <span className="min-w-0 break-words">MOCHILA DE EMERGÊNCIA</span>
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
             Inventário, controle de peso e alertas de validade.
@@ -157,7 +165,7 @@ function Inventory() {
             <Input
               value={draft.name || ""}
               onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-              placeholder="Ex: Ferro rod"
+              placeholder="Ex.: pederneira"
             />
           </div>
           <div>

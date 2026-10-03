@@ -39,7 +39,17 @@ async function get(path: string) {
 }
 
 describe("SSR em pt-BR", () => {
-  for (const path of ["/", "/login", "/manual", "/sos", "/settings", "/inventory"]) {
+  for (const path of [
+    "/",
+    "/login",
+    "/manual",
+    "/manual/water-purification",
+    "/sos",
+    "/settings",
+    "/inventory",
+    "/dashboard",
+    "/offline",
+  ]) {
     it(`${path} declara lang="pt-BR"`, async () => {
       const html = await get(path);
       expect(html).toMatch(/<html[^>]*lang="pt-BR"/);

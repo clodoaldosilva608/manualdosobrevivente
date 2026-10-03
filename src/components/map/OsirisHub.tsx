@@ -44,6 +44,7 @@ import {
 } from "@/lib/osint.functions";
 import type { IntelIss, IntelSnapshot, IntelVisibilidade, IntelVoo } from "@/lib/intel.types";
 import {
+  formatDateTime,
   formatDegrees,
   formatDistance,
   formatInteger,
@@ -59,6 +60,8 @@ interface OsirisHubProps {
   voos: IntelVoo[];
   intelVis: IntelVisibilidade;
   center: [number, number];
+  /** Seção do acordeão aberta automaticamente (ferramentas da plataforma). */
+  secaoInicial?: string;
   onAbrirCamadas: () => void;
   onAbrirBoletim: () => void;
   onFlyTo: (lng: number, lat: number, zoom?: number) => void;
@@ -406,6 +409,7 @@ export function OsirisHub({
   voos,
   intelVis,
   center,
+  secaoInicial,
   onAbrirCamadas,
   onAbrirBoletim,
   onFlyTo,
@@ -485,7 +489,13 @@ export function OsirisHub({
           </button>
         </div>
 
-        <Accordion type="single" collapsible className="mt-3">
+        <Accordion
+          key={secaoInicial ?? "padrao"}
+          type="single"
+          collapsible
+          defaultValue={secaoInicial}
+          className="mt-3"
+        >
           <AccordionItem value="astro">
             <AccordionTrigger className="mono text-[12px] uppercase">
               <span className="flex items-center gap-2">

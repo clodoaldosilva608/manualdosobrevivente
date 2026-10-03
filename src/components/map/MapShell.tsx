@@ -83,8 +83,9 @@ import {
   registrarPopupsIntel,
 } from "@/components/map/intel-layers";
 import { MapModeSwitch, type ModoMapa } from "@/components/map/MapModeSwitch";
-import { IntelStatusStrip, type StatusIntel } from "@/components/map/IntelStatusStrip";
+import { OsirisPlatform, type StatusIntel } from "@/components/map/OsirisPlatform";
 import { OsirisHub } from "@/components/map/OsirisHub";
+import { LINHAS_INTEL } from "@/components/map/intel-camadas-lista";
 import { Switch } from "@/components/ui/switch";
 
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
@@ -167,6 +168,15 @@ const styleFor = (layer: BaseLayerId): maplibregl.StyleSpecification => {
   };
 };
 
+/** Vista "mundo inteiro" da plataforma Osiris (fitBounds com margem). */
+const VISAO_GLOBAL = {
+  bounds: [
+    [-168, -58],
+    [168, 68],
+  ] as [[number, number], [number, number]],
+  padding: 24,
+};
+
 export default function MapShell() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -227,6 +237,8 @@ export default function MapShell() {
   const [navios, setNavios] = useState<IntelNavio[]>([]);
   const [statusAis, setStatusAis] = useState<StatusAis | "off">("off");
   const [boletimEm, setBoletimEm] = useState(0);
+  // Seção do Hub Osiris aberta diretamente pelas ferramentas da plataforma.
+  const [hubSecao, setHubSecao] = useState<string | undefined>(undefined);
   const callIntel = useServerFn(fetchIntelSnapshot);
   const callVoos = useServerFn(fetchVoos);
   const callIss = useServerFn(fetchIss);
@@ -761,6 +773,23 @@ export default function MapShell() {
     return () => window.clearInterval(t);
   }, [modoMapa]);
 
+  // Ao entrar no modo Osiris salva a vista tática e mostra o mundo inteiro;
+  // ao voltar ao Tático restaura a vista anterior.
+  const vistaTaticaRef = useRef<{ lng: number; lat: number; zoom: number } | null>(null);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    if (modoMapa === "osiris") {
+      const c = map.getCenter();
+      vistaTaticaRef.current = { lng: c.lng, lat: c.lat, zoom: map.getZoom() };
+      userMovedRef.current = true; // o GPS não deve puxar o mapa na plataforma
+      map.fitBounds(VISAO_GLOBAL.bounds, { padding: VISAO_GLOBAL.padding, duration: 1400 });
+    } else if (vistaTaticaRef.current) {
+      const v = vistaTaticaRef.current;
+      map.flyTo({ center: [v.lng, v.lat], zoom: v.zoom, duration: 1000 });
+    }
+  }, [modoMapa, ready]);
+
   // Load waypoints from local DB
   useEffect(() => {
     listWaypoints()
@@ -812,6 +841,25 @@ export default function MapShell() {
   const flyTo = useCallback((lng: number, lat: number, zoom = 14) => {
     mapRef.current?.flyTo({ center: [lng, lat], zoom });
   }, []);
+
+  const visaoGlobal = useCallback(() => {
+    mapRef.current?.fitBounds(VISAO_GLOBAL.bounds, {
+      padding: VISAO_GLOBAL.padding,
+      duration: 1200,
+    });
+  }, []);
+
+  // Liga/desliga todas as camadas de uma vez (painel da plataforma).
+  const definirTodasVis = useCallback(
+    (v: boolean) => {
+      updatePrefs({
+        intelVis: Object.fromEntries(
+          Object.keys(intelVis).map((k) => [k, v]),
+        ) as unknown as IntelVisibilidade,
+      });
+    },
+    [intelVis, updatePrefs],
+  );
 
   const handleGoto = () => {
     const c = parseCoordinate(gotoInput);
@@ -931,244 +979,264 @@ export default function MapShell() {
   const areaFmt = formatArea(polyArea);
 
   return (
-    <div className="absolute inset-0 bg-background">
+    <div className={`absolute inset-0 bg-background ${modoMapa === "osiris" ? "modo-osiris" : ""}`}>
       <div className="absolute inset-0">
         <div ref={containerRef} className="h-full w-full" />
       </div>
 
-      {/* HUD superior mobile: fluxo vertical — filhos nunca se sobrepõem */}
-      <div className="absolute left-2 right-20 top-[max(0.5rem,env(safe-area-inset-top))] z-10 flex flex-col gap-2 md:hidden">
-        <div data-test="modo-mapa-mobile">
-          <MapModeSwitch modo={modoMapa} onTrocar={(m) => updatePrefs({ mapMode: m })} />
-        </div>
-        <PainelCentro center={center} decl={decl} onCopy={(t) => copy(t)} />
-        <PainelPosicao
-          userPos={userPos}
-          onCentrar={() => {
-            if (!userPos) return toast.error("Sem localização disponível");
-            mapRef.current?.flyTo({ center: [userPos.lng, userPos.lat], zoom: 15 });
-          }}
-          onUltimoLocal={() => {
-            try {
-              const raw = localStorage.getItem("tgis:last-position");
-              if (!raw) return toast.error("Nenhum local salvo");
-              const p = JSON.parse(raw) as { lng: number; lat: number };
-              mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 14 });
-            } catch {
-              toast.error("Nenhum local salvo");
-            }
-          }}
-        />
-        {modoMapa === "osiris" && (
-          <IntelStatusStrip
-            snapshot={intel}
-            status={intelStatus}
-            vis={intelVis}
-            voos={voos}
-            iss={iss}
-            alertas={alertas}
-            navios={navios}
-            statusAis={statusAis}
-          />
-        )}
-        {(tool === "measure-line" || tool === "measure-area") && (
-          <LeituraMedicao tool={tool} lineLen={lineLen} areaFmt={areaFmt} onClear={clearDraw} />
-        )}
-      </div>
-
-      {/* HUD superior desktop: posições absolutas clássicas */}
-      <div className="absolute left-4 top-4 z-10 hidden w-[360px] md:block">
-        <PainelCentro center={center} decl={decl} onCopy={(t) => copy(t)} />
-      </div>
-      <div className="absolute left-4 top-[150px] z-10 hidden w-[360px] md:block">
-        <PainelPosicao
-          userPos={userPos}
-          onCentrar={() => {
-            if (!userPos) return toast.error("Sem localização disponível");
-            mapRef.current?.flyTo({ center: [userPos.lng, userPos.lat], zoom: 15 });
-          }}
-          onUltimoLocal={() => {
-            try {
-              const raw = localStorage.getItem("tgis:last-position");
-              if (!raw) return toast.error("Nenhum local salvo");
-              const p = JSON.parse(raw) as { lng: number; lat: number };
-              mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 14 });
-            } catch {
-              toast.error("Nenhum local salvo");
-            }
-          }}
-        />
-      </div>
-      {(tool === "measure-line" || tool === "measure-area") && (
-        <div className="absolute left-1/2 top-32 z-10 hidden -translate-x-1/2 md:block">
-          <LeituraMedicao tool={tool} lineLen={lineLen} areaFmt={areaFmt} onClear={clearDraw} />
-        </div>
-      )}
-
-      {/* Alternador de modo + faixa de inteligência (desktop, canto superior direito) */}
-      <div className="absolute right-4 top-4 z-10 hidden md:block" data-test="modo-mapa-desktop">
-        <MapModeSwitch modo={modoMapa} onTrocar={(m) => updatePrefs({ mapMode: m })} />
-      </div>
+      {/* Plataforma Osiris — centro de comando com todas as funcionalidades */}
       {modoMapa === "osiris" && (
-        <div className="absolute right-4 top-[64px] z-10 hidden w-[min(70vw,460px)] md:block">
-          <IntelStatusStrip
-            snapshot={intel}
-            status={intelStatus}
-            vis={intelVis}
-            voos={voos}
-            iss={iss}
-            alertas={alertas}
-            navios={navios}
-            statusAis={statusAis}
-          />
-        </div>
-      )}
-
-      {/* Right-side action rail */}
-      <div className="absolute right-2 top-[max(0.5rem,env(safe-area-inset-top))] z-10 flex flex-col gap-2 md:top-36">
-        <RailBtn
-          icon={Radar}
-          label="Osiris"
-          active={modoMapa === "osiris"}
-          onClick={() => {
-            setOpenSheet("hub");
-            carregarBoletim();
-          }}
-        />
-        <RailBtn
-          icon={Newspaper}
-          label="Boletim"
-          onClick={() => {
+        <OsirisPlatform
+          modo={modoMapa}
+          onTrocarModo={(m) => updatePrefs({ mapMode: m })}
+          status={intelStatus}
+          snapshot={intel}
+          vis={intelVis}
+          onToggleVis={(id, v) => updatePrefs({ intelVis: { ...intelVis, [id]: v } })}
+          onSetTodasVis={definirTodasVis}
+          voos={voos}
+          iss={iss}
+          alertas={alertas}
+          noticias={noticias}
+          navios={navios}
+          statusAis={statusAis}
+          onAbrirBoletim={() => {
             setOpenSheet("boletim");
             carregarBoletim();
           }}
-        />
-        <RailBtn icon={Layers} label="Camadas" onClick={() => setOpenSheet("layers")} />
-        <RailBtn icon={Navigation2} label="Ir para" onClick={() => setOpenSheet("goto")} />
-        <RailBtn icon={Ruler} label="Medir" onClick={() => setOpenSheet("measure")} />
-        <RailBtn
-          icon={MapPin}
-          label="Marcador"
-          active={tool === "marker"}
-          onClick={() => {
-            setTool(tool === "marker" ? "none" : "marker");
-            toast.message(
-              tool === "marker"
-                ? "Ferramenta de marcador desativada"
-                : "Toque no mapa para marcar um waypoint",
-            );
+          onAbrirHub={(secao) => {
+            setHubSecao(secao);
+            setOpenSheet("hub");
+            carregarBoletim();
           }}
+          onIrPara={() => setOpenSheet("goto")}
+          onFlyTo={(lng, lat, zoom) => flyTo(lng, lat, zoom ?? 5)}
+          onVisaoGlobal={visaoGlobal}
+          onAtualizar={carregarBoletim}
         />
-        <RailBtn
-          icon={Compass}
-          label="Bússola"
-          active={compassMode !== "mini"}
-          onClick={() => setCompassMode(compassMode === "mini" ? "panel" : "mini")}
-        />
-      </div>
-
-      {/* Elevation chart */}
-      {elevationData.length > 1 && (
-        <div
-          className={`absolute left-2 right-2 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-10 hud-panel rounded-md p-3 md:left-auto md:right-4 md:bottom-4 md:w-[420px] ${
-            newMarker ? "hidden md:block" : "block"
-          }`}
-        >
-          <div className="flex items-center justify-between mono text-xs mb-1">
-            <span className="text-tactical-orange font-bold">PERFIL DE ELEVAÇÃO</span>
-            <button onClick={() => setElevationData([])}>
-              <X className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
-          </div>
-          <div className="h-32">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={elevationData} margin={{ left: -20, right: 8, top: 4, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="elev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#FF6B35" stopOpacity={0.6} />
-                    <stop offset="100%" stopColor="#FF6B35" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="d" tick={{ fontSize: 10, fill: "#aaa" }} stroke="#444" />
-                <YAxis tick={{ fontSize: 10, fill: "#aaa" }} stroke="#444" />
-                <Tooltip
-                  contentStyle={{ background: "#1a1a1a", border: "1px solid #333", fontSize: 11 }}
-                  formatter={(v: number) => [formatElevation(v), "Elevação"]}
-                  labelFormatter={(d) => formatElevation(Number(d))}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="e"
-                  stroke="#FF6B35"
-                  fill="url(#elev)"
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
       )}
 
-      {/* New marker dialog */}
-      {newMarker && (
-        <div className="absolute left-2 right-2 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-4 md:left-auto md:right-4 md:w-96 z-20 hud-panel rounded-md p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="mono text-tactical-orange font-bold text-sm">NOVO WAYPOINT</span>
-            <button onClick={() => setNewMarker(null)}>
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="space-y-2">
-            <Label className="text-xs">Título</Label>
-            <Input
-              autoFocus
-              value={newMarker.title}
-              onChange={(e) => setNewMarker({ ...newMarker, title: e.target.value })}
-              placeholder="Ex: Fonte de água #3"
+      {modoMapa === "tatico" && (
+        <>
+          {/* HUD superior mobile: fluxo vertical — filhos nunca se sobrepõem */}
+          <div className="absolute left-2 right-20 top-[max(0.5rem,env(safe-area-inset-top))] z-10 flex flex-col gap-2 md:hidden">
+            <div data-test="modo-mapa-mobile">
+              <MapModeSwitch modo={modoMapa} onTrocar={(m) => updatePrefs({ mapMode: m })} />
+            </div>
+            <PainelCentro center={center} decl={decl} onCopy={(t) => copy(t)} />
+            <PainelPosicao
+              userPos={userPos}
+              onCentrar={() => {
+                if (!userPos) return toast.error("Sem localização disponível");
+                mapRef.current?.flyTo({ center: [userPos.lng, userPos.lat], zoom: 15 });
+              }}
+              onUltimoLocal={() => {
+                try {
+                  const raw = localStorage.getItem("tgis:last-position");
+                  if (!raw) return toast.error("Nenhum local salvo");
+                  const p = JSON.parse(raw) as { lng: number; lat: number };
+                  mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 14 });
+                } catch {
+                  toast.error("Nenhum local salvo");
+                }
+              }}
             />
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-xs">Categoria</Label>
-                <select
-                  className="w-full bg-input text-foreground rounded-md h-10 px-2 border border-border text-sm"
-                  value={newMarker.category}
-                  onChange={(e) =>
-                    setNewMarker({
-                      ...newMarker,
-                      category: e.target.value,
-                      color: CATEGORY_COLORS[e.target.value] || newMarker.color,
-                    })
-                  }
-                >
-                  {Object.entries(CATEGORY_LABELS_PT).map(([id, label]) => (
-                    <option key={id} value={id}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <Label className="text-xs">Cor</Label>
-                <input
-                  type="color"
-                  value={newMarker.color}
-                  onChange={(e) => setNewMarker({ ...newMarker, color: e.target.value })}
-                  className="w-full h-10 bg-input rounded-md border border-border"
-                />
-              </div>
-            </div>
-            <div className="mono text-xs text-muted-foreground">
-              {formatDD(newMarker.lng, newMarker.lat)} · MGRS{" "}
-              {formatMGRS(newMarker.lng, newMarker.lat)}
-            </div>
-            <Button
-              onClick={saveNewMarker}
-              className="w-full bg-tactical-orange text-background hover:bg-tactical-orange/90 glove-tap"
-            >
-              Salvar waypoint
-            </Button>
+            {(tool === "measure-line" || tool === "measure-area") && (
+              <LeituraMedicao tool={tool} lineLen={lineLen} areaFmt={areaFmt} onClear={clearDraw} />
+            )}
           </div>
-        </div>
+
+          {/* HUD superior desktop: posições absolutas clássicas */}
+          <div className="absolute left-4 top-4 z-10 hidden w-[360px] md:block">
+            <PainelCentro center={center} decl={decl} onCopy={(t) => copy(t)} />
+          </div>
+          <div className="absolute left-4 top-[150px] z-10 hidden w-[360px] md:block">
+            <PainelPosicao
+              userPos={userPos}
+              onCentrar={() => {
+                if (!userPos) return toast.error("Sem localização disponível");
+                mapRef.current?.flyTo({ center: [userPos.lng, userPos.lat], zoom: 15 });
+              }}
+              onUltimoLocal={() => {
+                try {
+                  const raw = localStorage.getItem("tgis:last-position");
+                  if (!raw) return toast.error("Nenhum local salvo");
+                  const p = JSON.parse(raw) as { lng: number; lat: number };
+                  mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 14 });
+                } catch {
+                  toast.error("Nenhum local salvo");
+                }
+              }}
+            />
+          </div>
+          {(tool === "measure-line" || tool === "measure-area") && (
+            <div className="absolute left-1/2 top-32 z-10 hidden -translate-x-1/2 md:block">
+              <LeituraMedicao tool={tool} lineLen={lineLen} areaFmt={areaFmt} onClear={clearDraw} />
+            </div>
+          )}
+
+          {/* Alternador de modo (desktop, canto superior direito) */}
+          <div
+            className="absolute right-4 top-4 z-10 hidden md:block"
+            data-test="modo-mapa-desktop"
+          >
+            <MapModeSwitch modo={modoMapa} onTrocar={(m) => updatePrefs({ mapMode: m })} />
+          </div>
+
+          {/* Right-side action rail */}
+          <div className="absolute right-2 top-[max(0.5rem,env(safe-area-inset-top))] z-10 flex flex-col gap-2 md:top-36">
+            <RailBtn
+              icon={Radar}
+              label="Osiris"
+              onClick={() => {
+                setHubSecao(undefined);
+                setOpenSheet("hub");
+                carregarBoletim();
+              }}
+            />
+            <RailBtn
+              icon={Newspaper}
+              label="Boletim"
+              onClick={() => {
+                setOpenSheet("boletim");
+                carregarBoletim();
+              }}
+            />
+            <RailBtn icon={Layers} label="Camadas" onClick={() => setOpenSheet("layers")} />
+            <RailBtn icon={Navigation2} label="Ir para" onClick={() => setOpenSheet("goto")} />
+            <RailBtn icon={Ruler} label="Medir" onClick={() => setOpenSheet("measure")} />
+            <RailBtn
+              icon={MapPin}
+              label="Marcador"
+              active={tool === "marker"}
+              onClick={() => {
+                setTool(tool === "marker" ? "none" : "marker");
+                toast.message(
+                  tool === "marker"
+                    ? "Ferramenta de marcador desativada"
+                    : "Toque no mapa para marcar um waypoint",
+                );
+              }}
+            />
+            <RailBtn
+              icon={Compass}
+              label="Bússola"
+              active={compassMode !== "mini"}
+              onClick={() => setCompassMode(compassMode === "mini" ? "panel" : "mini")}
+            />
+          </div>
+
+          {/* Elevation chart */}
+          {elevationData.length > 1 && (
+            <div
+              className={`absolute left-2 right-2 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-10 hud-panel rounded-md p-3 md:left-auto md:right-4 md:bottom-4 md:w-[420px] ${
+                newMarker ? "hidden md:block" : "block"
+              }`}
+            >
+              <div className="flex items-center justify-between mono text-xs mb-1">
+                <span className="text-tactical-orange font-bold">PERFIL DE ELEVAÇÃO</span>
+                <button onClick={() => setElevationData([])}>
+                  <X className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+              </div>
+              <div className="h-32">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={elevationData}
+                    margin={{ left: -20, right: 8, top: 4, bottom: 0 }}
+                  >
+                    <defs>
+                      <linearGradient id="elev" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#FF6B35" stopOpacity={0.6} />
+                        <stop offset="100%" stopColor="#FF6B35" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="d" tick={{ fontSize: 10, fill: "#aaa" }} stroke="#444" />
+                    <YAxis tick={{ fontSize: 10, fill: "#aaa" }} stroke="#444" />
+                    <Tooltip
+                      contentStyle={{
+                        background: "#1a1a1a",
+                        border: "1px solid #333",
+                        fontSize: 11,
+                      }}
+                      formatter={(v: number) => [formatElevation(v), "Elevação"]}
+                      labelFormatter={(d) => formatElevation(Number(d))}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="e"
+                      stroke="#FF6B35"
+                      fill="url(#elev)"
+                      strokeWidth={2}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* New marker dialog */}
+          {newMarker && (
+            <div className="absolute left-2 right-2 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-4 md:left-auto md:right-4 md:w-96 z-20 hud-panel rounded-md p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="mono text-tactical-orange font-bold text-sm">NOVO WAYPOINT</span>
+                <button onClick={() => setNewMarker(null)}>
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Título</Label>
+                <Input
+                  autoFocus
+                  value={newMarker.title}
+                  onChange={(e) => setNewMarker({ ...newMarker, title: e.target.value })}
+                  placeholder="Ex: Fonte de água #3"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Categoria</Label>
+                    <select
+                      className="w-full bg-input text-foreground rounded-md h-10 px-2 border border-border text-sm"
+                      value={newMarker.category}
+                      onChange={(e) =>
+                        setNewMarker({
+                          ...newMarker,
+                          category: e.target.value,
+                          color: CATEGORY_COLORS[e.target.value] || newMarker.color,
+                        })
+                      }
+                    >
+                      {Object.entries(CATEGORY_LABELS_PT).map(([id, label]) => (
+                        <option key={id} value={id}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Cor</Label>
+                    <input
+                      type="color"
+                      value={newMarker.color}
+                      onChange={(e) => setNewMarker({ ...newMarker, color: e.target.value })}
+                      className="w-full h-10 bg-input rounded-md border border-border"
+                    />
+                  </div>
+                </div>
+                <div className="mono text-xs text-muted-foreground">
+                  {formatDD(newMarker.lng, newMarker.lat)} · MGRS{" "}
+                  {formatMGRS(newMarker.lng, newMarker.lat)}
+                </div>
+                <Button
+                  onClick={saveNewMarker}
+                  className="w-full bg-tactical-orange text-background hover:bg-tactical-orange/90 glove-tap"
+                >
+                  Salvar waypoint
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Sheets */}
@@ -1558,6 +1626,7 @@ export default function MapShell() {
         voos={voos ?? []}
         intelVis={intelVis}
         center={center}
+        secaoInicial={hubSecao}
         onAbrirCamadas={() => setOpenSheet("layers")}
         onAbrirBoletim={() => setOpenSheet("boletim")}
         onFlyTo={(lng, lat, zoom = 10) => {
@@ -1567,109 +1636,111 @@ export default function MapShell() {
         onAtualizar={carregarBoletim}
       />
 
-      {/* Bússola flutuante sobre o mapa */}
-      <div
-        className={
-          compassMode === "full"
-            ? "absolute inset-0 z-30 flex items-start justify-center bg-background/70 backdrop-blur-sm overflow-y-auto p-3 pb-24"
-            : `absolute right-2 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:bottom-6 z-30 ${
-                elevationData.length > 1 || newMarker ? "hidden md:block" : "block"
-              }`
-        }
-      >
+      {/* Bússola flutuante sobre o mapa (só no modo tático) */}
+      {modoMapa === "tatico" && (
         <div
           className={
-            compassMode === "mini"
-              ? "hud-panel rounded-full p-1.5 shadow-lg"
-              : compassMode === "panel"
-                ? "hud-panel rounded-lg w-[min(72vw,18rem)] max-h-[calc(100dvh-10rem)] overflow-hidden shadow-xl"
-                : "hud-panel rounded-lg p-3 w-full max-w-md shadow-xl"
+            compassMode === "full"
+              ? "absolute inset-0 z-30 flex items-start justify-center bg-background/70 backdrop-blur-sm overflow-y-auto p-3 pb-24"
+              : `absolute right-2 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:bottom-6 z-30 ${
+                  elevationData.length > 1 || newMarker ? "hidden md:block" : "block"
+                }`
           }
         >
           <div
-            className={`flex items-center justify-between gap-1 ${
-              compassMode === "panel" ? "sticky top-0 z-10 bg-card/95 p-2" : "mb-1"
-            }`}
+            className={
+              compassMode === "mini"
+                ? "hud-panel rounded-full p-1.5 shadow-lg"
+                : compassMode === "panel"
+                  ? "hud-panel rounded-lg w-[min(72vw,18rem)] max-h-[calc(100dvh-10rem)] overflow-hidden shadow-xl"
+                  : "hud-panel rounded-lg p-3 w-full max-w-md shadow-xl"
+            }
           >
-            <span className="mono text-[10px] uppercase tracking-widest text-tactical-orange">
-              {compassMode === "mini" ? "" : "Bússola"}
-            </span>
-            <div className="flex items-center gap-1">
-              {compassMode !== "mini" && (
-                <button
-                  type="button"
-                  aria-label="Minimizar bússola"
-                  className="glove-tap rounded border border-border p-1 text-muted-foreground"
-                  onClick={() => setCompassMode("mini")}
-                >
-                  <Minus className="h-3.5 w-3.5" />
-                </button>
-              )}
-              {compassMode === "panel" && (
-                <button
-                  type="button"
-                  aria-label="Ver bússola em tela cheia"
-                  className="glove-tap rounded border border-tactical-orange/60 p-1 text-tactical-orange"
-                  onClick={() => setCompassMode("full")}
-                >
-                  <Maximize2 className="h-3.5 w-3.5" />
-                </button>
-              )}
-              {compassMode === "full" && (
-                <button
-                  type="button"
-                  aria-label="Reduzir bússola"
-                  className="glove-tap rounded border border-tactical-orange/60 p-1 text-tactical-orange"
-                  onClick={() => setCompassMode("panel")}
-                >
-                  <Minimize2 className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          <button
-            type="button"
-            aria-label="Abrir bússola"
-            className={compassMode === "mini" ? "block glove-tap" : "hidden"}
-            onClick={() => setCompassMode("panel")}
-          >
-            <CompassRose
-              heading={heading}
-              declination={decl}
-              center={center}
-              altitude={userPos?.alt ?? null}
-              variant="mini"
-            />
-          </button>
-
-          {compassMode !== "mini" && (
             <div
-              className={
-                compassMode === "panel"
-                  ? "overflow-y-auto p-2 pt-0 max-h-[calc(100dvh-12.5rem)]"
-                  : ""
-              }
+              className={`flex items-center justify-between gap-1 ${
+                compassMode === "panel" ? "sticky top-0 z-10 bg-card/95 p-2" : "mb-1"
+              }`}
+            >
+              <span className="mono text-[10px] uppercase tracking-widest text-tactical-orange">
+                {compassMode === "mini" ? "" : "Bússola"}
+              </span>
+              <div className="flex items-center gap-1">
+                {compassMode !== "mini" && (
+                  <button
+                    type="button"
+                    aria-label="Minimizar bússola"
+                    className="glove-tap rounded border border-border p-1 text-muted-foreground"
+                    onClick={() => setCompassMode("mini")}
+                  >
+                    <Minus className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                {compassMode === "panel" && (
+                  <button
+                    type="button"
+                    aria-label="Ver bússola em tela cheia"
+                    className="glove-tap rounded border border-tactical-orange/60 p-1 text-tactical-orange"
+                    onClick={() => setCompassMode("full")}
+                  >
+                    <Maximize2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                {compassMode === "full" && (
+                  <button
+                    type="button"
+                    aria-label="Reduzir bússola"
+                    className="glove-tap rounded border border-tactical-orange/60 p-1 text-tactical-orange"
+                    onClick={() => setCompassMode("panel")}
+                  >
+                    <Minimize2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              aria-label="Abrir bússola"
+              className={compassMode === "mini" ? "block glove-tap" : "hidden"}
+              onClick={() => setCompassMode("panel")}
             >
               <CompassRose
                 heading={heading}
                 declination={decl}
                 center={center}
                 altitude={userPos?.alt ?? null}
-                variant={compassMode}
-                bearingToWaypoint={
-                  waypoints[0]
-                    ? bearingDeg(center, [waypoints[0].longitude, waypoints[0].latitude])
-                    : null
-                }
-                waypointLabel={waypoints[0]?.title ?? null}
-                onRotate={(h) => mapRef.current?.rotateTo(h, { duration: 0 })}
-                onReset={() => mapRef.current?.rotateTo(0, { duration: 400 })}
+                variant="mini"
               />
-            </div>
-          )}
+            </button>
+
+            {compassMode !== "mini" && (
+              <div
+                className={
+                  compassMode === "panel"
+                    ? "overflow-y-auto p-2 pt-0 max-h-[calc(100dvh-12.5rem)]"
+                    : ""
+                }
+              >
+                <CompassRose
+                  heading={heading}
+                  declination={decl}
+                  center={center}
+                  altitude={userPos?.alt ?? null}
+                  variant={compassMode}
+                  bearingToWaypoint={
+                    waypoints[0]
+                      ? bearingDeg(center, [waypoints[0].longitude, waypoints[0].latitude])
+                      : null
+                  }
+                  waypointLabel={waypoints[0]?.title ?? null}
+                  onRotate={(h) => mapRef.current?.rotateTo(h, { duration: 0 })}
+                  onReset={() => mapRef.current?.rotateTo(0, { duration: 400 })}
+                />
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -1691,49 +1762,6 @@ const CATEGORY_LABELS_PT: Record<string, string> = {
   cache: "Cache",
   custom: "Personalizado",
 };
-
-/** Linhas do painel de camadas de inteligência (modo Osiris). */
-const LINHAS_INTEL: Array<{ id: keyof IntelVisibilidade; nome: string; dica: string }> = [
-  { id: "sismos", nome: "Sismos", dica: "USGS · M2,5+ nas últimas 24 horas" },
-  { id: "eventos", nome: "Eventos naturais", dica: "NASA EONET · ciclones, vulcões, gelo" },
-  {
-    id: "incendios",
-    nome: "Focos de calor",
-    dica: "NASA FIRMS · satélite VIIRS, últimas 24 horas",
-  },
-  { id: "conflitos", nome: "Zonas de conflito", dica: "Referência curada — não é feed ao vivo" },
-  {
-    id: "voos",
-    nome: "Voos ao vivo",
-    dica: "Rede ADS-B · militares no mundo + civis perto do centro",
-  },
-  {
-    id: "satelites",
-    nome: "ISS (satélite)",
-    dica: "Estação Espacial Internacional · posição, trajetória e pegada",
-  },
-  {
-    id: "alertas",
-    nome: "Alertas oficiais",
-    dica: "GDACS (UE/ONU) · terremotos, ciclones, vulcões, enchentes, incêndios",
-  },
-  {
-    id: "maritimo",
-    nome: "Rotas marítimas",
-    dica: "Estreitos estratégicos e maiores portos — referência curada",
-  },
-  {
-    id: "nuclear",
-    nome: "Centrais nucleares",
-    dica: "~100 instalações no mundo — referência curada",
-  },
-  { id: "noite", nome: "Dia e noite", dica: "Terminador solar em tempo real" },
-  {
-    id: "navios",
-    nome: "Navios ao vivo (AIS)",
-    dica: "Requer chave gratuita aisstream.io — cadastre em Ajustes",
-  },
-];
 
 function RailBtn({
   icon: Icon,

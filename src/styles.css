@@ -46,7 +46,6 @@
   --color-tactical-blue: oklch(0.66 0.12 230);
   --color-tactical-green: oklch(0.68 0.15 145);
 
-
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -215,12 +214,21 @@
 
 /* Bússola: fluxo do vento e onda do nível do mar */
 @keyframes wind-flow-pulse {
-  0%, 100% { opacity: 0.45; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 @keyframes sea-wave-slide {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 .wind-flow {
   animation: wind-flow-pulse 1.8s ease-in-out infinite;
@@ -256,4 +264,38 @@
 .maplibregl-popup-tip {
   border-top-color: #141414 !important;
   border-bottom-color: #141414 !important;
+}
+
+/* Plataforma Osiris — letreiro de emergências (marquee contínuo) */
+@keyframes osiris-ticker-roll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.osiris-ticker {
+  animation: osiris-ticker-roll 60s linear infinite;
+}
+.osiris-ticker:hover {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .osiris-ticker {
+    animation: none;
+  }
+}
+
+/* Plataforma Osiris — a atribuição do mapa não fica escondida sob o
+   letreiro (desktop) nem sob letreiro + barra de abas (celular). */
+.modo-osiris .maplibregl-ctrl-bottom-right,
+.modo-osiris .maplibregl-ctrl-bottom-left {
+  bottom: calc(5.75rem + env(safe-area-inset-bottom));
+}
+@media (min-width: 768px) {
+  .modo-osiris .maplibregl-ctrl-bottom-right,
+  .modo-osiris .maplibregl-ctrl-bottom-left {
+    bottom: 0.5rem;
+  }
 }

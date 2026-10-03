@@ -103,26 +103,17 @@ describe("Modo Osiris do mapa", () => {
     await page.context().close();
   }, 180_000);
 
-  it("HUD do modo Osiris não se sobrepõe em 390×844", async () => {
+  it("Plataforma Osiris: chrome fixo e gavetas não se sobrepõem em 390×844", async () => {
     const page = await abrirMapaMobile(browser);
     await ativarModoOsiris(page);
     await page.keyboard.press("Escape");
 
+    // Chrome fixo da plataforma: alternador (barra superior), letreiro e abas.
     const seletores = [
       '[data-test="modo-mapa-mobile"]',
-      '[data-test="faixa-intel"]',
-      'div.hud-panel:has(span:text-is("CENTRO"))',
-      'div.hud-panel:has(span:text-is("MINHA POSIÇÃO"))',
-      'button[title="Osiris"]',
-      'button[title="Boletim"]',
-      'button[title="Camadas"]',
-      'button[title="Ir para"]',
-      'button[title="Medir"]',
-      'button[title="Marcador"]',
-      'button[title="Bússola"]',
-      'button[aria-label="Abrir bússola"]',
+      '[data-test="osiris-ticker"]',
+      '[data-test="osiris-tabbar"]',
     ];
-
     const caixas: Array<{ nome: string; ret: Retangulo }> = [];
     for (const seletor of seletores) {
       const loc = page.locator(seletor).first();
@@ -139,6 +130,38 @@ describe("Modo Osiris do mapa", () => {
       }
     }
     expect(conflitos, `Elementos sobrepostos: ${conflitos.join("; ")}`).toEqual([]);
+
+    // Gaveta de camadas: abre pela aba, não invade letreiro/abas e traz
+    // as camadas de inteligência com interruptores.
+    await page.locator('[data-test="aba-camadas"]').click();
+    const gaveta = page.locator('[data-test="osiris-gaveta"]');
+    await gaveta.waitFor({ state: "visible", timeout: 15_000 });
+    await page.locator('[data-test="osiris-camadas"]').waitFor({ state: "visible" });
+    const retGaveta = (await gaveta.boundingBox()) as Retangulo;
+    const retAbas = (await page.locator('[data-test="osiris-tabbar"]').boundingBox()) as Retangulo;
+    const retLetreiro = (await page
+      .locator('[data-test="osiris-ticker"]')
+      .boundingBox()) as Retangulo;
+    expect(sobrepoe(retGaveta, retAbas), "gaveta sobrepõe abas").toBe(false);
+    expect(sobrepoe(retGaveta, retLetreiro), "gaveta sobrepõe letreiro").toBe(false);
+    for (const nome of ["Voos ao vivo", "ISS (satélite)", "Alertas oficiais"]) {
+      await page
+        .getByRole("switch", { name: `Ativar camada ${nome}` })
+        .waitFor({ state: "visible" });
+    }
+
+    // Gaveta de feed abre com cabeçalho próprio.
+    await page.locator('[data-test="aba-feed"]').click();
+    await page.locator('[data-test="osiris-feed"]').waitFor({ state: "visible", timeout: 15_000 });
+
+    // Gaveta de ferramentas com os atalhos da plataforma.
+    await page.locator('[data-test="aba-ferramentas"]').click();
+    await page
+      .locator('[data-test="osiris-ferramentas"]')
+      .waitFor({ state: "visible", timeout: 15_000 });
+    await page.getByText("Boletim completo", { exact: true }).waitFor({ state: "visible" });
+    await page.getByText("Investigar domínio", { exact: true }).waitFor({ state: "visible" });
+
     await page.context().close();
   }, 180_000);
 

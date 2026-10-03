@@ -43,19 +43,27 @@ bun run build      # check:all + build de produção em .output/
 - **Mobile-first**: novos overlays flutuantes sobre o mapa devem entrar no
   fluxo vertical do HUD (mobile) ou respeitar as zonas reservadas; o teste
   `tests/map-overlap.spec.ts` falha se dois elementos do HUD se sobrepuserem.
-- **Modo Osiris (inteligência global)**: as fontes externas (USGS, NASA EONET,
+- **Modo Osiris (inteligência global)**: o modo "Osiris" renderiza a
+  **Visão Osiris** (`src/components/map/VisaoOsiris.tsx`): tela cheia com o
+  globo OSIRIS self-hosted (`osiris-fork.vercel.app`) em iframe + painel
+  "Camadas" que monta a query `?layers=...` (catálogo em
+  `src/components/map/visao-osiris-camadas.ts`, persistido em `osirisVis`
+  no usePreferences). A instância do globo precisa listar o domínio do app na
+  CSP `frame-ancestors`; sem isso o componente mostra o aviso com instrução e
+  o mapa tático nativo fica visível atrás do aviso (com as camadas de
+  inteligência). As fontes externas das camadas nativas (USGS, NASA EONET,
   NOAA SWPC, NASA FIRMS, ADS-B.lol, WhereTheISS.at, GDACS, GDELT, Open-Meteo
   Air Quality) só são acessadas via `src/lib/intel.functions.ts` e
   `src/lib/intel-v2.functions.ts` (server functions com cache em memória e
   fallback para os últimos dados bons); o navegador nunca chama as fontes
   diretamente — exceção única: o WebSocket AIS do usuário (`src/lib/ais.ts`),
   que conecta direto a aisstream.io com a chave pessoal dele. Novas camadas
-  entram em `src/components/map/intel-layers.ts` (ordem de empilhamento fixa
-  documentada no topo do arquivo), com toggle em `LINHAS_INTEL` no
-  `MapShell.tsx` e visibilidade persistida em `intelVis` (usePreferences).
+  nativas entram em `src/components/map/intel-layers.ts` (ordem de
+  empilhamento fixa documentada no topo do arquivo), com toggle em
+  `LINHAS_INTEL` e visibilidade persistida em `intelVis` (usePreferences).
   Datasets curados (conflitos, nucleares, marítimos) são estáticos e em pt-BR.
-  Novos overlays do modo Osiris entram no fluxo vertical do HUD e são cobertos
-  por `tests/map-osiris.spec.ts` (inclui regressão de sobreposição).
+  A Visão Osiris é coberta por `tests/map-osiris.spec.ts` (iframe, contador,
+  painel de camadas, persistência e volta ao tático).
 - **Segurança**: operações administrativas usam o cliente service role
   (`client.server.ts`) apenas em módulos `*.server.ts` — arquivos `*.functions.ts`
   e rotas vão para o bundle do cliente. Rotas autenticadas usam o middleware

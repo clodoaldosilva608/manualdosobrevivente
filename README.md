@@ -27,17 +27,18 @@ sem conexão — e os dados sincronizam na nuvem quando uma conta está conectad
   zona de perigo, forrageio, cache) com importação/exportação em GPX e KML.
 - **Bússola digital** — HUD interativo com direção, azimute até o próximo
   waypoint e referência norte verdadeiro/magnético.
-- **Modo Osiris (inteligência global)** — alterne o mapa entre "Tático" e
-  "Osiris" e sobreponha camadas ao vivo ao basemap Tático Escuro: sismos M2,5+
-  (USGS), eventos naturais (NASA EONET), focos de calor (NASA FIRMS, opcional),
-  zonas de conflito (referência curada), terminador dia/noite em tempo real,
-  voos ao vivo militares e civis (ADS-B), ISS com trajetória e pegada,
-  alertas oficiais de desastre (GDACS), rotas marítimas estratégicas, centrais
-  nucleares (referência curada) e navios ao vivo via AIS (opcional) — com
-  índice Kp de clima espacial (NOAA SWPC), **Boletim de inteligência**
-  consolidado (incluindo qualidade do ar e manchetes globais) e atualização
-  automática a cada 45–90 segundos. Sem internet, as camadas exibem os
-  últimos dados coletados (cache no aparelho).
+- **Visão Osiris (inteligência global)** — alterne o mapa entre "Tático" e
+  "Osiris": o modo Osiris abre em tela cheia o globo 3D do OSIRIS
+  self-hosted (mesma apresentação da visão-osiris do Centro de Sobrevivência),
+  com painel lateral de 12 camadas (marítimo, satélites, câmeras, notícias ao
+  vivo, terremotos, incidentes globais, ciclo dia/noite, cabos submarinos,
+  SDKs marítimo/aéreo/naval) que recarrega o globo automaticamente a cada
+  mudança. O mapa tático nativo também mantém camadas de inteligência próprias
+  (sismos M2,5+ USGS, eventos NASA EONET, focos de calor NASA FIRMS, zonas de
+  conflito, terminador dia/noite, voos ADS-B, ISS, alertas GDACS, rotas
+  marítimas, centrais nucleares, navios AIS — opcionais) e o **Boletim de
+  inteligência** consolidado (incluindo qualidade do ar e manchetes globais).
+  Sem internet, o app exibe os últimos dados coletados (cache no aparelho).
 - **Manual de sobrevivência offline** — base de conhecimento categorizada e
   pesquisável (primeiros socorros, fogo, água, abrigos, nós) com
   renderização markdown e checklists interativos.
@@ -185,15 +186,37 @@ bunx nitro deploy --prebuilt
 A configuração do Worker (nome, data de compatibilidade, `nodejs_compat`)
 fica em `wrangler.jsonc`.
 
-## Modo Osiris (inteligência global)
+## Visão Osiris (inteligência global)
 
 O mapa tem dois modos alternáveis pelo usuário (botão no topo do HUD ou em
 *Camadas → Modo de visualização*):
 
 - **Tático** — navegação clássica (bússola, MGRS, medições, waypoints) com
   qualquer camada base.
-- **Osiris** — basemap Tático Escuro + camadas de inteligência global com
-  atualização automática (45–90 s conforme a fonte):
+- **Osiris** — abre a **Visão Osiris** em tela cheia (mesma apresentação da
+  `visao-osiris` do Centro de Sobrevivência): o globo 3D de inteligência global
+  do OSIRIS self-hosted (`osiris-fork.vercel.app`) roda em um iframe e o painel
+  lateral **Camadas** controla o que aparece no globo pela query `?layers=...`
+  — o iframe recarrega automaticamente a cada mudança. São 12 camadas
+  (Marítimo, Satélites, Câmeras, Preview câmeras, Notícias ao vivo, Terremotos,
+  Incidentes globais, Ciclo dia/noite, Cabos submarinos, SDK marítimo, SDK
+  aéreo e SDK naval), com "Ativar todas"/"Desativar todas" e contador na barra
+  superior ("N camadas ativas"). No celular o painel vira uma folha acionada
+  pelo botão da barra superior. A escolha de camadas é persistida no IndexedDB
+  (`osirisVis` nas preferências).
+
+  > **CSP (frame-ancestors)**: para o globo ser incorporado, a instância
+  > `osiris-fork.vercel.app` precisa listar o domínio deste app na CSP
+  > `frame-ancestors` (ex.: `https://manual-do-sobrevivente.vercel.app`).
+  > Sem isso, a Visão Osiris exibe um aviso com o domínio a autorizar, botão
+  > "Abrir original" (nova aba) e "Tentar novamente" — e o mapa tático nativo
+  > continua visível atrás do aviso.
+
+### Camadas de inteligência nativas do mapa (Boletim)
+
+O app também mantém camadas de inteligência nativas no mapa MapLibre — hoje
+elas operam atrás da Visão Osiris como experiência de fallback (quando o globo
+não pode ser incorporado, o mapa segue visível com estas camadas):
 
   | Camada | Fonte | Tipo |
   |--------|-------|------|
@@ -221,8 +244,9 @@ As fontes são acessadas apenas por server functions
 memória (45–300 s conforme a fonte) e fallback para os últimos dados bons — o
 navegador nunca chama as fontes diretamente (evita CORS e expõe chaves). O
 último snapshot bem-sucedido fica salvo no IndexedDB (`intel-cache`) e é
-hidratado ao abrir o modo offline. A escolha do modo e das camadas é
-persistida no banco local (IndexedDB) junto das demais preferências.
+hidratado ao abrir o modo offline. A escolha do modo, das camadas nativas
+(`intelVis`) e das camadas da Visão Osiris (`osirisVis`) é persistida no banco
+local (IndexedDB) junto das demais preferências.
 
 ### Chaves opcionais do usuário (Ajustes → Chaves de inteligência)
 

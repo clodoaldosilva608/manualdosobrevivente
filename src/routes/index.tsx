@@ -10,13 +10,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Mapa tático com MGRS, medições e waypoints + plataforma Osiris de inteligência global ao vivo: sismos, voos, ISS, alertas oficiais e mais.",
+          "Mapa tático com MGRS, medições e waypoints + Visão Osiris: globo 3D de inteligência global ao vivo — sismos, voos, satélites, câmeras, alertas e mais.",
       },
       { property: "og:title", content: "Mapa Tático — TacticalGIS" },
       {
         property: "og:description",
         content:
-          "Mapa tático com MGRS, medições e waypoints + plataforma Osiris de inteligência global ao vivo: sismos, voos, ISS, alertas oficiais e mais.",
+          "Mapa tático com MGRS, medições e waypoints + Visão Osiris: globo 3D de inteligência global ao vivo — sismos, voos, satélites, câmeras, alertas e mais.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

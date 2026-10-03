@@ -83,7 +83,8 @@ import {
   registrarPopupsIntel,
 } from "@/components/map/intel-layers";
 import { MapModeSwitch, type ModoMapa } from "@/components/map/MapModeSwitch";
-import { OsirisPlatform, type StatusIntel } from "@/components/map/OsirisPlatform";
+import { VisaoOsiris } from "@/components/map/VisaoOsiris";
+import type { VisOsiris } from "@/components/map/visao-osiris-camadas";
 import { OsirisHub } from "@/components/map/OsirisHub";
 import { LINHAS_INTEL } from "@/components/map/intel-camadas-lista";
 import { Switch } from "@/components/ui/switch";
@@ -127,6 +128,9 @@ const BASE_LAYERS: Record<
 
 type Tool = "none" | "measure-line" | "measure-area" | "marker";
 
+/** Estado da coleta de inteligência (camadas nativas do mapa). */
+type StatusIntel = "idle" | "carregando" | "ok" | "erro";
+
 const styleFor = (layer: BaseLayerId): maplibregl.StyleSpecification => {
   const l = BASE_LAYERS[layer];
   // O Tático Escuro soma uma camada de referência (rótulos de cidades/ruas).
@@ -168,7 +172,7 @@ const styleFor = (layer: BaseLayerId): maplibregl.StyleSpecification => {
   };
 };
 
-/** Vista "mundo inteiro" da plataforma Osiris (fitBounds com margem). */
+/** Vista "mundo inteiro" aplicada ao mapa ao entrar no modo Osiris. */
 const VISAO_GLOBAL = {
   bounds: [
     [-168, -58],
@@ -823,25 +827,6 @@ export default function MapShell() {
     mapRef.current?.flyTo({ center: [lng, lat], zoom });
   }, []);
 
-  const visaoGlobal = useCallback(() => {
-    mapRef.current?.fitBounds(VISAO_GLOBAL.bounds, {
-      padding: VISAO_GLOBAL.padding,
-      duration: 1200,
-    });
-  }, []);
-
-  // Liga/desliga todas as camadas de uma vez (painel da plataforma).
-  const definirTodasVis = useCallback(
-    (v: boolean) => {
-      updatePrefs({
-        intelVis: Object.fromEntries(
-          Object.keys(intelVis).map((k) => [k, v]),
-        ) as unknown as IntelVisibilidade,
-      });
-    },
-    [intelVis, updatePrefs],
-  );
-
   const handleGoto = () => {
     const c = parseCoordinate(gotoInput);
     if (!c) {
@@ -960,40 +945,25 @@ export default function MapShell() {
   const areaFmt = formatArea(polyArea);
 
   return (
-    <div className={`absolute inset-0 bg-background ${modoMapa === "osiris" ? "modo-osiris" : ""}`}>
+    <div className="absolute inset-0 bg-background">
       <div className="absolute inset-0">
         <div ref={containerRef} className="h-full w-full" />
       </div>
 
-      {/* Plataforma Osiris — centro de comando com todas as funcionalidades */}
+      {/* Visão Osiris — globo 3D de inteligência global em tela cheia,
+          mesma apresentação da visão-osiris do Centro de Sobrevivência */}
       {modoMapa === "osiris" && (
-        <OsirisPlatform
-          modo={modoMapa}
-          onTrocarModo={(m) => updatePrefs({ mapMode: m })}
-          status={intelStatus}
-          snapshot={intel}
-          vis={intelVis}
-          onToggleVis={(id, v) => updatePrefs({ intelVis: { ...intelVis, [id]: v } })}
-          onSetTodasVis={definirTodasVis}
-          voos={voos}
-          iss={iss}
-          alertas={alertas}
-          noticias={noticias}
-          navios={navios}
-          statusAis={statusAis}
-          onAbrirBoletim={() => {
-            setOpenSheet("boletim");
-            carregarBoletim();
-          }}
-          onAbrirHub={(secao) => {
-            setHubSecao(secao);
-            setOpenSheet("hub");
-            carregarBoletim();
-          }}
-          onIrPara={() => setOpenSheet("goto")}
-          onFlyTo={(lng, lat, zoom) => flyTo(lng, lat, zoom ?? 5)}
-          onVisaoGlobal={visaoGlobal}
-          onAtualizar={carregarBoletim}
+        <VisaoOsiris
+          vis={prefs.osirisVis}
+          onToggle={(id, v) => updatePrefs({ osirisVis: { ...prefs.osirisVis, [id]: v } })}
+          onSetTodas={(v) =>
+            updatePrefs({
+              osirisVis: Object.fromEntries(
+                Object.keys(prefs.osirisVis).map((k) => [k, v]),
+              ) as unknown as VisOsiris,
+            })
+          }
+          onVoltar={() => updatePrefs({ mapMode: "tatico" })}
         />
       )}
 
@@ -1261,8 +1231,8 @@ export default function MapShell() {
               <MapModeSwitch modo={modoMapa} onTrocar={(m) => updatePrefs({ mapMode: m })} />
               <p className="mt-2 text-xs text-muted-foreground">
                 {modoMapa === "osiris"
-                  ? "No modo Osiris o mapa usa o estilo Tático Escuro e acrescenta 11 camadas de inteligência (ao vivo e curadas) atualizadas a cada 45–90 segundos. Abra o Boletim para o resumo consolidado."
-                  : "Navegação clássica: bússola, MGRS, medições e waypoints. Mude para o modo Osiris para ver sismos, voos, ISS, alertas oficiais, rotas marítimas e zonas de conflito."}
+                  ? "A Visão Osiris abre o globo 3D de inteligência global (OSIRIS self-hosted) em tela cheia, com painel de camadas próprio — o mapa tático continua intacto atrás do botão de voltar."
+                  : "Navegação clássica: bússola, MGRS, medições e waypoints. Mude para o modo Osiris para abrir a Visão Osiris, o globo de inteligência global em tela cheia."}
               </p>
             </section>
 

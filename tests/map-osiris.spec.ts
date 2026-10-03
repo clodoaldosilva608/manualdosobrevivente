@@ -53,74 +53,43 @@ async function ativarModoOsiris(page: Page) {
   await page.locator('button[title="Camadas"]').click();
   await page.getByText("MODO DE VISUALIZAÇÃO").waitFor({ state: "visible", timeout: 10_000 });
   await page.locator('[role="dialog"] button[title="Alternar para o modo Osiris"]').first().click();
+  await page.keyboard.press("Escape");
 }
 
-/** Botão flutuante do alternador de modo (fora do painel de camadas). */
-function btnModoFlutuante(page: Page, modo: "Tático" | "Osiris") {
-  return page.locator(
-    `[data-test="modo-mapa-mobile"] button[title="Alternar para o modo ${modo}"]`,
-  );
+/** Iframe do globo OSIRIS self-hosted. */
+function iframeGlobo(page: Page) {
+  return page.locator('iframe[title="Globo OSIRIS — Manual do Sobrevivente"]');
 }
 
-describe("Modo Osiris do mapa", () => {
-  it("alterna Tático ↔ Osiris, liga a camada Dia e noite e mantém após recarregar", async () => {
-    const page = await abrirMapaMobile(browser);
-
-    // Painel de camadas: alterna para Osiris e liga o terminador noturno.
-    await ativarModoOsiris(page);
-    await page.getByText("Camadas de inteligência", { exact: true }).waitFor({ state: "visible" });
-    await page.getByRole("switch", { name: "Ativar camada Dia e noite" }).click();
-    await page.keyboard.press("Escape");
-
-    // A camada noturna deve existir no estilo do mapa (client-side, sem rede).
-    await page.waitForFunction(
-      () => {
-        const m = (window as unknown as { __tacticalMap?: { getLayer: (i: string) => unknown } })
-          .__tacticalMap;
-        return Boolean(m?.getLayer?.("intel-noite-fill"));
-      },
-      { timeout: 15_000 },
-    );
-
-    // Persistência: recarrega e o modo + camada continuam ativos.
-    await page.reload({ waitUntil: "domcontentloaded" });
-    await page.waitForSelector(".maplibregl-canvas", { timeout: 30_000 });
-    const pular2 = page.getByRole("button", { name: "Pular configuração" });
-    if (await pular2.isVisible().catch(() => false)) {
-      await pular2.click();
-      await pular2.waitFor({ state: "hidden" });
-    }
-    const osirisAtivo = await btnModoFlutuante(page, "Tático").isVisible();
-    expect(osirisAtivo).toBe(true);
-    await page.waitForFunction(
-      () => {
-        const m = (window as unknown as { __tacticalMap?: { getLayer: (i: string) => unknown } })
-          .__tacticalMap;
-        return Boolean(m?.getLayer?.("intel-noite-fill"));
-      },
-      { timeout: 20_000 },
-    );
-    await page.context().close();
-  }, 180_000);
-
-  it("Plataforma Osiris: chrome fixo e gavetas não se sobrepõem em 390×844", async () => {
+describe("Visão Osiris (modo Osiris do mapa)", () => {
+  it("abre em tela cheia com o iframe do globo, contador e painel de camadas", async () => {
     const page = await abrirMapaMobile(browser);
     await ativarModoOsiris(page);
-    await page.keyboard.press("Escape");
 
-    // Chrome fixo da plataforma: alternador (barra superior), letreiro e abas.
-    const seletores = [
-      '[data-test="modo-mapa-mobile"]',
-      '[data-test="osiris-ticker"]',
-      '[data-test="osiris-tabbar"]',
-    ];
+    // Barra superior da Visão Osiris.
+    await page
+      .getByText("VISÃO OSIRIS", { exact: true })
+      .waitFor({ state: "visible", timeout: 10_000 });
+    await page
+      .locator('[data-test="osiris-contagem"]')
+      .filter({ hasText: "7 camadas ativas" })
+      .waitFor({ state: "visible" });
+
+    // Iframe aponta para a instância do globo com as camadas padrão.
+    const iframe = iframeGlobo(page);
+    await iframe.waitFor({ state: "attached", timeout: 10_000 });
+    const src = await iframe.getAttribute("src");
+    expect(src).toContain("osiris-fork.vercel.app/?layers=");
+    expect(src).toContain("maritime");
+    expect(src).toContain("earthquakes");
+
+    // Elementos da barra superior não se sobrepõem em 390×844.
     const caixas: Array<{ nome: string; ret: Retangulo }> = [];
-    for (const seletor of seletores) {
+    for (const seletor of ['[data-test="osiris-voltar"]', '[data-test="osiris-btn-camadas"]']) {
       const loc = page.locator(seletor).first();
-      await loc.waitFor({ state: "visible", timeout: 15_000 });
+      await loc.waitFor({ state: "visible", timeout: 10_000 });
       caixas.push({ nome: seletor, ret: (await loc.boundingBox()) as Retangulo });
     }
-
     const conflitos: string[] = [];
     for (let i = 0; i < caixas.length; i++) {
       for (let j = i + 1; j < caixas.length; j++) {
@@ -131,98 +100,96 @@ describe("Modo Osiris do mapa", () => {
     }
     expect(conflitos, `Elementos sobrepostos: ${conflitos.join("; ")}`).toEqual([]);
 
-    // Gaveta de camadas: abre pela aba, não invade letreiro/abas e traz
-    // as camadas de inteligência com interruptores.
-    await page.locator('[data-test="aba-camadas"]').click();
-    const gaveta = page.locator('[data-test="osiris-gaveta"]');
-    await gaveta.waitFor({ state: "visible", timeout: 15_000 });
-    await page.locator('[data-test="osiris-camadas"]').waitFor({ state: "visible" });
-    const retGaveta = (await gaveta.boundingBox()) as Retangulo;
-    const retAbas = (await page.locator('[data-test="osiris-tabbar"]').boundingBox()) as Retangulo;
-    const retLetreiro = (await page
-      .locator('[data-test="osiris-ticker"]')
-      .boundingBox()) as Retangulo;
-    expect(sobrepoe(retGaveta, retAbas), "gaveta sobrepõe abas").toBe(false);
-    expect(sobrepoe(retGaveta, retLetreiro), "gaveta sobrepõe letreiro").toBe(false);
-    for (const nome of ["Voos ao vivo", "ISS (satélite)", "Alertas oficiais"]) {
-      await page
-        .getByRole("switch", { name: `Ativar camada ${nome}` })
-        .waitFor({ state: "visible" });
-    }
-
-    // Gaveta de feed abre com cabeçalho próprio.
-    await page.locator('[data-test="aba-feed"]').click();
-    await page.locator('[data-test="osiris-feed"]').waitFor({ state: "visible", timeout: 15_000 });
-
-    // Gaveta de ferramentas com os atalhos da plataforma.
-    await page.locator('[data-test="aba-ferramentas"]').click();
+    // Painel de camadas abre pela barra superior e traz as 12 camadas.
+    await page.getByRole("button", { name: "Abrir camadas" }).click();
     await page
-      .locator('[data-test="osiris-ferramentas"]')
-      .waitFor({ state: "visible", timeout: 15_000 });
-    await page.getByText("Boletim completo", { exact: true }).waitFor({ state: "visible" });
-    await page.getByText("Investigar domínio", { exact: true }).waitFor({ state: "visible" });
+      .locator('[role="dialog"] [data-test="osiris-camadas"]')
+      .waitFor({ state: "visible", timeout: 10_000 });
+    const linhas = page.locator('[role="dialog"] [data-test^="osiris-camada-"]');
+    await linhas.first().waitFor({ state: "visible" });
+    expect(await linhas.count()).toBe(12);
+    await page
+      .getByRole("switch", { name: "Ativar camada Marítimo" })
+      .waitFor({ state: "visible" });
+    await page
+      .getByRole("switch", { name: "Ativar camada Ciclo dia/noite" })
+      .waitFor({ state: "visible" });
+    await page
+      .getByRole("button", { name: "Ativar todas", exact: true })
+      .waitFor({ state: "visible" });
+    await page
+      .getByRole("button", { name: "Desativar todas", exact: true })
+      .waitFor({ state: "visible" });
+
+    // Ligar "Cabos submarinos" atualiza a URL do globo e o contador.
+    await page.getByRole("switch", { name: "Ativar camada Cabos submarinos" }).click();
+    await page
+      .locator('[data-test="osiris-contagem"]')
+      .filter({ hasText: "8 camadas ativas" })
+      .waitFor({ state: "visible", timeout: 10_000 });
+    expect(await iframeGlobo(page).getAttribute("src")).toContain("cables");
+
+    // Desativar todas: URL sem camadas e contador zerado; ativar todas: 12.
+    await page.getByRole("button", { name: "Desativar todas", exact: true }).click();
+    await page
+      .locator('[data-test="osiris-contagem"]')
+      .filter({ hasText: "0 camadas ativas" })
+      .waitFor({ state: "visible", timeout: 10_000 });
+    await page.getByRole("button", { name: "Ativar todas", exact: true }).click();
+    await page
+      .locator('[data-test="osiris-contagem"]')
+      .filter({ hasText: "12 camadas ativas" })
+      .waitFor({ state: "visible", timeout: 10_000 });
 
     await page.context().close();
   }, 180_000);
 
-  it("volta ao modo tático e remove as camadas de inteligência", async () => {
+  it("mantém o modo Osiris e as camadas escolhidas após recarregar", async () => {
     const page = await abrirMapaMobile(browser);
     await ativarModoOsiris(page);
+    await page.getByRole("button", { name: "Abrir camadas" }).click();
+    await page
+      .locator('[role="dialog"] [data-test="osiris-camadas"]')
+      .waitFor({ state: "visible" });
+    await page.getByRole("switch", { name: "Ativar camada Cabos submarinos" }).click();
     await page.keyboard.press("Escape");
-    await page.waitForFunction(
-      () => {
-        const m = (window as unknown as { __tacticalMap?: { getLayer: (i: string) => unknown } })
-          .__tacticalMap;
-        return Boolean(m?.getLayer?.("intel-conflito-circle"));
-      },
-      { timeout: 15_000 },
-    );
 
-    await btnModoFlutuante(page, "Tático").click();
-    await page.waitForFunction(
-      () => {
-        const m = (
-          window as unknown as {
-            __tacticalMap?: {
-              getLayer: (i: string) => unknown;
-              getStyle: () => { layers: unknown[] };
-            };
-          }
-        ).__tacticalMap;
-        return Boolean(m?.getStyle) && !m?.getLayer?.("intel-conflito-circle");
-      },
-      { timeout: 15_000 },
-    );
+    // Persistência: recarrega e a visão volta com a camada ligada.
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page
+      .getByText("VISÃO OSIRIS", { exact: true })
+      .waitFor({ state: "visible", timeout: 20_000 });
+    await page
+      .locator('[data-test="osiris-contagem"]')
+      .filter({ hasText: "8 camadas ativas" })
+      .waitFor({ state: "visible", timeout: 10_000 });
+    expect(await iframeGlobo(page).getAttribute("src")).toContain("cables");
+
     await page.context().close();
   }, 180_000);
 
-  it("Fase 2: painel de camadas lista as novas camadas e liga a de voos", async () => {
+  it("volta ao mapa tático pelo botão da barra superior", async () => {
     const page = await abrirMapaMobile(browser);
     await ativarModoOsiris(page);
-    await page.getByText("Camadas de inteligência", { exact: true }).waitFor({ state: "visible" });
+    await page
+      .getByText("VISÃO OSIRIS", { exact: true })
+      .waitFor({ state: "visible", timeout: 10_000 });
 
-    // As novas camadas da Fase 2 aparecem com toggles.
-    for (const nome of ["Voos ao vivo", "ISS (satélite)", "Alertas oficiais", "Rotas marítimas"]) {
-      await page
-        .getByRole("switch", { name: `Ativar camada ${nome}` })
-        .waitFor({ state: "visible" });
-    }
+    await page.getByRole("button", { name: "Voltar para o mapa tático" }).click();
 
-    // Liga "Centrais nucleares" e espera a camada aparecer no estilo.
-    await page.getByRole("switch", { name: "Ativar camada Centrais nucleares" }).click();
-    await page.keyboard.press("Escape");
-    await page.waitForFunction(
-      () => {
-        const m = (window as unknown as { __tacticalMap?: { getLayer: (i: string) => unknown } })
-          .__tacticalMap;
-        return Boolean(m?.getLayer?.("intel-nuclear-symbol"));
-      },
-      { timeout: 15_000 },
-    );
+    // A visão sai da tela e o HUD tático volta (alternador de modo presente).
+    await page
+      .getByText("VISÃO OSIRIS", { exact: true })
+      .waitFor({ state: "hidden", timeout: 10_000 });
+    await page.locator('[data-test="modo-mapa-mobile"]').waitFor({ state: "visible" });
+    await page
+      .locator('[data-test="modo-mapa-mobile"] button[title="Alternar para o modo Osiris"]')
+      .waitFor({ state: "visible" });
+
     await page.context().close();
   }, 180_000);
 
-  it("Fase 2: o Boletim de inteligência abre com dados consolidados", async () => {
+  it("o Boletim de inteligência abre com dados consolidados (mapa tático)", async () => {
     const page = await abrirMapaMobile(browser);
     await page.locator('button[title="Boletim"]').click();
     await page.getByText("BOLETIM DE INTELIGÊNCIA").waitFor({ state: "visible", timeout: 10_000 });

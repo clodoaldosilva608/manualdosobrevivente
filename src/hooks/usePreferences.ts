@@ -6,6 +6,7 @@ import {
   type IntelChaves,
   type IntelVisibilidade,
 } from "@/lib/intel.types";
+import { VIS_OSIRIS_PADRAO, type VisOsiris } from "@/components/map/visao-osiris-camadas";
 
 export type ModoMapa = "tatico" | "osiris";
 
@@ -19,6 +20,8 @@ export interface Preferences {
   intelVis: IntelVisibilidade;
   /** Chaves de serviço do usuário (FIRMS/AIS) — ficam só no aparelho. */
   intelKeys: IntelChaves;
+  /** Camadas ativas da Visão Osiris (globo 3D self-hosted). */
+  osirisVis: VisOsiris;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -28,6 +31,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   mapMode: "tatico",
   intelVis: INTEL_VIS_PADRAO,
   intelKeys: INTEL_CHAVES_PADRAO,
+  osirisVis: VIS_OSIRIS_PADRAO,
 };
 
 const KEY = "preferences";
@@ -46,6 +50,7 @@ export function usePreferences() {
           ...(v ?? {}),
           intelVis: { ...INTEL_VIS_PADRAO, ...(v?.intelVis ?? {}) },
           intelKeys: { ...INTEL_CHAVES_PADRAO, ...(v?.intelKeys ?? {}) },
+          osirisVis: { ...VIS_OSIRIS_PADRAO, ...(v?.osirisVis ?? {}) },
         });
         setLoaded(true);
       })

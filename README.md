@@ -48,11 +48,11 @@ sem conexão — e os dados sincronizam na nuvem quando uma conta está conectad
 | --------------- | ----------------------------------------------------- |
 | Framework       | [TanStack Start](https://tanstack.com/start) (React 19, SSR) |
 | Roteamento      | TanStack Router (file-based) + TanStack Query          |
-| Build           | Vite 7 + Nitro (preset `cloudflare-module`)            |
+| Build           | Vite 7 + Nitro (preset `vercel`)                       |
 | Estilo          | Tailwind CSS 4 + shadcn/ui + Lucide Icons              |
 | Mapas           | MapLibre GL JS + Turf.js + MGRS                        |
 | Backend         | Supabase (Postgres + Auth + RLS)                       |
-| Deploy          | Cloudflare Workers (compatível com Node via `nodejs_compat`) |
+| Deploy          | Vercel (Nitro, preset `vercel`) — alternativa: Cloudflare Workers |
 | Gerenciador     | [Bun](https://bun.sh)                                  |
 | Testes          | Vitest + Playwright                                    |
 
@@ -130,24 +130,34 @@ gateway de e-mail (ver seção abaixo) e agende o POST para
 Consulte `.env.example` para o modelo completo. **Nunca versione o arquivo
 `.env`** — ele está no `.gitignore` por padrão.
 
-## Deploy (Cloudflare Workers)
+## Deploy (Vercel)
 
-O build usa o Nitro com preset `cloudflare-module`, gerando em `.output/` um
-Worker pronto para o Cloudflare:
+O build usa o Nitro com preset `vercel`, gerando em `.vercel/output/` a
+estrutura padrão da Vercel (Build Output API):
 
 ```sh
 # Build completo (roda lint, i18n e testes antes)
 bun run build
 
-# Deploy do build para o Cloudflare
+# Deploy do build para a Vercel (produção)
+bunx vercel deploy --prebuilt --prod
+```
+
+No primeiro deploy, vincule o projeto com `bunx vercel link`. Defina as
+variáveis de ambiente do servidor (`SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET` e as de e-mail) no painel da Vercel
+ou via `bunx vercel env add`. Com o projeto vinculado ao repositório GitHub,
+todo push na `main` dispara um novo deploy automaticamente.
+
+### Deploy alternativo (Cloudflare Workers)
+
+```sh
+NITRO_PRESET=cloudflare-module bunx vite build
 bunx nitro deploy --prebuilt
 ```
 
 A configuração do Worker (nome, data de compatibilidade, `nodejs_compat`)
-fica em `wrangler.jsonc`. Defina as variáveis de ambiente do servidor
-(`SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
-`CRON_SECRET` e as de e-mail) no dashboard do Cloudflare ou via
-`wrangler secret put`.
+fica em `wrangler.jsonc`.
 
 ## Estrutura do projeto
 
@@ -174,7 +184,7 @@ fica em `wrangler.jsonc`. Defina as variáveis de ambiente do servidor
 │   └── migrations/        # Schema versionado do banco
 ├── tests/                 # Testes unitários e E2E
 ├── vite.config.ts         # Config do Vite (TanStack Start + Nitro)
-└── wrangler.jsonc         # Config de deploy no Cloudflare
+└── wrangler.jsonc         # Config do deploy alternativo no Cloudflare
 ```
 
 ## Arquitetura

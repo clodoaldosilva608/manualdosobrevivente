@@ -65,8 +65,11 @@ export default defineConfig(({ command, mode }) => {
         },
       }),
       viteReact(),
-      // Build para Cloudflare Workers apenas no comando build (deploy via wrangler).
-      ...(command === "build" ? [nitro({ defaultPreset: "cloudflare-module" })] : []),
+      // Build de deploy apenas no comando build. Preset padrão: Vercel.
+      // Para outro alvo, defina NITRO_PRESET (ex.: NITRO_PRESET=cloudflare-module).
+      ...(command === "build"
+        ? [nitro({ preset: process.env.NITRO_PRESET || "vercel" })]
+        : []),
     ],
   };
 });

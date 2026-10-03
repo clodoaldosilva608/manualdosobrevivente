@@ -7,9 +7,11 @@ português (pt-BR).
 ## Stack
 
 - TanStack Start (React 19, SSR) + TanStack Router/Query
-- Vite 7 + Nitro (preset `cloudflare-module`, deploy em Cloudflare Workers)
+- Vite 7 + Nitro (preset padrão `vercel`; alternativo `cloudflare-module`)
 - Tailwind CSS 4 + shadcn/ui + Lucide
 - Supabase (Postgres com RLS + Auth) e Bun como gerenciador de pacotes
+- Deploy: Vercel (`bunx vercel deploy --prebuilt --prod`); Cloudflare via
+  `NITRO_PRESET=cloudflare-module`
 
 ## Comandos
 

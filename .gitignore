@@ -5,9 +5,9 @@ node_modules
 dist
 dist-ssr
 .output
-.vinxi
-.tanstack/**
+.tanstack/
 .nitro
+.vercel
 .wrangler/
 
 # Variáveis de ambiente — NUNCA versionar
@@ -40,3 +40,4 @@ lerna-debug.log*
 # Testes
 playwright-report/
 test-results/
+

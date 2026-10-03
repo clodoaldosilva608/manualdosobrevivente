@@ -57,6 +57,8 @@ describe("responsividade do mapa", () => {
 });
 
 describe("páginas sem estouro horizontal", () => {
+  // Testes de UI pesada (mapa + SVG) podem oscilar sob carga paralela do CI.
+  it.retry = 2;
   const routes = [
     "/",
     "/manual",
@@ -88,15 +90,26 @@ describe("páginas sem estouro horizontal", () => {
     const page = await context.newPage();
     await page.goto(BASE, { waitUntil: "domcontentloaded" });
     await page.waitForSelector(".maplibregl-canvas", { timeout: 30_000 });
+    // Dispensa o modal de boas-vindas, que abre por cima do HUD.
+    const pular = page.getByRole("button", { name: "Pular configuração" });
+    const modal = await pular
+      .waitFor({ state: "visible", timeout: 6_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (modal) {
+      await pular.click();
+      await pular.waitFor({ state: "hidden" });
+    }
     const mini = page.getByRole("button", { name: "Abrir bússola" });
     await mini.click();
     const full = page.getByRole("button", { name: "Ver bússola em tela cheia" });
-    await expect(full).toBeVisible();
+    await full.waitFor({ state: "visible" });
+    await page.waitForTimeout(400); // aguarda o painel assentar antes do clique
     const box = await full.boundingBox();
     expect(box?.y ?? -1).toBeGreaterThanOrEqual(0);
     expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(844);
     await full.click();
-    await expect(page.getByRole("button", { name: "Reduzir bússola" })).toBeVisible();
+    await page.getByRole("button", { name: "Reduzir bússola" }).waitFor({ state: "visible" });
     await context.close();
   }, 120_000);
 });

@@ -133,6 +133,9 @@
     height: 100%;
     overscroll-behavior: none;
   }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -147,6 +150,22 @@
   }
   .mono {
     font-family: var(--font-mono);
+  }
+  /* iOS: evita o zoom automático ao focar campos (fonte mínima de 16px). */
+  @media (max-width: 767px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+}
+
+/* Mobile: os controles nativos do MapLibre (topo/direita) ficam atrás do HUD
+   tático e sob o polegar — desativados; pinça + trilha de ações cobrem o uso. */
+@media (max-width: 767px) {
+  .maplibregl-ctrl-top-right {
+    display: none;
   }
 }
 

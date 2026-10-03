@@ -558,83 +558,62 @@ export default function MapShell() {
         <div ref={containerRef} className="h-full w-full" />
       </div>
 
-      {/* Top HUD: coordinates */}
-      <div className="absolute left-2 right-2 top-2 z-10 md:left-4 md:right-auto md:top-4 md:w-[360px] hud-panel rounded-md p-2 mono text-xs">
-        <div className="flex items-center justify-between text-tactical-orange">
-          <span className="font-bold tracking-wider">CENTRO</span>
-          <span>Δ {formatSignedDegrees(decl)}</span>
-        </div>
-        <div className="grid grid-cols-[60px_1fr] gap-x-2 mt-1 text-foreground">
-          <span className="text-muted-foreground">DD</span>
-          <button
-            className="text-left truncate"
-            onClick={() => copy(formatDD(center[0], center[1]))}
-          >
-            {formatDD(center[0], center[1])}
-          </button>
-          <span className="text-muted-foreground">DMS</span>
-          <button
-            className="text-left truncate"
-            onClick={() => copy(formatDMS(center[0], center[1]))}
-          >
-            {formatDMS(center[0], center[1])}
-          </button>
-          <span className="text-muted-foreground">MGRS</span>
-          <button
-            className="text-left truncate"
-            onClick={() => copy(formatMGRS(center[0], center[1]))}
-          >
-            {formatMGRS(center[0], center[1])}
-          </button>
-        </div>
+      {/* HUD superior mobile: fluxo vertical — filhos nunca se sobrepõem */}
+      <div className="absolute left-2 right-20 top-[max(0.5rem,env(safe-area-inset-top))] z-10 flex flex-col gap-2 md:hidden">
+        <PainelCentro center={center} decl={decl} onCopy={(t) => copy(t)} />
+        <PainelPosicao
+          userPos={userPos}
+          onCentrar={() => {
+            if (!userPos) return toast.error("Sem localização disponível");
+            mapRef.current?.flyTo({ center: [userPos.lng, userPos.lat], zoom: 15 });
+          }}
+          onUltimoLocal={() => {
+            try {
+              const raw = localStorage.getItem("tgis:last-position");
+              if (!raw) return toast.error("Nenhum local salvo");
+              const p = JSON.parse(raw) as { lng: number; lat: number };
+              mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 14 });
+            } catch {
+              toast.error("Nenhum local salvo");
+            }
+          }}
+        />
+        {(tool === "measure-line" || tool === "measure-area") && (
+          <LeituraMedicao tool={tool} lineLen={lineLen} areaFmt={areaFmt} onClear={clearDraw} />
+        )}
       </div>
 
-      {/* Posição atual do usuário */}
-      <div className="absolute left-2 right-2 top-[122px] z-10 md:left-4 md:right-auto md:top-[150px] md:w-[360px] hud-panel rounded-md p-2 mono text-xs">
-        <div className="flex items-center justify-between text-sky-400">
-          <span className="font-bold tracking-wider">MINHA POSIÇÃO</span>
-          <span>{userPos ? `± ${formatElevation(userPos.acc)}` : "aguardando sinal"}</span>
-        </div>
-        <div className="mt-1 grid grid-cols-3 gap-2 text-foreground">
-          <Cell label="Latitude" value={userPos ? formatDecimalDegrees(userPos.lat) : "—"} />
-          <Cell label="Longitude" value={userPos ? formatDecimalDegrees(userPos.lng) : "—"} />
-          <Cell
-            label="Altitude"
-            value={userPos && userPos.alt != null ? formatElevation(userPos.alt) : "—"}
-          />
-        </div>
-        <div className="mt-2 flex gap-2">
-          <button
-            type="button"
-            className="glove-tap flex-1 rounded border border-sky-400/60 text-sky-400 py-1 uppercase tracking-wider"
-            onClick={() => {
-              if (!userPos) return toast.error("Sem localização disponível");
-              mapRef.current?.flyTo({ center: [userPos.lng, userPos.lat], zoom: 15 });
-            }}
-          >
-            Centrar em mim
-          </button>
-          <button
-            type="button"
-            className="glove-tap flex-1 rounded border border-border text-muted-foreground py-1 uppercase tracking-wider"
-            onClick={() => {
-              try {
-                const raw = localStorage.getItem("tgis:last-position");
-                if (!raw) return toast.error("Nenhum local salvo");
-                const p = JSON.parse(raw) as { lng: number; lat: number };
-                mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 14 });
-              } catch {
-                toast.error("Nenhum local salvo");
-              }
-            }}
-          >
-            Último local
-          </button>
-        </div>
+      {/* HUD superior desktop: posições absolutas clássicas */}
+      <div className="absolute left-4 top-4 z-10 hidden w-[360px] md:block">
+        <PainelCentro center={center} decl={decl} onCopy={(t) => copy(t)} />
       </div>
+      <div className="absolute left-4 top-[150px] z-10 hidden w-[360px] md:block">
+        <PainelPosicao
+          userPos={userPos}
+          onCentrar={() => {
+            if (!userPos) return toast.error("Sem localização disponível");
+            mapRef.current?.flyTo({ center: [userPos.lng, userPos.lat], zoom: 15 });
+          }}
+          onUltimoLocal={() => {
+            try {
+              const raw = localStorage.getItem("tgis:last-position");
+              if (!raw) return toast.error("Nenhum local salvo");
+              const p = JSON.parse(raw) as { lng: number; lat: number };
+              mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 14 });
+            } catch {
+              toast.error("Nenhum local salvo");
+            }
+          }}
+        />
+      </div>
+      {(tool === "measure-line" || tool === "measure-area") && (
+        <div className="absolute left-1/2 top-32 z-10 hidden -translate-x-1/2 md:block">
+          <LeituraMedicao tool={tool} lineLen={lineLen} areaFmt={areaFmt} onClear={clearDraw} />
+        </div>
+      )}
 
       {/* Right-side action rail */}
-      <div className="absolute right-2 top-32 md:top-36 z-10 flex flex-col gap-2">
+      <div className="absolute right-2 top-[max(0.5rem,env(safe-area-inset-top))] z-10 flex flex-col gap-2 md:top-36">
         <RailBtn icon={Layers} label="Camadas" onClick={() => setOpenSheet("layers")} />
         <RailBtn icon={Navigation2} label="Ir para" onClick={() => setOpenSheet("goto")} />
         <RailBtn icon={Ruler} label="Medir" onClick={() => setOpenSheet("measure")} />
@@ -659,35 +638,13 @@ export default function MapShell() {
         />
       </div>
 
-      {/* Leitura da ferramenta ativa */}
-      {(tool === "measure-line" || tool === "measure-area") && (
-        <div className="absolute left-1/2 -translate-x-1/2 top-28 md:top-32 z-10 hud-panel rounded-md px-3 py-2 mono text-xs flex items-center gap-3">
-          {tool === "measure-line" ? (
-            <>
-              <span className="text-tactical-orange">DIST</span>
-              <span>{formatMeters(lineLen)}</span>
-              <span className="text-muted-foreground">·</span>
-              <span>{formatNauticalMiles(lineLen)}</span>
-            </>
-          ) : (
-            <>
-              <span className="text-tactical-orange">ÁREA</span>
-              <span>{areaFmt.m2}</span>
-              <span className="text-muted-foreground">·</span>
-              <span>{areaFmt.ha}</span>
-              <span className="text-muted-foreground">·</span>
-              <span>{areaFmt.acres}</span>
-            </>
-          )}
-          <button onClick={clearDraw} className="text-muted-foreground hover:text-foreground">
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      )}
-
       {/* Elevation chart */}
       {elevationData.length > 1 && (
-        <div className="absolute left-2 right-2 md:left-auto md:right-4 md:bottom-4 md:w-[420px] bottom-20 z-10 hud-panel rounded-md p-3">
+        <div
+          className={`absolute left-2 right-2 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-10 hud-panel rounded-md p-3 md:left-auto md:right-4 md:bottom-4 md:w-[420px] ${
+            newMarker ? "hidden md:block" : "block"
+          }`}
+        >
           <div className="flex items-center justify-between mono text-xs mb-1">
             <span className="text-tactical-orange font-bold">PERFIL DE ELEVAÇÃO</span>
             <button onClick={() => setElevationData([])}>
@@ -725,7 +682,7 @@ export default function MapShell() {
 
       {/* New marker dialog */}
       {newMarker && (
-        <div className="absolute inset-x-0 bottom-16 md:bottom-4 md:right-4 md:left-auto md:w-96 z-20 hud-panel rounded-md p-4 mx-2 md:mx-0 space-y-3">
+        <div className="absolute left-2 right-2 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-4 md:left-auto md:right-4 md:w-96 z-20 hud-panel rounded-md p-4 space-y-3">
           <div className="flex items-center justify-between">
             <span className="mono text-tactical-orange font-bold text-sm">NOVO WAYPOINT</span>
             <button onClick={() => setNewMarker(null)}>
@@ -895,7 +852,9 @@ export default function MapShell() {
         className={
           compassMode === "full"
             ? "absolute inset-0 z-30 flex items-start justify-center bg-background/70 backdrop-blur-sm overflow-y-auto p-3 pb-24"
-            : "absolute right-2 bottom-24 md:bottom-6 z-30"
+            : `absolute right-2 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:bottom-6 z-30 ${
+                elevationData.length > 1 || newMarker ? "hidden md:block" : "block"
+              }`
         }
       >
         <div
@@ -903,7 +862,7 @@ export default function MapShell() {
             compassMode === "mini"
               ? "hud-panel rounded-full p-1.5 shadow-lg"
               : compassMode === "panel"
-                ? "hud-panel rounded-lg w-[min(72vw,18rem)] max-h-[calc(100dvh-8rem)] overflow-hidden shadow-xl"
+                ? "hud-panel rounded-lg w-[min(72vw,18rem)] max-h-[calc(100dvh-10rem)] overflow-hidden shadow-xl"
                 : "hud-panel rounded-lg p-3 w-full max-w-md shadow-xl"
           }
         >
@@ -967,7 +926,9 @@ export default function MapShell() {
           {compassMode !== "mini" && (
             <div
               className={
-                compassMode === "panel" ? "overflow-y-auto p-2 pt-0 max-h-[calc(100dvh-11rem)]" : ""
+                compassMode === "panel"
+                  ? "overflow-y-auto p-2 pt-0 max-h-[calc(100dvh-12.5rem)]"
+                  : ""
               }
             >
               <CompassRose
@@ -1033,6 +994,133 @@ function RailBtn({
       <Icon className="h-5 w-5" />
       <span className="uppercase tracking-wider">{label}</span>
     </button>
+  );
+}
+
+/** Painel de coordenadas do centro do mapa (compartilhado entre mobile e desktop). */
+function PainelCentro({
+  center,
+  decl,
+  onCopy,
+}: {
+  center: [number, number];
+  decl: number;
+  onCopy: (t: string) => void;
+}) {
+  return (
+    <div className="hud-panel rounded-md p-2 mono text-xs">
+      <div className="flex items-center justify-between text-tactical-orange">
+        <span className="font-bold tracking-wider">CENTRO</span>
+        <span>Δ {formatSignedDegrees(decl)}</span>
+      </div>
+      <div className="grid grid-cols-[60px_1fr] gap-x-2 mt-1 text-foreground">
+        <span className="text-muted-foreground">DD</span>
+        <button
+          className="text-left truncate"
+          onClick={() => onCopy(formatDD(center[0], center[1]))}
+        >
+          {formatDD(center[0], center[1])}
+        </button>
+        <span className="text-muted-foreground">DMS</span>
+        <button
+          className="text-left truncate"
+          onClick={() => onCopy(formatDMS(center[0], center[1]))}
+        >
+          {formatDMS(center[0], center[1])}
+        </button>
+        <span className="text-muted-foreground">MGRS</span>
+        <button
+          className="text-left truncate"
+          onClick={() => onCopy(formatMGRS(center[0], center[1]))}
+        >
+          {formatMGRS(center[0], center[1])}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+type MapShellUserPos = { lng: number; lat: number; alt: number | null; acc: number } | null;
+
+/** Painel da posição atual do usuário (compartilhado entre mobile e desktop). */
+function PainelPosicao({
+  userPos,
+  onCentrar,
+  onUltimoLocal,
+}: {
+  userPos: MapShellUserPos;
+  onCentrar: () => void;
+  onUltimoLocal: () => void;
+}) {
+  return (
+    <div className="hud-panel rounded-md p-2 mono text-xs">
+      <div className="flex items-center justify-between text-sky-400">
+        <span className="font-bold tracking-wider">MINHA POSIÇÃO</span>
+        <span>{userPos ? `± ${formatElevation(userPos.acc)}` : "aguardando sinal"}</span>
+      </div>
+      <div className="mt-1 grid grid-cols-3 gap-2 text-foreground">
+        <Cell label="Latitude" value={userPos ? formatDecimalDegrees(userPos.lat) : "—"} />
+        <Cell label="Longitude" value={userPos ? formatDecimalDegrees(userPos.lng) : "—"} />
+        <Cell
+          label="Altitude"
+          value={userPos && userPos.alt != null ? formatElevation(userPos.alt) : "—"}
+        />
+      </div>
+      <div className="mt-2 flex gap-2">
+        <button
+          type="button"
+          className="glove-tap flex-1 rounded border border-sky-400/60 text-sky-400 py-1 uppercase tracking-wider"
+          onClick={onCentrar}
+        >
+          Centrar em mim
+        </button>
+        <button
+          type="button"
+          className="glove-tap flex-1 rounded border border-border text-muted-foreground py-1 uppercase tracking-wider"
+          onClick={onUltimoLocal}
+        >
+          Último local
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Leitura da ferramenta de medição ativa. */
+function LeituraMedicao({
+  tool,
+  lineLen,
+  areaFmt,
+  onClear,
+}: {
+  tool: "measure-line" | "measure-area";
+  lineLen: number;
+  areaFmt: ReturnType<typeof formatArea>;
+  onClear: () => void;
+}) {
+  return (
+    <div className="hud-panel rounded-md px-3 py-2 mono text-xs flex items-center gap-3">
+      {tool === "measure-line" ? (
+        <>
+          <span className="text-tactical-orange">DIST</span>
+          <span>{formatMeters(lineLen)}</span>
+          <span className="text-muted-foreground">·</span>
+          <span>{formatNauticalMiles(lineLen)}</span>
+        </>
+      ) : (
+        <>
+          <span className="text-tactical-orange">ÁREA</span>
+          <span>{areaFmt.m2}</span>
+          <span className="text-muted-foreground">·</span>
+          <span>{areaFmt.ha}</span>
+          <span className="text-muted-foreground">·</span>
+          <span>{areaFmt.acres}</span>
+        </>
+      )}
+      <button onClick={onClear} className="text-muted-foreground hover:text-foreground">
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
+    </div>
   );
 }
 

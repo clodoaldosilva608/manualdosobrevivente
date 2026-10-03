@@ -159,7 +159,7 @@ Prefira água corrente e nascentes acima de áreas de pasto e habitação. Evite
 ## Hierarquia de métodos (melhor → pior)
 
 1. **Fervura** — fervura vigorosa por 1 minuto (3 minutos acima de 2000 m). Elimina todos os patógenos biológicos.
-2. **Filtragem** — filtro de 0,2 mícron remove bactérias e protozoários. Combine com químico para cobrir vírus.
+2. **Filtragem** — filtro de 0,2 mícron elimina bactérias e protozoários. Combine com químico para cobrir vírus.
 3. **Químico** — dióxido de cloro: 30 minutos de espera (4 horas para *Cryptosporidium*). Água fria exige o dobro do tempo.
 4. **UV** — só funciona em água transparente. Agite o recipiente durante a exposição.
 5. **Solar (SODIS)** — garrafa PET transparente deitada ao sol pleno por 6 horas (2 dias se nublado). Último recurso.

@@ -34,13 +34,18 @@ function createSupabaseClient() {
   const SUPABASE_PUBLISHABLE_KEY = import.meta.env['VITE_SUPABASE_PUBLISHABLE_KEY'] || process.env['SUPABASE_PUBLISHABLE_KEY'];
 
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-    const missing = [
-      ...(!SUPABASE_URL ? ['SUPABASE_URL'] : []),
-      ...(!SUPABASE_PUBLISHABLE_KEY ? ['SUPABASE_PUBLISHABLE_KEY'] : []),
-    ];
-    const message = `Variáveis de ambiente do Supabase ausentes: ${missing.join(', ')}. Configure-as no arquivo .env (veja .env.example).`;
-    console.error(`[Supabase] ${message}`);
-    throw new Error(message);
+    // Modo local: o aplicativo funciona 100% com o banco local do aparelho.
+    // O cliente é criado apontando para um endereço inócuo; nenhuma chamada
+    // de rede é feita sem sessão ativa e os dados permanecem no IndexedDB.
+    console.warn(
+      '[Supabase] Variáveis de ambiente ausentes — rodando em modo local (nuvem desativada).',
+    );
+    return createClient('http://localhost:54321', 'local-mode-anon-key', {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: false,
+      },
+    });
   }
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {

@@ -37,10 +37,22 @@ sem conexão — e os dados sincronizam na nuvem quando uma conta está conectad
 - **Painel de dados** — visão consolidada do estado da mochila, checklists e
   waypoints.
 - **Downloads offline** — gestão de tiles e conteúdos disponíveis sem rede.
+- **PWA instalável** — instale na tela de início (Android/iOS/desktop) com
+  ícone próprio, tela cheia, service worker e página offline dedicada.
+- **Mobile-first** — interface projetada para toque: HUD do mapa em fluxo
+  vertical sem sobreposições (regressão coberta por testes automatizados),
+  alvos de toque generosos, safe-areas de iPhone e campos sem zoom automático.
+- **Modo local por padrão** — todos os dados (waypoints, mochila, checklist e
+  preferências) vivem no banco local do aparelho (IndexedDB). Conta e nuvem
+  são opcionais e só entram em ação com o consentimento do usuário.
+- **Pasta de backup** — no primeiro uso, um assistente pede ao usuário para
+  criar/escolher uma pasta no aparelho (File System Access API); todas as
+  atividades são gravadas nela automaticamente, com rotação de versão
+  (`backup-anterior.json`) e restauração com um toque.
 - **Relatório semanal por e-mail** — envio agendado e protegido de um resumo
   do uso do app (requer gateway de e-mail configurado).
 - **Conta e sincronização** — autenticação por e-mail/senha e Google via
-  Supabase, com sincronização automática local-first entre aparelhos.
+  Supabase, com sincronização local-first desativada por padrão.
 
 ## Stack tecnológica
 
@@ -59,7 +71,9 @@ sem conexão — e os dados sincronizam na nuvem quando uma conta está conectad
 ## Requisitos
 
 - [Bun](https://bun.sh) 1.2 ou superior
-- Um projeto [Supabase](https://supabase.com) (URL e chave publishable)
+- Um projeto [Supabase](https://supabase.com) (URL e chave publishable) —
+  **opcional em modo local**: sem as variáveis, o app funciona 100% offline
+  com o banco do aparelho
 
 ## Começando
 
@@ -159,22 +173,61 @@ bunx nitro deploy --prebuilt
 A configuração do Worker (nome, data de compatibilidade, `nodejs_compat`)
 fica em `wrangler.jsonc`.
 
+## PWA, modo local e pasta de backup
+
+### Instalar o aplicativo
+
+- **Android/Chrome/desktop** — botão “Instalar aplicativo” no modal de
+  boas-vindas ou em *Ajustes → Aplicativo* (usa o `beforeinstallprompt`).
+- **iPhone/iPad** — no Safari: Compartilhar → “Adicionar à Tela de Início”
+  (a Apple não expõe prompt automático para PWA).
+
+O service worker (`public/sw.js`) cacheia o shell do app, assets com hash,
+fontes e tiles de mapa (com limite de espaço). Sem conexão, o app abre em
+modo offline; navegações fora do cache recebem a página `public/offline.html`.
+Para invalidar caches após mudanças, aumente a constante `VERSAO` no sw.js.
+
+### Banco de dados local
+
+Todos os dados do usuário ficam no IndexedDB do aparelho
+(`src/lib/db.ts`). A sincronização com a nuvem é **opt-in**: só acontece com
+sessão ativa e com “Sincronizar automaticamente” ativado em *Ajustes*. Sem as
+variáveis do Supabase, o app segue funcionando em modo local.
+
+### Pasta de backup
+
+No primeiro acesso, o assistente pede ao usuário para criar/escolher uma
+pasta (File System Access API — Chrome/Edge/Android). O aplicativo grava
+automaticamente nesta pasta, a cada alteração:
+
+| Arquivo                                    | Conteúdo                              |
+| ------------------------------------------ | ------------------------------------- |
+| `backup-manual-do-sobrevivente.json`       | Snapshot mais recente dos dados       |
+| `backup-manual-do-sobrevivente-anterior.json` | Cópia da versão anterior (rotação) |
+| `LEIA-ME.txt`                              | Explicação da pasta                   |
+
+A restauração (mesclagem, vence o registro mais recente) fica em
+*Ajustes → Pasta de backup → Restaurar do backup*. Em navegadores sem
+suporte à API (Safari/iOS), a seção não aparece e o backup é feito por
+exportação/importação de arquivo em *Ajustes*.
+
 ## Estrutura do projeto
 
 ```
 ├── .github/workflows/     # CI (lint, i18n, testes, E2E e build)
 ├── eslint-rules/          # Regras customizadas de i18n pt-BR
-├── scripts/               # Utilitários (auditoria i18n)
+├── public/                # Manifest PWA, service worker, ícones e offline.html
+├── scripts/               # Utilitários (auditoria i18n, geração de ícones)
 ├── src/
 │   ├── assets/manual/     # Imagens do manual de sobrevivência
 │   ├── components/
 │   │   ├── ui/            # Componentes shadcn/ui
-│   │   ├── map/           # Componentes do mapa (bússola, shell)
-│   │   └── ...            # Navegação, compartilhamento, sync
+│   │   ├── map/           # Componentes do mapa (bússola, shell, HUD)
+│   │   └── ...            # Navegação, compartilhamento, onboarding, backup
 │   ├── hooks/             # Hooks de React (preferências, mobile)
 │   ├── integrations/
 │   │   └── supabase/      # Clientes, middleware de auth e cron
-│   ├── lib/               # Núcleo: geo, coords, sync, manual, GPX/KML…
+│   ├── lib/               # Núcleo: geo, coords, db local, backup, PWA, sync…
 │   ├── routes/            # Rotas file-based (mapa, manual, mochila, SOS…)
 │   ├── router.tsx         # Criação do router (TanStack Router)
 │   ├── server.ts          # Entry do servidor SSR com página de erro
@@ -190,15 +243,18 @@ fica em `wrangler.jsonc`.
 ## Arquitetura
 
 - **Local-first** — alterações de dados do usuário disparam um evento único
-  no navegador; o coordenador de sync na raiz do app agrupa as mudanças
-  (debounce) e sincroniza com a nuvem no login ou reconexão. As telas não
-  duplicam lógica de sincronização.
+  no navegador; o backup em pasta reage ao mesmo evento (com debounce e
+  rotação de versão), e a sincronização com a nuvem — desativada por padrão —
+  agrupa as mudanças quando o usuário consente. As telas não duplicam lógica
+  de sincronização.
 - **Segurança do servidor** — operações administrativas usam o cliente
   service role apenas dentro de módulos `*.server.ts`; rotas de usuário
   passam pelo middleware de autenticação com RLS ativa.
 - **i18n pt-BR** — o ESLint bloqueia literais em inglês nas telas e obriga o
   uso do utilitário central de formatação de números/datas
   (`scripts/check-i18n.mjs` reforça a auditoria no CI).
+- **Regressão visual** — `tests/map-overlap.spec.ts` mede as caixas dos
+  elementos do HUD do mapa em 390×844 e falha se qualquer par se sobrepor.
 
 Confira `AGENTS.md` para um resumo rápido da arquitetura voltado a
 contribuidores (e agentes de código).

@@ -13,6 +13,8 @@ import {
   listManualAssets,
   saveWaypoint,
   clearLocalData,
+  getSetting,
+  setSetting,
   type LocalWaypoint,
 } from "@/lib/db";
 import { listAreas, deleteArea } from "@/lib/offline-tiles";
@@ -28,6 +30,8 @@ import {
 } from "@/lib/cloud-sync";
 import { CloudUpload, CloudDownload, Trash2, Upload, Download } from "lucide-react";
 import { getReportSettings, saveReportSettings, sendReportNow } from "@/lib/report.functions";
+import { BackupFolderCard } from "@/components/BackupFolderCard";
+import { usePwaInstall } from "@/lib/pwa";
 
 interface ReportForm {
   enabled: boolean;
@@ -82,6 +86,8 @@ function Settings() {
   const [counts, setCounts] = useState<Counts | null>(null);
   const [lastSync, setLastSync] = useState<number | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [autoSync, setAutoSync] = useState(false);
+  const { podeInstalar, instalado, plataforma, instalar } = usePwaInstall();
   const [reportForm, setReportForm] = useState<ReportForm>({
     enabled: false,
     weekday: 1,
@@ -168,6 +174,28 @@ function Settings() {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    let alive = true;
+    getSetting<boolean>("cloud-auto-sync")
+      .then((v) => {
+        if (alive) setAutoSync(v === true);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const alternarAutoSync = async (ligar: boolean) => {
+    setAutoSync(ligar);
+    try {
+      await setSetting("cloud-auto-sync", ligar);
+      window.dispatchEvent(new Event("tactical-gis:local-data-changed"));
+    } catch {
+      /* armazenamento indisponível */
+    }
+  };
 
   const exportGPX = async () => {
     try {
@@ -418,18 +446,31 @@ function Settings() {
         </div>
       </Section>
 
-      <Section title="Nuvem">
+      <Section title="Nuvem (opcional)">
+        <p className="text-xs text-muted-foreground">
+          Seus dados vivem neste aparelho. A nuvem só é usada se você ativar a sincronização e
+          entrar com sua conta.
+        </p>
+        <label className="flex items-center gap-3 text-sm">
+          <Checkbox
+            checked={autoSync}
+            onCheckedChange={(checked) => void alternarAutoSync(checked === true)}
+            aria-label="Sincronizar automaticamente com a nuvem"
+          />
+          Sincronizar automaticamente com a nuvem
+        </label>
         <p className="text-xs text-muted-foreground">
           {lastSync
             ? `Última sincronização: ${formatDateTime(lastSync)}`
             : "Nada sincronizado ainda."}
         </p>
-        <p className="text-xs text-muted-foreground">
-          Alterações em waypoints, mochila, checklist e preferências também são salvas
-          automaticamente quando houver conexão.
-        </p>
         <div className="grid gap-2 sm:grid-cols-2">
-          <Button onClick={doPush} disabled={busy !== null} className="glove-tap w-full">
+          <Button
+            onClick={doPush}
+            disabled={busy !== null}
+            className="glove-tap w-full"
+            title={email ? undefined : "Entre na conta para usar a nuvem"}
+          >
             <CloudUpload className="h-4 w-4" /> Enviar para a nuvem
           </Button>
           <Button
@@ -437,10 +478,36 @@ function Settings() {
             disabled={busy !== null}
             variant="secondary"
             className="glove-tap w-full"
+            title={email ? undefined : "Entre na conta para usar a nuvem"}
           >
             <CloudDownload className="h-4 w-4" /> Trazer da nuvem
           </Button>
         </div>
+      </Section>
+
+      <BackupFolderCard />
+
+      <Section title="Aplicativo">
+        {instalado ? (
+          <p className="text-sm text-tactical-green">
+            Aplicativo instalado — rodando em tela cheia com suporte offline.
+          </p>
+        ) : podeInstalar ? (
+          <div className="space-y-2">
+            <Button onClick={() => void instalar()} className="glove-tap w-full">
+              <Download className="h-4 w-4" /> Instalar aplicativo
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Instale para abrir em tela cheia e usar mesmo sem internet.
+            </p>
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            {plataforma === "ios"
+              ? "Para instalar no iPhone/iPad: botão Compartilhar no Safari → “Adicionar à Tela de Início”."
+              : "Para instalar: use a opção “Instalar aplicativo” do navegador ou o ícone na barra de endereço."}
+          </p>
+        )}
       </Section>
 
       {email && (

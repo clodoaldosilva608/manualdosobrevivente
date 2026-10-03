@@ -29,9 +29,20 @@ bun run build      # check:all + build de produção em .output/
   (`eslint-rules/i18n-pt-br.js`) bloqueia literais em inglês nas telas e exige o
   utilitário central de formatação (`src/lib/format.ts`) para números e datas.
 - **Arquitetura de dados (local-first)**: alterações de dados do usuário
-  despacham um evento compartilhado no navegador; o coordenador de sync na raiz
-  agrupa (debounce) e sincroniza com a nuvem no login ou reconexão. Telas de
-  funcionalidade não duplicam lógica de sincronização.
+  despacham um evento compartilhado no navegador; o backup em pasta
+  (`src/lib/auto-backup.ts`) e o coordenador de sync na raiz reagem ao mesmo
+  evento. A nuvem é opt-in (toggle em Ajustes, `cloud-auto-sync` no IndexedDB);
+  telas de funcionalidade não duplicam lógica de sincronização ou backup.
+- **PWA**: o service worker é o `public/sw.js` (sem plugin); em mudanças de
+  lógica, aumente a constante `VERSAO` para invalidar caches. O registro só
+  ocorre em build de produção (`src/lib/pwa.ts`). Ícones regeneráveis via
+  `scripts/generate-icons.mjs`.
+- **Backup em pasta**: use sempre os utilitários de `src/lib/backup.ts`
+  (permissões, rotação e restauração) — nunca escreva na pasta do usuário
+  diretamente das telas.
+- **Mobile-first**: novos overlays flutuantes sobre o mapa devem entrar no
+  fluxo vertical do HUD (mobile) ou respeitar as zonas reservadas; o teste
+  `tests/map-overlap.spec.ts` falha se dois elementos do HUD se sobrepuserem.
 - **Segurança**: operações administrativas usam o cliente service role
   (`client.server.ts`) apenas em módulos `*.server.ts` — arquivos `*.functions.ts`
   e rotas vão para o bundle do cliente. Rotas autenticadas usam o middleware

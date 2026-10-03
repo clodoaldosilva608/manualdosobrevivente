@@ -15,6 +15,9 @@ import { supabase } from "@/integrations/supabase/client";
 import appCss from "../styles.css?url";
 import { AppNav } from "@/components/AppNav";
 import { AutoCloudSync } from "@/components/AutoCloudSync";
+import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
+import { registerServiceWorker } from "@/lib/pwa";
+import { iniciarAutoBackup } from "@/lib/auto-backup";
 
 function NotFoundComponent() {
   return (
@@ -65,6 +68,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "theme-color", content: "#121212" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "Sobrevivência" },
       { title: "Mapa Tático — TacticalGIS" },
       {
         name: "description",
@@ -98,6 +105,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "icon", type: "image/png", sizes: "32x32", href: "/icons/favicon-32.png" },
+      { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.png" },
       { rel: "stylesheet", href: appCss },
       {
         rel: "preconnect",
@@ -145,11 +155,16 @@ function AuthListener() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => {
+    registerServiceWorker();
+    iniciarAutoBackup();
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <AuthListener />
       <AutoCloudSync />
-      <div className="flex min-h-screen flex-col pb-14 md:pb-0 md:pt-14">
+      <WelcomeOnboarding />
+      <div className="flex min-h-screen flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0 md:pt-14">
         <main className="flex-1 relative">
           <Outlet />
         </main>

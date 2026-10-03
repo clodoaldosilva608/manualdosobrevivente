@@ -13,7 +13,17 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, ExternalLink, Globe, Info, Layers, MonitorX, RefreshCw, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ExternalLink,
+  Globe,
+  Info,
+  Layers,
+  Menu as MenuIcon,
+  MonitorX,
+  RefreshCw,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -28,6 +38,8 @@ export interface VisaoOsirisProps {
   onToggle: (id: keyof VisOsiris, v: boolean) => void;
   onSetTodas: (v: boolean) => void;
   onVoltar: () => void;
+  /** Abre o menu geral (hambúrguer). Opcional para não acoplar ao MapShell. */
+  onAbrirMenu?: () => void;
 }
 
 type EstadoGlobo = "carregando" | "ok" | "bloqueado";
@@ -38,7 +50,13 @@ const ORIGEM_APP =
     ? window.location.origin
     : "https://manual-do-sobrevivente.vercel.app";
 
-export function VisaoOsiris({ vis, onToggle, onSetTodas, onVoltar }: VisaoOsirisProps) {
+export function VisaoOsiris({
+  vis,
+  onToggle,
+  onSetTodas,
+  onVoltar,
+  onAbrirMenu,
+}: VisaoOsirisProps) {
   const [camadasAbertas, setCamadasAbertas] = useState(false);
   const [estadoGlobo, setEstadoGlobo] = useState<EstadoGlobo>("carregando");
   const [tentativa, setTentativa] = useState(0);
@@ -112,6 +130,19 @@ export function VisaoOsiris({ vis, onToggle, onSetTodas, onVoltar }: VisaoOsiris
           </div>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
+          {onAbrirMenu && (
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Abrir menu"
+              title="Abrir menu"
+              className="h-9 w-9 shrink-0"
+              onClick={onAbrirMenu}
+              data-test="osiris-btn-menu"
+            >
+              <MenuIcon className="h-[18px] w-[18px]" />
+            </Button>
+          )}
           <Button
             variant="outline"
             className="px-3 sm:hidden gap-2 h-9"

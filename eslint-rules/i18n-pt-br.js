@@ -58,6 +58,8 @@ const ALLOW = new Set([
   "property",
   "app",
   "bug",
+  // "menu" é palavra adotada pelo pt-BR (menu operacional, botão hambúrguer)
+  "menu",
   "out",
   "bag",
   "fatwood",

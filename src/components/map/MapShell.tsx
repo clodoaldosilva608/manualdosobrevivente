@@ -17,6 +17,7 @@ import {
   Newspaper,
   Radar,
   RefreshCw,
+  Menu as MenuIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -86,6 +87,7 @@ import { MapModeSwitch, type ModoMapa } from "@/components/map/MapModeSwitch";
 import { VisaoOsiris } from "@/components/map/VisaoOsiris";
 import type { VisOsiris } from "@/components/map/visao-osiris-camadas";
 import { OsirisHub } from "@/components/map/OsirisHub";
+import { MenuApp, type AcaoMenuMapa, type AcaoMenuOsiris } from "@/components/map/MenuApp";
 import { LINHAS_INTEL } from "@/components/map/intel-camadas-lista";
 import { Switch } from "@/components/ui/switch";
 
@@ -263,7 +265,7 @@ export default function MapShell() {
   const [drawCoords, setDrawCoords] = useState<[number, number][]>([]);
   const [waypoints, setWaypoints] = useState<LocalWaypoint[]>([]);
   const [openSheet, setOpenSheet] = useState<
-    null | "layers" | "goto" | "measure" | "markers" | "boletim" | "hub"
+    null | "menu" | "layers" | "goto" | "measure" | "markers" | "boletim" | "hub"
   >(null);
   const [compassMode, setCompassModeState] = useState<"mini" | "panel" | "full">("mini");
   useEffect(() => {
@@ -939,6 +941,95 @@ export default function MapShell() {
     setWaypoints((w) => w.filter((x) => x.id !== id));
   };
 
+  // Ações do menu hambúrguer (MenuApp). Ferramentas do mapa tático e painéis
+  // do Osiris exigem o mapa nativo: vindo da Visão Osiris (globo em tela
+  // cheia cobre os painéis), devolve ao modo tático antes de abrir.
+  const acaoMenu = (a: AcaoMenuMapa | AcaoMenuOsiris) => {
+    setOpenSheet(null);
+    const irTatico = () => {
+      if (modoMapa !== "tatico") updatePrefs({ mapMode: "tatico" });
+    };
+    const abrirHub = (secao?: string) => {
+      setHubSecao(secao);
+      setOpenSheet("hub");
+      carregarBoletim();
+    };
+    switch (a) {
+      case "goto":
+        irTatico();
+        setOpenSheet("goto");
+        break;
+      case "measure":
+        irTatico();
+        setOpenSheet("measure");
+        break;
+      case "marcador":
+        irTatico();
+        setTool(tool === "marker" ? "none" : "marker");
+        toast.message(
+          tool === "marker"
+            ? "Ferramenta de marcador desativada"
+            : "Toque no mapa para marcar um waypoint",
+        );
+        break;
+      case "bussola":
+        irTatico();
+        setCompassMode(compassMode === "mini" ? "panel" : "mini");
+        break;
+      case "visao":
+        // Já dentro da Visão Osiris o item é apenas um retorno visual.
+        if (modoMapa !== "osiris") updatePrefs({ mapMode: "osiris" });
+        break;
+      case "hub":
+        irTatico();
+        abrirHub(undefined);
+        break;
+      case "boletim":
+        irTatico();
+        setOpenSheet("boletim");
+        carregarBoletim();
+        break;
+      case "camadas":
+        irTatico();
+        setOpenSheet("layers");
+        break;
+      case "astro":
+        irTatico();
+        abrirHub("astro");
+        break;
+      case "iss":
+        irTatico();
+        abrirHub("iss");
+        break;
+      case "ip":
+        irTatico();
+        abrirHub("ip");
+        break;
+      case "dominio":
+        irTatico();
+        abrirHub("dominio");
+        break;
+      case "chaves":
+        irTatico();
+        abrirHub("chaves");
+        break;
+    }
+  };
+
+  /** Botão hambúrguer que abre o menu geral (HUD tático, mobile e desktop). */
+  const botaoMenu = (
+    <button
+      type="button"
+      title="Abrir menu"
+      aria-label="Abrir menu"
+      data-test="btn-menu-app"
+      onClick={() => setOpenSheet("menu")}
+      className="glove-tap hud-panel flex h-[30px] w-[36px] items-center justify-center rounded-md text-foreground"
+    >
+      <MenuIcon className="h-4 w-4" />
+    </button>
+  );
+
   const decl = magneticDeclination(center[1], center[0]);
   const lineLen = pathLengthMeters(drawCoords);
   const polyArea = polygonAreaSqMeters(drawCoords);
@@ -964,6 +1055,12 @@ export default function MapShell() {
             })
           }
           onVoltar={() => updatePrefs({ mapMode: "tatico" })}
+          onAbrirMenu={() => {
+            // Os painéis ficam por baixo do globo em tela cheia: devolve ao
+            // tático e abre o menu geral em cima do mapa nativo.
+            updatePrefs({ mapMode: "tatico" });
+            setOpenSheet("menu");
+          }}
         />
       )}
 
@@ -971,8 +1068,11 @@ export default function MapShell() {
         <>
           {/* HUD superior mobile: fluxo vertical — filhos nunca se sobrepõem */}
           <div className="absolute left-2 right-20 top-[max(0.5rem,env(safe-area-inset-top))] z-10 flex flex-col gap-2 md:hidden">
-            <div data-test="modo-mapa-mobile">
-              <MapModeSwitch modo={modoMapa} onTrocar={(m) => updatePrefs({ mapMode: m })} />
+            <div className="flex items-start gap-2">
+              {botaoMenu}
+              <div data-test="modo-mapa-mobile">
+                <MapModeSwitch modo={modoMapa} onTrocar={(m) => updatePrefs({ mapMode: m })} />
+              </div>
             </div>
             <PainelCentro center={center} decl={decl} onCopy={(t) => copy(t)} />
             <PainelPosicao
@@ -1026,11 +1126,12 @@ export default function MapShell() {
             </div>
           )}
 
-          {/* Alternador de modo (desktop, canto superior direito) */}
+          {/* Alternador de modo + hambúrguer (desktop, canto superior direito) */}
           <div
-            className="absolute right-4 top-4 z-10 hidden md:block"
+            className="absolute right-4 top-4 z-10 hidden items-start gap-2 md:flex"
             data-test="modo-mapa-desktop"
           >
+            {botaoMenu}
             <MapModeSwitch modo={modoMapa} onTrocar={(m) => updatePrefs({ mapMode: m })} />
           </div>
 
@@ -1585,6 +1686,17 @@ export default function MapShell() {
           setOpenSheet(null);
         }}
         onAtualizar={carregarBoletim}
+      />
+
+      {/* Menu geral — botão hambúrguer com submenu do Osiris */}
+      <MenuApp
+        open={openSheet === "menu"}
+        onOpenChange={(o) => !o && setOpenSheet(null)}
+        modo={modoMapa}
+        marcadorAtivo={tool === "marker"}
+        bussolaAtiva={compassMode !== "mini"}
+        onAcaoMapa={acaoMenu}
+        onAcaoOsiris={acaoMenu}
       />
 
       {/* Bússola flutuante sobre o mapa (só no modo tático) */}

@@ -64,6 +64,13 @@ bun run build      # check:all + build de produção em .output/
   Datasets curados (conflitos, nucleares, marítimos) são estáticos e em pt-BR.
   A Visão Osiris é coberta por `tests/map-osiris.spec.ts` (iframe, contador,
   painel de camadas, persistência e volta ao tático).
+- **Menu geral (hambúrguer)**: o botão hambúrguer (`btn-menu-app`, ao lado do
+  alternador de modo no HUD tático e no cabeçalho da Visão Osiris) abre o
+  `MenuApp` (`src/components/map/MenuApp.tsx`): navegação entre telas,
+  ferramentas do mapa e o submenu "OSIRIS" com todas as funções de
+  inteligência. Ações que dependem do mapa nativo passam por `acaoMenu` no
+  MapShell, que devolve ao modo tático antes de abrir o painel (os sheets
+  ficam por baixo do globo em tela cheia). Coberto por `tests/map-menu.spec.ts`.
 - **Segurança**: operações administrativas usam o cliente service role
   (`client.server.ts`) apenas em módulos `*.server.ts` — arquivos `*.functions.ts`
   e rotas vão para o bundle do cliente. Rotas autenticadas usam o middleware

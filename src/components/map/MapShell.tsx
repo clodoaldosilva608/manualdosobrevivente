@@ -965,7 +965,11 @@ export default function MapShell() {
           </button>
 
           {compassMode !== "mini" && (
-            <div className={compassMode === "panel" ? "overflow-y-auto p-2 pt-0 max-h-[calc(100dvh-11rem)]" : ""}>
+            <div
+              className={
+                compassMode === "panel" ? "overflow-y-auto p-2 pt-0 max-h-[calc(100dvh-11rem)]" : ""
+              }
+            >
               <CompassRose
                 heading={heading}
                 declination={decl}

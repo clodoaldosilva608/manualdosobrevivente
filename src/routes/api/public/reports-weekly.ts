@@ -15,7 +15,9 @@ export const Route = createFileRoute("/api/public/reports-weekly")({
           .eq("enabled", true);
         if (error) return Response.json({ success: false }, { status: 500 });
         const due = (data ?? []).filter((item) => isReportDue(item));
-        const results = await Promise.allSettled(due.map((item) => sendWeeklyReport(supabaseAdmin, item)));
+        const results = await Promise.allSettled(
+          due.map((item) => sendWeeklyReport(supabaseAdmin, item)),
+        );
         return Response.json({
           success: true,
           processed: results.length,

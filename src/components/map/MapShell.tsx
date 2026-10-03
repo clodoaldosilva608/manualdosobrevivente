@@ -41,6 +41,19 @@ import {
   formatDecimalDegrees,
 } from "@/lib/format";
 import { useServerFn } from "@tanstack/react-start";
+import { usePreferences } from "@/hooks/usePreferences";
+import { fetchIntelSnapshot } from "@/lib/intel.functions";
+import { CONFLITOS } from "@/lib/intel-conflicts";
+import { poligonoNoturno } from "@/lib/intel-night";
+import type { IntelSnapshot, IntelVisibilidade } from "@/lib/intel.types";
+import {
+  sincronizarCamadasIntel,
+  removerCamadasIntel,
+  registrarPopupsIntel,
+} from "@/components/map/intel-layers";
+import { MapModeSwitch, type ModoMapa } from "@/components/map/MapModeSwitch";
+import { IntelStatusStrip, type StatusIntel } from "@/components/map/IntelStatusStrip";
+import { Switch } from "@/components/ui/switch";
 
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 
@@ -140,6 +153,30 @@ export default function MapShell() {
   } | null>(null);
   const callFetchElev = useServerFn(fetchElevations);
 
+  // ---- Modo Osiris (inteligência global) ----
+  const { prefs, update: updatePrefs } = usePreferences();
+  const modoMapa = prefs.mapMode;
+  const intelVis = prefs.intelVis;
+  const [intel, setIntel] = useState<IntelSnapshot | null>(null);
+  const [intelStatus, setIntelStatus] = useState<StatusIntel>("idle");
+  const [noite, setNoite] = useState<GeoJSON.Feature | null>(null);
+  const callIntel = useServerFn(fetchIntelSnapshot);
+
+  // No modo Osiris o mapa usa o estilo Tático Escuro como base.
+  const baseEfetiva: BaseLayerId = modoMapa === "osiris" ? "dark" : baseLayer;
+
+  // Estado mais recente das camadas de inteligência, acessível pelos handlers
+  // do mapa (listener "styledata" re-sincroniza após trocas de estilo).
+  const intelRef = useRef({
+    modo: "tatico" as ModoMapa,
+    snapshot: null as IntelSnapshot | null,
+    noite: null as GeoJSON.Feature | null,
+    vis: prefs.intelVis,
+  });
+  useEffect(() => {
+    intelRef.current = { modo: modoMapa, snapshot: intel, noite, vis: intelVis };
+  }, [modoMapa, intel, noite, intelVis]);
+
   // Init map (client only)
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -149,7 +186,7 @@ export default function MapShell() {
       if (cancelled || !containerRef.current) return;
       const map = new ml.Map({
         container: containerRef.current,
-        style: styleFor(baseLayer),
+        style: styleFor(baseEfetiva),
         center,
         zoom: 11,
         attributionControl: { compact: true },
@@ -239,6 +276,26 @@ export default function MapShell() {
       });
       mapRef.current = map;
 
+      // Instância exposta para os testes automatizados (Playwright).
+      (window as unknown as { __tacticalMap?: maplibregl.Map }).__tacticalMap = map;
+
+      // Após qualquer troca de estilo, reconstrói as camadas de inteligência.
+      map.on("styledata", () => {
+        const s = intelRef.current;
+        if (s.modo !== "osiris") return;
+        sincronizarCamadasIntel(map, {
+          snapshot: s.snapshot,
+          conflitos: CONFLITOS,
+          noite: s.noite,
+          vis: s.vis,
+        });
+      });
+
+      // Popups das entidades de inteligência (sismos, eventos, conflitos, focos).
+      map.on("load", () => {
+        registrarPopupsIntel(map);
+      });
+
       // Abrir na última posição conhecida (imediato) e depois no GPS atual.
       try {
         const raw = localStorage.getItem("tgis:last-position");
@@ -273,6 +330,7 @@ export default function MapShell() {
     })();
     return () => {
       cancelled = true;
+      delete (window as unknown as { __tacticalMap?: unknown }).__tacticalMap;
       mapRef.current?.remove();
       mapRef.current = null;
     };
@@ -369,10 +427,10 @@ export default function MapShell() {
     }
   }, [ready, userPos]);
 
-  // Layer swap
+  // Layer swap (troca de camada base / modo)
   useEffect(() => {
     if (!mapRef.current || !ready) return;
-    mapRef.current.setStyle(styleFor(baseLayer));
+    mapRef.current.setStyle(styleFor(baseEfetiva));
     // re-add custom sources after style swap
     mapRef.current.once("styledata", () => {
       const map = mapRef.current!;
@@ -420,7 +478,61 @@ export default function MapShell() {
         });
       }
     });
-  }, [baseLayer, ready]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [baseEfetiva, ready]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Liga/desliga e alimenta as camadas de inteligência conforme o modo.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    if (modoMapa !== "osiris") {
+      removerCamadasIntel(map);
+      return;
+    }
+    sincronizarCamadasIntel(map, {
+      snapshot: intel,
+      conflitos: CONFLITOS,
+      noite,
+      vis: intelVis,
+    });
+  }, [ready, modoMapa, intel, noite, intelVis]);
+
+  // Coleta periódica dos dados de inteligência enquanto o modo Osiris está ativo.
+  useEffect(() => {
+    if (modoMapa !== "osiris") return;
+    let vivo = true;
+    const carregar = async () => {
+      if (typeof navigator !== "undefined" && navigator.onLine === false) {
+        setIntelStatus("erro");
+        return;
+      }
+      setIntelStatus((s) => (s === "ok" ? "ok" : "carregando"));
+      try {
+        const snap = await callIntel();
+        if (!vivo) return;
+        setIntel(snap);
+        setIntelStatus("ok");
+      } catch {
+        if (vivo) setIntelStatus("erro");
+      }
+    };
+    void carregar();
+    const timer = window.setInterval(() => void carregar(), 90_000);
+    const aoVoltar = () => void carregar();
+    window.addEventListener("online", aoVoltar);
+    return () => {
+      vivo = false;
+      window.clearInterval(timer);
+      window.removeEventListener("online", aoVoltar);
+    };
+  }, [modoMapa, callIntel]);
+
+  // Terminador dia/noite recalculado a cada 10 minutos no modo Osiris.
+  useEffect(() => {
+    if (modoMapa !== "osiris") return;
+    setNoite(poligonoNoturno());
+    const t = window.setInterval(() => setNoite(poligonoNoturno()), 600_000);
+    return () => window.clearInterval(t);
+  }, [modoMapa]);
 
   // Load waypoints from local DB
   useEffect(() => {
@@ -560,6 +672,9 @@ export default function MapShell() {
 
       {/* HUD superior mobile: fluxo vertical — filhos nunca se sobrepõem */}
       <div className="absolute left-2 right-20 top-[max(0.5rem,env(safe-area-inset-top))] z-10 flex flex-col gap-2 md:hidden">
+        <div data-test="modo-mapa-mobile">
+          <MapModeSwitch modo={modoMapa} onTrocar={(m) => updatePrefs({ mapMode: m })} />
+        </div>
         <PainelCentro center={center} decl={decl} onCopy={(t) => copy(t)} />
         <PainelPosicao
           userPos={userPos}
@@ -578,6 +693,9 @@ export default function MapShell() {
             }
           }}
         />
+        {modoMapa === "osiris" && (
+          <IntelStatusStrip snapshot={intel} status={intelStatus} vis={intelVis} />
+        )}
         {(tool === "measure-line" || tool === "measure-area") && (
           <LeituraMedicao tool={tool} lineLen={lineLen} areaFmt={areaFmt} onClear={clearDraw} />
         )}
@@ -609,6 +727,16 @@ export default function MapShell() {
       {(tool === "measure-line" || tool === "measure-area") && (
         <div className="absolute left-1/2 top-32 z-10 hidden -translate-x-1/2 md:block">
           <LeituraMedicao tool={tool} lineLen={lineLen} areaFmt={areaFmt} onClear={clearDraw} />
+        </div>
+      )}
+
+      {/* Alternador de modo + faixa de inteligência (desktop, canto superior direito) */}
+      <div className="absolute right-4 top-4 z-10 hidden md:block" data-test="modo-mapa-desktop">
+        <MapModeSwitch modo={modoMapa} onTrocar={(m) => updatePrefs({ mapMode: m })} />
+      </div>
+      {modoMapa === "osiris" && (
+        <div className="absolute right-4 top-[64px] z-10 hidden w-[min(70vw,420px)] md:block">
+          <IntelStatusStrip snapshot={intel} status={intelStatus} vis={intelVis} />
         </div>
       )}
 
@@ -746,25 +874,89 @@ export default function MapShell() {
       <Sheet open={openSheet === "layers"} onOpenChange={(o) => !o && setOpenSheet(null)}>
         <SheetContent side="bottom" className="bg-card border-border">
           <SheetHeader>
-            <SheetTitle className="mono text-tactical-orange">CAMADAS BASE</SheetTitle>
+            <SheetTitle className="mono text-tactical-orange">CAMADAS DO MAPA</SheetTitle>
           </SheetHeader>
-          <div className="grid grid-cols-2 gap-2 mt-4">
-            {(Object.keys(BASE_LAYERS) as BaseLayerId[]).map((k) => (
-              <button
-                key={k}
-                onClick={() => {
-                  setBaseLayer(k);
-                  setOpenSheet(null);
-                }}
-                className={`glove-tap rounded-md border p-3 text-left mono text-sm ${
-                  baseLayer === k
-                    ? "border-tactical-orange bg-tactical-orange/10 text-tactical-orange"
-                    : "border-border hover:border-foreground/40"
-                }`}
-              >
-                {BASE_LAYERS[k].label}
-              </button>
-            ))}
+
+          <div className="mt-4 space-y-4">
+            {modoMapa === "tatico" && (
+              <section>
+                <div className="mono mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Camadas base
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {(Object.keys(BASE_LAYERS) as BaseLayerId[]).map((k) => (
+                    <button
+                      key={k}
+                      onClick={() => {
+                        setBaseLayer(k);
+                        setOpenSheet(null);
+                      }}
+                      className={`glove-tap rounded-md border p-3 text-left mono text-sm ${
+                        baseLayer === k
+                          ? "border-tactical-orange bg-tactical-orange/10 text-tactical-orange"
+                          : "border-border hover:border-foreground/40"
+                      }`}
+                    >
+                      {BASE_LAYERS[k].label}
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            <section>
+              <div className="mono mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                Modo de visualização
+              </div>
+              <MapModeSwitch modo={modoMapa} onTrocar={(m) => updatePrefs({ mapMode: m })} />
+              <p className="mt-2 text-xs text-muted-foreground">
+                {modoMapa === "osiris"
+                  ? "No modo Osiris o mapa usa o estilo Tático Escuro e acrescenta camadas de inteligência global atualizadas a cada 90 segundos."
+                  : "Navegação clássica: bússola, MGRS, medições e waypoints. Mude para o modo Osiris para ver sismos, eventos naturais e zonas de conflito."}
+              </p>
+            </section>
+
+            {modoMapa === "osiris" && (
+              <section>
+                <div className="mono mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Camadas de inteligência
+                </div>
+                <div className="space-y-2">
+                  {LINHAS_INTEL.map((linha) => {
+                    const desabilitada =
+                      linha.id === "incendios" && intel !== null && !intel.incendiosDisponivel;
+                    return (
+                      <div
+                        key={linha.id}
+                        className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
+                      >
+                        <div className="min-w-0">
+                          <div className="text-sm">{linha.nome}</div>
+                          <div className="truncate text-[10px] text-muted-foreground">
+                            {desabilitada
+                              ? "Requer chave gratuita NASA FIRMS (FIRMS_MAP_KEY) no servidor"
+                              : linha.dica}
+                          </div>
+                        </div>
+                        <Switch
+                          checked={intelVis[linha.id]}
+                          disabled={desabilitada}
+                          aria-label={`Ativar camada ${linha.nome}`}
+                          onCheckedChange={(v) =>
+                            updatePrefs({ intelVis: { ...intelVis, [linha.id]: v } })
+                          }
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                {intelStatus === "erro" && (
+                  <p className="mt-2 text-[10px] text-muted-foreground">
+                    Sem conexão agora — as camadas mostram os últimos dados coletados.
+                  </p>
+                )}
+              </section>
+            )}
           </div>
         </SheetContent>
       </Sheet>
@@ -971,6 +1163,19 @@ const CATEGORY_LABELS_PT: Record<string, string> = {
   cache: "Cache",
   custom: "Personalizado",
 };
+
+/** Linhas do painel de camadas de inteligência (modo Osiris). */
+const LINHAS_INTEL: Array<{ id: keyof IntelVisibilidade; nome: string; dica: string }> = [
+  { id: "sismos", nome: "Sismos", dica: "USGS · M2,5+ nas últimas 24 horas" },
+  { id: "eventos", nome: "Eventos naturais", dica: "NASA EONET · ciclones, vulcões, gelo" },
+  {
+    id: "incendios",
+    nome: "Focos de calor",
+    dica: "NASA FIRMS · satélite VIIRS, últimas 24 horas",
+  },
+  { id: "conflitos", nome: "Zonas de conflito", dica: "Referência curada — não é feed ao vivo" },
+  { id: "noite", nome: "Dia e noite", dica: "Terminador solar em tempo real" },
+];
 
 function RailBtn({
   icon: Icon,

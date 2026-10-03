@@ -234,3 +234,26 @@
     animation: none;
   }
 }
+
+/* Popups das camadas de inteligência (modo Osiris) */
+.intel-popup {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  line-height: 1.5;
+  color: #e5e5e5;
+  max-width: 260px;
+}
+.intel-popup .intel-popup-link {
+  color: #ff6b35;
+  text-decoration: underline;
+}
+.maplibregl-popup-content {
+  background: #141414 !important;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 10px 12px !important;
+}
+.maplibregl-popup-tip {
+  border-top-color: #141414 !important;
+  border-bottom-color: #141414 !important;
+}

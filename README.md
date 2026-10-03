@@ -27,6 +27,12 @@ sem conexão — e os dados sincronizam na nuvem quando uma conta está conectad
   zona de perigo, forrageio, cache) com importação/exportação em GPX e KML.
 - **Bússola digital** — HUD interativo com direção, azimute até o próximo
   waypoint e referência norte verdadeiro/magnético.
+- **Modo Osiris (inteligência global)** — alterne o mapa entre "Tático" e
+  "Osiris" e sobreponha camadas ao vivo ao basemap Tático Escuro: sismos M2,5+
+  (USGS), eventos naturais (NASA EONET), focos de calor (NASA FIRMS, opcional),
+  zonas de conflito (referência curada) e terminador dia/noite em tempo real,
+  com índice Kp de clima espacial (NOAA SWPC) e atualização automática a cada
+  90 segundos. Sem internet, as camadas exibem os últimos dados coletados.
 - **Manual de sobrevivência offline** — base de conhecimento categorizada e
   pesquisável (primeiros socorros, fogo, água, abrigos, nós) com
   renderização markdown e checklists interativos.
@@ -140,6 +146,7 @@ gateway de e-mail (ver seção abaixo) e agende o POST para
 | `MAIL_GATEWAY_URL`             | Servidor   | Endpoint compatível com a API do Gmail                |
 | `MAIL_GATEWAY_KEY`             | Servidor   | Token Bearer do gateway de e-mail                     |
 | `MAIL_CONNECTION_KEY`          | Servidor   | Chave de conexão do gateway (`X-Connection-Api-Key`)  |
+| `FIRMS_MAP_KEY`                | Servidor   | Opcional — chave gratuita NASA FIRMS para a camada de focos de calor do modo Osiris |
 
 Consulte `.env.example` para o modelo completo. **Nunca versione o arquivo
 `.env`** — ele está no `.gitignore` por padrão.
@@ -172,6 +179,26 @@ bunx nitro deploy --prebuilt
 
 A configuração do Worker (nome, data de compatibilidade, `nodejs_compat`)
 fica em `wrangler.jsonc`.
+
+## Modo Osiris (inteligência global)
+
+O mapa tem dois modos alternáveis pelo usuário (botão no topo do HUD ou em
+*Camadas → Modo de visualização*):
+
+- **Tático** — navegação clássica (bússola, MGRS, medições, waypoints) com
+  qualquer camada base.
+- **Osiris** — basemap Tático Escuro + camadas de inteligência global com
+  atualização automática a cada 90 segundos: **sismos** M2,5+ das últimas 24 h
+  (USGS), **eventos naturais** ativos (NASA EONET), **focos de calor**
+  (NASA FIRMS/VIIRS, requer `FIRMS_MAP_KEY` gratuita), **zonas de conflito**
+  (dataset curado em `src/lib/intel-conflicts.ts`), **terminador dia/noite**
+  (SunCalc) e **clima espacial** com índice Kp (NOAA SWPC).
+
+As fontes são acessadas apenas por server functions (`src/lib/intel.functions.ts`)
+com cache em memória de 60 s e fallback para os últimos dados bons — o
+navegador nunca chama as fontes diretamente (evita CORS e expõe chaves). A
+escolha do modo e das camadas é persistida no banco local (IndexedDB) junto
+das demais preferências.
 
 ## PWA, modo local e pasta de backup
 

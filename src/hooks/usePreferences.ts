@@ -1,16 +1,25 @@
 import { useCallback, useEffect, useState } from "react";
 import { getSetting, setSetting } from "@/lib/db";
+import { INTEL_VIS_PADRAO, type IntelVisibilidade } from "@/lib/intel.types";
+
+export type ModoMapa = "tatico" | "osiris";
 
 export interface Preferences {
   units: "metric" | "nautical";
   coordFormat: "DD" | "DMS" | "MGRS";
   northRef: "true" | "magnetic";
+  /** Modo do mapa: navegação tática ou inteligência global (Osiris). */
+  mapMode: ModoMapa;
+  /** Visibilidade persistida das camadas de inteligência do modo Osiris. */
+  intelVis: IntelVisibilidade;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
   units: "metric",
   coordFormat: "DD",
   northRef: "true",
+  mapMode: "tatico",
+  intelVis: INTEL_VIS_PADRAO,
 };
 
 const KEY = "preferences";
@@ -24,7 +33,11 @@ export function usePreferences() {
     getSetting<Partial<Preferences>>(KEY)
       .then((v) => {
         if (!alive) return;
-        setPrefs({ ...DEFAULT_PREFERENCES, ...(v ?? {}) });
+        setPrefs({
+          ...DEFAULT_PREFERENCES,
+          ...(v ?? {}),
+          intelVis: { ...INTEL_VIS_PADRAO, ...(v?.intelVis ?? {}) },
+        });
         setLoaded(true);
       })
       .catch(() => alive && setLoaded(true));

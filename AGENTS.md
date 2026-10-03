@@ -43,6 +43,15 @@ bun run build      # check:all + build de produção em .output/
 - **Mobile-first**: novos overlays flutuantes sobre o mapa devem entrar no
   fluxo vertical do HUD (mobile) ou respeitar as zonas reservadas; o teste
   `tests/map-overlap.spec.ts` falha se dois elementos do HUD se sobrepuserem.
+- **Modo Osiris (inteligência global)**: as fontes externas (USGS, NASA EONET,
+  NOAA SWPC, NASA FIRMS) só são acessadas via `src/lib/intel.functions.ts`
+  (server function com cache de 60 s e fallback para os últimos dados bons);
+  o navegador nunca chama as fontes diretamente. Novas camadas entram em
+  `src/components/map/intel-layers.ts` (ordem de empilhamento fixa: noite →
+  focos → eventos → conflitos → sismos), com toggle em `LINHAS_INTEL` no
+  `MapShell.tsx` e visibilidade persistida em `intelVis` (usePreferences).
+  Novos overlays do modo Osiris entram no fluxo vertical do HUD e são cobertos
+  por `tests/map-osiris.spec.ts` (inclui regressão de sobreposição).
 - **Segurança**: operações administrativas usam o cliente service role
   (`client.server.ts`) apenas em módulos `*.server.ts` — arquivos `*.functions.ts`
   e rotas vão para o bundle do cliente. Rotas autenticadas usam o middleware

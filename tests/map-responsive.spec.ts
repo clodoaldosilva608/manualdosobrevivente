@@ -55,3 +55,48 @@ describe("responsividade do mapa", () => {
     await context.close();
   }, 120_000);
 });
+
+describe("páginas sem estouro horizontal", () => {
+  const routes = [
+    "/",
+    "/manual",
+    "/manual/water-purification",
+    "/inventory",
+    "/sos",
+    "/dashboard",
+    "/offline",
+    "/settings",
+    "/login",
+  ];
+
+  for (const path of routes) {
+    it(`${path} cabe em uma tela móvel estreita`, async () => {
+      const context = await browser.newContext({ viewport: { width: 320, height: 700 } });
+      const page = await context.newPage();
+      await page.goto(`${BASE}${path}`, { waitUntil: "domcontentloaded" });
+      const dimensions = await page.evaluate(() => ({
+        viewport: window.innerWidth,
+        content: document.documentElement.scrollWidth,
+      }));
+      expect(dimensions.content).toBeLessThanOrEqual(dimensions.viewport + 1);
+      await context.close();
+    }, 120_000);
+  }
+
+  it("mantém os controles da bússola acessíveis no celular", async () => {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await context.newPage();
+    await page.goto(BASE, { waitUntil: "domcontentloaded" });
+    await page.waitForSelector(".maplibregl-canvas", { timeout: 30_000 });
+    const mini = page.getByRole("button", { name: "Abrir bússola" });
+    await mini.click();
+    const full = page.getByRole("button", { name: "Ver bússola em tela cheia" });
+    await expect(full).toBeVisible();
+    const box = await full.boundingBox();
+    expect(box?.y ?? -1).toBeGreaterThanOrEqual(0);
+    expect((box?.y ?? 0) + (box?.height ?? 0)).toBeLessThanOrEqual(844);
+    await full.click();
+    await expect(page.getByRole("button", { name: "Reduzir bússola" })).toBeVisible();
+    await context.close();
+  }, 120_000);
+});

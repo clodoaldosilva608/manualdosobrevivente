@@ -313,7 +313,7 @@ function Settings() {
   };
 
   return (
-    <div className="container max-w-2xl mx-auto p-4 md:p-8 space-y-6">
+    <div className="container mx-auto max-w-2xl space-y-6 p-4 pb-8 md:p-8">
       <header>
         <h1 className="mono text-tactical-orange text-2xl md:text-3xl font-bold tracking-wider">
           AJUSTES
@@ -535,7 +535,7 @@ function Settings() {
                   >
                     {item.status === "sent" ? "Enviado" : "Falhou"}
                   </span>
-                  <span className="w-full text-muted-foreground">
+                  <span className="w-full break-words text-muted-foreground">
                     {formatInteger(item.waypoint_count)} waypoints ·{" "}
                     {formatInteger(item.gear_count)} itens · {formatInteger(item.checklist_count)}{" "}
                     concluídos

@@ -96,11 +96,12 @@ export async function sendWeeklyReport(
     error_message: errorMessage,
   });
   if (historyError) throw new Error(historyError.message);
-  if (status === "failed") throw new Error(errorMessage ?? "Falha no envio");
-  await admin
+  const { error: updateError } = await admin
     .from("weekly_report_settings")
     .update({ last_sent_at: new Date().toISOString() })
     .eq("user_id", settings.user_id);
+  if (updateError) throw new Error(updateError.message);
+  if (status === "failed") throw new Error(errorMessage ?? "Falha no envio");
 }
 
 export function isReportDue(settings: ReportSettings, now = new Date()): boolean {

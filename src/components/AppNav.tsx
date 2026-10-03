@@ -24,7 +24,7 @@ export function AppNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 hud-panel border-t md:top-0 md:bottom-auto md:border-t-0 md:border-b">
-      <ul className="flex items-stretch justify-around overflow-x-auto md:justify-start md:gap-1 md:px-3">
+      <ul className="grid grid-cols-8 items-stretch md:flex md:justify-start md:gap-1 md:px-3">
         <li className="hidden md:flex items-center pr-3 mr-2 border-r border-border">
           <span className="mono text-tactical-orange text-sm font-bold tracking-wider">
             TACTICAL/GIS
@@ -34,23 +34,27 @@ export function AppNav() {
           const active = path === it.to || (it.to !== "/" && path.startsWith(it.to));
           const Icon = it.icon;
           return (
-            <li key={it.to} className="flex-1 md:flex-none">
+            <li key={it.to} className="min-w-0 md:flex-none">
               <Link
                 to={it.to}
-                className={`glove-tap flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 md:px-4 py-2 mono text-[11px] md:text-sm uppercase tracking-wide transition-colors ${
+                title={it.label}
+                aria-label={it.label}
+                className={`flex h-14 min-w-0 items-center justify-center px-1 md:glove-tap md:h-auto md:flex-row md:gap-2 md:px-4 md:py-2 mono text-[11px] md:text-sm uppercase tracking-wide transition-colors ${
                   active ? "text-tactical-orange" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <Icon className="h-5 w-5" />
-                <span>{it.label}</span>
+                <Icon className="h-5 w-5 shrink-0" />
+                <span className="sr-only md:not-sr-only">{it.label}</span>
               </Link>
             </li>
           );
         })}
-        <li className="md:ml-auto flex items-center">
+        <li className="min-w-0 md:ml-auto md:flex md:items-center">
           <Link
             to="/login"
-            className="glove-tap flex items-center gap-2 px-3 text-muted-foreground hover:text-foreground mono text-[11px] md:text-sm uppercase"
+            title="Conta"
+            aria-label="Conta"
+            className="flex h-14 min-w-0 items-center justify-center px-1 text-muted-foreground hover:text-foreground mono text-[11px] uppercase md:glove-tap md:h-auto md:gap-2 md:px-3 md:text-sm"
           >
             <LogIn className="h-5 w-5" />
             <span className="hidden md:inline">Conta</span>

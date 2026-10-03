@@ -16,6 +16,13 @@ export const Route = createFileRoute("/sos")({
         content:
           "Sinalização de emergência: estrobo SOS em código Morse, lanterna e coordenadas em texto grande para ditado por rádio.",
       },
+      { property: "og:title", content: "S.O.S — TacticalGIS" },
+      {
+        property: "og:description",
+        content: "Sinalização de emergência e coordenadas prontas para compartilhamento.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: SOS,
@@ -129,10 +136,10 @@ function SOS() {
   };
 
   return (
-    <div className={`min-h-screen transition-colors ${strobeOn ? "bg-white" : "bg-background"}`}>
-      <div className="container max-w-2xl mx-auto p-4 md:p-8">
-        <h1 className="mono text-destructive text-3xl md:text-4xl font-bold tracking-widest flex items-center gap-3">
-          <Siren className="h-8 w-8" /> S.O.S
+    <div className={`min-h-full transition-colors ${strobeOn ? "bg-white" : "bg-background"}`}>
+      <div className="container mx-auto max-w-2xl p-4 pb-8 md:p-8">
+        <h1 className="mono flex min-w-0 items-center gap-3 text-3xl font-bold tracking-widest text-destructive md:text-4xl">
+          <Siren className="h-8 w-8 shrink-0" /> S.O.S
         </h1>
         <p className="text-muted-foreground text-sm mt-1 mb-6">
           Sinalização de emergência e coordenadas prontas para ditado.
@@ -153,10 +160,10 @@ function SOS() {
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Button
             onClick={active ? stopStrobe : startStrobe}
-            className={`glove-tap h-20 text-lg font-bold mono ${
+            className={`glove-tap min-h-20 h-auto whitespace-normal text-base font-bold mono sm:text-lg ${
               active
                 ? "bg-destructive text-destructive-foreground"
                 : "bg-tactical-orange text-background"
@@ -167,7 +174,7 @@ function SOS() {
           </Button>
           <Button
             onClick={shareLocation}
-            className="glove-tap h-20 text-lg font-bold mono bg-secondary text-foreground"
+            className="glove-tap min-h-20 h-auto whitespace-normal text-base font-bold mono bg-secondary text-foreground sm:text-lg"
           >
             <Share2 className="h-6 w-6 mr-2" />
             COMPARTILHAR

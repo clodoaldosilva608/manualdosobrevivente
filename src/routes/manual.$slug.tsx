@@ -76,7 +76,7 @@ function Entry() {
   };
 
   return (
-    <div className="container max-w-3xl mx-auto p-4 md:p-8">
+    <div className="container mx-auto max-w-3xl p-4 pb-8 md:p-8">
       <Link
         to="/manual"
         className="inline-flex items-center text-sm text-muted-foreground mb-4 hover:text-foreground"
@@ -87,7 +87,7 @@ function Entry() {
       <div className="mono text-[10px] uppercase tracking-widest text-tactical-orange mb-1">
         {CATEGORY_LABELS[entry.category]}
       </div>
-      <h1 className="text-2xl md:text-3xl font-bold mb-2">{entry.title}</h1>
+      <h1 className="mb-2 break-words text-2xl font-bold md:text-3xl">{entry.title}</h1>
       <p className="text-muted-foreground mb-4">{entry.summary}</p>
 
       <img

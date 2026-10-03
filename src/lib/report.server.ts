@@ -13,7 +13,9 @@ function base64Url(value: string): string {
 }
 
 function encodedHeader(value: string): string {
-  return Array.from(value).every((char) => char.charCodeAt(0) <= 127) ? value : `=?UTF-8?B?${base64Url(value)}?=`;
+  return Array.from(value).every((char) => char.charCodeAt(0) <= 127)
+    ? value
+    : `=?UTF-8?B?${base64Url(value)}?=`;
 }
 
 function reportBody(counts: { waypoints: number; gear: number; checklist: number }): string {

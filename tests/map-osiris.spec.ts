@@ -113,6 +113,8 @@ describe("Modo Osiris do mapa", () => {
       '[data-test="faixa-intel"]',
       'div.hud-panel:has(span:text-is("CENTRO"))',
       'div.hud-panel:has(span:text-is("MINHA POSIÇÃO"))',
+      'button[title="Osiris"]',
+      'button[title="Boletim"]',
       'button[title="Camadas"]',
       'button[title="Ir para"]',
       'button[title="Medir"]',
@@ -215,6 +217,35 @@ describe("Modo Osiris do mapa", () => {
       .catch(() => {
         // Sem acesso às fontes no ambiente de teste: o boletim segue válido.
       });
+    await page.context().close();
+  }, 180_000);
+
+  it("Hub Osiris: abre pelo rail com atalhos, astronomia e ferramentas OSINT", async () => {
+    const page = await abrirMapaMobile(browser);
+
+    // Botão do rail abre o hub (funciona também no modo tático).
+    await page.locator('button[title="Osiris"]').click();
+    await page.getByText("OSIRIS — CENTRO DE INTELIGÊNCIA").waitFor({
+      state: "visible",
+      timeout: 10_000,
+    });
+
+    // Chips de resumo e atalhos das duas portas de entrada.
+    await page.getByText("Conflitos", { exact: true }).waitFor({ state: "visible" });
+    await page.locator('[data-test="hub-atalho-camadas"]').waitFor({ state: "visible" });
+    await page.locator('[data-test="hub-atalho-boletim"]').waitFor({ state: "visible" });
+
+    // Astronomia tática calcula localmente (nascer do sol sempre existe).
+    await page.getByRole("button", { name: /Astronomia tática/ }).click();
+    await page.getByText("Nascer do sol", { exact: false }).waitFor({ state: "visible" });
+    await page.getByText("Fase", { exact: true }).waitFor({ state: "visible" });
+
+    // Ferramentas OSINT: formulários presentes (consulta real depende de rede).
+    await page.getByRole("button", { name: /Investigar IP/ }).click();
+    await page.locator('input[placeholder="ex.: 8.8.8.8"]').waitFor({ state: "visible" });
+    await page.getByRole("button", { name: /Investigar domínio/ }).click();
+    await page.locator('input[placeholder="ex.: exemplo.com"]').waitFor({ state: "visible" });
+
     await page.context().close();
   }, 180_000);
 });

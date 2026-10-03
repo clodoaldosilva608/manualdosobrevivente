@@ -15,6 +15,7 @@ import {
   Minimize2,
   Minus,
   Newspaper,
+  Radar,
   RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,7 @@ import {
 } from "@/components/map/intel-layers";
 import { MapModeSwitch, type ModoMapa } from "@/components/map/MapModeSwitch";
 import { IntelStatusStrip, type StatusIntel } from "@/components/map/IntelStatusStrip";
+import { OsirisHub } from "@/components/map/OsirisHub";
 import { Switch } from "@/components/ui/switch";
 
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
@@ -178,7 +180,7 @@ export default function MapShell() {
   const [drawCoords, setDrawCoords] = useState<[number, number][]>([]);
   const [waypoints, setWaypoints] = useState<LocalWaypoint[]>([]);
   const [openSheet, setOpenSheet] = useState<
-    null | "layers" | "goto" | "measure" | "markers" | "boletim"
+    null | "layers" | "goto" | "measure" | "markers" | "boletim" | "hub"
   >(null);
   const [compassMode, setCompassModeState] = useState<"mini" | "panel" | "full">("mini");
   useEffect(() => {
@@ -1025,6 +1027,15 @@ export default function MapShell() {
       {/* Right-side action rail */}
       <div className="absolute right-2 top-[max(0.5rem,env(safe-area-inset-top))] z-10 flex flex-col gap-2 md:top-36">
         <RailBtn
+          icon={Radar}
+          label="Osiris"
+          active={modoMapa === "osiris"}
+          onClick={() => {
+            setOpenSheet("hub");
+            carregarBoletim();
+          }}
+        />
+        <RailBtn
           icon={Newspaper}
           label="Boletim"
           onClick={() => {
@@ -1537,6 +1548,24 @@ export default function MapShell() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Hub Osiris — menu central de inteligência */}
+      <OsirisHub
+        open={openSheet === "hub"}
+        onOpenChange={(o) => !o && setOpenSheet(null)}
+        snapshot={intel}
+        iss={iss}
+        voos={voos ?? []}
+        intelVis={intelVis}
+        center={center}
+        onAbrirCamadas={() => setOpenSheet("layers")}
+        onAbrirBoletim={() => setOpenSheet("boletim")}
+        onFlyTo={(lng, lat, zoom = 10) => {
+          flyTo(lng, lat, zoom);
+          setOpenSheet(null);
+        }}
+        onAtualizar={carregarBoletim}
+      />
 
       {/* Bússola flutuante sobre o mapa */}
       <div

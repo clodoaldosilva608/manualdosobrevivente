@@ -1,4 +1,50 @@
-# Project architecture
+# Guia do projeto — Manual do Sobrevivente
 
-- Local-first user data changes dispatch one shared browser event; the root sync coordinator debounces cloud backup and merges on sign-in or reconnect, preventing feature screens from duplicating synchronization logic.
-- Scheduled reports use one protected public server route and a workspace-owned Gmail connection; report preferences and delivery history remain owner-scoped in the database.
+App web full-stack offline-first para sobrevivismo e bushcraft com GIS tático
+(MapLibre, MGRS, perfil de elevação), tema escuro militar e interface 100% em
+português (pt-BR).
+
+## Stack
+
+- TanStack Start (React 19, SSR) + TanStack Router/Query
+- Vite 7 + Nitro (preset `cloudflare-module`, deploy em Cloudflare Workers)
+- Tailwind CSS 4 + shadcn/ui + Lucide
+- Supabase (Postgres com RLS + Auth) e Bun como gerenciador de pacotes
+
+## Comandos
+
+```sh
+bun install        # instalar dependências (sempre Bun; não há package-lock.json)
+bun run dev        # desenvolvimento na porta 8080
+bun run check:all  # lint + auditoria i18n + testes unitários
+bun run typecheck  # tsc --noEmit
+bun run build      # check:all + build de produção em .output/
+```
+
+## Convenções importantes
+
+- **Idioma**: todo texto de interface e comentários de código em pt-BR. O ESLint
+  (`eslint-rules/i18n-pt-br.js`) bloqueia literais em inglês nas telas e exige o
+  utilitário central de formatação (`src/lib/format.ts`) para números e datas.
+- **Arquitetura de dados (local-first)**: alterações de dados do usuário
+  despacham um evento compartilhado no navegador; o coordenador de sync na raiz
+  agrupa (debounce) e sincroniza com a nuvem no login ou reconexão. Telas de
+  funcionalidade não duplicam lógica de sincronização.
+- **Segurança**: operações administrativas usam o cliente service role
+  (`client.server.ts`) apenas em módulos `*.server.ts` — arquivos `*.functions.ts`
+  e rotas vão para o bundle do cliente. Rotas autenticadas usam o middleware
+  `auth-middleware.ts` (RLS ativa).
+- **Cron**: a rota `POST /api/public/reports-weekly` exige o header
+  `Authorization: Bearer <CRON_SECRET>`; valide sempre com
+  `authenticateCronRequest`.
+- **Env**: variáveis `VITE_*` são injetadas em tempo de build pelo
+  `vite.config.ts`; nunca versione `.env` (modelo em `.env.example`).
+
+## Project architecture
+
+- Local-first user data changes dispatch one shared browser event; the root sync
+  coordinator debounces cloud backup and merges on sign-in or reconnect,
+  preventing feature screens from duplicating synchronization logic.
+- Scheduled reports use one protected public server route and a workspace-owned
+  mail connection; report preferences and delivery history remain owner-scoped
+  in the database.

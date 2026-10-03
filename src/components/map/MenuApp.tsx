@@ -19,6 +19,8 @@ import {
   ChevronDown,
   Compass,
   DownloadCloud,
+  Eraser,
+  Eye,
   Globe2,
   KeyRound,
   Layers,
@@ -41,7 +43,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { ModoMapa } from "@/components/map/MapModeSwitch";
 
-export type AcaoMenuMapa = "goto" | "measure" | "marcador" | "bussola";
+export type AcaoMenuMapa = "goto" | "measure" | "marcador" | "bussola" | "limpar" | "elementos";
 export type AcaoMenuOsiris =
   "visao" | "hub" | "boletim" | "camadas" | "astro" | "iss" | "ip" | "dominio" | "chaves";
 
@@ -80,6 +82,18 @@ const FERRAMENTAS: Array<ItemMenu & { id: AcaoMenuMapa }> = [
   { id: "measure", rotulo: "Medir", dica: "Distância e área no mapa", icone: Ruler },
   { id: "marcador", rotulo: "Marcador", dica: "Marcar waypoint no mapa", icone: MapPin },
   { id: "bussola", rotulo: "Bússola", dica: "Orientação e declinação", icone: Compass },
+  {
+    id: "limpar",
+    rotulo: "Limpar tela",
+    dica: "Apagar medições e ocultar waypoints do mapa",
+    icone: Eraser,
+  },
+  {
+    id: "elementos",
+    rotulo: "Elementos da tela",
+    dica: "Escolher o que aparece sobre o mapa",
+    icone: Eye,
+  },
 ];
 
 /** Submenu do OSIRIS — tudo que pertence à inteligência global. */

@@ -8,6 +8,7 @@ import {
   MapPin,
   Compass,
   Download,
+  Eraser,
   Navigation2,
   X,
   Trash2,
@@ -89,6 +90,11 @@ import type { VisOsiris } from "@/components/map/visao-osiris-camadas";
 import { OsirisHub } from "@/components/map/OsirisHub";
 import { MenuApp, type AcaoMenuMapa, type AcaoMenuOsiris } from "@/components/map/MenuApp";
 import { LINHAS_INTEL } from "@/components/map/intel-camadas-lista";
+import {
+  LINHAS_TELA,
+  TELA_VIS_PADRAO,
+  type TelaVisibilidade,
+} from "@/components/map/tela-elementos";
 import { Switch } from "@/components/ui/switch";
 
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
@@ -301,6 +307,7 @@ export default function MapShell() {
   const { prefs, update: updatePrefs } = usePreferences();
   const modoMapa = prefs.mapMode;
   const intelVis = prefs.intelVis;
+  const telaVis = prefs.telaVis;
   const [intel, setIntel] = useState<IntelSnapshot | null>(null);
   const [intelStatus, setIntelStatus] = useState<StatusIntel>("idle");
   const [noite, setNoite] = useState<GeoJSON.Feature | null>(null);
@@ -349,6 +356,51 @@ export default function MapShell() {
     };
   }, [modoMapa, intel, noite, intelVis, voos, iss, alertas, navios]);
 
+  // Estado do desenho/waypoints para ressincronizar após trocas de estilo — o
+  // styledata recria as fontes vazias e, sem isso, medições e waypoints
+  // sumiam ao trocar a camada base.
+  const desenhoRef = useRef({
+    coords: drawCoords,
+    tool,
+    waypoints,
+  });
+  useEffect(() => {
+    desenhoRef.current = { coords: drawCoords, tool, waypoints };
+  }, [drawCoords, tool, waypoints]);
+
+  // Visibilidade dos elementos da tela (espelho para os handlers do mapa).
+  const telaVisRef = useRef<TelaVisibilidade>(telaVis);
+  useEffect(() => {
+    telaVisRef.current = telaVis;
+  }, [telaVis]);
+
+  // Instâncias dos controles nativos — adicionados/removidos conforme o
+  // toggle "Controles do mapa" (Elementos da tela).
+  const controlesRef = useRef<{
+    nav: maplibregl.NavigationControl | null;
+    geo: maplibregl.GeolocateControl | null;
+    escala: maplibregl.ScaleControl | null;
+  }>({ nav: null, geo: null, escala: null });
+
+  /** Dados + visibilidade das camadas de desenho/waypoints/posição (idempotente). */
+  const sincronizarDesenho = useCallback((map: maplibregl.Map) => {
+    const d = desenhoRef.current;
+    const wp = map.getSource("waypoints") as maplibregl.GeoJSONSource | undefined;
+    wp?.setData(waypointsFC(d.waypoints));
+    const dr = map.getSource("draw") as maplibregl.GeoJSONSource | undefined;
+    dr?.setData(drawFC(d.coords, d.tool));
+    const vis = telaVisRef.current;
+    const aplicar = (id: string, ativo: boolean) => {
+      if (map.getLayer(id)) {
+        map.setLayoutProperty(id, "visibility", ativo ? "visible" : "none");
+      }
+    };
+    aplicar("wp-circles", vis.waypoints);
+    aplicar("wp-labels", vis.waypoints);
+    aplicar("user-position-accuracy", vis.pontoPosicao);
+    aplicar("user-position-dot", vis.pontoPosicao);
+  }, []);
+
   // Init map (client only)
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -364,15 +416,16 @@ export default function MapShell() {
         zoom: 11,
         attributionControl: { compact: true },
       });
-      map.addControl(new ml.NavigationControl({ visualizePitch: true }), "top-right");
-      map.addControl(new ml.ScaleControl({ unit: "metric", maxWidth: 120 }), "bottom-left");
-      map.addControl(
-        new ml.GeolocateControl({
-          positionOptions: { enableHighAccuracy: true },
-          trackUserLocation: true,
-        }),
-        "top-right",
-      );
+      const nav = new ml.NavigationControl({ visualizePitch: true });
+      const escala = new ml.ScaleControl({ unit: "metric", maxWidth: 120 });
+      const geo = new ml.GeolocateControl({
+        positionOptions: { enableHighAccuracy: true },
+        trackUserLocation: true,
+      });
+      map.addControl(nav, "top-right");
+      map.addControl(escala, "bottom-left");
+      map.addControl(geo, "top-right");
+      controlesRef.current = { nav, geo, escala };
       map.on("dragstart", () => {
         userMovedRef.current = true;
       });
@@ -386,6 +439,7 @@ export default function MapShell() {
         // sources for drawing + markers (idempotente: o timer de segurança
         // pode liberar o app antes do load e o styledata já ter criado tudo)
         adicionarFontesDesenho(map);
+        sincronizarDesenho(map);
         setReady(true);
       });
       mapRef.current = map;
@@ -401,8 +455,10 @@ export default function MapShell() {
       // aparecem quando terminarem de carregar).
       liberarSemTiles = window.setTimeout(() => setReady(true), 3000);
 
-      // Após qualquer troca de estilo, reconstrói as camadas de inteligência.
+      // Após qualquer troca de estilo, reconstrói as camadas de inteligência
+      // e reapresenta desenho/waypoints/posição.
       map.on("styledata", () => {
+        sincronizarDesenho(map);
         const s = intelRef.current;
         if (s.modo !== "osiris") return;
         sincronizarCamadasIntel(map, {
@@ -457,6 +513,7 @@ export default function MapShell() {
       cancelled = true;
       if (liberarSemTiles !== undefined) window.clearTimeout(liberarSemTiles);
       delete (window as unknown as { __tacticalMap?: unknown }).__tacticalMap;
+      controlesRef.current = { nav: null, geo: null, escala: null };
       mapRef.current?.remove();
       mapRef.current = null;
     };
@@ -552,18 +609,25 @@ export default function MapShell() {
         },
       });
     }
-  }, [ready, userPos]);
+    // Respeita o toggle "Ponto de posição no mapa" (Elementos da tela).
+    const visPos = telaVisRef.current.pontoPosicao ? "visible" : "none";
+    for (const id of ["user-position-accuracy", "user-position-dot"]) {
+      if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", visPos);
+    }
+  }, [ready, userPos, telaVis.pontoPosicao]);
 
   // Layer swap (troca de camada base / modo)
   useEffect(() => {
     if (!mapRef.current || !ready) return;
     mapRef.current.setStyle(styleFor(baseEfetiva));
-    // re-add custom sources after style swap
+    // re-add custom sources after style swap — dados e visibilidade juntos,
+    // senão medições e waypoints desaparecem ao trocar a camada base
     mapRef.current.once("styledata", () => {
       const map = mapRef.current!;
       adicionarFontesDesenho(map);
+      sincronizarDesenho(map);
     });
-  }, [baseEfetiva, ready]);
+  }, [baseEfetiva, ready, sincronizarDesenho]);
 
   // Liga/desliga e alimenta as camadas de inteligência conforme o modo.
   useEffect(() => {
@@ -800,6 +864,34 @@ export default function MapShell() {
     src?.setData(drawFC(drawCoords, tool));
   }, [drawCoords, tool, ready]);
 
+  // Liga/desliga a visibilidade dos waypoints e do ponto de posição (seção
+  // "Elementos da tela") sem mexer nos dados guardados.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    sincronizarDesenho(map);
+  }, [ready, telaVis.waypoints, telaVis.pontoPosicao, sincronizarDesenho]);
+
+  // Controles nativos (zoom, GPS e escala) conforme o toggle "Controles do mapa".
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const alvo = telaVis.controlesMapa;
+    const sincronizarControle = (
+      controle:
+        maplibregl.NavigationControl | maplibregl.GeolocateControl | maplibregl.ScaleControl | null,
+      pos: "top-right" | "bottom-left",
+    ) => {
+      if (!controle) return;
+      const presente = map.hasControl(controle);
+      if (alvo && !presente) map.addControl(controle, pos);
+      if (!alvo && presente) map.removeControl(controle);
+    };
+    sincronizarControle(controlesRef.current.nav, "top-right");
+    sincronizarControle(controlesRef.current.geo, "top-right");
+    sincronizarControle(controlesRef.current.escala, "bottom-left");
+  }, [ready, telaVis.controlesMapa]);
+
   // Click handling for tools
   useEffect(() => {
     const map = mapRef.current;
@@ -845,6 +937,27 @@ export default function MapShell() {
   const clearDraw = () => {
     setDrawCoords([]);
     setElevationData([]);
+  };
+
+  /** Limpa a tela: apaga medições, oculta os waypoints do mapa e desarma as ferramentas. */
+  const limparTela = () => {
+    setDrawCoords([]);
+    setElevationData([]);
+    setNewMarker(null);
+    setTool("none");
+    setOpenSheet(null);
+    if (compassMode !== "mini") setCompassMode("mini");
+    if (telaVis.waypoints) updatePrefs({ telaVis: { ...telaVis, waypoints: false } });
+    toast.success("Tela limpa", {
+      description:
+        "Medições apagadas e waypoints ocultos do mapa — traga de volta em Camadas › Elementos da tela.",
+    });
+  };
+
+  /** Restaura todos os elementos da tela para o padrão (visíveis). */
+  const restaurarTela = () => {
+    updatePrefs({ telaVis: { ...TELA_VIS_PADRAO } });
+    toast.success("Elementos da tela restaurados");
   };
 
   // Boletim de inteligência: garante dados frescos ao abrir o painel.
@@ -976,6 +1089,14 @@ export default function MapShell() {
         irTatico();
         setCompassMode(compassMode === "mini" ? "panel" : "mini");
         break;
+      case "limpar":
+        irTatico();
+        limparTela();
+        break;
+      case "elementos":
+        irTatico();
+        setOpenSheet("layers");
+        break;
       case "visao":
         // Já dentro da Visão Osiris o item é apenas um retorno visual.
         if (modoMapa !== "osiris") updatePrefs({ mapMode: "osiris" });
@@ -1074,24 +1195,28 @@ export default function MapShell() {
                 <MapModeSwitch modo={modoMapa} onTrocar={(m) => updatePrefs({ mapMode: m })} />
               </div>
             </div>
-            <PainelCentro center={center} decl={decl} onCopy={(t) => copy(t)} />
-            <PainelPosicao
-              userPos={userPos}
-              onCentrar={() => {
-                if (!userPos) return toast.error("Sem localização disponível");
-                mapRef.current?.flyTo({ center: [userPos.lng, userPos.lat], zoom: 15 });
-              }}
-              onUltimoLocal={() => {
-                try {
-                  const raw = localStorage.getItem("tgis:last-position");
-                  if (!raw) return toast.error("Nenhum local salvo");
-                  const p = JSON.parse(raw) as { lng: number; lat: number };
-                  mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 14 });
-                } catch {
-                  toast.error("Nenhum local salvo");
-                }
-              }}
-            />
+            {telaVis.coordenadas && (
+              <PainelCentro center={center} decl={decl} onCopy={(t) => copy(t)} />
+            )}
+            {telaVis.posicao && (
+              <PainelPosicao
+                userPos={userPos}
+                onCentrar={() => {
+                  if (!userPos) return toast.error("Sem localização disponível");
+                  mapRef.current?.flyTo({ center: [userPos.lng, userPos.lat], zoom: 15 });
+                }}
+                onUltimoLocal={() => {
+                  try {
+                    const raw = localStorage.getItem("tgis:last-position");
+                    if (!raw) return toast.error("Nenhum local salvo");
+                    const p = JSON.parse(raw) as { lng: number; lat: number };
+                    mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 14 });
+                  } catch {
+                    toast.error("Nenhum local salvo");
+                  }
+                }}
+              />
+            )}
             {(tool === "measure-line" || tool === "measure-area") && (
               <LeituraMedicao tool={tool} lineLen={lineLen} areaFmt={areaFmt} onClear={clearDraw} />
             )}
@@ -1099,26 +1224,34 @@ export default function MapShell() {
 
           {/* HUD superior desktop: posições absolutas clássicas */}
           <div className="absolute left-4 top-4 z-10 hidden w-[360px] md:block">
-            <PainelCentro center={center} decl={decl} onCopy={(t) => copy(t)} />
+            {telaVis.coordenadas && (
+              <PainelCentro center={center} decl={decl} onCopy={(t) => copy(t)} />
+            )}
           </div>
-          <div className="absolute left-4 top-[150px] z-10 hidden w-[360px] md:block">
-            <PainelPosicao
-              userPos={userPos}
-              onCentrar={() => {
-                if (!userPos) return toast.error("Sem localização disponível");
-                mapRef.current?.flyTo({ center: [userPos.lng, userPos.lat], zoom: 15 });
-              }}
-              onUltimoLocal={() => {
-                try {
-                  const raw = localStorage.getItem("tgis:last-position");
-                  if (!raw) return toast.error("Nenhum local salvo");
-                  const p = JSON.parse(raw) as { lng: number; lat: number };
-                  mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 14 });
-                } catch {
-                  toast.error("Nenhum local salvo");
-                }
-              }}
-            />
+          <div
+            className={`absolute left-4 z-10 hidden w-[360px] md:block ${
+              telaVis.coordenadas ? "top-[150px]" : "top-4"
+            }`}
+          >
+            {telaVis.posicao && (
+              <PainelPosicao
+                userPos={userPos}
+                onCentrar={() => {
+                  if (!userPos) return toast.error("Sem localização disponível");
+                  mapRef.current?.flyTo({ center: [userPos.lng, userPos.lat], zoom: 15 });
+                }}
+                onUltimoLocal={() => {
+                  try {
+                    const raw = localStorage.getItem("tgis:last-position");
+                    if (!raw) return toast.error("Nenhum local salvo");
+                    const p = JSON.parse(raw) as { lng: number; lat: number };
+                    mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 14 });
+                  } catch {
+                    toast.error("Nenhum local salvo");
+                  }
+                }}
+              />
+            )}
           </div>
           {(tool === "measure-line" || tool === "measure-area") && (
             <div className="absolute left-1/2 top-32 z-10 hidden -translate-x-1/2 md:block">
@@ -1136,7 +1269,11 @@ export default function MapShell() {
           </div>
 
           {/* Right-side action rail */}
-          <div className="absolute right-2 top-[max(0.5rem,env(safe-area-inset-top))] z-10 flex flex-col gap-2 md:top-36">
+          <div
+            className={`absolute right-2 top-[max(0.5rem,env(safe-area-inset-top))] z-10 flex-col gap-2 md:top-36 ${
+              telaVis.ferramentas ? "flex" : "hidden"
+            }`}
+          >
             <RailBtn
               icon={Radar}
               label="Osiris"
@@ -1176,6 +1313,7 @@ export default function MapShell() {
               active={compassMode !== "mini"}
               onClick={() => setCompassMode(compassMode === "mini" ? "panel" : "mini")}
             />
+            <RailBtn icon={Eraser} label="Limpar" onClick={limparTela} />
           </div>
 
           {/* Elevation chart */}
@@ -1321,6 +1459,54 @@ export default function MapShell() {
                       {BASE_LAYERS[k].label}
                     </button>
                   ))}
+                </div>
+              </section>
+            )}
+
+            {modoMapa === "tatico" && (
+              <section data-test="tela-elementos">
+                <div className="mono mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Elementos da tela
+                </div>
+                <div className="space-y-2">
+                  {LINHAS_TELA.map((linha) => (
+                    <div
+                      key={linha.id}
+                      className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-sm">{linha.nome}</div>
+                        <div className="truncate text-[10px] text-muted-foreground">
+                          {linha.dica}
+                        </div>
+                      </div>
+                      <Switch
+                        checked={telaVis[linha.id]}
+                        aria-label={`Ativar elemento ${linha.nome}`}
+                        onCheckedChange={(v) =>
+                          updatePrefs({ telaVis: { ...telaVis, [linha.id]: v } })
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <Button
+                    variant="destructive"
+                    className="glove-tap"
+                    data-test="tela-limpar"
+                    onClick={limparTela}
+                  >
+                    <Eraser className="mr-1 h-4 w-4" /> Limpar tela
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    className="glove-tap"
+                    data-test="tela-restaurar"
+                    onClick={restaurarTela}
+                  >
+                    Restaurar tudo
+                  </Button>
                 </div>
               </section>
             )}
@@ -1699,8 +1885,8 @@ export default function MapShell() {
         onAcaoOsiris={acaoMenu}
       />
 
-      {/* Bússola flutuante sobre o mapa (só no modo tático) */}
-      {modoMapa === "tatico" && (
+      {/* Bússola flutuante sobre o mapa (só no modo tático, se visível) */}
+      {modoMapa === "tatico" && telaVis.bussola && (
         <div
           className={
             compassMode === "full"
@@ -1862,7 +2048,7 @@ function PainelCentro({
   onCopy: (t: string) => void;
 }) {
   return (
-    <div className="hud-panel rounded-md p-2 mono text-xs">
+    <div className="hud-panel rounded-md p-2 mono text-xs" data-test="painel-centro">
       <div className="flex items-center justify-between text-tactical-orange">
         <span className="font-bold tracking-wider">CENTRO</span>
         <span>Δ {formatSignedDegrees(decl)}</span>
@@ -1907,7 +2093,7 @@ function PainelPosicao({
   onUltimoLocal: () => void;
 }) {
   return (
-    <div className="hud-panel rounded-md p-2 mono text-xs">
+    <div className="hud-panel rounded-md p-2 mono text-xs" data-test="painel-posicao">
       <div className="flex items-center justify-between text-sky-400">
         <span className="font-bold tracking-wider">MINHA POSIÇÃO</span>
         <span>{userPos ? `± ${formatElevation(userPos.acc)}` : "aguardando sinal"}</span>
@@ -1953,7 +2139,10 @@ function LeituraMedicao({
   onClear: () => void;
 }) {
   return (
-    <div className="hud-panel rounded-md px-3 py-2 mono text-xs flex items-center gap-3">
+    <div
+      className="hud-panel rounded-md px-3 py-2 mono text-xs flex items-center gap-3"
+      data-test="leitura-medicao"
+    >
       {tool === "measure-line" ? (
         <>
           <span className="text-tactical-orange">DIST</span>

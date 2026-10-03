@@ -7,6 +7,7 @@ import {
   type IntelVisibilidade,
 } from "@/lib/intel.types";
 import { VIS_OSIRIS_PADRAO, type VisOsiris } from "@/components/map/visao-osiris-camadas";
+import { TELA_VIS_PADRAO, type TelaVisibilidade } from "@/components/map/tela-elementos";
 
 export type ModoMapa = "tatico" | "osiris";
 
@@ -22,6 +23,8 @@ export interface Preferences {
   intelKeys: IntelChaves;
   /** Camadas ativas da Visão Osiris (globo 3D self-hosted). */
   osirisVis: VisOsiris;
+  /** Elementos da tela do mapa tático visíveis (HUD, bússola, waypoints…). */
+  telaVis: TelaVisibilidade;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -32,6 +35,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   intelVis: INTEL_VIS_PADRAO,
   intelKeys: INTEL_CHAVES_PADRAO,
   osirisVis: VIS_OSIRIS_PADRAO,
+  telaVis: TELA_VIS_PADRAO,
 };
 
 const KEY = "preferences";
@@ -51,6 +55,7 @@ export function usePreferences() {
           intelVis: { ...INTEL_VIS_PADRAO, ...(v?.intelVis ?? {}) },
           intelKeys: { ...INTEL_CHAVES_PADRAO, ...(v?.intelKeys ?? {}) },
           osirisVis: { ...VIS_OSIRIS_PADRAO, ...(v?.osirisVis ?? {}) },
+          telaVis: { ...TELA_VIS_PADRAO, ...(v?.telaVis ?? {}) },
         });
         setLoaded(true);
       })

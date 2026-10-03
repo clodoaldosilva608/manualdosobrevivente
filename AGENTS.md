@@ -71,6 +71,17 @@ bun run build      # check:all + build de produção em .output/
   inteligência. Ações que dependem do mapa nativo passam por `acaoMenu` no
   MapShell, que devolve ao modo tático antes de abrir o painel (os sheets
   ficam por baixo do globo em tela cheia). Coberto por `tests/map-menu.spec.ts`.
+- **Limpar tela e elementos da tela**: o botão "Limpar" (rail, menu e folha de
+  camadas) apaga medições/perfil de elevação, desarma ferramentas e oculta os
+  waypoints do mapa (eles continuam salvos no banco local). O que aparece na
+  tela é escolhido na seção "Elementos da tela" da folha de camadas — catálogo
+  em `src/components/map/tela-elementos.ts` (`TelaVisibilidade`/`LINHAS_TELA`,
+  persistido em `telaVis` no usePreferences): coordenadas, minha posição, ponto
+  de posição no mapa, bússola, barra de ferramentas, waypoints e controles
+  nativos do MapLibre (adicionados/removidos via `controlesRef`). A
+  resincronização após troca de estilo é centralizada em `sincronizarDesenho`
+  (load, styledata e troca de camada base) — sem ela medições e waypoints
+  sumiam ao trocar a base. Coberto por `tests/map-tela.spec.ts`.
 - **Segurança**: operações administrativas usam o cliente service role
   (`client.server.ts`) apenas em módulos `*.server.ts` — arquivos `*.functions.ts`
   e rotas vão para o bundle do cliente. Rotas autenticadas usam o middleware

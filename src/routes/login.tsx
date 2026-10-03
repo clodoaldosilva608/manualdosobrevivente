@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
@@ -61,16 +60,17 @@ function Login() {
 
   const google = async () => {
     setBusy(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+    // OAuth nativo do Supabase: o navegador é redirecionado ao provedor e volta
+    // para redirectTo após a autenticação. Requer o provedor Google habilitado
+    // no painel do Supabase (Authentication > Providers).
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin },
     });
-    if (result.error) {
+    if (error) {
       toast.error("Falha ao entrar com Google");
       setBusy(false);
-      return;
     }
-    if (result.redirected) return;
-    nav({ to: "/" });
   };
 
   return (

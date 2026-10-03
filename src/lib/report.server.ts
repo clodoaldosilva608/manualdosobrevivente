@@ -3,7 +3,9 @@ import type { Database } from "@/integrations/supabase/types";
 type AdminClient = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 type ReportSettings = Database["public"]["Tables"]["weekly_report_settings"]["Row"];
 
-const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_mail/gmail/v1";
+// Gateway de envio de e-mail compatível com a API do Gmail (envio via /users/me/messages/send).
+// Configure as variáveis abaixo no ambiente do servidor (veja .env.example).
+const GATEWAY_URL = process.env["MAIL_GATEWAY_URL"] ?? "";
 
 function base64Url(value: string): string {
   const bytes = new TextEncoder().encode(value);
@@ -57,9 +59,12 @@ export async function sendWeeklyReport(
   let status = "sent";
   let errorMessage: string | null = null;
   try {
-    const lovableKey = process.env["LOVABLE_API_KEY"];
-    const mailKey = process.env["GOOGLE_MAIL_API_KEY"];
-    if (!lovableKey || !mailKey) throw new Error("O serviço de e-mail não está configurado");
+    const gatewayKey = process.env["MAIL_GATEWAY_KEY"];
+    const connectionKey = process.env["MAIL_CONNECTION_KEY"];
+    if (!GATEWAY_URL || !gatewayKey || !connectionKey)
+      throw new Error(
+        "O serviço de e-mail não está configurado: defina MAIL_GATEWAY_URL, MAIL_GATEWAY_KEY e MAIL_CONNECTION_KEY no ambiente.",
+      );
     const raw = base64Url(
       [
         `To: ${settings.recipient_email}`,
@@ -73,8 +78,8 @@ export async function sendWeeklyReport(
     const response = await fetch(`${GATEWAY_URL}/users/me/messages/send`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${lovableKey}`,
-        "X-Connection-Api-Key": mailKey,
+        Authorization: `Bearer ${gatewayKey}`,
+        "X-Connection-Api-Key": connectionKey,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ raw }),

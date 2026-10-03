@@ -193,7 +193,13 @@ function Dashboard() {
         <h1 className="mono min-w-0 break-words text-lg font-bold uppercase tracking-widest text-tactical-orange sm:text-xl">
           Painel de dados
         </h1>
-        <Button className="shrink-0" variant="outline" size="sm" onClick={() => void refresh()} disabled={loading}>
+        <Button
+          className="shrink-0"
+          variant="outline"
+          size="sm"
+          onClick={() => void refresh()}
+          disabled={loading}
+        >
           <RefreshCw className="h-4 w-4 mr-1" /> Atualizar
         </Button>
       </header>

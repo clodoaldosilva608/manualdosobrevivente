@@ -1,15 +1,72 @@
-// @lovable.dev/vite-tanstack-config already includes the following — do NOT add them manually
-// or the app will break with duplicate plugins:
-//   - tanstackStart, viteReact, tailwindcss, tsConfigPaths, cloudflare (build-only),
-//     componentTagger (dev-only), VITE_* env injection, @ path alias, React/TanStack dedupe,
-//     error logger plugins, and sandbox detection (port/host/strictPort).
-// You can pass additional config via defineConfig({ vite: { ... } }) if needed.
-import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+// Configuração Vite padrão do projeto (independente de plataforma).
+//
+// Stack de build:
+//   - TanStack Start (SSR) com entry de servidor customizado em src/server.ts
+//   - Tailwind CSS 4 via plugin oficial
+//   - React 19 via @vitejs/plugin-react
+//   - Nitro com preset cloudflare-module no build (deploy para Cloudflare Workers)
+//
+// Ordem dos plugins importa: tsConfigPaths antes do tanstackStart garante que o
+// alias "@" resolva corretamente nas server functions.
+import { defineConfig, loadEnv } from "vite";
+import tailwindcss from "@tailwindcss/vite";
+import tsConfigPaths from "vite-tsconfig-paths";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import viteReact from "@vitejs/plugin-react";
+import { nitro } from "nitro/vite";
 
-// Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-// @cloudflare/vite-plugin builds from this — wrangler.jsonc main alone is insufficient.
-export default defineConfig({
-  tanstackStart: {
-    server: { entry: "server" },
-  },
+export default defineConfig(({ command, mode }) => {
+  // Injeta todas as variáveis VITE_* do .env como import.meta.env.* em tempo de build.
+  const envDefine: Record<string, string> = {};
+  for (const [key, value] of Object.entries(loadEnv(mode, process.cwd(), "VITE_"))) {
+    envDefine[`import.meta.env.${key}`] = JSON.stringify(value);
+  }
+
+  return {
+    define: envDefine,
+    css: { transformer: "lightningcss" },
+    resolve: {
+      alias: { "@": `${process.cwd()}/src` },
+      dedupe: [
+        "react",
+        "react-dom",
+        "react/jsx-runtime",
+        "react/jsx-dev-runtime",
+        "@tanstack/react-query",
+        "@tanstack/query-core",
+      ],
+    },
+    optimizeDeps: {
+      include: [
+        "react",
+        "react-dom",
+        "react-dom/client",
+        "react/jsx-runtime",
+        "react/jsx-dev-runtime",
+      ],
+      ignoreOutdatedRequests: true,
+    },
+    server: {
+      host: "::",
+      port: 8080,
+      watch: {
+        awaitWriteFinish: { stabilityThreshold: 1000, pollInterval: 100 },
+      },
+    },
+    plugins: [
+      tailwindcss(),
+      tsConfigPaths({ projects: ["./tsconfig.json"] }),
+      tanstackStart({
+        // Redireciona o entry do servidor SSR para src/server.ts (wrapper de erros).
+        server: { entry: "server" },
+        importProtection: {
+          behavior: "error",
+          client: { files: ["**/server/**"], specifiers: ["server-only"] },
+        },
+      }),
+      viteReact(),
+      // Build para Cloudflare Workers apenas no comando build (deploy via wrangler).
+      ...(command === "build" ? [nitro({ defaultPreset: "cloudflare-module" })] : []),
+    ],
+  };
 });

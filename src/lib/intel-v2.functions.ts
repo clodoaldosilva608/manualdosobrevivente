@@ -183,7 +183,13 @@ interface IssPosicao {
   timestamp: number;
 }
 
-/** Anel geográfico aproximado de raio em km (elipse em graus, clampada). */
+/** Anel geográfico aproximado de raio em km (elipse em graus).
+ *
+ * A longitude NÃO é clampada em ±180: perto do antimeridiano o clamp
+ * empilhava pontos degenerados e o preenchimento do anel (pegada da ISS,
+ * raios dos estreitos) saía como um polígono preto gigante no mapa. O
+ * MapLibre aceita longitudes fora de ±180 e renderiza na cópia vizinha.
+ */
 export function anelGeo(
   lat: number,
   lng: number,
@@ -197,7 +203,7 @@ export function anelGeo(
   for (let i = 0; i < pontos; i++) {
     const ang = (2 * Math.PI * i) / pontos;
     const la = Math.max(-89.9, Math.min(89.9, lat + dLat * Math.sin(ang)));
-    const ln = Math.max(-179.9, Math.min(179.9, lng + dLng * Math.cos(ang)));
+    const ln = lng + dLng * Math.cos(ang);
     anel.push([ln, la]);
   }
   anel.push(anel[0]);

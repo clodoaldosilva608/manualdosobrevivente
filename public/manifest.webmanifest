@@ -1,0 +1,42 @@
+{
+  "id": "/",
+  "name": "Manual do Sobrevivente — TacticalGIS",
+  "short_name": "Sobrevivência",
+  "description": "Mapa tático offline, manual de sobrevivência, mochila de emergência e S.O.S. — seus dados salvos no seu aparelho.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#121212",
+  "theme_color": "#121212",
+  "categories": ["navigation", "utilities", "travel"],
+  "icons": [
+    {
+      "src": "/icons/pwa-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/pwa-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/pwa-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

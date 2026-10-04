@@ -120,7 +120,7 @@ export function ShareSheet({ open, onOpenChange, title, text, mapUrl }: ShareShe
         onOpenChange(o);
       }}
     >
-      <SheetContent side="bottom" className="bg-card border-border max-h-[90vh] overflow-y-auto">
+      <SheetContent side="bottom" className="bg-card border-border">
         <SheetHeader>
           <SheetTitle className="mono text-tactical-orange">COMPARTILHAR LOCALIZAÇÃO</SheetTitle>
           <SheetDescription>Escolha para onde enviar suas coordenadas.</SheetDescription>

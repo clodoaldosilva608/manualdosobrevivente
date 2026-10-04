@@ -85,6 +85,7 @@ import {
   fetchAr,
 } from "@/lib/intel-v2.functions";
 import { conectarAis, type StatusAis } from "@/lib/ais";
+import { buscarNoticiasNavegador } from "@/lib/noticias-gdelt";
 import { CONFLITOS } from "@/lib/intel-conflicts";
 import { poligonoNoturno } from "@/lib/intel-night";
 import type {
@@ -871,15 +872,23 @@ export default function MapShell() {
   }, [intelVis.satelites, tles]);
 
   // Manchetes globais (GDELT): ciclo lento — a fonte tem limite de requisições.
+  // Primeiro direto do navegador (limite por IP do usuário); o servidor é o
+  // plano B, pois o IP do Vercel vive limitado pela GDELT.
   useEffect(() => {
     if (!algumaIntelAtiva) return;
     let vivo = true;
     const carregar = () => {
-      void callNoticias()
-        .then((v) => {
-          if (vivo) setNoticias(v.noticias);
+      buscarNoticiasNavegador()
+        .then((ns) => {
+          if (vivo) setNoticias(ns);
         })
-        .catch(() => {});
+        .catch(() =>
+          callNoticias()
+            .then((v) => {
+              if (vivo) setNoticias(v.noticias);
+            })
+            .catch(() => {}),
+        );
     };
     carregar();
     const timer = window.setInterval(carregar, 300_000);
@@ -1164,9 +1173,13 @@ export default function MapShell() {
       .then(setAr)
       .catch(() => {});
     if (!noticias) {
-      void callNoticias()
-        .then((v) => setNoticias(v.noticias))
-        .catch(() => {});
+      buscarNoticiasNavegador()
+        .then(setNoticias)
+        .catch(() =>
+          callNoticias()
+            .then((v) => setNoticias(v.noticias))
+            .catch(() => {}),
+        );
     }
     if (!alertas) {
       void callAlertas()

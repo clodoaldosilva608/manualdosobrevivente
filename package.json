@@ -11,8 +11,8 @@
     "lint": "eslint .",
     "check:i18n": "node scripts/check-i18n.mjs",
     "format": "prettier --write .",
-    "test": "vitest run tests/format.spec.ts",
-    "test:e2e": "vitest run tests/i18n-ssr.spec.ts tests/map-responsive.spec.ts tests/map-overlap.spec.ts tests/map-osiris.spec.ts tests/map-menu.spec.ts tests/map-tela.spec.ts",
+    "test": "vitest run tests/format.spec.ts tests/celestial.spec.ts",
+    "test:e2e": "vitest run tests/i18n-ssr.spec.ts tests/map-responsive.spec.ts tests/map-overlap.spec.ts tests/map-osiris.spec.ts tests/map-menu.spec.ts tests/map-tela.spec.ts tests/map-bussola.spec.ts",
     "typecheck": "tsc --noEmit",
     "check:all": "bun run lint && bun run check:i18n && bun run test"
   },

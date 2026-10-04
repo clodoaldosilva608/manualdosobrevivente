@@ -308,6 +308,11 @@ export default function MapShell() {
   const modoMapa = prefs.mapMode;
   const intelVis = prefs.intelVis;
   const telaVis = prefs.telaVis;
+  // Norte de referência da bússola (verdadeiro/magnético) — a mesma
+  // configuração de Ajustes, compartilhada entre miniatura e bússola completa.
+  const bussolaMagnetica = prefs.northRef === "magnetic";
+  const alternarNorteBussola = () =>
+    updatePrefs({ northRef: bussolaMagnetica ? "true" : "magnetic" });
   const [intel, setIntel] = useState<IntelSnapshot | null>(null);
   const [intelStatus, setIntelStatus] = useState<StatusIntel>("idle");
   const [noite, setNoite] = useState<GeoJSON.Feature | null>(null);
@@ -1947,11 +1952,19 @@ export default function MapShell() {
               </div>
             </div>
 
-            <button
-              type="button"
+            <div
+              role="button"
+              tabIndex={0}
               aria-label="Abrir bússola"
-              className={compassMode === "mini" ? "block glove-tap" : "hidden"}
+              title="Abrir bússola"
+              className={compassMode === "mini" ? "block glove-tap cursor-pointer" : "hidden"}
               onClick={() => setCompassMode("panel")}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setCompassMode("panel");
+                }
+              }}
             >
               <CompassRose
                 heading={heading}
@@ -1959,8 +1972,10 @@ export default function MapShell() {
                 center={center}
                 altitude={userPos?.alt ?? null}
                 variant="mini"
+                magnetic={bussolaMagnetica}
+                onToggleMagnetic={alternarNorteBussola}
               />
-            </button>
+            </div>
 
             {compassMode !== "mini" && (
               <div
@@ -1976,6 +1991,8 @@ export default function MapShell() {
                   center={center}
                   altitude={userPos?.alt ?? null}
                   variant={compassMode}
+                  magnetic={bussolaMagnetica}
+                  onToggleMagnetic={alternarNorteBussola}
                   bearingToWaypoint={
                     waypoints[0]
                       ? bearingDeg(center, [waypoints[0].longitude, waypoints[0].latitude])

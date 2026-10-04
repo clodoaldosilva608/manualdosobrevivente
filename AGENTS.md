@@ -82,6 +82,15 @@ bun run build      # check:all + build de produção em .output/
   resincronização após troca de estilo é centralizada em `sincronizarDesenho`
   (load, styledata e troca de camada base) — sem ela medições e waypoints
   sumiam ao trocar a base. Coberto por `tests/map-tela.spec.ts`.
+- **Bússola tática**: a configuração de norte (verdadeiro/magnético) é a
+  preferência global `northRef` (Ajustes) — compartilhada entre a bússola em
+  miniatura, a bússola completa e os Ajustes. O sensor do aparelho vive no
+  store compartilhado `src/lib/bussola-sensor.ts` (fora do React): ativado uma
+  vez, alimenta as duas bússolas e sobrevive a remontagens. O mostrador traz a
+  posição real e atual do Sol, da Lua e do Cruzeiro do Sul/Polaris
+  (`posicaoEquatorialParaHorizontal` em `src/lib/celestial.ts`, via tempo
+  sideral) — astros abaixo do horizonte aparecem apagados. Coberta por
+  `tests/celestial.spec.ts` (unit) e `tests/map-bussola.spec.ts` (E2E).
 - **Segurança**: operações administrativas usam o cliente service role
   (`client.server.ts`) apenas em módulos `*.server.ts` — arquivos `*.functions.ts`
   e rotas vão para o bundle do cliente. Rotas autenticadas usam o middleware

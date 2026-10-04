@@ -71,7 +71,7 @@ describe("HUD do mapa em celular (390×844)", () => {
       'button[title="Medir"]',
       'button[title="Marcador"]',
       'button[title="Bússola"]',
-      'button[aria-label="Abrir bússola"]',
+      '[aria-label="Abrir bússola"]',
     ];
 
     const caixas: Array<{ nome: string; ret: Retangulo }> = [];
@@ -117,7 +117,7 @@ describe("HUD do mapa em celular (390×844)", () => {
       'div.hud-panel:has(span:text-is("MINHA POSIÇÃO"))',
       'button[title="Camadas"]',
       'button[title="Marcador"]',
-      'button[aria-label="Abrir bússola"]',
+      '[aria-label="Abrir bússola"]',
     ];
     for (const seletor of concorrentes) {
       const loc = page.locator(seletor).first();
@@ -134,7 +134,7 @@ describe("HUD do mapa em celular (390×844)", () => {
     const retNav = (await nav.boundingBox()) as Retangulo;
     expect(retNav.y).toBeGreaterThanOrEqual(844 - retNav.height - 1);
 
-    const bussola = page.locator('button[aria-label="Abrir bússola"]');
+    const bussola = page.locator('[aria-label="Abrir bússola"]');
     const retBussola = (await bussola.boundingBox()) as Retangulo;
     expect(sobrepoe(retNav, retBussola), "navegação sobrepõe a bússola mini").toBe(false);
 

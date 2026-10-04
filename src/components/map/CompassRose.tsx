@@ -1,9 +1,19 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Sun, Moon, Star, Thermometer, Waves, Wind, Compass as CompassIcon } from "lucide-react";
+import {
+  Sun,
+  Moon,
+  Star,
+  Thermometer,
+  Waves,
+  Wind,
+  Compass as CompassIcon,
+  Smartphone,
+} from "lucide-react";
 import { getCelestial } from "@/lib/celestial";
 import { nearestCoast, compassPoint } from "@/lib/coast";
+import { ativarSensorBussola, useSensorBussola } from "@/lib/bussola-sensor";
 import { fetchWeather } from "@/lib/weather.functions";
 import {
   formatDegrees,
@@ -41,6 +51,9 @@ export interface CompassRoseProps {
   bearingToWaypoint?: number | null;
   waypointLabel?: string | null;
   variant?: CompassVariant;
+  /** Norte de referência configurado (compartilhado com Ajustes e a miniatura). */
+  magnetic: boolean;
+  onToggleMagnetic: () => void;
   onRotate?: (heading: number) => void;
   onReset?: () => void;
 }
@@ -53,53 +66,22 @@ export default function CompassRose({
   bearingToWaypoint,
   waypointLabel,
   variant = "full",
+  magnetic,
+  onToggleMagnetic,
   onRotate,
   onReset,
 }: CompassRoseProps) {
   const ref = useRef<SVGSVGElement>(null);
   const dragRef = useRef<{ startAngle: number; startHeading: number } | null>(null);
-  const [magnetic, setMagnetic] = useState(false);
-  const [deviceHeading, setDeviceHeading] = useState<number | null>(null);
-  const [tilt, setTilt] = useState<{ beta: number; gamma: number } | null>(null);
-  const [sensorOn, setSensorOn] = useState(false);
+  // Sensor do aparelho compartilhado: miniatura e bússola completa leem o
+  // mesmo estado — configurado uma vez, funciona em todas.
+  const { sensorOn, rumoAparelho: deviceHeading, inclinacao: tilt } = useSensorBussola();
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 30000);
     return () => window.clearInterval(id);
   }, []);
-
-  const enableSensor = useCallback(async () => {
-    type Ctor = typeof DeviceOrientationEvent & {
-      requestPermission?: () => Promise<"granted" | "denied">;
-    };
-    const ctor = (
-      typeof DeviceOrientationEvent !== "undefined" ? DeviceOrientationEvent : undefined
-    ) as Ctor | undefined;
-    if (!ctor) return;
-    if (typeof ctor.requestPermission === "function") {
-      try {
-        if ((await ctor.requestPermission()) !== "granted") return;
-      } catch {
-        return;
-      }
-    }
-    setSensorOn(true);
-  }, []);
-
-  useEffect(() => {
-    if (!sensorOn) return;
-    const handler = (e: DeviceOrientationEvent & { webkitCompassHeading?: number }) => {
-      const wk = e.webkitCompassHeading;
-      if (typeof wk === "number") setDeviceHeading(norm(wk));
-      else if (typeof e.alpha === "number") setDeviceHeading(norm(360 - e.alpha));
-      if (typeof e.beta === "number" && typeof e.gamma === "number") {
-        setTilt({ beta: e.beta, gamma: e.gamma });
-      }
-    };
-    window.addEventListener("deviceorientation", handler as EventListener, true);
-    return () => window.removeEventListener("deviceorientation", handler as EventListener, true);
-  }, [sensorOn]);
 
   const trueHeading = norm(deviceHeading ?? heading);
   const target = magnetic ? norm(trueHeading - declination) : trueHeading;
@@ -182,6 +164,11 @@ export default function CompassRose({
   const windOuter = windFrom != null ? markerAt(windFrom, 86) : null;
   const windInner = windFrom != null ? markerAt(windFrom, 58) : null;
   const windSpeed = weather?.windSpeed ?? null;
+  const cruzDoSul = celestial.hemisphere === "S";
+  // Resumo dos astros para o título da miniatura (ponto atual de cada um).
+  const resumoCeleste = `Sol ${formatDegrees(celestial.sunAzimuth ?? 0)} · Lua ${formatDegrees(
+    celestial.moonAzimuth,
+  )} · ${celestial.starName} ${formatDegrees(celestial.starAzimuth)}`;
   // Nível de bolha: desloca a bolha conforme a inclinação do aparelho (limitada a ±30°)
   const clamp = (v: number, m: number) => Math.max(-m, Math.min(m, v));
   const bubbleX = tilt ? clamp(tilt.gamma, 30) / 30 : 0;
@@ -193,7 +180,10 @@ export default function CompassRose({
   const isFull = variant === "full";
 
   return (
-    <div className={`flex flex-col items-center w-full ${isMini ? "gap-1" : "gap-4"}`}>
+    <div
+      className={`flex flex-col items-center w-full ${isMini ? "gap-1" : "gap-4"}`}
+      title={isMini ? resumoCeleste : undefined}
+    >
       <div
         className={`relative w-full aspect-square select-none touch-none ${
           isMini ? "max-w-[5.5rem]" : isFull ? "max-w-[min(82vw,22rem)]" : "max-w-[min(52vw,13rem)]"
@@ -327,23 +317,81 @@ export default function CompassRose({
 
               {/* referências celestes e geográficas */}
               <g>
-                <circle cx={sunPt.x} cy={sunPt.y} r="6" fill="#F4A261" opacity="0.9" />
-                <text x={sunPt.x} y={sunPt.y + 3} textAnchor="middle" fontSize="7" fill="#1a1a1a">
-                  ☀
-                </text>
-                <circle cx={moonPt.x} cy={moonPt.y} r="5.5" fill="#cbd5e1" opacity="0.9" />
-                <text
-                  x={moonPt.x}
-                  y={moonPt.y + 2.5}
-                  textAnchor="middle"
-                  fontSize="6"
-                  fill="#1a1a1a"
-                >
-                  ☾
-                </text>
-                <text x={starPt.x} y={starPt.y + 3} textAnchor="middle" fontSize="9" fill="#8ecae6">
-                  ✦
-                </text>
+                {/* Sol: posição real, apagado quando abaixo do horizonte */}
+                <g opacity={celestial.sunAltitude > 0 ? 1 : 0.25}>
+                  <title>{`Sol — azimute ${formatDegrees(celestial.sunAzimuth ?? 0)} ${compassPoint(
+                    celestial.sunAzimuth ?? 0,
+                  )}${celestial.sunAltitude > 0 ? "" : " (abaixo do horizonte)"}`}</title>
+                  <circle cx={sunPt.x} cy={sunPt.y} r="6" fill="#F4A261" opacity="0.9" />
+                  <text x={sunPt.x} y={sunPt.y + 3} textAnchor="middle" fontSize="7" fill="#1a1a1a">
+                    ☀
+                  </text>
+                </g>
+                {/* Lua: posição real, apagada quando abaixo do horizonte */}
+                <g opacity={celestial.moonUp ? 1 : 0.25}>
+                  <title>{`Lua — azimute ${formatDegrees(celestial.moonAzimuth)} ${compassPoint(
+                    celestial.moonAzimuth,
+                  )}${celestial.moonUp ? "" : " (abaixo do horizonte)"}`}</title>
+                  <circle cx={moonPt.x} cy={moonPt.y} r="5.5" fill="#cbd5e1" opacity="0.9" />
+                  <text
+                    x={moonPt.x}
+                    y={moonPt.y + 2.5}
+                    textAnchor="middle"
+                    fontSize="6"
+                    fill="#1a1a1a"
+                  >
+                    ☾
+                  </text>
+                </g>
+                {/* Cruzeiro do Sul (sul) ou Polaris (norte) na posição real */}
+                <g opacity={celestial.starUp ? 1 : 0.25}>
+                  <title>{`${celestial.starName} — azimute ${formatDegrees(
+                    celestial.starAzimuth,
+                  )} ${compassPoint(celestial.starAzimuth)}${
+                    celestial.starUp ? "" : " (abaixo do horizonte)"
+                  }`}</title>
+                  {cruzDoSul ? (
+                    <>
+                      <line
+                        x1={starPt.x}
+                        y1={starPt.y - 5.5}
+                        x2={starPt.x}
+                        y2={starPt.y + 5.5}
+                        stroke="#8ecae6"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                      <line
+                        x1={starPt.x - 3.8}
+                        y1={starPt.y}
+                        x2={starPt.x + 3.8}
+                        y2={starPt.y}
+                        stroke="#8ecae6"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                      <circle
+                        cx={starPt.x}
+                        cy={starPt.y}
+                        r="7.5"
+                        fill="none"
+                        stroke="#8ecae6"
+                        strokeOpacity="0.45"
+                        strokeWidth="0.8"
+                      />
+                    </>
+                  ) : (
+                    <text
+                      x={starPt.x}
+                      y={starPt.y + 3}
+                      textAnchor="middle"
+                      fontSize="9"
+                      fill="#8ecae6"
+                    >
+                      ✦
+                    </text>
+                  )}
+                </g>
                 <text
                   x={coastPt.x}
                   y={coastPt.y + 3}
@@ -460,7 +508,7 @@ export default function CompassRose({
           <button
             type="button"
             onClick={() => onReset?.()}
-            onDoubleClick={() => setMagnetic((m) => !m)}
+            onDoubleClick={() => onToggleMagnetic()}
             title="Tocar: alinhar ao norte · Toque duplo: alternar norte magnético"
             className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-background/90 border border-tactical-orange/60 mono text-[10px] font-bold text-tactical-orange flex flex-col items-center justify-center glove-tap ${
               isFull ? "h-16 w-16" : "h-12 w-12"
@@ -482,6 +530,51 @@ export default function CompassRose({
           {compassPoint(shown)}
         </span>
       </div>
+
+      {/* Configuração da bússola direto na miniatura (vale para as duas) */}
+      {isMini && (
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            data-test="bussola-mag"
+            title="Alternar norte verdadeiro/magnético"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleMagnetic();
+            }}
+            className={`mono text-[8px] font-bold rounded border px-1 py-px leading-none ${
+              magnetic
+                ? "border-tactical-orange text-tactical-orange"
+                : "border-border text-muted-foreground"
+            }`}
+          >
+            {magnetic ? "MAG" : "VERD"}
+          </button>
+          {sensorOn ? (
+            <span
+              data-test="bussola-sensor-on"
+              title="Sensor do aparelho ativo"
+              className="mono text-[8px] font-bold leading-none text-tactical-green"
+            >
+              SEN
+            </span>
+          ) : (
+            <button
+              type="button"
+              data-test="bussola-sensor"
+              title="Usar o sensor do aparelho"
+              aria-label="Usar sensor do aparelho"
+              onClick={(e) => {
+                e.stopPropagation();
+                void ativarSensorBussola();
+              }}
+              className="rounded border border-tactical-orange/60 text-tactical-orange p-px leading-none"
+            >
+              <Smartphone className="h-2.5 w-2.5" />
+            </button>
+          )}
+        </div>
+      )}
 
       {!isMini && (
         <>
@@ -539,7 +632,7 @@ export default function CompassRose({
           <div className="flex flex-wrap items-center justify-center gap-2">
             <button
               type="button"
-              onClick={() => setMagnetic((m) => !m)}
+              onClick={() => onToggleMagnetic()}
               className="glove-tap rounded-md border border-border px-3 py-1 mono text-[11px] uppercase tracking-widest"
             >
               {magnetic ? "Norte magnético" : "Norte verdadeiro"}
@@ -547,7 +640,7 @@ export default function CompassRose({
             {!sensorOn && (
               <button
                 type="button"
-                onClick={enableSensor}
+                onClick={() => void ativarSensorBussola()}
                 className="glove-tap rounded-md border border-tactical-orange/60 text-tactical-orange px-3 py-1 mono text-[11px] uppercase tracking-widest"
               >
                 Usar sensor do aparelho
@@ -622,9 +715,11 @@ export default function CompassRose({
             />
             <Cell
               icon={<Star className="h-3.5 w-3.5" />}
-              label="Referência estelar"
-              value={celestial.starName}
-              hint={celestial.starHint}
+              label={celestial.starName}
+              value={`${formatDegrees(celestial.starAzimuth)} ${compassPoint(celestial.starAzimuth)}`}
+              hint={`Altura ${formatDegrees(celestial.starAltitude, 1)} · ${
+                celestial.starUp ? "acima do horizonte" : "abaixo do horizonte"
+              } · ${celestial.starHint}`}
             />
             <Cell
               icon={<Waves className="h-3.5 w-3.5" />}

@@ -106,8 +106,8 @@ function AstronomiaTatica({ center }: { center: [number, number] }) {
   const az = (d: Date | undefined | null) => {
     const v = valid(d);
     if (!v) return "";
-    const rad = SunCalc.getPosition(v, lat, lng).azimuth;
-    const graus = ((rad * 180) / Math.PI + 360) % 360;
+    // suncalc 2.x devolve azimute norte-based já em graus.
+    const graus = ((SunCalc.getPosition(v, lat, lng).azimuth % 360) + 360) % 360;
     return ` · azimute ${formatDegrees(graus)}`;
   };
 

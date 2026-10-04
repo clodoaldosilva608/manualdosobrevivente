@@ -1,17 +1,16 @@
-import { useState } from "react";
+import { useState, type ComponentType } from "react";
 import { toast } from "sonner";
+import { Share2, Copy } from "lucide-react";
 import {
-  MessageCircle,
-  Send,
-  Mail,
-  MapPin,
-  Share2,
-  Copy,
-  Facebook,
-  Twitter,
-  Smartphone,
-  NotebookPen,
-} from "lucide-react";
+  IconeEmail,
+  IconeFacebook,
+  IconeGoogleMaps,
+  IconeObsidian,
+  IconeSms,
+  IconeTelegram,
+  IconeWhatsApp,
+  IconeX,
+} from "./brand-icons";
 import {
   Sheet,
   SheetContent,
@@ -102,15 +101,21 @@ export function ShareSheet({ open, onOpenChange, title, text, mapUrl }: ShareShe
     }
   };
 
-  const options = [
+  const options: Array<{
+    label: string;
+    icon: ComponentType<{ className?: string }>;
+    /** Classe extra de cor para ícones neutros (não têm cor de marca própria). */
+    tone?: string;
+    run: () => void | Promise<void>;
+  }> = [
     {
       label: "WhatsApp",
-      icon: MessageCircle,
+      icon: IconeWhatsApp,
       run: () => openUrl(`https://wa.me/?text=${enc}`),
     },
     {
       label: "Telegram",
-      icon: Send,
+      icon: IconeTelegram,
       run: () =>
         openUrl(
           `https://t.me/share/url?url=${encodeURIComponent(mapUrl ?? "")}&text=${encodeURIComponent(text)}`,
@@ -118,22 +123,22 @@ export function ShareSheet({ open, onOpenChange, title, text, mapUrl }: ShareShe
     },
     {
       label: "SMS",
-      icon: Smartphone,
+      icon: IconeSms,
       run: () => openUrl(`sms:?&body=${enc}`),
     },
     {
       label: "E-mail",
-      icon: Mail,
+      icon: IconeEmail,
       run: () => openUrl(`mailto:?subject=${encodeURIComponent(title)}&body=${enc}`),
     },
     {
       label: "Google Maps",
-      icon: MapPin,
+      icon: IconeGoogleMaps,
       run: () => (mapUrl ? openUrl(mapUrl) : toast.error("Sem posição GPS ainda")),
     },
     {
       label: "Facebook",
-      icon: Facebook,
+      icon: IconeFacebook,
       run: () =>
         mapUrl
           ? openUrl(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(mapUrl)}`)
@@ -141,17 +146,18 @@ export function ShareSheet({ open, onOpenChange, title, text, mapUrl }: ShareShe
     },
     {
       label: "X",
-      icon: Twitter,
+      icon: IconeX,
       run: () => openUrl(`https://twitter.com/intent/tweet?text=${enc}`),
     },
     {
       label: "Obsidian",
-      icon: NotebookPen,
+      icon: IconeObsidian,
       run: () => void salvarNoObsidian(),
     },
     {
       label: "Compartilhar do aparelho",
       icon: Share2,
+      tone: "text-tactical-orange",
       run: async () => {
         if (typeof navigator !== "undefined" && navigator.share) {
           try {
@@ -168,6 +174,7 @@ export function ShareSheet({ open, onOpenChange, title, text, mapUrl }: ShareShe
     {
       label: "Copiar texto",
       icon: Copy,
+      tone: "text-tactical-orange",
       run: async () => {
         try {
           await navigator.clipboard.writeText(full);
@@ -203,7 +210,7 @@ export function ShareSheet({ open, onOpenChange, title, text, mapUrl }: ShareShe
               onClick={o.run}
               className="glove-tap rounded-md border border-border bg-background/60 hover:border-tactical-orange/60 p-3 flex flex-col items-center gap-2 mono text-[10px] uppercase tracking-wider text-center"
             >
-              <o.icon className="h-6 w-6 text-tactical-orange" />
+              <o.icon className={`h-6 w-6 ${o.tone ?? ""}`} />
               {o.label}
             </button>
           ))}

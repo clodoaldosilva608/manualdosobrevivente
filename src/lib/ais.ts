@@ -34,6 +34,7 @@ interface RelatoAis {
 }
 
 const MAX_NAVIOS = 2000;
+const decodificador = new TextDecoder();
 
 /** Abre a conexão AIS e devolve função de limpeza (fecha o socket). */
 export function conectarAis(opcoes: OpcoesAis): () => void {
@@ -47,6 +48,50 @@ export function conectarAis(opcoes: OpcoesAis): () => void {
   const liberar = setInterval(() => {
     if (navios.size > 0) onNavios([...navios.values()].slice(0, MAX_NAVIOS));
   }, 5_000);
+
+  const processar = (texto: string) => {
+    let msg: RelatoAis;
+    try {
+      msg = JSON.parse(texto) as RelatoAis;
+    } catch {
+      return;
+    }
+    if (msg?.MessageType !== "PositionReport" || !msg.MetaData) return;
+    const md = msg.MetaData;
+    if (typeof md.latitude !== "number" || typeof md.longitude !== "number") return;
+    const pr = msg.Message?.PositionReport;
+    const mmsi = String(md.MMSI ?? pr?.UserId ?? "");
+    if (!mmsi) return;
+    navios.set(mmsi, {
+      mmsi,
+      nome: (md.ShipName ?? "").trim(),
+      lng: md.longitude,
+      lat: md.latitude,
+      velocidade: typeof pr?.Sog === "number" ? pr.Sog : null,
+      rumo: typeof pr?.Cog === "number" && pr.Cog < 360 ? pr.Cog : null,
+      hora: md.time_utc ? new Date(md.time_utc).getTime() : Date.now(),
+    });
+  };
+
+  /** O AISStream entrega os relatos como quadros binários (UTF-8 JSON) na
+   * maioria dos navegadores — trata string, ArrayBuffer e Blob. */
+  const receber = (ev: MessageEvent) => {
+    const dados: unknown = ev.data;
+    if (typeof dados === "string") {
+      processar(dados);
+      return;
+    }
+    if (dados instanceof ArrayBuffer) {
+      processar(decodificador.decode(new Uint8Array(dados)));
+      return;
+    }
+    if (typeof Blob !== "undefined" && dados instanceof Blob) {
+      void dados
+        .text()
+        .then(processar)
+        .catch(() => {});
+    }
+  };
 
   const inscrever = () => {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
@@ -74,35 +119,15 @@ export function conectarAis(opcoes: OpcoesAis): () => void {
       opcoes.onStatus("erro");
       return;
     }
+    // Quadros binários chegam como ArrayBuffer (e não Blob), decodificáveis
+    // em memória sem I/O assíncrono.
+    ws.binaryType = "arraybuffer";
     ws.onopen = () => {
       tentativa = 0;
       opcoes.onStatus("ativo");
       inscrever();
     };
-    ws.onmessage = (ev) => {
-      if (typeof ev.data !== "string") return;
-      let msg: RelatoAis;
-      try {
-        msg = JSON.parse(ev.data) as RelatoAis;
-      } catch {
-        return;
-      }
-      if (msg?.MessageType !== "PositionReport" || !msg.MetaData) return;
-      const md = msg.MetaData;
-      if (typeof md.latitude !== "number" || typeof md.longitude !== "number") return;
-      const pr = msg.Message?.PositionReport;
-      const mmsi = String(md.MMSI ?? pr?.UserId ?? "");
-      if (!mmsi) return;
-      navios.set(mmsi, {
-        mmsi,
-        nome: (md.ShipName ?? "").trim(),
-        lng: md.longitude,
-        lat: md.latitude,
-        velocidade: typeof pr?.Sog === "number" ? pr.Sog : null,
-        rumo: typeof pr?.Cog === "number" && pr.Cog < 360 ? pr.Cog : null,
-        hora: md.time_utc ? new Date(md.time_utc).getTime() : Date.now(),
-      });
-    };
+    ws.onmessage = receber;
     ws.onclose = () => {
       if (fechado) return;
       tentativa++;

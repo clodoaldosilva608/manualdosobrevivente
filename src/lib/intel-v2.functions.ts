@@ -368,6 +368,47 @@ async function buscarGdelt(url: string): Promise<GdeltDoc> {
   }
 }
 
+/** Diagnóstico: testa cada consulta GDELT e devolve só contagens (nada de corpo). */
+export const diagNoticias = createServerFn({ method: "GET" }).handler(
+  async (): Promise<
+    Array<{ consulta: string; artigos: number; erro: string | null; ms: number }>
+  > => {
+    const consultas: Array<[string, string]> = [
+      ["flood", "flood"],
+      ["flood+sourcelang", "flood sourcelang:eng"],
+      ["or-group", CONSULTA_GDELT],
+      ["or+qualificador", `${CONSULTA_GDELT} (sourcelang:eng OR sourcelang:por)`],
+    ];
+    const saida: Array<{ consulta: string; artigos: number; erro: string | null; ms: number }> = [];
+    for (const [nome, consulta] of consultas) {
+      const comeco = Date.now();
+      try {
+        const doc = await buscarJson<GdeltDoc>(
+          "https://api.gdeltproject.org/api/v2/doc/doc?query=" +
+            encodeURIComponent(consulta) +
+            "&mode=ArtList&maxrecords=10&format=json&timespan=24h&sort=datedesc",
+          15_000,
+        );
+        saida.push({
+          consulta: nome,
+          artigos: doc.articles?.length ?? -1,
+          erro: null,
+          ms: Date.now() - comeco,
+        });
+      } catch (e) {
+        saida.push({
+          consulta: nome,
+          artigos: -1,
+          erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60),
+          ms: Date.now() - comeco,
+        });
+      }
+      await new Promise((r) => setTimeout(r, 5_500));
+    }
+    return saida;
+  },
+);
+
 export const fetchNoticias = createServerFn({ method: "GET" }).handler(
   async (): Promise<{ noticias: IntelNoticia[] }> => {
     const { noticias } = await comCache(

@@ -14,10 +14,21 @@ import { CENTRAIS_NUCLEARES } from "@/lib/intel-nuclear";
 import { ESTREITOS, PORTOS, ROTULO_ESTREITO, type NivelEstreito } from "@/lib/intel-maritimo";
 import { ROTULO_STATUS_NUCLEAR } from "@/lib/intel-nuclear";
 import { anelGeo } from "@/lib/intel-v2.functions";
+import {
+  CAMERAS,
+  ROTULO_CATEGORIA_CAMERA,
+  urlEmbedCamera,
+  urlPaginaCamera,
+  type IntelCamera,
+} from "@/lib/intel-cameras";
+import { CABOS, type IntelCabo } from "@/lib/intel-cables";
+import { centroidePais } from "@/lib/pais-centroides";
 import type {
   IntelAlerta,
   IntelIss,
   IntelNavio,
+  IntelNoticia,
+  IntelSatelite,
   IntelSnapshot,
   IntelVisibilidade,
   IntelVoo,
@@ -41,6 +52,11 @@ export const FONTES_INTEL = [
   "intel-estreito",
   "intel-porto",
   "intel-navio",
+  "intel-camera",
+  "intel-cabo",
+  "intel-cabo-ponto",
+  "intel-noticia",
+  "intel-sat",
 ] as const;
 
 const CAMADA_NOITE = "intel-noite-fill";
@@ -63,9 +79,17 @@ const CAMADA_ESTREITO_ANEL = "intel-estreito-anel";
 const CAMADA_ESTREITO_LABEL = "intel-estreito-label";
 const CAMADA_PORTO = "intel-porto-circle";
 const CAMADA_PORTO_LABEL = "intel-porto-label";
+const CAMADA_CAMERA = "intel-camera-symbol";
+const CAMADA_CABO = "intel-cabo-line";
+const CAMADA_CABO_PONTO = "intel-cabo-ponto-circle";
+const CAMADA_NOTICIA = "intel-noticia-circle";
+const CAMADA_SAT = "intel-sat-circle";
+const CAMADA_SAT_LABEL = "intel-sat-label";
 
 const CAMADAS_EM_ORDEM = [
   CAMADA_NOITE,
+  CAMADA_CABO,
+  CAMADA_CABO_PONTO,
   CAMADA_FOGO,
   CAMADA_ISS_PEGADA,
   CAMADA_EVENTO,
@@ -82,6 +106,10 @@ const CAMADAS_EM_ORDEM = [
   CAMADA_VOO,
   CAMADA_VOO_MIL,
   CAMADA_NAVIO,
+  CAMADA_CAMERA,
+  CAMADA_NOTICIA,
+  CAMADA_SAT,
+  CAMADA_SAT_LABEL,
   CAMADA_ISS_TRAJ,
   CAMADA_ISS,
   CAMADA_ISS_LABEL,
@@ -222,12 +250,39 @@ function iconeNavio(ctx: Ctx2D, cor: string) {
   ctx.stroke();
 }
 
+/** Câmera de vigilância (corpo + lente). */
+function iconeCamera(ctx: Ctx2D) {
+  ctx.fillStyle = "#F9A8D4";
+  ctx.strokeStyle = "#0A0A0A";
+  ctx.lineWidth = 1;
+  // corpo
+  ctx.beginPath();
+  ctx.roundRect(3, 8, 17, 12, 2.5);
+  ctx.fill();
+  ctx.stroke();
+  // lente
+  ctx.beginPath();
+  ctx.moveTo(20, 10);
+  ctx.lineTo(27, 5);
+  ctx.lineTo(27, 23);
+  ctx.lineTo(20, 18);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // ilhuz de gravação
+  ctx.fillStyle = "#0A0A0A";
+  ctx.beginPath();
+  ctx.arc(8, 14, 2, 0, 2 * Math.PI);
+  ctx.fill();
+}
+
 function garantirIcones(map: ML) {
   aplicar(map, "intel-ico-voo-civil", 30, (c) => iconeAviao(c, "#6FD3E8"));
   aplicar(map, "intel-ico-voo-mil", 30, (c) => iconeAviao(c, "#FF5C4D"));
   aplicar(map, "intel-ico-iss", 30, (c) => iconeIss(c));
   aplicar(map, "intel-ico-nuclear", 30, (c) => iconeTrefoil(c));
   aplicar(map, "intel-ico-navio", 30, (c) => iconeNavio(c, "#EAF6FF"));
+  aplicar(map, "intel-ico-camera", 30, (c) => iconeCamera(c));
 }
 
 // ---------------------------------------------------------------------------
@@ -243,11 +298,30 @@ export interface EntradaSincronizacaoIntel {
   iss: IntelIss | null;
   alertas: IntelAlerta[] | null;
   navios: IntelNavio[];
+  cameras: IntelCamera[];
+  cabos: IntelCabo[];
+  /** Manchetes GDELT brutas — geolocalizadas aqui pelo país de origem. */
+  noticias: IntelNoticia[] | null;
+  /** Satélites de observação propagados no aparelho (TLE/SGP4). */
+  satelites: IntelSatelite[];
 }
 
 /** Cria/atualiza as camadas de inteligência conforme visibilidade e dados. */
 export function sincronizarCamadasIntel(map: ML, entrada: EntradaSincronizacaoIntel) {
-  const { snapshot, conflitos, noite, vis, voos, iss, alertas, navios } = entrada;
+  const {
+    snapshot,
+    conflitos,
+    noite,
+    vis,
+    voos,
+    iss,
+    alertas,
+    navios,
+    cameras,
+    cabos,
+    noticias,
+    satelites,
+  } = entrada;
 
   garantirIcones(map);
 
@@ -471,6 +545,117 @@ export function sincronizarCamadasIntel(map: ML, entrada: EntradaSincronizacaoIn
       : fonteVazia(),
   );
 
+  // Câmeras públicas ao vivo (referência curada).
+  garantirFonte(map, "intel-camera", {
+    type: "FeatureCollection",
+    features: cameras.map((c) => ({
+      type: "Feature" as const,
+      properties: {
+        nome: c.nome,
+        canal: c.canal,
+        cidade: c.cidade,
+        pais: c.pais,
+        categoria: c.categoria,
+        videoId: c.videoId,
+      },
+      geometry: { type: "Point" as const, coordinates: [c.lng, c.lat] },
+    })),
+  });
+
+  // Cabos submarinos (rotas aproximadas) + pontos de desembarque.
+  garantirFonte(map, "intel-cabo", {
+    type: "FeatureCollection",
+    features: cabos.map((c) => ({
+      type: "Feature" as const,
+      properties: {
+        nome: c.nome,
+        ano: c.ano,
+        comprimentoKm: c.comprimentoKm,
+        desembarques: c.desembarques.join(" · "),
+      },
+      geometry: { type: "LineString" as const, coordinates: c.pontos },
+    })),
+  });
+  garantirFonte(map, "intel-cabo-ponto", {
+    type: "FeatureCollection",
+    features: cabos.flatMap((c) => {
+      const primeiro = c.pontos[0];
+      const ultimo = c.pontos[c.pontos.length - 1];
+      if (!primeiro || !ultimo) return [];
+      return [
+        {
+          type: "Feature" as const,
+          properties: {
+            nome: c.nome,
+            ano: c.ano,
+            comprimentoKm: c.comprimentoKm,
+            desembarques: c.desembarques.join(" · "),
+          },
+          geometry: { type: "Point" as const, coordinates: primeiro },
+        },
+        {
+          type: "Feature" as const,
+          properties: {
+            nome: c.nome,
+            ano: c.ano,
+            comprimentoKm: c.comprimentoKm,
+            desembarques: c.desembarques.join(" · "),
+          },
+          geometry: { type: "Point" as const, coordinates: ultimo },
+        },
+      ];
+    }),
+  });
+
+  // Notícias ao vivo (GDELT) geolocalizadas pelo país de origem.
+  garantirFonte(
+    map,
+    "intel-noticia",
+    noticias && noticias.length
+      ? {
+          type: "FeatureCollection",
+          features: noticias.flatMap((n) => {
+            const ponto = centroidePais(n.pais);
+            if (!ponto) return [];
+            return [
+              {
+                type: "Feature" as const,
+                properties: {
+                  titulo: n.titulo,
+                  fonte: n.fonte,
+                  pais: n.pais,
+                  hora: n.hora,
+                  url: n.url,
+                },
+                geometry: { type: "Point" as const, coordinates: ponto },
+              },
+            ];
+          }),
+        }
+      : fonteVazia(),
+  );
+
+  // Satélites de observação (propagação SGP4 local).
+  garantirFonte(
+    map,
+    "intel-sat",
+    satelites.length
+      ? {
+          type: "FeatureCollection",
+          features: satelites.map((s) => ({
+            type: "Feature" as const,
+            properties: {
+              nome: s.nome,
+              norad: s.norad,
+              altitudeKm: s.altitudeKm,
+              velocidadeKmh: s.velocidadeKmh,
+            },
+            geometry: { type: "Point" as const, coordinates: [s.lng, s.lat] },
+          })),
+        }
+      : fonteVazia(),
+  );
+
   // Remove camadas desligadas ou fora de ordem (recria se necessário).
   for (const id of CAMADAS_EM_ORDEM) {
     if (map.getLayer(id)) map.removeLayer(id);
@@ -487,6 +672,31 @@ export function sincronizarCamadasIntel(map: ML, entrada: EntradaSincronizacaoIn
       },
       "draw-line",
     );
+  }
+  if (vis.cabos) {
+    map.addLayer({
+      id: CAMADA_CABO,
+      type: "line",
+      source: "intel-cabo",
+      paint: {
+        "line-color": "#22D3EE",
+        "line-width": 1.4,
+        "line-dasharray": [3, 1.5],
+        "line-opacity": 0.75,
+      },
+    });
+    map.addLayer({
+      id: CAMADA_CABO_PONTO,
+      type: "circle",
+      source: "intel-cabo-ponto",
+      minzoom: 2,
+      paint: {
+        "circle-radius": 4,
+        "circle-color": "#67E8F9",
+        "circle-stroke-color": "#0B0B0B",
+        "circle-stroke-width": 1.2,
+      },
+    });
   }
   if (vis.incendios) {
     map.addLayer({
@@ -764,6 +974,68 @@ export function sincronizarCamadasIntel(map: ML, entrada: EntradaSincronizacaoIn
       },
     });
   }
+  if (vis.cameras) {
+    map.addLayer({
+      id: CAMADA_CAMERA,
+      type: "symbol",
+      source: "intel-camera",
+      minzoom: 3,
+      layout: {
+        "icon-image": "intel-ico-camera",
+        "icon-size": 0.6,
+        "icon-allow-overlap": true,
+      },
+      paint: {
+        "icon-opacity": 0.95,
+      },
+    });
+  }
+  if (vis.noticias) {
+    map.addLayer({
+      id: CAMADA_NOTICIA,
+      type: "circle",
+      source: "intel-noticia",
+      minzoom: 2,
+      paint: {
+        "circle-radius": 6,
+        "circle-color": "#FBBF24",
+        "circle-stroke-color": "#1A1A1A",
+        "circle-stroke-width": 1.5,
+        "circle-opacity": 0.85,
+      },
+    });
+  }
+  if (vis.satelites && satelites.length) {
+    map.addLayer({
+      id: CAMADA_SAT,
+      type: "circle",
+      source: "intel-sat",
+      paint: {
+        "circle-radius": 5,
+        "circle-color": "#E879F9",
+        "circle-stroke-color": "#0B0B0B",
+        "circle-stroke-width": 1.5,
+      },
+    });
+    map.addLayer({
+      id: CAMADA_SAT_LABEL,
+      type: "symbol",
+      source: "intel-sat",
+      layout: {
+        "text-field": ["get", "nome"],
+        "text-size": 9,
+        "text-offset": [0, 1.3],
+        "text-anchor": "top",
+        "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+        "text-allow-overlap": true,
+      },
+      paint: {
+        "text-color": "#F5D0FE",
+        "text-halo-color": "#0B0B0B",
+        "text-halo-width": 2,
+      },
+    });
+  }
   if (vis.satelites && iss) {
     map.addLayer({
       id: CAMADA_ISS_TRAJ,
@@ -969,6 +1241,48 @@ export function registrarPopupsIntel(map: ML) {
               ? `<div class="text-muted-foreground">${formatDateTime(Number(p["hora"]))}</div>`
               : "") +
             `<div class="text-muted-foreground">Fonte: AISStream.io</div>`,
+        );
+        break;
+      case CAMADA_CAMERA: {
+        const categoria = String(p["categoria"] ?? "cidade");
+        const videoId = typeof p["videoId"] === "string" ? p["videoId"] : "";
+        html = htmlPopup(
+          `<div class="font-bold text-pink-300">CÂMERA AO VIVO — ${ROTULO_CATEGORIA_CAMERA[categoria as keyof typeof ROTULO_CATEGORIA_CAMERA] ?? categoria}</div>` +
+            `<div class="font-bold">${p["nome"] ?? ""}</div>` +
+            `<div class="text-muted-foreground">${p["cidade"] ?? ""} · ${p["pais"] ?? ""} · canal ${p["canal"] ?? "—"}</div>` +
+            (videoId
+              ? `<iframe width="240" height="135" src="https://www.youtube.com/embed/${videoId}?rel=0" title="Câmera ao vivo" frameborder="0" allow="encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" loading="lazy" style="margin-top:4px;border:0;border-radius:6px"></iframe>`
+              : ""),
+          videoId ? `https://www.youtube.com/watch?v=${videoId}` : undefined,
+        );
+        break;
+      }
+      case CAMADA_CABO:
+      case CAMADA_CABO_PONTO:
+        html = htmlPopup(
+          `<div class="font-bold text-cyan-300">CABO SUBMARINO</div>` +
+            `<div class="font-bold">${p["nome"] ?? ""}</div>` +
+            `<div>${formatInteger(Number(p["comprimentoKm"] ?? 0))} km · em serviço desde ${formatInteger(Number(p["ano"] ?? 0))}</div>` +
+            `<div class="text-muted-foreground">Desembarques: ${p["desembarques"] ?? "—"}</div>` +
+            `<div class="text-muted-foreground">Rota aproximada — referência curada.</div>`,
+        );
+        break;
+      case CAMADA_NOTICIA:
+        html = htmlPopup(
+          `<div class="font-bold text-amber-300">MANCHETE — ${p["pais"] ?? ""}</div>` +
+            `<div>${p["titulo"] ?? ""}</div>` +
+            (p["hora"]
+              ? `<div class="text-muted-foreground">${formatDateTime(Number(p["hora"]))} · ${p["fonte"] ?? ""}</div>`
+              : "") +
+            `<div class="text-muted-foreground">Posição = país de origem do veículo (centroide) — fonte: GDELT</div>`,
+          typeof p["url"] === "string" && p["url"] ? p["url"] : undefined,
+        );
+        break;
+      case CAMADA_SAT:
+        html = htmlPopup(
+          `<div class="font-bold text-fuchsia-300">SATÉLITE — ${p["nome"] ?? ""}</div>` +
+            `<div>Altitude ${formatInteger(Number(p["altitudeKm"] ?? 0))} km · ${formatInteger(Number(p["velocidadeKmh"] ?? 0))} km/h</div>` +
+            `<div class="text-muted-foreground">NORAD ${p["norad"] ?? "—"} · posição propagada localmente (SGP4/TLE — Celestrak)</div>`,
         );
         break;
       default:

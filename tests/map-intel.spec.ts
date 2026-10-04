@@ -58,10 +58,10 @@ describe("Camadas de inteligência no mapa tático", () => {
     const page = await abrirMapaMobile(browser);
     await abrirCamadas(page);
 
-    // 11 camadas de inteligência com alternadores próprios.
+    // 14 camadas de inteligência com alternadores próprios.
     const alternadores = page.getByRole("switch", { name: /^Ativar camada / });
     await alternadores.first().waitFor({ state: "visible" });
-    expect(await alternadores.count()).toBe(11);
+    expect(await alternadores.count()).toBe(14);
 
     // Sismos vem ativo por padrão: a camada existe no mapa tático.
     await page.waitForFunction(
@@ -155,6 +155,80 @@ describe("Camadas de inteligência no mapa tático", () => {
             __tacticalMap?: { getLayer(id: string): unknown };
           }
         ).__tacticalMap?.getLayer("intel-navio-symbol"),
+      { timeout: 10_000 },
+    );
+
+    await page.context().close();
+  }, 180_000);
+
+  it("liga as novas camadas Câmeras, Cabos submarinos e Notícias no tático", async () => {
+    const page = await abrirMapaMobile(browser);
+    await abrirCamadas(page);
+
+    // Câmeras: dados curados locais — a camada nasce com ícone imediatamente.
+    const cameras = page.getByRole("switch", { name: "Ativar camada Câmeras ao vivo" });
+    await cameras.click();
+    await page.waitForFunction(
+      () =>
+        !!(
+          window as unknown as {
+            __tacticalMap?: { getLayer(id: string): unknown };
+          }
+        ).__tacticalMap?.getLayer("intel-camera-symbol"),
+      { timeout: 15_000 },
+    );
+
+    // Cabos submarinos: linha + pontos de desembarque.
+    const cabos = page.getByRole("switch", { name: "Ativar camada Cabos submarinos" });
+    await cabos.click();
+    await page.waitForFunction(
+      () =>
+        !!(
+          window as unknown as {
+            __tacticalMap?: { getLayer(id: string): unknown };
+          }
+        ).__tacticalMap?.getLayer("intel-cabo-line"),
+      { timeout: 15_000 },
+    );
+    expect(await camadaNoMapa(page, "intel-cabo-ponto-circle")).toBe(true);
+
+    // Notícias ao vivo: camada nasce (pontos dependem da coleta GDELT).
+    const noticias = page.getByRole("switch", { name: "Ativar camada Notícias ao vivo" });
+    await noticias.click();
+    await page.waitForFunction(
+      () =>
+        !!(
+          window as unknown as {
+            __tacticalMap?: { getLayer(id: string): unknown };
+          }
+        ).__tacticalMap?.getLayer("intel-noticia-circle"),
+      { timeout: 15_000 },
+    );
+
+    // Satélites: a camada extra (TLE) pode ficar vazia sem rede, mas a fonte
+    // da ISS dedicada segue existindo quando a camada Satélites está ligada.
+    expect(await camadaNoMapa(page, "intel-camera-symbol")).toBe(true);
+
+    // Desliga tudo e as camadas saem do mapa.
+    await cameras.click();
+    await page.waitForFunction(
+      () =>
+        !(
+          window as unknown as {
+            __tacticalMap?: { getLayer(id: string): unknown };
+          }
+        ).__tacticalMap?.getLayer("intel-camera-symbol"),
+      { timeout: 10_000 },
+    );
+    await cabos.click();
+    await noticias.click();
+    await page.waitForFunction(
+      () =>
+        !(
+          window as unknown as {
+            __tacticalMap?: { getLayer(id: string): unknown };
+          }
+        ).__tacticalMap?.getLayer("intel-cabo-line"),
       { timeout: 10_000 },
     );
 

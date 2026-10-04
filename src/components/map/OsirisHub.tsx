@@ -43,6 +43,7 @@ import {
   type IpInfo,
 } from "@/lib/osint.functions";
 import type { IntelIss, IntelSnapshot, IntelVisibilidade, IntelVoo } from "@/lib/intel.types";
+import { LINHAS_INTEL } from "@/components/map/intel-camadas-lista";
 import {
   formatDateTime,
   formatDegrees,
@@ -473,7 +474,7 @@ export function OsirisHub({
             <Layers className="h-4 w-4 shrink-0 text-tactical-orange" />
             <span className="mono text-[11px] font-bold uppercase">Camadas</span>
             <span className="mono ml-auto text-[10px] text-muted-foreground">
-              {formatInteger(camadasAtivas)}/11
+              {formatInteger(camadasAtivas)}/{formatInteger(LINHAS_INTEL.length)}
             </span>
             <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
           </button>

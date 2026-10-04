@@ -51,6 +51,26 @@ export interface LocalMochila {
   atualizada_em: string;
 }
 
+/**
+ * Conta de operador criada e guardada localmente (offline-first).
+ *
+ * O esquema espelha o perfil que um dia será sincronizado com a nuvem:
+ * quando houver banco de dados, cada conta local mapeia 1:1 para o usuário
+ * remoto (mesmo e-mail) e os dados do aparelho passam a subir sob esse id.
+ * A senha NUNCA é guardada — apenas o hash PBKDF2 (ver src/lib/conta.ts).
+ */
+export interface LocalConta {
+  id: string;
+  /** E-mail do operador — chave natural para a futura sincronização. */
+  email: string;
+  nome: string;
+  /** Hash da senha no formato "pbkdf2$iterações$sal$digest" (nunca a senha). */
+  senha_hash: string;
+  criada_em: string;
+  atualizada_em: string;
+  ultimo_acesso: string;
+}
+
 export interface LocalTileSource {
   id: string;
   user_id: string | null;
@@ -103,6 +123,7 @@ interface TacticalDB extends DBSchema {
   waypoints: { key: string; value: LocalWaypoint; indexes: { by_user: string } };
   gear: { key: string; value: LocalGearItem; indexes: { by_user: string } };
   mochilas: { key: string; value: LocalMochila };
+  contas: { key: string; value: LocalConta };
   tile_sources: { key: string; value: LocalTileSource };
   tiles: { key: string; value: CachedTile; indexes: { by_source: string } };
   areas: { key: string; value: CachedArea };
@@ -118,7 +139,7 @@ export function getDB() {
     return Promise.reject(new Error("IndexedDB not available on server"));
   }
   if (!dbPromise) {
-    dbPromise = openDB<TacticalDB>("tactical-gis", 3, {
+    dbPromise = openDB<TacticalDB>("tactical-gis", 4, {
       upgrade(db, oldVersion) {
         if (oldVersion < 1) {
           const wp = db.createObjectStore("waypoints", { keyPath: "id" });
@@ -137,6 +158,9 @@ export function getDB() {
         }
         if (oldVersion < 3 && !db.objectStoreNames.contains("mochilas")) {
           db.createObjectStore("mochilas", { keyPath: "id" });
+        }
+        if (oldVersion < 4 && !db.objectStoreNames.contains("contas")) {
+          db.createObjectStore("contas", { keyPath: "id" });
         }
       },
     });
@@ -222,6 +246,21 @@ export async function saveMochila(m: LocalMochila) {
 export async function deleteMochila(id: string) {
   const db = await getDB();
   await db.delete("mochilas", id);
+  notifyLocalChange();
+}
+
+export async function listContas(): Promise<LocalConta[]> {
+  const db = await getDB();
+  return db.getAll("contas");
+}
+export async function saveConta(c: LocalConta) {
+  const db = await getDB();
+  await db.put("contas", c);
+  notifyLocalChange();
+}
+export async function deleteConta(id: string) {
+  const db = await getDB();
+  await db.delete("contas", id);
   notifyLocalChange();
 }
 

@@ -77,7 +77,7 @@ export interface IntelVisibilidade {
   incendios: boolean;
   /** Voos ao vivo (ADS-B) — militares globais + civis perto do centro. */
   voos: boolean;
-  /** Estação Espacial Internacional (posição, trajetória e pegada). */
+  /** ISS + satélites de observação (TLE/Celestrak propagado no aparelho). */
   satelites: boolean;
   /** Alertas oficiais de desastre (GDACS). */
   alertas: boolean;
@@ -87,6 +87,12 @@ export interface IntelVisibilidade {
   maritimo: boolean;
   /** Navios ao vivo via AIS (requer chave gratuita do usuário). */
   navios: boolean;
+  /** Câmeras públicas ao vivo (webcams 24/7 — referência curada). */
+  cameras: boolean;
+  /** Cabos submarinos (rotas aproximadas — referência curada). */
+  cabos: boolean;
+  /** Manchetes GDELT geolocalizadas pelo país de origem do veículo. */
+  noticias: boolean;
 }
 
 export const INTEL_VIS_PADRAO: IntelVisibilidade = {
@@ -101,6 +107,9 @@ export const INTEL_VIS_PADRAO: IntelVisibilidade = {
   nuclear: false,
   maritimo: true,
   navios: false,
+  cameras: false,
+  cabos: false,
+  noticias: false,
 };
 
 /** Chaves de serviço do usuário — ficam somente no aparelho (IndexedDB). */
@@ -212,5 +221,20 @@ export interface IntelNavio {
   /** Rumo sobre o solo em graus. */
   rumo: number | null;
   /** Unix em milissegundos do último relato. */
+  hora: number;
+}
+
+/** Satélite em órbita propagado localmente a partir de TLEs (Celestrak). */
+export interface IntelSatelite {
+  /** Número NORAD do objeto. */
+  norad: number;
+  nome: string;
+  lng: number;
+  lat: number;
+  /** Altitude orbital em km. */
+  altitudeKm: number;
+  /** Velocidade orbital em km/h. */
+  velocidadeKmh: number;
+  /** Unix em milissegundos da época da propagação. */
   hora: number;
 }

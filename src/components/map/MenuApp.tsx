@@ -25,7 +25,7 @@ import {
   KeyRound,
   Layers,
   LayoutDashboard,
-  LogIn,
+  UserRound,
   Map,
   MapPin,
   Navigation2,
@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { ModoMapa } from "@/components/map/MapModeSwitch";
+import { LINHAS_INTEL } from "@/components/map/intel-camadas-lista";
 
 export type AcaoMenuMapa = "goto" | "measure" | "marcador" | "bussola" | "limpar" | "elementos";
 export type AcaoMenuOsiris =
@@ -73,7 +74,7 @@ const ROTAS: Array<ItemMenu & { to: string }> = [
   { to: "/dashboard", rotulo: "Painel", dica: "Resumo operacional", icone: LayoutDashboard },
   { to: "/offline", rotulo: "Offline", dica: "Mapas e dados para campo", icone: DownloadCloud },
   { to: "/settings", rotulo: "Ajustes", dica: "Configurações do aplicativo", icone: Settings },
-  { to: "/login", rotulo: "Conta", dica: "Entrar ou gerenciar a conta", icone: LogIn },
+  { to: "/conta", rotulo: "Conta", dica: "Perfil local do operador", icone: UserRound },
 ];
 
 /** Ferramentas do HUD tático — exigem o mapa nativo. */
@@ -101,7 +102,12 @@ const OSIRIS: Array<ItemMenu & { id: AcaoMenuOsiris }> = [
   { id: "visao", rotulo: "Visão Osiris", dica: "Globo 3D de inteligência global", icone: Globe2 },
   { id: "hub", rotulo: "Hub de inteligência", dica: "Centro de comando OSINT", icone: Radar },
   { id: "boletim", rotulo: "Boletim tático", dica: "Consolidado do momento", icone: Newspaper },
-  { id: "camadas", rotulo: "Camadas de inteligência", dica: "11 camadas ao vivo", icone: Layers },
+  {
+    id: "camadas",
+    rotulo: "Camadas de inteligência",
+    dica: `${LINHAS_INTEL.length} camadas ao vivo`,
+    icone: Layers,
+  },
   { id: "astro", rotulo: "Astronomia tática", dica: "Sol, lua e visibilidade", icone: Sunrise },
   { id: "iss", rotulo: "ISS em tempo real", dica: "Posição da estação espacial", icone: Satellite },
   { id: "ip", rotulo: "Investigar IP", dica: "Geolocalização e operadora", icone: Network },

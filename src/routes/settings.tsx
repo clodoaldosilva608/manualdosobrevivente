@@ -29,12 +29,21 @@ import {
   pushAll,
   pullAll,
 } from "@/lib/cloud-sync";
-import { CloudUpload, CloudDownload, Trash2, Upload, Download, KeyRound } from "lucide-react";
+import {
+  CloudUpload,
+  CloudDownload,
+  Trash2,
+  Upload,
+  Download,
+  KeyRound,
+  UserRound,
+} from "lucide-react";
 import { getReportSettings, saveReportSettings, sendReportNow } from "@/lib/report.functions";
 import { chavesServidor, type ChavesServidor } from "@/lib/intel.functions";
 import { BackupFolderCard } from "@/components/BackupFolderCard";
 import { ObsidianCard } from "@/components/ObsidianCard";
 import { usePwaInstall } from "@/lib/pwa";
+import { contaAtiva, type ContaLocal } from "@/lib/conta";
 
 interface ReportForm {
   enabled: boolean;
@@ -86,6 +95,7 @@ interface Counts {
 function Settings() {
   const [email, setEmail] = useState<string | null>(null);
   const [loadingSession, setLoadingSession] = useState(true);
+  const [contaLocal, setContaLocal] = useState<ContaLocal | null>(null);
   const [counts, setCounts] = useState<Counts | null>(null);
   const [lastSync, setLastSync] = useState<number | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -125,6 +135,18 @@ function Settings() {
     return () => {
       alive = false;
       sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    void contaAtiva()
+      .then((c) => {
+        if (alive) setContaLocal(c);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
     };
   }, []);
 
@@ -372,22 +394,34 @@ function Settings() {
       </header>
 
       <Section title="Conta">
-        {loadingSession ? (
-          <div className="text-sm text-muted-foreground">Verificando sessão…</div>
-        ) : email ? (
+        {contaLocal ? (
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <span className="mono text-sm break-all">{email}</span>
-            <Button variant="destructive" onClick={signOut} className="glove-tap shrink-0">
-              Sair
-            </Button>
+            <div className="min-w-0">
+              <p className="mono truncate text-sm font-bold" data-test="ajustes-conta-local">
+                {contaLocal.nome}{" "}
+                <span className="text-muted-foreground">· {contaLocal.email}</span>
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                Conta local deste aparelho — pronta para a nuvem quando o banco de dados existir.
+              </p>
+            </div>
+            <Link to="/conta" className="shrink-0">
+              <Button variant="outline" className="glove-tap">
+                <UserRound className="h-4 w-4" /> Gerenciar
+              </Button>
+            </Link>
           </div>
         ) : (
-          <div className="text-sm text-muted-foreground">
-            Não autenticado.{" "}
-            <Link to="/login" className="text-tactical-orange underline">
-              Entre
-            </Link>{" "}
-            para guardar waypoints, mochila e checklist na nuvem.
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              Nenhuma conta neste aparelho. Crie a sua conta local — ela fica guardada aqui,
+              funciona offline e estará pronta para sincronizar com a nuvem no futuro.
+            </p>
+            <Link to="/conta" className="shrink-0">
+              <Button className="glove-tap bg-tactical-orange text-background hover:bg-tactical-orange/90">
+                <UserRound className="h-4 w-4" /> Criar conta
+              </Button>
+            </Link>
           </div>
         )}
       </Section>
@@ -527,6 +561,26 @@ function Settings() {
       </Section>
 
       <Section title="Nuvem (opcional)">
+        <div className="rounded border border-border/70 px-3 py-2">
+          {loadingSession ? (
+            <p className="text-xs text-muted-foreground">Verificando sessão…</p>
+          ) : email ? (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="mono text-xs break-all">{email}</span>
+              <Button variant="destructive" size="sm" onClick={signOut} className="glove-tap">
+                Sair
+              </Button>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Sincronização entre aparelhos via Supabase (experimental):{" "}
+              <Link to="/login" className="text-tactical-orange underline">
+                entre com a conta de nuvem
+              </Link>
+              .
+            </p>
+          )}
+        </div>
         <p className="text-xs text-muted-foreground">
           Seus dados vivem neste aparelho. A nuvem só é usada se você ativar a sincronização e
           entrar com sua conta.

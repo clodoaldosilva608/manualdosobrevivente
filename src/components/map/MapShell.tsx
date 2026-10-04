@@ -93,11 +93,16 @@ import type {
   IntelIss,
   IntelNavio,
   IntelNoticia,
+  IntelSatelite,
   IntelSnapshot,
   IntelVisibilidade,
   IntelVoo,
 } from "@/lib/intel.types";
 import { sincronizarCamadasIntel, registrarPopupsIntel } from "@/components/map/intel-layers";
+import { CAMERAS } from "@/lib/intel-cameras";
+import { CABOS } from "@/lib/intel-cables";
+import { tleServidor } from "@/lib/satelite.functions";
+import { propagarSatelites, type TleSatelite } from "@/lib/satelite-propagacao";
 import { MapModeSwitch, type ModoMapa } from "@/components/map/MapModeSwitch";
 import { VisaoOsiris } from "@/components/map/VisaoOsiris";
 import type { VisOsiris } from "@/components/map/visao-osiris-camadas";
@@ -362,6 +367,9 @@ export default function MapShell() {
   const [ar, setAr] = useState<IntelAr | null>(null);
   const [navios, setNavios] = useState<IntelNavio[]>([]);
   const [statusAis, setStatusAis] = useState<StatusAis | "off">("off");
+  // Satélites de observação (TLE do servidor + propagação SGP4 no aparelho).
+  const [tles, setTles] = useState<TleSatelite[]>([]);
+  const [satelites, setSatelites] = useState<IntelSatelite[]>([]);
   // Chave AIS do servidor (usada quando o usuário não cadastrou a própria).
   const [chaveAisServidor, setChaveAisServidor] = useState("");
   const [boletimEm, setBoletimEm] = useState(0);
@@ -389,6 +397,8 @@ export default function MapShell() {
     iss: null as IntelIss | null,
     alertas: null as IntelAlerta[] | null,
     navios: [] as IntelNavio[],
+    noticias: null as IntelNoticia[] | null,
+    satelites: [] as IntelSatelite[],
   });
   useEffect(() => {
     intelRef.current = {
@@ -400,8 +410,10 @@ export default function MapShell() {
       iss,
       alertas,
       navios,
+      noticias,
+      satelites,
     };
-  }, [modoMapa, intel, noite, intelVis, voos, iss, alertas, navios]);
+  }, [modoMapa, intel, noite, intelVis, voos, iss, alertas, navios, noticias, satelites]);
 
   // Estado do desenho/waypoints para ressincronizar após trocas de estilo — o
   // styledata recria as fontes vazias e, sem isso, medições e waypoints
@@ -525,6 +537,10 @@ export default function MapShell() {
           iss: s.iss,
           alertas: s.alertas,
           navios: s.navios,
+          cameras: CAMERAS,
+          cabos: CABOS,
+          noticias: s.noticias,
+          satelites: s.satelites,
         });
       });
 
@@ -744,8 +760,12 @@ export default function MapShell() {
       iss,
       alertas,
       navios,
+      cameras: CAMERAS,
+      cabos: CABOS,
+      noticias,
+      satelites,
     });
-  }, [ready, modoMapa, intel, noite, intelVis, voos, iss, alertas, navios]);
+  }, [ready, modoMapa, intel, noite, intelVis, voos, iss, alertas, navios, noticias, satelites]);
 
   // Coleta periódica dos dados de inteligência enquanto alguma camada estiver
   // ativa (qualquer modo): snapshot consolidado (sismos/eventos/focos/Kp) +
@@ -806,6 +826,49 @@ export default function MapShell() {
       window.clearInterval(timer);
     };
   }, [intelVis.satelites, openSheet, callIss]);
+
+  // TLEs dos satélites de observação: o servidor busca no Celestrak com cache
+  // de 6 h — uma consulta por sessão basta enquanto a camada está ligada.
+  const callTle = useServerFn(tleServidor);
+  useEffect(() => {
+    if (!intelVis.satelites) return;
+    let vivo = true;
+    void callTle()
+      .then((c) => {
+        if (vivo) setTles(c.tles);
+      })
+      .catch(() => {});
+    const timer = window.setInterval(
+      () => {
+        void callTle()
+          .then((c) => {
+            if (vivo) setTles(c.tles);
+          })
+          .catch(() => {});
+      },
+      6 * 60 * 60 * 1000,
+    );
+    return () => {
+      vivo = false;
+      window.clearInterval(timer);
+    };
+  }, [intelVis.satelites, callTle]);
+
+  // Propagação SGP4 local: roda no aparelho a cada 30 s enquanto há TLEs —
+  // sem rede, as posições continuam se movendo (offline-friendly).
+  useEffect(() => {
+    if (!intelVis.satelites || !tles.length) return;
+    let vivo = true;
+    const propagar = () => {
+      if (vivo) setSatelites(propagarSatelites(tles, Date.now()));
+    };
+    propagar();
+    const timer = window.setInterval(propagar, 30_000);
+    return () => {
+      vivo = false;
+      window.clearInterval(timer);
+    };
+  }, [intelVis.satelites, tles]);
 
   // Manchetes globais (GDELT): ciclo lento — a fonte tem limite de requisições.
   useEffect(() => {

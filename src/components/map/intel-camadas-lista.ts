@@ -42,8 +42,8 @@ export const LINHAS_INTEL: LinhaIntel[] = [
   },
   {
     id: "satelites",
-    nome: "ISS (satélite)",
-    dica: "Estação Espacial Internacional · posição, trajetória e pegada",
+    nome: "Satélites ao vivo",
+    dica: "ISS (WhereTheISS.at) + Tiangong, Hubble, Landsat, Sentinel e NOAA (TLE/Celestrak)",
     cor: "#7DD3FC",
   },
   {
@@ -70,5 +70,23 @@ export const LINHAS_INTEL: LinhaIntel[] = [
     nome: "Navios ao vivo (AIS)",
     dica: "AISStream.io · transponders ao redor do mapa (chave do servidor ou pessoal em Ajustes)",
     cor: "#67E8F9",
+  },
+  {
+    id: "cameras",
+    nome: "Câmeras ao vivo",
+    dica: "Webcams públicas 24/7 (Brasil e mundo) — referência curada, vídeo no popup",
+    cor: "#F9A8D4",
+  },
+  {
+    id: "cabos",
+    nome: "Cabos submarinos",
+    dica: "Rotas aproximadas dos principais cabos de fibra — referência curada",
+    cor: "#22D3EE",
+  },
+  {
+    id: "noticias",
+    nome: "Notícias ao vivo",
+    dica: "GDELT · manchetes de emergência geolocalizadas pelo país do veículo",
+    cor: "#FBBF24",
   },
 ];

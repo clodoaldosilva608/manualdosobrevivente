@@ -17,11 +17,13 @@ import {
   listGear,
   listMochilas,
   listChecklist,
+  listContas,
   getSetting,
   setSetting,
   saveWaypoint,
   saveGear,
   saveMochila,
+  saveConta,
   putChecklistState,
 } from "@/lib/db";
 
@@ -31,7 +33,7 @@ export const BACKUP_ARQUIVO = "backup-manual-do-sobrevivente.json";
 export const BACKUP_ARQUIVO_ANTERIOR = "backup-manual-do-sobrevivente-anterior.json";
 export const LEIA_ME = "LEIA-ME.txt";
 const APP_ID = "manual-do-sobrevivente";
-const VERSAO_BACKUP = 2;
+const VERSAO_BACKUP = 3;
 
 /* Tipos mínimos da File System Access API (nem todos estão no lib.dom). */
 interface OpcoesDirectoryPicker {
@@ -126,16 +128,19 @@ export interface BundleBackup {
   mochilas: Array<Record<string, unknown>>;
   mochila: Array<Record<string, unknown>>;
   checklist: Array<Record<string, unknown>>;
+  /** Contas locais (com hash PBKDF2 — nunca a senha em claro). Desde a versão 3. */
+  contas?: Array<Record<string, unknown>>;
   preferencias: unknown;
   contagens: { waypoints: number; mochila: number; checklist: number };
 }
 
 export async function montarBundle(): Promise<BundleBackup> {
-  const [waypoints, mochila, mochilas, checklist, preferencias] = await Promise.all([
+  const [waypoints, mochila, mochilas, checklist, contas, preferencias] = await Promise.all([
     listWaypoints(),
     listGear(),
     listMochilas(),
     listChecklist(),
+    listContas(),
     getSetting("preferences"),
   ]);
   return {
@@ -146,6 +151,7 @@ export async function montarBundle(): Promise<BundleBackup> {
     mochilas: mochilas as unknown as Array<Record<string, unknown>>,
     mochila: mochila as unknown as Array<Record<string, unknown>>,
     checklist: checklist as unknown as Array<Record<string, unknown>>,
+    contas: contas as unknown as Array<Record<string, unknown>>,
     preferencias: preferencias ?? null,
     contagens: {
       waypoints: waypoints.length,
@@ -247,6 +253,8 @@ export interface ResultadoRestauracao {
   mochilas: number;
   mochila: number;
   checklist: number;
+  /** Contas locais importadas (0 quando o aparelho já tinha conta). */
+  contas: number;
   gerado_em: string | null;
 }
 
@@ -302,6 +310,18 @@ export async function restaurarDaPasta(
     });
     check++;
   }
+  // Contas: só entram se o aparelho não tiver nenhuma — a conta local atual
+  // sempre vence (evita sobrescrever o cadastro deste aparelho com o do backup).
+  let contasRestauradas = 0;
+  const locais = await listContas();
+  if (!locais.length) {
+    for (const bruto of bundle.contas ?? []) {
+      const c = bruto as unknown as Parameters<typeof saveConta>[0];
+      if (!c?.id || typeof c.email !== "string" || typeof c.senha_hash !== "string") continue;
+      await saveConta({ ...c });
+      contasRestauradas++;
+    }
+  }
   if (bundle.preferencias && typeof bundle.preferencias === "object") {
     await setSetting("preferences", bundle.preferencias);
   }
@@ -311,6 +331,7 @@ export async function restaurarDaPasta(
     mochilas,
     mochila: gear,
     checklist: check,
+    contas: contasRestauradas,
     gerado_em: bundle.gerado_em ?? null,
   };
 }

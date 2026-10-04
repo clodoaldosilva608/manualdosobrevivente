@@ -92,7 +92,7 @@ export function BackupFolderCard() {
     try {
       const r = await restaurarDaPasta(null);
       toast.success(
-        `Restaurado: ${formatInteger(r.waypoints)} waypoints, ${formatInteger(r.mochila)} itens, ${formatInteger(r.mochilas)} mochilas, ${formatInteger(r.checklist)} marcações`,
+        `Restaurado: ${formatInteger(r.waypoints)} waypoints, ${formatInteger(r.mochila)} itens, ${formatInteger(r.mochilas)} mochilas, ${formatInteger(r.checklist)} marcações${r.contas ? ` + conta local importada` : ""}`,
       );
     } catch (e) {
       toast.error("Falha ao restaurar", {

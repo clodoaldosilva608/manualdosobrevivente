@@ -5,7 +5,7 @@ import {
   Backpack,
   Siren,
   Settings,
-  LogIn,
+  UserRound,
   DownloadCloud,
   LayoutDashboard,
 } from "lucide-react";
@@ -51,12 +51,12 @@ export function AppNav() {
         })}
         <li className="hidden min-w-0 md:ml-auto md:flex md:items-center">
           <Link
-            to="/login"
+            to="/conta"
             title="Conta"
             aria-label="Conta"
             className="flex h-14 min-w-0 items-center justify-center px-1 text-muted-foreground hover:text-foreground mono text-[11px] uppercase md:glove-tap md:h-auto md:gap-2 md:px-3 md:text-sm"
           >
-            <LogIn className="h-5 w-5" />
+            <UserRound className="h-5 w-5" />
             <span className="hidden md:inline">Conta</span>
           </Link>
         </li>

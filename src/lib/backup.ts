@@ -37,7 +37,7 @@ interface OpcoesDirectoryPicker {
   mode?: "read" | "readwrite";
   startIn?: string;
 }
-type HandlePasta = FileSystemDirectoryHandle & {
+export type HandlePasta = FileSystemDirectoryHandle & {
   queryPermission?: (d: { mode: "read" | "readwrite" }) => Promise<PermissionState>;
   requestPermission?: (d: { mode: "read" | "readwrite" }) => Promise<PermissionState>;
 };
@@ -50,7 +50,8 @@ export function seletorPastaSuportado(): boolean {
   );
 }
 
-async function pegarPermissao(
+/** Verifica (e opcionalmente pede) permissão de leitura/escrita na pasta. */
+export async function pegarPermissao(
   handle: HandlePasta,
   solicitar: boolean,
 ): Promise<"granted" | "denied" | "prompt"> {
@@ -153,7 +154,12 @@ export function bundleEstaVazio(b: BundleBackup): boolean {
   return b.contagens.waypoints + b.contagens.mochila + b.contagens.checklist === 0;
 }
 
-async function escreverArquivo(handle: FileSystemDirectoryHandle, nome: string, conteudo: string) {
+/** Escreve um arquivo de texto dentro de uma pasta (cria/substitui). */
+export async function escreverArquivo(
+  handle: FileSystemDirectoryHandle,
+  nome: string,
+  conteudo: string,
+) {
   const arquivo = await handle.getFileHandle(nome, { create: true });
   const stream = await arquivo.createWritable();
   await stream.write(conteudo);

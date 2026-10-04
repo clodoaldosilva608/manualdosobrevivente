@@ -32,6 +32,7 @@ import {
 import { CloudUpload, CloudDownload, Trash2, Upload, Download, KeyRound } from "lucide-react";
 import { getReportSettings, saveReportSettings, sendReportNow } from "@/lib/report.functions";
 import { BackupFolderCard } from "@/components/BackupFolderCard";
+import { ObsidianCard } from "@/components/ObsidianCard";
 import { usePwaInstall } from "@/lib/pwa";
 
 interface ReportForm {
@@ -526,6 +527,8 @@ function Settings() {
       </Section>
 
       <BackupFolderCard />
+
+      <ObsidianCard />
 
       <Section title="Aplicativo">
         {instalado ? (

@@ -20,6 +20,7 @@ import {
   RefreshCw,
   Lock,
   Menu as MenuIcon,
+  NotebookPen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -51,6 +52,16 @@ import {
   type LocalWaypoint,
 } from "@/lib/db";
 import { fetchElevations } from "@/lib/elevation.functions";
+import {
+  conectarPastaObsidian,
+  estadoPastaObsidian,
+  notaBoletimMarkdown,
+  nomeArquivoSeguro,
+  obsidianSuportado,
+  salvarNotaObsidian,
+  SUBPASTA_BOLETINS,
+} from "@/lib/obsidian";
+import { downloadText } from "@/lib/gpx-kml";
 import CompassRose from "@/components/map/CompassRose";
 import MapaControles, { MapaControlesComSensor } from "@/components/map/mapa-controles";
 import {
@@ -1109,6 +1120,54 @@ export default function MapShell() {
     prefs.intelKeys.firms,
   ]);
 
+  /** Salva o boletim atual como nota Markdown no Obsidian (ou baixa .md). */
+  const salvarBoletimObsidian = useCallback(async () => {
+    try {
+      const markdown = notaBoletimMarkdown({
+        geradoEm: boletimEm || Date.now(),
+        intel,
+        ar,
+        alertas,
+        iss,
+        noticias,
+      });
+      const nome = nomeArquivoSeguro("boletim", { data: Date.now() });
+      let estado = await estadoPastaObsidian();
+      if (estado.estado !== "conectada" && obsidianSuportado()) {
+        const quer =
+          estado.estado === "sem-pasta"
+            ? window.confirm(
+                "Conectar ao Obsidian agora? O aplicativo criará a pasta “Manual do Sobrevivente” dentro da pasta que você escolher (de preferência o seu vault) e salvará o boletim lá.",
+              )
+            : window.confirm(
+                "A pasta do Obsidian aguarda permissão. Conceder agora e salvar o boletim?",
+              );
+        if (!quer) return;
+        if (estado.estado === "sem-pasta") {
+          await conectarPastaObsidian();
+        }
+        estado = await estadoPastaObsidian();
+      }
+      if (estado.estado === "conectada") {
+        await salvarNotaObsidian({
+          subpasta: SUBPASTA_BOLETINS,
+          nomeArquivo: nome,
+          markdown,
+        });
+        toast.success("Boletim salvo como nota no Obsidian");
+      } else {
+        downloadText(nome, markdown, "text/markdown");
+        toast.info(
+          "Este navegador não grava em pastas — o boletim foi baixado como arquivo .md (arraste para dentro do seu vault).",
+        );
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (!/abort/i.test(msg))
+        toast.error("Não foi possível salvar no Obsidian", { description: msg });
+    }
+  }, [boletimEm, intel, ar, alertas, iss, noticias]);
+
   const runElevation = async () => {
     if (drawCoords.length < 2) return;
     const sampled = samplePath(drawCoords, 50, 120);
@@ -1765,14 +1824,25 @@ export default function MapShell() {
             <span className="mono text-[10px] text-muted-foreground">
               {boletimEm ? `Conferido às ${formatTime(boletimEm)} · centro do mapa` : ""}
             </span>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="glove-tap mono text-[11px]"
-              onClick={carregarBoletim}
-            >
-              <RefreshCw className="mr-1 h-3.5 w-3.5" /> Atualizar
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="glove-tap mono text-[11px]"
+                data-test="boletim-obsidian"
+                onClick={() => void salvarBoletimObsidian()}
+              >
+                <NotebookPen className="mr-1 h-3.5 w-3.5" /> Obsidian
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="glove-tap mono text-[11px]"
+                onClick={carregarBoletim}
+              >
+                <RefreshCw className="mr-1 h-3.5 w-3.5" /> Atualizar
+              </Button>
+            </div>
           </div>
 
           <div className="mt-3 max-h-[62dvh] space-y-3 overflow-y-auto pr-1">

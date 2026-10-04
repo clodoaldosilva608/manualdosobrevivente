@@ -101,6 +101,21 @@ bun run build      # check:all + build de produção em .output/
   seção MAPA do cartão da bússola (`src/components/map/mapa-controles.tsx`,
   assinatura do sensor no componente folha via `MapaControlesComSensor`) e o
   chip `mapa-travado` permite ver/destravar com a bússola minimizada.
+- **Integração Obsidian** (`src/lib/obsidian.ts`, cartão em Ajustes): o app grava
+  notas Markdown direto no vault do usuário — o Obsidian reindexa a pasta
+  sozinho, sem plug-in e sem servidor. O fluxo segue o padrão do backup em
+  pasta (File System Access API, permissões via `pegarPermissao`/`escreverArquivo`
+  de `src/lib/backup.ts`): o usuário escolhe a pasta (de preferência o vault),
+  o app cria a subpasta "Manual do Sobrevivente" (Waypoints/, Boletins/,
+  Localizações/) e persiste o handle no IndexedDB (`obsidian-folder-handle`).
+  Degradê em três níveis: pasta conectada (Chrome/Edge PC+Android) → URI
+  `obsidian://new` (Obsidian instalado, texto curto) → baixar `.md` (universal).
+  Frontmatter das notas usa `location: "lat,lng"` (compatível com o plug-in
+  Map View). Pontos de gravação: cartão Obsidian (sincronizar waypoints),
+  botão "Obsidian" no boletim de inteligência e opção "Obsidian" na folha de
+  compartilhar (S.O.S). E2E em `tests/map-obsidian.spec.ts` substitui o
+  seletor por handles falsos + patch do IndexedDB (handle → descritor
+  serializável) — handles OPFS reais derrubam o Chromium headless.
 - **Segurança**: operações administrativas usam o cliente service role
   (`client.server.ts`) apenas em módulos `*.server.ts` — arquivos `*.functions.ts`
   e rotas vão para o bundle do cliente. Rotas autenticadas usam o middleware

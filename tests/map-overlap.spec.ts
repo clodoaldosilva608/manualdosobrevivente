@@ -147,6 +147,34 @@ describe("HUD do mapa em celular (390×844)", () => {
     await page.context().close();
   }, 120_000);
 
+  it("painel da bússola não cobre o HUD (painéis de cima, rail e navegação)", async () => {
+    const page = await abrirMapaMobile(browser);
+    await page.locator('[aria-label="Abrir bússola"]').click();
+    const painel = page.locator("div.compass-card").first();
+    await painel.waitFor({ state: "visible", timeout: 10_000 });
+    const retPainel = (await painel.boundingBox()) as Retangulo;
+    expect(retPainel).not.toBeNull();
+
+    const concorrentes = [
+      'div.hud-panel:has(span:text-is("CENTRO"))',
+      'div.hud-panel:has(span:text-is("MINHA POSIÇÃO"))',
+      'button[title="Camadas"]',
+      'button[title="Ir para"]',
+      'button[title="Medir"]',
+      'button[title="Marcador"]',
+      'button[title="Bússola"]',
+      'button[title="Limpar"]',
+      "nav",
+    ];
+    for (const seletor of concorrentes) {
+      const loc = page.locator(seletor).first();
+      const box = (await loc.boundingBox()) as Retangulo | null;
+      if (!box) continue;
+      expect(sobrepoe(retPainel, box), `painel da bússola sobrepõe ${seletor}`).toBe(false);
+    }
+    await page.context().close();
+  }, 180_000);
+
   it("declara o manifest e o ícone de instalação", async () => {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
     const page = await context.newPage();

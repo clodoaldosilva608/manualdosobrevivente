@@ -121,4 +121,95 @@ describe("bússola tática — miniatura funciona como a completa e mostra os as
     await page.getByText("Usar sensor do aparelho").waitFor({ state: "hidden", timeout: 5_000 });
     await page.context().close();
   }, 180_000);
+
+  it("a miniatura acompanha o sensor antes e depois de minimizar", async () => {
+    const page = await abrirMapaMobile(browser);
+    const sensor = page.locator('[data-test="bussola-sensor"]');
+    await sensor.waitFor({ state: "visible", timeout: 10_000 });
+    await sensor.click();
+    await page.locator('[data-test="bussola-sensor-on"]').waitFor({ state: "visible" });
+
+    // Antes de minimizar: leitura de orientação sintética muda a miniatura
+    // (alpha 90 → rumo 270).
+    await page.evaluate(() =>
+      window.dispatchEvent(
+        new DeviceOrientationEvent("deviceorientation", { alpha: 90, beta: 0, gamma: 0 }),
+      ),
+    );
+    await page.waitForFunction(
+      () =>
+        (
+          document.querySelector('[aria-label="Abrir bússola"] [data-test="bussola-leitura"]')
+            ?.textContent ?? ""
+        ).includes("270"),
+      null,
+      { timeout: 10_000 },
+    );
+
+    // Abre a bússola completa e minimiza de volta para a miniatura.
+    await page.locator('[aria-label="Abrir bússola"]').click();
+    const minimizar = page.getByRole("button", { name: "Minimizar bússola" });
+    await minimizar.waitFor({ state: "visible", timeout: 10_000 });
+    await minimizar.click();
+    await page
+      .locator('[aria-label="Abrir bússola"] [data-test="bussola-leitura"]')
+      .waitFor({ state: "visible", timeout: 10_000 });
+
+    // Depois de minimizar: continua acompanhando o sensor (alpha 180 → 180).
+    await page.evaluate(() =>
+      window.dispatchEvent(
+        new DeviceOrientationEvent("deviceorientation", { alpha: 180, beta: 0, gamma: 0 }),
+      ),
+    );
+    await page.waitForFunction(
+      () =>
+        (
+          document.querySelector('[aria-label="Abrir bússola"] [data-test="bussola-leitura"]')
+            ?.textContent ?? ""
+        ).includes("180"),
+      null,
+      { timeout: 10_000 },
+    );
+    await page.context().close();
+  }, 180_000);
+
+  it("acompanha o sensor mesmo com movimento reduzido (acessibilidade)", async () => {
+    const context = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      reducedMotion: "reduce",
+    });
+    const page = await context.newPage();
+    await page.goto(BASE, { waitUntil: "domcontentloaded" });
+    await page.waitForSelector(".maplibregl-canvas", { timeout: 30_000 });
+    const pular = page.getByRole("button", { name: "Pular configuração" });
+    const apareceu = await pular
+      .waitFor({ state: "visible", timeout: 6_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (apareceu) {
+      await pular.click();
+      await pular.waitFor({ state: "hidden" });
+    }
+    const sensor = page.locator('[data-test="bussola-sensor"]');
+    await sensor.waitFor({ state: "visible", timeout: 10_000 });
+    await sensor.click();
+    await page.locator('[data-test="bussola-sensor-on"]').waitFor({ state: "visible" });
+
+    // Sem laço de animação, a leitura ainda segue o sensor (instantânea).
+    await page.evaluate(() =>
+      window.dispatchEvent(
+        new DeviceOrientationEvent("deviceorientation", { alpha: 90, beta: 0, gamma: 0 }),
+      ),
+    );
+    await page.waitForFunction(
+      () =>
+        (
+          document.querySelector('[aria-label="Abrir bússola"] [data-test="bussola-leitura"]')
+            ?.textContent ?? ""
+        ).includes("270"),
+      null,
+      { timeout: 10_000 },
+    );
+    await context.close();
+  }, 180_000);
 });

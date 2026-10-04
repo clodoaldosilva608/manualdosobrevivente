@@ -75,7 +75,12 @@ export default function CompassRose({
   const dragRef = useRef<{ startAngle: number; startHeading: number } | null>(null);
   // Sensor do aparelho compartilhado: miniatura e bússola completa leem o
   // mesmo estado — configurado uma vez, funciona em todas.
-  const { sensorOn, rumoAparelho: deviceHeading, inclinacao: tilt } = useSensorBussola();
+  const {
+    sensorOn,
+    rumoAparelho: deviceHeading,
+    inclinacao: tilt,
+    ultimaLeitura,
+  } = useSensorBussola();
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -86,20 +91,24 @@ export default function CompassRose({
   const trueHeading = norm(deviceHeading ?? heading);
   const target = magnetic ? norm(trueHeading - declination) : trueHeading;
 
+  // Acessibilidade: com "reduzir movimento" ativo no aparelho o ponteiro
+  // acompanha o alvo instantaneamente — nunca congela.
+  const [reduzirMovimento, setReduzirMovimento] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sincronizar = () => setReduzirMovimento(mq.matches);
+    sincronizar();
+    mq.addEventListener?.("change", sincronizar);
+    return () => mq.removeEventListener?.("change", sincronizar);
+  }, []);
+
   // Ponteiro girando em tempo real: interpolação suave pelo caminho mais curto
   const [shown, setShown] = useState(target);
   const shownRef = useRef(target);
   const targetRef = useRef(target);
   targetRef.current = target;
   useEffect(() => {
-    const reduced =
-      typeof window !== "undefined" &&
-      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
-      shownRef.current = targetRef.current;
-      setShown(targetRef.current);
-      return;
-    }
+    if (reduzirMovimento) return;
     let raf = 0;
     const step = () => {
       const cur = shownRef.current;
@@ -114,7 +123,12 @@ export default function CompassRose({
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [reduzirMovimento]);
+  useEffect(() => {
+    if (!reduzirMovimento) return;
+    shownRef.current = target;
+    setShown(target);
+  }, [target, reduzirMovimento]);
 
   const [lng, lat] = center;
   const celestial = useMemo(() => getCelestial(lat, lng, now), [lat, lng, now]);
@@ -258,6 +272,19 @@ export default function CompassRose({
               stroke="#FF6B35"
               strokeOpacity="0.35"
             />
+            {/* sensor ativo: anel pulsante indica que o mostrador segue o aparelho */}
+            {sensorOn && (
+              <circle
+                cx="100"
+                cy="100"
+                r="95"
+                fill="none"
+                stroke="#FF6B35"
+                strokeOpacity="0.5"
+                strokeWidth="1.5"
+                className="sensor-glow"
+              />
+            )}
 
             {/* limbo rotativo */}
             <g style={{ transform: `rotate(${-shown}deg)`, transformOrigin: "100px 100px" }}>
@@ -521,6 +548,7 @@ export default function CompassRose({
       </div>
 
       <div
+        data-test="bussola-leitura"
         className={`mono font-bold text-tactical-orange leading-none ${
           isMini ? "text-sm" : isFull ? "text-4xl" : "text-2xl"
         }`}
@@ -553,8 +581,14 @@ export default function CompassRose({
           {sensorOn ? (
             <span
               data-test="bussola-sensor-on"
-              title="Sensor do aparelho ativo"
-              className="mono text-[8px] font-bold leading-none text-tactical-green"
+              title={
+                ultimaLeitura != null
+                  ? "Sensor do aparelho ativo — recebendo leituras"
+                  : "Sensor do aparelho ativo — aguardando leituras"
+              }
+              className={`mono text-[8px] font-bold leading-none text-tactical-green ${
+                ultimaLeitura != null ? "animate-pulse" : "opacity-70"
+              }`}
             >
               SEN
             </span>

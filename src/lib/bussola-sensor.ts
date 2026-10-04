@@ -20,9 +20,35 @@ export interface EstadoSensor {
   rumoAparelho: number | null;
   /** Inclinação (beta/gamma) para o nível de bolha. */
   inclinacao: InclinacaoAparelho | null;
+  /** Carimbo (Date.now) da última leitura recebida — indica sensor vivo. */
+  ultimaLeitura: number | null;
 }
 
-const ESTADO_INICIAL: EstadoSensor = { sensorOn: false, rumoAparelho: null, inclinacao: null };
+const ESTADO_INICIAL: EstadoSensor = {
+  sensorOn: false,
+  rumoAparelho: null,
+  inclinacao: null,
+  ultimaLeitura: null,
+};
+
+/** Chave da preferência "sensor habilitado pelo usuário" (sobrevive ao reload). */
+const CHAVE_SENSOR = "tgis:sensor-bussola";
+
+function sensorPreferido(): boolean {
+  try {
+    return localStorage.getItem(CHAVE_SENSOR) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function lembrarSensor() {
+  try {
+    localStorage.setItem(CHAVE_SENSOR, "1");
+  } catch {
+    /* armazenamento indisponível — o sensor vale só nesta sessão */
+  }
+}
 
 let estado: EstadoSensor = ESTADO_INICIAL;
 let listenerRegistrado = false;
@@ -57,13 +83,13 @@ function registrarOuvinteNativo() {
   listenerRegistrado = true;
   const tratar = (e: DeviceOrientationEvent & { webkitCompassHeading?: number }) => {
     const webkit = e.webkitCompassHeading;
-    const parcial: Partial<EstadoSensor> = {};
+    const parcial: Partial<EstadoSensor> = { ultimaLeitura: Date.now() };
     if (typeof webkit === "number") parcial.rumoAparelho = normalizar(webkit);
     else if (typeof e.alpha === "number") parcial.rumoAparelho = normalizar(360 - e.alpha);
     if (typeof e.beta === "number" && typeof e.gamma === "number") {
       parcial.inclinacao = { beta: e.beta, gamma: e.gamma };
     }
-    if (Object.keys(parcial).length > 0) definir(parcial);
+    definir(parcial);
   };
   window.addEventListener("deviceorientation", tratar as EventListener, true);
 }
@@ -89,8 +115,23 @@ export async function ativarSensorBussola(): Promise<boolean> {
     }
   }
   registrarOuvinteNativo();
+  lembrarSensor();
   definir({ sensorOn: true });
   return true;
+}
+
+/**
+ * Reativa o sensor no carregamento do app quando o usuário já o havia
+ * habilitado antes. No iOS a permissão concedida persiste entre sessões
+ * (requestPermission resolve "granted" sem gesto novo); no Android não há
+ * permissão a pedir. Se não for possível (permissão revogada ou gesto
+ * exigido), nada acontece — o botão SEN continua disponível.
+ */
+export async function reativarSensorSeConfigurado(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  if (estado.sensorOn) return true;
+  if (!sensorPreferido()) return false;
+  return ativarSensorBussola();
 }
 
 /** Hook de leitura reativa do estado compartilhado do sensor. */

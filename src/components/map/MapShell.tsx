@@ -36,6 +36,7 @@ import {
   bearingDeg,
 } from "@/lib/geo";
 import { magneticDeclination } from "@/lib/declination";
+import { reativarSensorSeConfigurado } from "@/lib/bussola-sensor";
 import {
   listWaypoints,
   saveWaypoint,
@@ -267,6 +268,11 @@ export default function MapShell() {
   const [center, setCenter] = useState<[number, number]>([-47.8822, -15.7942]);
 
   const [heading, setHeading] = useState(0);
+  // Sensor do aparelho: se o usuário já habilitou antes, religa sozinho ao
+  // abrir o app — a bússola configurada uma vez continua viva.
+  useEffect(() => {
+    void reativarSensorSeConfigurado();
+  }, []);
   const [tool, setTool] = useState<Tool>("none");
   const [drawCoords, setDrawCoords] = useState<[number, number][]>([]);
   const [waypoints, setWaypoints] = useState<LocalWaypoint[]>([]);
@@ -286,6 +292,15 @@ export default function MapShell() {
       /* armazenamento indisponível */
     }
   }, []);
+  // Esc na tela cheia devolve ao painel (comportamento padrão de modais).
+  useEffect(() => {
+    if (compassMode !== "full") return;
+    const aoTeclar = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setCompassMode("panel");
+    };
+    window.addEventListener("keydown", aoTeclar);
+    return () => window.removeEventListener("keydown", aoTeclar);
+  }, [compassMode, setCompassMode]);
   const [gotoInput, setGotoInput] = useState("");
   const [newMarker, setNewMarker] = useState<{
     lng: number;
@@ -1895,10 +1910,22 @@ export default function MapShell() {
         <div
           className={
             compassMode === "full"
-              ? "absolute inset-0 z-30 flex items-start justify-center bg-background/70 backdrop-blur-sm overflow-y-auto p-3 pb-24"
-              : `absolute right-2 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:bottom-6 z-30 ${
-                  elevationData.length > 1 || newMarker ? "hidden md:block" : "block"
-                }`
+              ? "absolute inset-0 z-30 flex items-start justify-center overflow-y-auto bg-black/60 p-3 pb-24 backdrop-blur-md"
+              : `absolute z-30 ${
+                  // Painel nasce abaixo do HUD superior (fixo em ~328px) para
+                  // nunca cobrir CENTRO/MINHA POSIÇÃO; no desktop volta à base.
+                  compassMode === "panel"
+                    ? "right-[5.5rem] top-[20.5rem] md:top-auto md:bottom-6"
+                    : "right-2 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:bottom-6"
+                } ${elevationData.length > 1 || newMarker ? "hidden md:block" : "block"}`
+          }
+          onClick={
+            compassMode === "full"
+              ? (e) => {
+                  // Tocar fora do cartão devolve ao painel flutuante.
+                  if (e.target === e.currentTarget) setCompassMode("panel");
+                }
+              : undefined
           }
         >
           <div
@@ -1906,47 +1933,51 @@ export default function MapShell() {
               compassMode === "mini"
                 ? "hud-panel rounded-full p-1.5 shadow-lg"
                 : compassMode === "panel"
-                  ? "hud-panel rounded-lg w-[min(72vw,18rem)] max-h-[calc(100dvh-10rem)] overflow-hidden shadow-xl"
-                  : "hud-panel rounded-lg p-3 w-full max-w-md shadow-xl"
+                  ? "compass-card compass-in flex w-[min(66vw,19rem)] flex-col max-h-[calc(100dvh-25rem)] overflow-hidden md:max-h-[calc(100dvh-25.5rem)]"
+                  : "compass-card compass-in w-full max-w-md p-4"
             }
           >
             <div
               className={`flex items-center justify-between gap-1 ${
-                compassMode === "panel" ? "sticky top-0 z-10 bg-card/95 p-2" : "mb-1"
+                compassMode === "panel"
+                  ? "px-3 pt-3 pb-1"
+                  : compassMode === "full"
+                    ? "mb-2"
+                    : "mb-1"
               }`}
             >
               <span className="mono text-[10px] uppercase tracking-widest text-tactical-orange">
                 {compassMode === "mini" ? "" : "Bússola"}
               </span>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 {compassMode !== "mini" && (
                   <button
                     type="button"
                     aria-label="Minimizar bússola"
-                    className="glove-tap rounded border border-border p-1 text-muted-foreground"
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-muted-foreground transition-colors hover:bg-white/10"
                     onClick={() => setCompassMode("mini")}
                   >
-                    <Minus className="h-3.5 w-3.5" />
+                    <Minus className="h-4 w-4" />
                   </button>
                 )}
                 {compassMode === "panel" && (
                   <button
                     type="button"
                     aria-label="Ver bússola em tela cheia"
-                    className="glove-tap rounded border border-tactical-orange/60 p-1 text-tactical-orange"
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-tactical-orange/50 bg-tactical-orange/10 text-tactical-orange transition-colors hover:bg-tactical-orange/20"
                     onClick={() => setCompassMode("full")}
                   >
-                    <Maximize2 className="h-3.5 w-3.5" />
+                    <Maximize2 className="h-4 w-4" />
                   </button>
                 )}
                 {compassMode === "full" && (
                   <button
                     type="button"
                     aria-label="Reduzir bússola"
-                    className="glove-tap rounded border border-tactical-orange/60 p-1 text-tactical-orange"
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-tactical-orange/50 bg-tactical-orange/10 text-tactical-orange transition-colors hover:bg-tactical-orange/20"
                     onClick={() => setCompassMode("panel")}
                   >
-                    <Minimize2 className="h-3.5 w-3.5" />
+                    <Minimize2 className="h-4 w-4" />
                   </button>
                 )}
               </div>
@@ -1979,11 +2010,7 @@ export default function MapShell() {
 
             {compassMode !== "mini" && (
               <div
-                className={
-                  compassMode === "panel"
-                    ? "overflow-y-auto p-2 pt-0 max-h-[calc(100dvh-12.5rem)]"
-                    : ""
-                }
+                className={compassMode === "panel" ? "min-h-0 flex-1 overflow-y-auto p-3 pt-1" : ""}
               >
                 <CompassRose
                   heading={heading}

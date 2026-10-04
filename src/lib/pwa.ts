@@ -6,15 +6,69 @@
  */
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 
+let atualizacaoPedida = false;
+let recarregou = false;
+let swEsperando: ServiceWorker | null = null;
+const assinantesVersao = new Set<() => void>();
+
+function notificarVersao() {
+  for (const fn of assinantesVersao) fn();
+}
+
 export function registerServiceWorker() {
   if (typeof window === "undefined") return;
   if (!("serviceWorker" in navigator)) return;
   if (!import.meta.env.PROD) return;
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {
-      /* instalação offline degradada — o app continua funcionando */
-    });
+    navigator.serviceWorker
+      .register("/sw.js", { scope: "/" })
+      .then((registro) => {
+        // Trabalhador já em espera: existe uma versão nova pronta para assumir.
+        if (registro.waiting && navigator.serviceWorker.controller) {
+          swEsperando = registro.waiting;
+          notificarVersao();
+        }
+        registro.addEventListener("updatefound", () => {
+          const novo = registro.installing;
+          if (!novo) return;
+          novo.addEventListener("statechange", () => {
+            if (novo.state === "installed" && navigator.serviceWorker.controller) {
+              swEsperando = novo;
+              notificarVersao();
+            }
+          });
+        });
+      })
+      .catch(() => {
+        /* instalação offline degradada — o app continua funcionando */
+      });
   });
+  // Depois que o novo trabalhador assumir (por conta do botão Atualizar),
+  // recarrega uma única vez para entrar na versão nova.
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!atualizacaoPedida || recarregou) return;
+    recarregou = true;
+    window.location.reload();
+  });
+}
+
+/** Estado da atualização do app: versão nova esperando + botão de aplicar. */
+export function useNovaVersao(): { disponivel: boolean; atualizar: () => void } {
+  const inscricao = useCallback((onChange: () => void) => {
+    assinantesVersao.add(onChange);
+    return () => assinantesVersao.delete(onChange);
+  }, []);
+  const disponivel = useSyncExternalStore(
+    inscricao,
+    () => swEsperando !== null,
+    () => false,
+  );
+  const atualizar = useCallback(() => {
+    if (!swEsperando) return;
+    atualizacaoPedida = true;
+    swEsperando.postMessage("skip-waiting");
+  }, []);
+  return { disponivel, atualizar };
 }
 
 /* ------------------------------------------------------------------ */

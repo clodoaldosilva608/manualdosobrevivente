@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import {
   Outlet,
@@ -10,13 +10,14 @@ import {
   ErrorComponentProps,
 } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 import appCss from "../styles.css?url";
 import { AppNav } from "@/components/AppNav";
 import { AutoCloudSync } from "@/components/AutoCloudSync";
 import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
-import { registerServiceWorker } from "@/lib/pwa";
+import { registerServiceWorker, useNovaVersao } from "@/lib/pwa";
 import { iniciarAutoBackup } from "@/lib/auto-backup";
 
 function NotFoundComponent() {
@@ -140,6 +141,26 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * Avisa que existe uma versão nova do app esperando e oferece aplicá-la na
+ * hora — evita o aparelho continuar rodando JavaScript antigo com o PWA em
+ * segundo plano.
+ */
+function AvisoNovaVersao() {
+  const { disponivel, atualizar } = useNovaVersao();
+  const mostrado = useRef(false);
+  useEffect(() => {
+    if (!disponivel || mostrado.current) return;
+    mostrado.current = true;
+    toast("Nova versão disponível", {
+      description: "O Manual foi atualizado nos bastidores.",
+      action: { label: "Atualizar agora", onClick: () => atualizar() },
+      duration: Infinity,
+    });
+  }, [disponivel, atualizar]);
+  return null;
+}
+
 function AuthListener() {
   const router = useRouter();
   const qc = useQueryClient();
@@ -162,6 +183,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthListener />
+      <AvisoNovaVersao />
       <AutoCloudSync />
       <WelcomeOnboarding />
       <div className="flex min-h-screen flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0 md:pt-14">

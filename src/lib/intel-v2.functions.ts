@@ -15,7 +15,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { IntelAlerta, IntelAr, IntelIss, IntelNoticia, IntelVoo } from "./intel.types";
-import { mapearNoticias, urlGdelt, VARIANTES_GDELT, type GdeltDoc } from "./noticias-gdelt";
+import {
+  CONSULTA_GDELT,
+  mapearNoticias,
+  urlGdelt,
+  VARIANTES_GDELT,
+  type GdeltDoc,
+} from "./noticias-gdelt";
 
 /** Busca JSON com tempo limite para não travar a resposta do servidor. */
 async function buscarJson<T>(url: string, timeoutMs = 12_000): Promise<T> {

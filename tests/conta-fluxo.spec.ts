@@ -18,6 +18,15 @@ async function abrirConta(browser: Browser): Promise<Page> {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
   await page.goto(`${BASE}/conta`, { waitUntil: "domcontentloaded" });
+  // Contexto novo = sem a flag "onboarding-done": o modal de boas-vindas abre
+  // ~900 ms depois do load e cobre o centro da página — dispensa-o antes de
+  // interagir (mesmo padrão dos demais specs).
+  const pular = page.getByRole("button", { name: "Pular configuração" });
+  const apareceu = await pular
+    .waitFor({ state: "visible", timeout: 6_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (apareceu) await pular.click();
   // O formulário de criação (ou o de entrar/perfil) confirma que o IndexedDB v4 abriu.
   await page.waitForSelector('[data-test="conta-form-criar"], [data-test="conta-perfil"]', {
     timeout: 20_000,

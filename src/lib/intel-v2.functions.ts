@@ -38,6 +38,7 @@ async function buscarJson<T>(url: string, timeoutMs = 12_000): Promise<T> {
 
 interface Slot<T> {
   em: number;
+  ttl: number;
   valor: T;
   bons: T;
 }
@@ -51,13 +52,26 @@ function cacheV2(): Map<string, Slot<unknown>> {
   return G.__msIntelV2Cache;
 }
 
-async function comCache<T>(chave: string, ttlMs: number, buscar: () => Promise<T>): Promise<T> {
+async function comCache<T>(
+  chave: string,
+  ttlMs: number,
+  buscar: () => Promise<T>,
+  eVazio?: (valor: T) => boolean,
+  ttlSeVazioMs = 60_000,
+): Promise<T> {
   const cache = cacheV2();
   const atual = cache.get(chave) as Slot<T> | undefined;
-  if (atual && Date.now() - atual.em < ttlMs) return atual.valor;
+  const ttlDoSlot = atual?.ttl ?? ttlMs;
+  if (atual && Date.now() - atual.em < ttlDoSlot) return atual.valor;
   try {
     const valor = await buscar();
-    cache.set(chave, { em: Date.now(), valor, bons: valor });
+    const vazio = eVazio ? eVazio(valor) : false;
+    cache.set(chave, {
+      em: Date.now(),
+      ttl: vazio ? ttlSeVazioMs : ttlMs,
+      valor,
+      bons: valor,
+    });
     return valor;
   } catch (erro) {
     if (atual) return atual.bons;
@@ -339,10 +353,41 @@ export const fetchAlertas = createServerFn({ method: "GET" }).handler(
 // ---------------------------------------------------------------------------
 
 const TTL_NOTICIAS = 300_000;
+// Resultado vazio costuma ser transitivo (limite 1 req/5 s por IP do GDELT,
+// ou a peculiaridade da API com consultas só de grupo OR): recolher logo.
+const TTL_NOTICIAS_VAZIAS = 60_000;
 const MAX_NOTICIAS = 14;
 
 const CONSULTA_GDELT =
   '("earthquake" OR "volcanic eruption" OR "wildfire" OR "flood" OR "evacuation" OR "typhoon" OR "hurricane" OR "airstrike" OR "armed clash")';
+
+// A API DOC 2.0 devolve {"articles":[]} para consultas que são só um grupo OR
+// de frases — exige pelo menos um qualificador obrigatório. Cada variante
+// adiciona um; a primeira que trouxer artigos vence.
+const VARIANTES_GDELT = [
+  "(sourcelang:eng OR sourcelang:por)",
+  "sourcelang:eng",
+  "sourcelang:spa",
+] as const;
+
+function urlGdelt(qualificador: string): string {
+  const consulta = `${CONSULTA_GDELT} ${qualificador}`.trim();
+  return (
+    "https://api.gdeltproject.org/api/v2/doc/doc?query=" +
+    encodeURIComponent(consulta) +
+    "&mode=ArtList&maxrecords=40&format=json&timespan=24h&sort=datedesc"
+  );
+}
+
+async function buscarGdelt(url: string): Promise<GdeltDoc> {
+  try {
+    return await buscarJson<GdeltDoc>(url, 15_000);
+  } catch {
+    // A GDELT limita 1 req/5 s por IP: uma única retentativa após 7 s.
+    await new Promise((r) => setTimeout(r, 7_000));
+    return buscarJson<GdeltDoc>(url, 15_000);
+  }
+}
 
 function parseGdeltData(s: string): number {
   // "20261003T083000Z" -> unix ms
@@ -364,37 +409,52 @@ interface GdeltDoc {
 
 export const fetchNoticias = createServerFn({ method: "GET" }).handler(
   async (): Promise<{ noticias: IntelNoticia[] }> => {
-    const { noticias } = await comCache("noticias", TTL_NOTICIAS, async () => {
-      const url =
-        "https://api.gdeltproject.org/api/v2/doc/doc?query=" +
-        encodeURIComponent(CONSULTA_GDELT) +
-        "&mode=ArtList&maxrecords=40&format=json&timespan=24h&sort=datedesc";
-      let doc: GdeltDoc;
-      try {
-        doc = await buscarJson<GdeltDoc>(url, 15_000);
-      } catch (e) {
-        // A GDELT limita 1 req/5 s por IP: uma única retentativa após 7 s.
-        await new Promise((r) => setTimeout(r, 7_000));
-        doc = await buscarJson<GdeltDoc>(url, 15_000);
-      }
-      const noticias: IntelNoticia[] = [];
-      const vistos = new Set<string>();
-      for (const a of doc.articles ?? []) {
-        if (!a.title || !a.url) continue;
-        const chave = a.title.slice(0, 80);
-        if (vistos.has(chave)) continue;
-        vistos.add(chave);
-        noticias.push({
-          titulo: a.title,
-          url: a.url,
-          fonte: a.domain ?? "—",
-          pais: a.sourcecountry ?? "",
-          hora: parseGdeltData(a.seendate ?? ""),
-        });
-        if (noticias.length >= MAX_NOTICIAS) break;
-      }
-      return { noticias };
-    });
+    const { noticias } = await comCache(
+      "noticias",
+      TTL_NOTICIAS,
+      async () => {
+        // Orçamento de tempo: serverless tem teto — só tenta a variante
+        // seguinte se ainda houver folga antes de mais uma retentativa.
+        const comeco = Date.now();
+        let doc: GdeltDoc | null = null;
+        for (const variante of VARIANTES_GDELT) {
+          // 1ª variante sempre roda; as seguintes só se ainda houver folga
+          // (serverless tem teto de tempo e cada tentativa pode custar ~37 s
+          // no pior caso: timeout 15 s + espera 7 s + timeout 15 s).
+          if (Date.now() - comeco > 6_000) break;
+          try {
+            const d = await buscarGdelt(urlGdelt(variante));
+            doc = d;
+            if ((d.articles ?? []).length > 0) break;
+          } catch {
+            // variante falhou — tenta a próxima
+          }
+        }
+        if (!doc) {
+          // Nada obtido (rede/limite): deixa o comCache devolver o último bom.
+          throw new Error("GDELT indisponível");
+        }
+        const noticias: IntelNoticia[] = [];
+        const vistos = new Set<string>();
+        for (const a of doc.articles ?? []) {
+          if (!a.title || !a.url) continue;
+          const chave = a.title.slice(0, 80);
+          if (vistos.has(chave)) continue;
+          vistos.add(chave);
+          noticias.push({
+            titulo: a.title,
+            url: a.url,
+            fonte: a.domain ?? "—",
+            pais: a.sourcecountry ?? "",
+            hora: parseGdeltData(a.seendate ?? ""),
+          });
+          if (noticias.length >= MAX_NOTICIAS) break;
+        }
+        return { noticias };
+      },
+      (v) => v.noticias.length === 0,
+      TTL_NOTICIAS_VAZIAS,
+    );
     return { noticias };
   },
 );

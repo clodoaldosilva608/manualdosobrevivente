@@ -15,13 +15,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { IntelAlerta, IntelAr, IntelIss, IntelNoticia, IntelVoo } from "./intel.types";
-import {
-  CONSULTA_GDELT,
-  mapearNoticias,
-  urlGdelt,
-  VARIANTES_GDELT,
-  type GdeltDoc,
-} from "./noticias-gdelt";
+import { mapearNoticias, urlGdelt, VARIANTES_GDELT, type GdeltDoc } from "./noticias-gdelt";
 
 /** Busca JSON com tempo limite para não travar a resposta do servidor. */
 async function buscarJson<T>(url: string, timeoutMs = 12_000): Promise<T> {
@@ -379,31 +373,31 @@ export const diagNoticias = createServerFn({ method: "GET" }).handler(
   async (): Promise<
     Array<{ consulta: string; artigos: number; erro: string | null; ms: number }>
   > => {
-    const consultas: Array<[string, string]> = [
-      ["flood", "flood"],
-      ["flood+sourcelang", "flood sourcelang:eng"],
-      ["or-group", CONSULTA_GDELT],
-      ["or+qualificador", `${CONSULTA_GDELT} (sourcelang:eng OR sourcelang:por)`],
+    const tentativas: Array<{ nome: string; url: string }> = [
+      // controle: formato mínimo comprovado (flood, sem timespan)
+      {
+        nome: "controle-flood",
+        url:
+          "https://api.gdeltproject.org/api/v2/doc/doc?query=" +
+          encodeURIComponent("flood") +
+          "&mode=ArtList&format=json&maxrecords=3",
+      },
+      ...VARIANTES_GDELT.map((v) => ({ nome: v.extra, url: urlGdelt(v) })),
     ];
     const saida: Array<{ consulta: string; artigos: number; erro: string | null; ms: number }> = [];
-    for (const [nome, consulta] of consultas) {
+    for (const t of tentativas) {
       const comeco = Date.now();
       try {
-        const doc = await buscarJson<GdeltDoc>(
-          "https://api.gdeltproject.org/api/v2/doc/doc?query=" +
-            encodeURIComponent(consulta) +
-            "&mode=ArtList&maxrecords=10&format=json&timespan=24h&sort=datedesc",
-          15_000,
-        );
+        const doc = await buscarJson<GdeltDoc>(t.url, 15_000);
         saida.push({
-          consulta: nome,
+          consulta: t.nome,
           artigos: doc.articles?.length ?? -1,
           erro: null,
           ms: Date.now() - comeco,
         });
       } catch (e) {
         saida.push({
-          consulta: nome,
+          consulta: t.nome,
           artigos: -1,
           erro: e instanceof Error ? e.message.slice(0, 60) : String(e).slice(0, 60),
           ms: Date.now() - comeco,

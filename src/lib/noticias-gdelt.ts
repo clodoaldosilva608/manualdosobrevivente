@@ -10,21 +10,36 @@ import type { IntelNoticia } from "./intel.types";
 export const CONSULTA_GDELT =
   '("earthquake" OR "volcanic eruption" OR "wildfire" OR "flood" OR "evacuation" OR "typhoon" OR "hurricane" OR "airstrike" OR "armed clash")';
 
-// A API DOC 2.0 devolve {"articles":[]} para consultas que são só um grupo OR
-// de frases — exige pelo menos um qualificador obrigatório. Cada variante
-// adiciona um; a primeira que trouxer artigos vence.
-export const VARIANTES_GDELT = [
-  "(sourcelang:eng OR sourcelang:por)",
-  "sourcelang:eng",
-  "sourcelang:spa",
-] as const;
+// A API DOC 2.0 é volátil em parâmetros (medido em produção, out/2026):
+// — "timespan=24h" devolve {"articles":[]} SEM EXCEÇÃO (o mesmo pedido sem
+//   timespan devolve artigos) — por isso NENHUMA variante manda timespan;
+// — consultas só de grupo OR também podem devolver vazio: um qualificador
+//   obrigatório (sourcelang) ajuda.
+// A 1ª variante tenta ordenar por data; a 2ª usa só os parâmetros mínimos
+// (formato comprovadamente estável) — a primeira que trouxer artigos vence.
+export interface VarianteGdelt {
+  consulta: string;
+  extra: string;
+}
 
-export function urlGdelt(qualificador: string): string {
-  const consulta = `${CONSULTA_GDELT} ${qualificador}`.trim();
+const QUALIFICADOR = "(sourcelang:eng OR sourcelang:por)";
+
+export const VARIANTES_GDELT: VarianteGdelt[] = [
+  {
+    consulta: `${CONSULTA_GDELT} ${QUALIFICADOR}`,
+    extra: "&mode=ArtList&maxrecords=40&format=json&sort=datedesc",
+  },
+  {
+    consulta: `${CONSULTA_GDELT} ${QUALIFICADOR}`,
+    extra: "&mode=ArtList&maxrecords=40&format=json",
+  },
+];
+
+export function urlGdelt(variante: VarianteGdelt): string {
   return (
     "https://api.gdeltproject.org/api/v2/doc/doc?query=" +
-    encodeURIComponent(consulta) +
-    "&mode=ArtList&maxrecords=40&format=json&timespan=24h&sort=datedesc"
+    encodeURIComponent(variante.consulta) +
+    variante.extra
   );
 }
 

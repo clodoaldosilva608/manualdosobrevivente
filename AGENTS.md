@@ -59,7 +59,11 @@ bun run build      # check:all + build de produção em .output/
   diretamente — exceção única: o WebSocket AIS (`src/lib/ais.ts`), que conecta
   direto a aisstream.io usando a chave pessoal do usuário ou a chave do
   servidor entregada pela server function `chavesServidor`
-  (`AISSTREAM_API_KEY`; `FIRMS_MAP_KEY` nunca sai do servidor). Novas camadas
+  (`AISSTREAM_API_KEY`; `FIRMS_MAP_KEY` nunca sai do servidor). As camadas de
+  inteligência são desenhadas no mapa tático em QUALQUER modo (a Visão Osiris
+  do globo cobre o mapa quando o embed funciona) e a coleta periódica roda
+  enquanto qualquer camada de `intelVis` estiver ativa; os toggles ficam na
+  folha "Camadas do mapa" dos dois modos. Novas camadas
   nativas entram em `src/components/map/intel-layers.ts` (ordem de
   empilhamento fixa documentada no topo do arquivo), com toggle em
   `LINHAS_INTEL` e visibilidade persistida em `intelVis` (usePreferences).

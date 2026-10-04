@@ -156,8 +156,18 @@ describe("aba Camadas (folha inferior)", () => {
     const ultima = await dialog.locator("section").last().boundingBox();
     expect(folha).not.toBeNull();
     expect(ultima).not.toBeNull();
-    expect(ultima!.y).toBeGreaterThanOrEqual(folha!.y - 1);
+    // O fim do conteúdo é alcançável e termina dentro da folha — seções podem
+    // ser mais altas que a própria folha em telas estreitas (a seção de
+    // inteligência tem 11 linhas), o que importa é alcançar e ver o fim.
     expect(ultima!.y + ultima!.height).toBeLessThanOrEqual(folha!.y + folha!.height + 1);
+    // Rolando de volta ao topo, a primeira seção volta a ficar visível.
+    await rolagem.evaluate((el) => {
+      el.scrollTop = 0;
+    });
+    await page.waitForTimeout(300);
+    const primeira = await dialog.locator("section").first().boundingBox();
+    expect(primeira).not.toBeNull();
+    expect(primeira!.y).toBeGreaterThanOrEqual(folha!.y - 1);
   }
 
   it("celular: cabe na tela, título visível e rola até o fim", async () => {

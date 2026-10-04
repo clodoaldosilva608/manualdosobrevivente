@@ -249,17 +249,23 @@ hidratado ao abrir o modo offline. A escolha do modo, das camadas nativas
 (`intelVis`) e das camadas da Visão Osiris (`osirisVis`) é persistida no banco
 local (IndexedDB) junto das demais preferências.
 
-### Chaves opcionais do usuário (Ajustes → Chaves de inteligência)
+### Chaves de inteligência (servidor ou pessoais em Ajustes)
 
-As chaves ficam **somente no aparelho** (IndexedDB) e podem ser cadastradas
-sem envolver o servidor:
+Duas camadas usam chaves gratuitas e podem funcionar sem nenhuma configuração
+do usuário quando o servidor as providencia:
 
-- **NASA FIRMS** (`firms.modaps.eosdis.nasa.gov`, conta Earthdata gratuita) —
-  ativa a camada de focos de calor; alternativa à variável `FIRMS_MAP_KEY` do
-  servidor.
-- **AISStream.io** (registro gratuito) — conecta o WebSocket de AIS no
-  navegador e mostra navios ao redor da área visível do mapa (camada
-  "Navios ao vivo").
+- **NASA FIRMS — focos de calor**: o servidor usa `FIRMS_MAP_KEY` (a chave
+  nunca chega ao navegador). O usuário também pode cadastrar a própria chave
+  em _Ajustes_ (fica salva somente no aparelho).
+- **AISStream.io — navios ao vivo**: a conexão WebSocket nasce no navegador;
+  quando o usuário não tem chave própria, o servidor entrega a
+  `AISSTREAM_API_KEY` pela server function `chavesServidor`. Sem nenhuma das
+  duas, a camada fica desligada e o campo em _Ajustes_ orienta o cadastro.
+
+As camadas de inteligência (sismos, eventos, focos, conflitos, voos, ISS,
+alertas, marítimo, nuclear, dia/noite e navios) são controladas na folha
+_Camadas do mapa_ (modo tático e Osiris) e desenhadas direto no mapa tático;
+a coleta roda em segundo plano enquanto qualquer camada estiver ativa.
 
 ## PWA, modo local e pasta de backup
 

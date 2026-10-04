@@ -97,11 +97,7 @@ import type {
   IntelVisibilidade,
   IntelVoo,
 } from "@/lib/intel.types";
-import {
-  sincronizarCamadasIntel,
-  removerCamadasIntel,
-  registrarPopupsIntel,
-} from "@/components/map/intel-layers";
+import { sincronizarCamadasIntel, registrarPopupsIntel } from "@/components/map/intel-layers";
 import { MapModeSwitch, type ModoMapa } from "@/components/map/MapModeSwitch";
 import { VisaoOsiris } from "@/components/map/VisaoOsiris";
 import type { VisOsiris } from "@/components/map/visao-osiris-camadas";
@@ -520,7 +516,6 @@ export default function MapShell() {
       map.on("styledata", () => {
         sincronizarDesenho(map);
         const s = intelRef.current;
-        if (s.modo !== "osiris") return;
         sincronizarCamadasIntel(map, {
           snapshot: s.snapshot,
           conflitos: CONFLITOS,
@@ -732,14 +727,11 @@ export default function MapShell() {
     });
   }, [baseEfetiva, ready, sincronizarDesenho]);
 
-  // Liga/desliga e alimenta as camadas de inteligência conforme o modo.
+  // Liga/desliga e alimenta as camadas de inteligência conforme a
+  // visibilidade — no tático e no Osiris (por trás do globo quando ele carrega).
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    if (modoMapa !== "osiris") {
-      removerCamadasIntel(map);
-      return;
-    }
     // Se o estilo ainda está processando (o app já foi liberado pelo timer
     // de segurança), o listener "styledata" sincroniza quando estiver pronto.
     if (!map.isStyleLoaded()) return;
@@ -755,10 +747,12 @@ export default function MapShell() {
     });
   }, [ready, modoMapa, intel, noite, intelVis, voos, iss, alertas, navios]);
 
-  // Coleta periódica dos dados de inteligência enquanto o modo Osiris está
-  // ativo: snapshot consolidado (sismos/eventos/focos/Kp) + voos + alertas.
+  // Coleta periódica dos dados de inteligência enquanto alguma camada estiver
+  // ativa (qualquer modo): snapshot consolidado (sismos/eventos/focos/Kp) +
+  // voos + alertas.
+  const algumaIntelAtiva = Object.values(intelVis).some(Boolean);
   useEffect(() => {
-    if (modoMapa !== "osiris") return;
+    if (!algumaIntelAtiva) return;
     let vivo = true;
     const offline = typeof navigator !== "undefined" && navigator.onLine === false;
     const carregar = async () => {
@@ -792,11 +786,11 @@ export default function MapShell() {
       window.clearInterval(timer);
       window.removeEventListener("online", aoVoltar);
     };
-  }, [modoMapa, callIntel, callVoos, callAlertas, prefs.intelKeys.firms, center]);
+  }, [algumaIntelAtiva, callIntel, callVoos, callAlertas, prefs.intelKeys.firms, center]);
 
-  // ISS: atualização rápida (posição muda ~7 km/s).
+  // ISS: atualização rápida (posição muda ~7 km/s) — camada ligada ou Hub aberto.
   useEffect(() => {
-    if (modoMapa !== "osiris") return;
+    if (!intelVis.satelites && openSheet !== "hub") return;
     let vivo = true;
     const carregar = () => {
       void callIss()
@@ -811,11 +805,11 @@ export default function MapShell() {
       vivo = false;
       window.clearInterval(timer);
     };
-  }, [modoMapa, callIss]);
+  }, [intelVis.satelites, openSheet, callIss]);
 
   // Manchetes globais (GDELT): ciclo lento — a fonte tem limite de requisições.
   useEffect(() => {
-    if (modoMapa !== "osiris") return;
+    if (!algumaIntelAtiva) return;
     let vivo = true;
     const carregar = () => {
       void callNoticias()
@@ -830,12 +824,12 @@ export default function MapShell() {
       vivo = false;
       window.clearInterval(timer);
     };
-  }, [modoMapa, callNoticias]);
+  }, [algumaIntelAtiva, callNoticias]);
 
-  // Cache offline: hidrata do IndexedDB ao entrar no modo e salva após coletas.
+  // Cache offline: hidrata do IndexedDB ao entrar no app e salva após coletas.
   const hidratadoRef = useRef(false);
   useEffect(() => {
-    if (modoMapa !== "osiris") return;
+    if (!algumaIntelAtiva) return;
     if (intel || voos || alertas || hidratadoRef.current) return;
     hidratadoRef.current = true;
     void getSetting<{
@@ -858,10 +852,10 @@ export default function MapShell() {
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modoMapa]);
+  }, [algumaIntelAtiva]);
 
   useEffect(() => {
-    if (modoMapa !== "osiris" || !intel) return;
+    if (!intel) return;
     void setSetting("intel-cache", { intel, voos, iss, alertas, noticias }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [intel]);
@@ -881,10 +875,11 @@ export default function MapShell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Navios ao vivo (AIS): só conecta com chave (pessoal ou do servidor) e camada ligada.
+  // Navios ao vivo (AIS): conecta com chave (pessoal ou do servidor) e camada
+  // ligada — em qualquer modo; no tático os pontos aparecem direto no mapa.
   useEffect(() => {
     const chave = prefs.intelKeys.ais.trim() || chaveAisServidor;
-    if (modoMapa !== "osiris" || !intelVis.navios || !chave || !ready) {
+    if (!intelVis.navios || !chave || !ready) {
       setStatusAis("off");
       return;
     }
@@ -932,7 +927,7 @@ export default function MapShell() {
       fecharAtual();
       setNavios([]);
     };
-  }, [modoMapa, intelVis.navios, prefs.intelKeys.ais, chaveAisServidor, ready]);
+  }, [intelVis.navios, prefs.intelKeys.ais, chaveAisServidor, ready]);
 
   // Terminador dia/noite recalculado a cada 10 minutos no modo Osiris.
   useEffect(() => {
@@ -1710,47 +1705,59 @@ export default function MapShell() {
               </p>
             </section>
 
-            {modoMapa === "osiris" && (
-              <section>
-                <div className="mono mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
-                  Camadas de inteligência
-                </div>
-                <div className="space-y-2">
-                  {LINHAS_INTEL.map((linha) => {
-                    const desabilitada =
-                      linha.id === "incendios" && intel !== null && !intel.incendiosDisponivel;
-                    return (
-                      <div
-                        key={linha.id}
-                        className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
-                      >
-                        <div className="min-w-0">
-                          <div className="text-sm">{linha.nome}</div>
-                          <div className="truncate text-[10px] text-muted-foreground">
-                            {desabilitada
-                              ? "Cadastre uma chave gratuita NASA FIRMS em Ajustes"
-                              : linha.dica}
-                          </div>
+            <section>
+              <div className="mono mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                Camadas de inteligência
+              </div>
+              <div className="space-y-2">
+                {LINHAS_INTEL.map((linha) => {
+                  const desabilitada =
+                    linha.id === "incendios" && intel !== null && !intel.incendiosDisponivel;
+                  return (
+                    <div
+                      key={linha.id}
+                      className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <div className="text-sm">{linha.nome}</div>
+                        <div className="truncate text-[10px] text-muted-foreground">
+                          {desabilitada
+                            ? "Sem dados agora — verifique a chave FIRMS (servidor ou Ajustes)"
+                            : linha.dica}
                         </div>
-                        <Switch
-                          checked={intelVis[linha.id]}
-                          disabled={desabilitada}
-                          aria-label={`Ativar camada ${linha.nome}`}
-                          onCheckedChange={(v) =>
-                            updatePrefs({ intelVis: { ...intelVis, [linha.id]: v } })
-                          }
-                        />
+                        {linha.id === "navios" && intelVis.navios && (
+                          <div
+                            className="mono mt-1 text-[10px] text-tactical-orange"
+                            data-test="ais-status"
+                          >
+                            {statusAis === "ativo"
+                              ? `Ao vivo — ${formatInteger(navios.length)} navios na área`
+                              : statusAis === "conectando"
+                                ? "Conectando ao AISStream…"
+                                : statusAis === "erro"
+                                  ? "Falha na conexão AIS — nova tentativa em instantes"
+                                  : ""}
+                          </div>
+                        )}
                       </div>
-                    );
-                  })}
-                </div>
-                {intelStatus === "erro" && (
-                  <p className="mt-2 text-[10px] text-muted-foreground">
-                    Sem conexão agora — as camadas mostram os últimos dados coletados.
-                  </p>
-                )}
-              </section>
-            )}
+                      <Switch
+                        checked={intelVis[linha.id]}
+                        disabled={desabilitada}
+                        aria-label={`Ativar camada ${linha.nome}`}
+                        onCheckedChange={(v) =>
+                          updatePrefs({ intelVis: { ...intelVis, [linha.id]: v } })
+                        }
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+              {intelStatus === "erro" && (
+                <p className="mt-2 text-[10px] text-muted-foreground">
+                  Sem conexão agora — as camadas mostram os últimos dados coletados.
+                </p>
+              )}
+            </section>
           </div>
         </SheetContent>
       </Sheet>

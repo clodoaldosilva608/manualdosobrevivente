@@ -2072,11 +2072,15 @@ export default function MapShell() {
             compassMode === "full"
               ? "absolute inset-0 z-30 flex items-start justify-center overflow-y-auto bg-black/60 p-3 pb-24 backdrop-blur-md"
               : `absolute z-30 ${
-                  // Painel nasce abaixo do HUD superior (fixo em ~328px) para
-                  // nunca cobrir CENTRO/MINHA POSIÇÃO; no desktop volta à base.
+                  // Painel esticado entre o HUD superior (top ~328px, nunca
+                  // cobre CENTRO/MINHA POSIÇÃO) e a base (acima da barra
+                  // inferior no celular e da atribuição no desktop); à
+                  // esquerda da trilha de ações. O cartão se adapta a telas
+                  // baixas e paisagem em vez de esmagar a rosa sob os
+                  // controles de rotação/posição.
                   compassMode === "panel"
-                    ? "right-[5.5rem] top-[20.5rem] md:top-auto md:bottom-6"
-                    : "right-2 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:bottom-6"
+                    ? "right-[5.5rem] top-[20.5rem] bottom-8 md:top-auto md:bottom-10"
+                    : "right-2 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:bottom-10"
                 } ${elevationData.length > 1 || newMarker ? "hidden md:block" : "block"}`
           }
           onClick={
@@ -2093,7 +2097,7 @@ export default function MapShell() {
               compassMode === "mini"
                 ? "hud-panel rounded-full p-1.5 shadow-lg"
                 : compassMode === "panel"
-                  ? "compass-card compass-in flex w-[min(66vw,19rem)] flex-col max-h-[calc(100dvh-25rem)] overflow-hidden md:max-h-[calc(100dvh-25.5rem)]"
+                  ? "compass-card compass-in flex w-[min(66vw,19rem)] flex-col max-h-full overflow-hidden md:max-h-[min(max(calc(100dvh-14rem),17rem),32rem)]"
                   : "compass-card compass-in flex w-full max-w-md flex-col overflow-hidden"
             }
           >
@@ -2191,23 +2195,23 @@ export default function MapShell() {
                   onRotate={(h) => mapRef.current?.rotateTo(h, { duration: 0 })}
                   onReset={() => mapRef.current?.rotateTo(0, { duration: 400 })}
                 />
+                {/* Rotação e posição rolam JUNTO com o conteúdo do cartão:
+                    fixos no rodapé eles esmagavam a rosa em telas baixas
+                    (o cartão inteiro ficava menor que cabeçalho + controles). */}
+                <MapaControlesComSensor
+                  className={
+                    compassMode === "panel"
+                      ? "mt-2 border-t border-white/10 pt-2.5"
+                      : "mt-3 border-t border-white/10 pt-3"
+                  }
+                  rotaciona={mapaRotaciona}
+                  onRotaciona={(v) => updatePrefs({ mapaRotaciona: v })}
+                  travado={posicaoTravada}
+                  centroAtual={center}
+                  onTravar={travarPosicao}
+                  onDestravar={destravarPosicao}
+                />
               </div>
-            )}
-
-            {compassMode !== "mini" && (
-              <MapaControlesComSensor
-                className={
-                  compassMode === "panel"
-                    ? "shrink-0 border-t border-white/10 px-3 pb-2.5 pt-2"
-                    : "shrink-0 border-t border-white/10 px-4 pb-4 pt-3"
-                }
-                rotaciona={mapaRotaciona}
-                onRotaciona={(v) => updatePrefs({ mapaRotaciona: v })}
-                travado={posicaoTravada}
-                centroAtual={center}
-                onTravar={travarPosicao}
-                onDestravar={destravarPosicao}
-              />
             )}
           </div>
         </div>

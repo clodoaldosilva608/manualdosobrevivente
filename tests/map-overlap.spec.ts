@@ -32,7 +32,12 @@ function sobrepoe(a: Retangulo, b: Retangulo): boolean {
 
 /** Abre o mapa em celular e dispensa o onboarding se ele aparecer. */
 async function abrirMapaMobile(browser: Browser): Promise<Page> {
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  return abrirMapa(browser, 390, 844);
+}
+
+/** Abre o mapa na resolução indicada e dispensa o onboarding se ele aparecer. */
+async function abrirMapa(browser: Browser, largura: number, altura: number): Promise<Page> {
+  const context = await browser.newContext({ viewport: { width: largura, height: altura } });
   const page = await context.newPage();
   await page.goto(BASE, { waitUntil: "domcontentloaded" });
   await page.waitForSelector(".maplibregl-canvas", { timeout: 30_000 });
@@ -46,6 +51,16 @@ async function abrirMapaMobile(browser: Browser): Promise<Page> {
     await pular.waitFor({ state: "hidden" });
   }
   return page;
+}
+
+/** Mede o cartão do painel e a janela de rolagem do conteúdo (rosa + controles). */
+async function medirPainel(page: Page) {
+  const painel = page.locator("div.compass-card").first();
+  await painel.waitFor({ state: "visible", timeout: 10_000 });
+  const retPainel = (await painel.boundingBox()) as Retangulo;
+  const area = page.locator("div.compass-card .overflow-y-auto").first();
+  const retArea = (await area.boundingBox()) as Retangulo;
+  return { painel, retPainel, retArea };
 }
 
 describe("HUD do mapa em celular (390×844)", () => {
@@ -194,4 +209,85 @@ describe("HUD do mapa em celular (390×844)", () => {
     expect((corpo.icons ?? []).length).toBeGreaterThanOrEqual(3);
     await context.close();
   }, 120_000);
+});
+
+describe("painel da bússola em telas baixas, paisagem e desktop", () => {
+  it("celular baixo (360×640): rosa visível e controles alcançados por rolagem", async () => {
+    const page = await abrirMapa(browser, 360, 640);
+    await page.locator('[aria-label="Abrir bússola"]').click();
+    const { retPainel, retArea } = await medirPainel(page);
+
+    // Regressão: com rodapé fixo, a rosa era esmagada a ~16px e os controles
+    // de rotação/posição tomavam o cartão.
+    expect(retArea.height, "janela da rosa com espaço útil").toBeGreaterThanOrEqual(140);
+    expect(retPainel.y).toBeGreaterThanOrEqual(0);
+    expect(retPainel.y + retPainel.height).toBeLessThanOrEqual(640);
+    const nav = (await page.locator("nav").boundingBox()) as Retangulo;
+    expect(sobrepoe(retPainel, nav), "painel sobrepõe a navegação").toBe(false);
+
+    // Controles de rotação/posição existem e rolam até ficarem dentro do cartão.
+    const controles = page.locator('[data-test="mapa-controles"]');
+    await page.evaluate(() => {
+      const area = document.querySelector("div.compass-card .overflow-y-auto") as HTMLElement;
+      area.scrollTop = area.scrollHeight;
+    });
+    await controles.waitFor({ state: "visible" });
+    const retControles = (await controles.boundingBox()) as Retangulo;
+    expect(
+      retControles.y >= retPainel.y - 1 &&
+        retControles.y + retControles.height <= retPainel.y + retPainel.height + 1,
+      "controles fora do cartão após rolar",
+    ).toBe(true);
+    await page.context().close();
+  }, 180_000);
+
+  it("paisagem de celular (844×390): o cartão não colapsa e cabe na tela", async () => {
+    const page = await abrirMapa(browser, 844, 390);
+    await page.locator('[aria-label="Abrir bússola"]').click();
+    const { retPainel, retArea } = await medirPainel(page);
+
+    // Regressão: com max-h negativo, o cartão colapsava a ~2px na paisagem.
+    expect(retPainel.height, "cartão com altura útil na paisagem").toBeGreaterThanOrEqual(240);
+    expect(retArea.height).toBeGreaterThanOrEqual(140);
+    expect(retPainel.y).toBeGreaterThanOrEqual(0);
+    expect(retPainel.y + retPainel.height).toBeLessThanOrEqual(390);
+    expect(retPainel.x).toBeGreaterThanOrEqual(0);
+    expect(retPainel.x + retPainel.width).toBeLessThanOrEqual(844);
+    await page.context().close();
+  }, 180_000);
+
+  it("desktop (1440×900): não cobre trilha de ações nem controles nativos", async () => {
+    const page = await abrirMapa(browser, 1440, 900);
+    await page.locator('[aria-label="Abrir bússola"]').click();
+    const { retPainel } = await medirPainel(page);
+
+    for (const titulo of [
+      "Osiris",
+      "Boletim",
+      "Camadas",
+      "Ir para",
+      "Medir",
+      "Marcador",
+      "Bússola",
+      "Limpar",
+    ]) {
+      const botao = page.locator(`button[title="${titulo}"]`).first();
+      const box = (await botao.boundingBox()) as Retangulo | null;
+      if (!box) continue;
+      expect(sobrepoe(retPainel, box), `painel sobrepõe o botão ${titulo}`).toBe(false);
+    }
+
+    // Controles nativos do MapLibre (rotação, posição, escala e atribuição).
+    const controles = await page.evaluate(() =>
+      [...document.querySelectorAll(".maplibregl-ctrl")]
+        .map((e) => e.getBoundingClientRect())
+        .filter((r) => r.width > 0 && r.height > 0)
+        .map((r) => ({ x: r.left, y: r.top, width: r.width, height: r.height })),
+    );
+    expect(controles.length, "controles nativos presentes").toBeGreaterThan(0);
+    for (const c of controles) {
+      expect(sobrepoe(retPainel, c), "painel sobrepõe controle nativo do mapa").toBe(false);
+    }
+    await page.context().close();
+  }, 180_000);
 });

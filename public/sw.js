@@ -10,7 +10,7 @@
  * Bump de versão: altere VERSAO ao mudar a lógica deste arquivo — os caches
  * antigos são apagados na ativação.
  */
-const VERSAO = "v12";
+const VERSAO = "v13";
 const CACHE_SHELL = `shell-${VERSAO}`;
 const CACHE_ASSETS = `assets-${VERSAO}`;
 const CACHE_RUNTIME = `runtime-${VERSAO}`;
@@ -19,11 +19,7 @@ const SHELL_URL = "/";
 const MAX_ASSETS = 120;
 const MAX_RUNTIME = 400;
 
-const HOSTS_DE_TILES = [
-  "tile.opentopomap.org",
-  "openstreetmap.org",
-  "server.arcgisonline.com",
-];
+const HOSTS_DE_TILES = ["tile.opentopomap.org", "openstreetmap.org", "server.arcgisonline.com"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

@@ -32,9 +32,23 @@ export interface LocalGearItem {
   notes?: string | null;
   expires_at?: string | null;
   packed: boolean;
+  /** Mochila à qual o item pertence (somente local — não vai para a nuvem). */
+  mochila_id?: string | null;
   created_at: string;
   updated_at: string;
   dirty?: boolean;
+}
+
+export interface LocalMochila {
+  id: string;
+  nome: string;
+  descricao: string;
+  /** Limite de peso empacotado, em gramas. */
+  limite_g: number;
+  /** Identificador do modelo de origem ("8h"|"12h"|"48h"|"72h"|"300h") ou null para personalizada. */
+  modelo: string | null;
+  criada_em: string;
+  atualizada_em: string;
 }
 
 export interface LocalTileSource {
@@ -88,6 +102,7 @@ export interface ManualAsset {
 interface TacticalDB extends DBSchema {
   waypoints: { key: string; value: LocalWaypoint; indexes: { by_user: string } };
   gear: { key: string; value: LocalGearItem; indexes: { by_user: string } };
+  mochilas: { key: string; value: LocalMochila };
   tile_sources: { key: string; value: LocalTileSource };
   tiles: { key: string; value: CachedTile; indexes: { by_source: string } };
   areas: { key: string; value: CachedArea };
@@ -103,7 +118,7 @@ export function getDB() {
     return Promise.reject(new Error("IndexedDB not available on server"));
   }
   if (!dbPromise) {
-    dbPromise = openDB<TacticalDB>("tactical-gis", 2, {
+    dbPromise = openDB<TacticalDB>("tactical-gis", 3, {
       upgrade(db, oldVersion) {
         if (oldVersion < 1) {
           const wp = db.createObjectStore("waypoints", { keyPath: "id" });
@@ -119,6 +134,9 @@ export function getDB() {
         }
         if (oldVersion < 2 && !db.objectStoreNames.contains("manual_assets")) {
           db.createObjectStore("manual_assets", { keyPath: "slug" });
+        }
+        if (oldVersion < 3 && !db.objectStoreNames.contains("mochilas")) {
+          db.createObjectStore("mochilas", { keyPath: "id" });
         }
       },
     });
@@ -154,7 +172,12 @@ export async function deleteManualAssets() {
 
 export async function clearLocalData() {
   const db = await getDB();
-  await Promise.all([db.clear("waypoints"), db.clear("gear"), db.clear("checklist")]);
+  await Promise.all([
+    db.clear("waypoints"),
+    db.clear("gear"),
+    db.clear("mochilas"),
+    db.clear("checklist"),
+  ]);
 }
 
 export async function listWaypoints(): Promise<LocalWaypoint[]> {
@@ -184,6 +207,21 @@ export async function saveGear(g: LocalGearItem) {
 export async function deleteGear(id: string) {
   const db = await getDB();
   await db.delete("gear", id);
+  notifyLocalChange();
+}
+
+export async function listMochilas(): Promise<LocalMochila[]> {
+  const db = await getDB();
+  return db.getAll("mochilas");
+}
+export async function saveMochila(m: LocalMochila) {
+  const db = await getDB();
+  await db.put("mochilas", m);
+  notifyLocalChange();
+}
+export async function deleteMochila(id: string) {
+  const db = await getDB();
+  await db.delete("mochilas", id);
   notifyLocalChange();
 }
 

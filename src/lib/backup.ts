@@ -15,11 +15,13 @@
 import {
   listWaypoints,
   listGear,
+  listMochilas,
   listChecklist,
   getSetting,
   setSetting,
   saveWaypoint,
   saveGear,
+  saveMochila,
   putChecklistState,
 } from "@/lib/db";
 
@@ -29,7 +31,7 @@ export const BACKUP_ARQUIVO = "backup-manual-do-sobrevivente.json";
 export const BACKUP_ARQUIVO_ANTERIOR = "backup-manual-do-sobrevivente-anterior.json";
 export const LEIA_ME = "LEIA-ME.txt";
 const APP_ID = "manual-do-sobrevivente";
-const VERSAO_BACKUP = 1;
+const VERSAO_BACKUP = 2;
 
 /* Tipos mínimos da File System Access API (nem todos estão no lib.dom). */
 interface OpcoesDirectoryPicker {
@@ -121,6 +123,7 @@ export interface BundleBackup {
   versao: number;
   gerado_em: string;
   waypoints: Array<Record<string, unknown>>;
+  mochilas: Array<Record<string, unknown>>;
   mochila: Array<Record<string, unknown>>;
   checklist: Array<Record<string, unknown>>;
   preferencias: unknown;
@@ -128,9 +131,10 @@ export interface BundleBackup {
 }
 
 export async function montarBundle(): Promise<BundleBackup> {
-  const [waypoints, mochila, checklist, preferencias] = await Promise.all([
+  const [waypoints, mochila, mochilas, checklist, preferencias] = await Promise.all([
     listWaypoints(),
     listGear(),
+    listMochilas(),
     listChecklist(),
     getSetting("preferences"),
   ]);
@@ -139,6 +143,7 @@ export async function montarBundle(): Promise<BundleBackup> {
     versao: VERSAO_BACKUP,
     gerado_em: new Date().toISOString(),
     waypoints: waypoints as unknown as Array<Record<string, unknown>>,
+    mochilas: mochilas as unknown as Array<Record<string, unknown>>,
     mochila: mochila as unknown as Array<Record<string, unknown>>,
     checklist: checklist as unknown as Array<Record<string, unknown>>,
     preferencias: preferencias ?? null,
@@ -239,6 +244,7 @@ function textoLeiaMe(): string {
 
 export interface ResultadoRestauracao {
   waypoints: number;
+  mochilas: number;
   mochila: number;
   checklist: number;
   gerado_em: string | null;
@@ -271,6 +277,13 @@ export async function restaurarDaPasta(
     await saveWaypoint({ ...r, dirty: false });
     wp++;
   }
+  let mochilas = 0;
+  for (const bruto of bundle.mochilas ?? []) {
+    const m = bruto as unknown as Parameters<typeof saveMochila>[0];
+    if (!m?.id || typeof m.nome !== "string") continue;
+    await saveMochila({ ...m, dirty: false } as Parameters<typeof saveMochila>[0]);
+    mochilas++;
+  }
   let gear = 0;
   for (const bruto of bundle.mochila ?? []) {
     const g = bruto as unknown as Parameters<typeof saveGear>[0];
@@ -293,7 +306,13 @@ export async function restaurarDaPasta(
     await setSetting("preferences", bundle.preferencias);
   }
 
-  return { waypoints: wp, mochila: gear, checklist: check, gerado_em: bundle.gerado_em ?? null };
+  return {
+    waypoints: wp,
+    mochilas,
+    mochila: gear,
+    checklist: check,
+    gerado_em: bundle.gerado_em ?? null,
+  };
 }
 
 export async function obterUltimoBackupAt(): Promise<number | null> {

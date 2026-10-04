@@ -117,7 +117,8 @@ export async function pullCloudToLocal(
     const row = r as unknown as LocalGearItem;
     const local = gearMap.get(row.id);
     if (local && new Date(local.updated_at) >= new Date(row.updated_at)) continue;
-    await saveGear({ ...row, dirty: false });
+    // mochila_id é somente local (não existe na nuvem): preserva o agrupamento.
+    await saveGear({ ...row, mochila_id: local?.mochila_id ?? null, dirty: false });
     gearCount++;
   }
 

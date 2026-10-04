@@ -76,7 +76,7 @@ import {
 } from "@/lib/format";
 import { useServerFn } from "@tanstack/react-start";
 import { usePreferences } from "@/hooks/usePreferences";
-import { fetchIntelSnapshot } from "@/lib/intel.functions";
+import { chavesServidor, fetchIntelSnapshot } from "@/lib/intel.functions";
 import {
   fetchVoos,
   fetchIss,
@@ -366,6 +366,8 @@ export default function MapShell() {
   const [ar, setAr] = useState<IntelAr | null>(null);
   const [navios, setNavios] = useState<IntelNavio[]>([]);
   const [statusAis, setStatusAis] = useState<StatusAis | "off">("off");
+  // Chave AIS do servidor (usada quando o usuário não cadastrou a própria).
+  const [chaveAisServidor, setChaveAisServidor] = useState("");
   const [boletimEm, setBoletimEm] = useState(0);
   // Seção do Hub Osiris aberta diretamente pelas ferramentas da plataforma.
   const [hubSecao, setHubSecao] = useState<string | undefined>(undefined);
@@ -375,6 +377,7 @@ export default function MapShell() {
   const callAlertas = useServerFn(fetchAlertas);
   const callNoticias = useServerFn(fetchNoticias);
   const callAr = useServerFn(fetchAr);
+  const callChaves = useServerFn(chavesServidor);
 
   // No modo Osiris o mapa usa o estilo Tático Escuro como base.
   const baseEfetiva: BaseLayerId = modoMapa === "osiris" ? "dark" : baseLayer;
@@ -863,9 +866,24 @@ export default function MapShell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [intel]);
 
-  // Navios ao vivo (AIS): só conecta com chave do usuário e camada ligada.
+  // Busca a chave AIS do servidor (uma vez por sessão): com ela, a camada
+  // "Navios ao vivo" funciona sem o usuário cadastrar a própria chave.
   useEffect(() => {
-    const chave = prefs.intelKeys.ais.trim();
+    let ativo = true;
+    callChaves()
+      .then((c) => {
+        if (ativo) setChaveAisServidor(c.chaveAis);
+      })
+      .catch(() => {});
+    return () => {
+      ativo = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Navios ao vivo (AIS): só conecta com chave (pessoal ou do servidor) e camada ligada.
+  useEffect(() => {
+    const chave = prefs.intelKeys.ais.trim() || chaveAisServidor;
     if (modoMapa !== "osiris" || !intelVis.navios || !chave || !ready) {
       setStatusAis("off");
       return;
@@ -914,7 +932,7 @@ export default function MapShell() {
       fecharAtual();
       setNavios([]);
     };
-  }, [modoMapa, intelVis.navios, prefs.intelKeys.ais, ready]);
+  }, [modoMapa, intelVis.navios, prefs.intelKeys.ais, chaveAisServidor, ready]);
 
   // Terminador dia/noite recalculado a cada 10 minutos no modo Osiris.
   useEffect(() => {

@@ -68,7 +68,7 @@ export const LINHAS_INTEL: LinhaIntel[] = [
   {
     id: "navios",
     nome: "Navios ao vivo (AIS)",
-    dica: "Requer chave gratuita aisstream.io — cadastre em Ajustes",
+    dica: "AISStream.io · transponders ao redor do mapa (chave do servidor ou pessoal em Ajustes)",
     cor: "#67E8F9",
   },
 ];

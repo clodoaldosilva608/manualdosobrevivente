@@ -548,9 +548,10 @@ export function OsirisHub({
             </AccordionTrigger>
             <AccordionContent className="space-y-2">
               <p className="mono text-[11px] leading-relaxed text-muted-foreground">
-                Duas camadas usam chaves gratuitas salvas somente no aparelho: focos de calor (NASA
-                FIRMS) e navios ao vivo (AISStream.io). Cadastre-se nos sites oficiais e cole as
-                chaves em Ajustes.
+                Focos de calor (NASA FIRMS) e navios ao vivo (AISStream.io) já podem funcionar com
+                chaves configuradas no servidor do aplicativo — nesse caso nada precisa ser feito.
+                Sem servidor, cadastre-se nos sites oficiais e cole as chaves em Ajustes: elas ficam
+                salvas somente no aparelho.
               </p>
               <Link
                 to="/settings"
@@ -564,8 +565,8 @@ export function OsirisHub({
 
         <p className="mono mt-3 text-[9px] leading-relaxed text-muted-foreground">
           Fontes: USGS · NASA EONET/FIRMS · NOAA SWPC · GDACS · GDELT · ADS-B.lol · WhereTheISS.at ·
-          Open-Meteo · ipwho.is · rdap.org — consolidadas pelo servidor do aplicativo, com cache e
-          fallback.
+          Open-Meteo · AISStream.io · ipwho.is · rdap.org — consolidadas pelo servidor do
+          aplicativo, com cache e fallback.
         </p>
       </SheetContent>
     </Sheet>

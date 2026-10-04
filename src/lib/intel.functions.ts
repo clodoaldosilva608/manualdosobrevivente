@@ -304,3 +304,32 @@ export const fetchIntelSnapshot = createServerFn({ method: "GET" })
     cache.chaveFirms = chaveFirms;
     return snapshot;
   });
+
+// ---------------------------------------------------------------------------
+// Chaves de inteligência providas pelo servidor (variáveis de ambiente)
+// ---------------------------------------------------------------------------
+
+export interface ChavesServidor {
+  /** Chave AISStream.io do servidor (vazia quando não configurada). */
+  chaveAis: string;
+  /** true quando o servidor já tem FIRMS_MAP_KEY (focos funcionam sem chave pessoal). */
+  firmsServidor: boolean;
+}
+
+/** Lê as chaves do ambiente do servidor — pura para facilitar teste. */
+export function chavesDoAmbiente(env: NodeJS.ProcessEnv = process.env): ChavesServidor {
+  return {
+    chaveAis: (env["AISSTREAM_API_KEY"] ?? "").trim(),
+    firmsServidor: Boolean((env["FIRMS_MAP_KEY"] ?? "").trim()),
+  };
+}
+
+/**
+ * Entrega ao cliente a chave AIS do servidor quando o usuário não cadastrou
+ * a própria (a conexão AIS nasce no navegador, logo a chave precisa chegar
+ * até ele — sem ela a camada "Navios ao vivo" fica desligada). A chave FIRMS
+ * nunca sai do servidor: a coleta dos focos é feita lá via fetchIntelSnapshot.
+ */
+export const chavesServidor = createServerFn({ method: "GET" }).handler(
+  async (): Promise<ChavesServidor> => chavesDoAmbiente(),
+);

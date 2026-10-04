@@ -68,17 +68,17 @@ sem conexão — e os dados sincronizam na nuvem quando uma conta está conectad
 
 ## Stack tecnológica
 
-| Camada          | Tecnologia                                            |
-| --------------- | ----------------------------------------------------- |
-| Framework       | [TanStack Start](https://tanstack.com/start) (React 19, SSR) |
-| Roteamento      | TanStack Router (file-based) + TanStack Query          |
-| Build           | Vite 7 + Nitro (preset `vercel`)                       |
-| Estilo          | Tailwind CSS 4 + shadcn/ui + Lucide Icons              |
-| Mapas           | MapLibre GL JS + Turf.js + MGRS                        |
-| Backend         | Supabase (Postgres + Auth + RLS)                       |
-| Deploy          | Vercel (Nitro, preset `vercel`) — alternativa: Cloudflare Workers |
-| Gerenciador     | [Bun](https://bun.sh)                                  |
-| Testes          | Vitest + Playwright                                    |
+| Camada      | Tecnologia                                                        |
+| ----------- | ----------------------------------------------------------------- |
+| Framework   | [TanStack Start](https://tanstack.com/start) (React 19, SSR)      |
+| Roteamento  | TanStack Router (file-based) + TanStack Query                     |
+| Build       | Vite 7 + Nitro (preset `vercel`)                                  |
+| Estilo      | Tailwind CSS 4 + shadcn/ui + Lucide Icons                         |
+| Mapas       | MapLibre GL JS + Turf.js + MGRS                                   |
+| Backend     | Supabase (Postgres + Auth + RLS)                                  |
+| Deploy      | Vercel (Nitro, preset `vercel`) — alternativa: Cloudflare Workers |
+| Gerenciador | [Bun](https://bun.sh)                                             |
+| Testes      | Vitest + Playwright                                               |
 
 ## Requisitos
 
@@ -126,33 +126,34 @@ gateway de e-mail (ver seção abaixo) e agende o POST para
 
 ## Scripts disponíveis
 
-| Comando              | Descrição                                                    |
-| -------------------- | ------------------------------------------------------------ |
-| `bun run dev`        | Servidor de desenvolvimento (porta 8080)                      |
-| `bun run build`      | Verificações + build de produção (saída em `.output/`)        |
-| `bun run preview`    | Preview do build de produção                                  |
-| `bun run lint`       | ESLint (inclui regras de i18n pt-BR)                          |
-| `bun run check:i18n` | Auditoria anti-inglês nas telas                               |
-| `bun run test`       | Testes unitários (Vitest)                                     |
-| `bun run test:e2e`   | Testes E2E (SSR pt-BR e responsividade do mapa)               |
-| `bun run typecheck`  | Verificação de tipos TypeScript (`tsc --noEmit`)              |
-| `bun run check:all`  | lint + i18n + testes (roda antes de todo build)               |
-| `bun run format`     | Formatação com Prettier                                       |
+| Comando              | Descrição                                              |
+| -------------------- | ------------------------------------------------------ |
+| `bun run dev`        | Servidor de desenvolvimento (porta 8080)               |
+| `bun run build`      | Verificações + build de produção (saída em `.output/`) |
+| `bun run preview`    | Preview do build de produção                           |
+| `bun run lint`       | ESLint (inclui regras de i18n pt-BR)                   |
+| `bun run check:i18n` | Auditoria anti-inglês nas telas                        |
+| `bun run test`       | Testes unitários (Vitest)                              |
+| `bun run test:e2e`   | Testes E2E (SSR pt-BR e responsividade do mapa)        |
+| `bun run typecheck`  | Verificação de tipos TypeScript (`tsc --noEmit`)       |
+| `bun run check:all`  | lint + i18n + testes (roda antes de todo build)        |
+| `bun run format`     | Formatação com Prettier                                |
 
 ## Variáveis de ambiente
 
-| Variável                       | Onde       | Descrição                                            |
-| ------------------------------ | ---------- | ---------------------------------------------------- |
-| `SUPABASE_URL`                 | Cliente/SSR | URL do projeto Supabase                              |
-| `SUPABASE_PUBLISHABLE_KEY`     | Cliente/SSR | Chave publishable (nova API key `sb_publishable_...`) |
-| `VITE_SUPABASE_URL`            | Navegador  | Espelho da URL para substituição em tempo de build    |
-| `VITE_SUPABASE_PUBLISHABLE_KEY`| Navegador  | Espelho da chave para substituição em tempo de build  |
-| `SUPABASE_SERVICE_ROLE_KEY`    | Servidor   | Chave service role (bypassa RLS; nunca expor)         |
-| `CRON_SECRET`                  | Servidor   | Segredo do job de relatórios semanais                 |
-| `MAIL_GATEWAY_URL`             | Servidor   | Endpoint compatível com a API do Gmail                |
-| `MAIL_GATEWAY_KEY`             | Servidor   | Token Bearer do gateway de e-mail                     |
-| `MAIL_CONNECTION_KEY`          | Servidor   | Chave de conexão do gateway (`X-Connection-Api-Key`)  |
-| `FIRMS_MAP_KEY`                | Servidor   | Opcional — chave gratuita NASA FIRMS para a camada de focos de calor do modo Osiris (o usuário também pode cadastrar a própria chave em Ajustes, salva só no aparelho) |
+| Variável                        | Onde               | Descrição                                                                                                                                                                                        |
+| ------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `SUPABASE_URL`                  | Cliente/SSR        | URL do projeto Supabase                                                                                                                                                                          |
+| `SUPABASE_PUBLISHABLE_KEY`      | Cliente/SSR        | Chave publishable (nova API key `sb_publishable_...`)                                                                                                                                            |
+| `VITE_SUPABASE_URL`             | Navegador          | Espelho da URL para substituição em tempo de build                                                                                                                                               |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Navegador          | Espelho da chave para substituição em tempo de build                                                                                                                                             |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Servidor           | Chave service role (bypassa RLS; nunca expor)                                                                                                                                                    |
+| `CRON_SECRET`                   | Servidor           | Segredo do job de relatórios semanais                                                                                                                                                            |
+| `MAIL_GATEWAY_URL`              | Servidor           | Endpoint compatível com a API do Gmail                                                                                                                                                           |
+| `MAIL_GATEWAY_KEY`              | Servidor           | Token Bearer do gateway de e-mail                                                                                                                                                                |
+| `MAIL_CONNECTION_KEY`           | Servidor           | Chave de conexão do gateway (`X-Connection-Api-Key`)                                                                                                                                             |
+| `FIRMS_MAP_KEY`                 | Servidor           | Opcional — chave gratuita NASA FIRMS para a camada de focos de calor do modo Osiris (nunca chega ao navegador; o usuário também pode cadastrar a própria chave em Ajustes, salva só no aparelho) |
+| `AISSTREAM_API_KEY`             | Servidor→Navegador | Opcional — chave gratuita AISStream.io para a camada "Navios ao vivo". Entregue pela server function `chavesServidor` quando o usuário não tem chave própria (a conexão AIS nasce no navegador)  |
 
 Consulte `.env.example` para o modelo completo. **Nunca versione o arquivo
 `.env`** — ele está no `.gitignore` por padrão.
@@ -189,7 +190,7 @@ fica em `wrangler.jsonc`.
 ## Visão Osiris (inteligência global)
 
 O mapa tem dois modos alternáveis pelo usuário (botão no topo do HUD ou em
-*Camadas → Modo de visualização*):
+_Camadas → Modo de visualização_):
 
 - **Tático** — navegação clássica (bússola, MGRS, medições, waypoints) com
   qualquer camada base.
@@ -218,20 +219,20 @@ O app também mantém camadas de inteligência nativas no mapa MapLibre — hoje
 elas operam atrás da Visão Osiris como experiência de fallback (quando o globo
 não pode ser incorporado, o mapa segue visível com estas camadas):
 
-  | Camada | Fonte | Tipo |
-  |--------|-------|------|
-  | Sismos M2,5+ (24 h) | USGS | ao vivo |
-  | Eventos naturais | NASA EONET | ao vivo |
-  | Focos de calor (VIIRS) | NASA FIRMS | ao vivo · requer chave (ver abaixo) |
-  | Zonas de conflito | dataset curado (`intel-conflicts.ts`) | referência |
-  | Terminador dia/noite | SunCalc | calculado no cliente |
-  | Clima espacial (Kp) | NOAA SWPC | ao vivo |
-  | Voos ao vivo (militares + civis) | rede ADS-B (adsb.lol) | ao vivo |
-  | ISS — posição, trajetória e pegada | WhereTheISS.at | ao vivo |
-  | Alertas oficiais de desastre | GDACS (UE/ONU) | ao vivo |
-  | Rotas marítimas (12 estreitos + 22 portos) | dataset curado (`intel-maritimo.ts`) | referência |
-  | Centrais nucleares (~100 instalações) | dataset curado (`intel-nuclear.ts`) | referência |
-  | Navios ao vivo (AIS) | AISStream.io | ao vivo · requer chave (ver abaixo) |
+| Camada                                     | Fonte                                 | Tipo                                |
+| ------------------------------------------ | ------------------------------------- | ----------------------------------- |
+| Sismos M2,5+ (24 h)                        | USGS                                  | ao vivo                             |
+| Eventos naturais                           | NASA EONET                            | ao vivo                             |
+| Focos de calor (VIIRS)                     | NASA FIRMS                            | ao vivo · requer chave (ver abaixo) |
+| Zonas de conflito                          | dataset curado (`intel-conflicts.ts`) | referência                          |
+| Terminador dia/noite                       | SunCalc                               | calculado no cliente                |
+| Clima espacial (Kp)                        | NOAA SWPC                             | ao vivo                             |
+| Voos ao vivo (militares + civis)           | rede ADS-B (adsb.lol)                 | ao vivo                             |
+| ISS — posição, trajetória e pegada         | WhereTheISS.at                        | ao vivo                             |
+| Alertas oficiais de desastre               | GDACS (UE/ONU)                        | ao vivo                             |
+| Rotas marítimas (12 estreitos + 22 portos) | dataset curado (`intel-maritimo.ts`)  | referência                          |
+| Centrais nucleares (~100 instalações)      | dataset curado (`intel-nuclear.ts`)   | referência                          |
+| Navios ao vivo (AIS)                       | AISStream.io                          | ao vivo · requer chave (ver abaixo) |
 
 - **Boletim de inteligência** — painel consolidado (botão no rail do mapa) com
   clima espacial, qualidade do ar no centro do mapa (Open-Meteo), alertas
@@ -265,7 +266,7 @@ sem envolver o servidor:
 ### Instalar o aplicativo
 
 - **Android/Chrome/desktop** — botão “Instalar aplicativo” no modal de
-  boas-vindas ou em *Ajustes → Aplicativo* (usa o `beforeinstallprompt`).
+  boas-vindas ou em _Ajustes → Aplicativo_ (usa o `beforeinstallprompt`).
 - **iPhone/iPad** — no Safari: Compartilhar → “Adicionar à Tela de Início”
   (a Apple não expõe prompt automático para PWA).
 
@@ -278,7 +279,7 @@ Para invalidar caches após mudanças, aumente a constante `VERSAO` no sw.js.
 
 Todos os dados do usuário ficam no IndexedDB do aparelho
 (`src/lib/db.ts`). A sincronização com a nuvem é **opt-in**: só acontece com
-sessão ativa e com “Sincronizar automaticamente” ativado em *Ajustes*. Sem as
+sessão ativa e com “Sincronizar automaticamente” ativado em _Ajustes_. Sem as
 variáveis do Supabase, o app segue funcionando em modo local.
 
 ### Pasta de backup
@@ -287,16 +288,16 @@ No primeiro acesso, o assistente pede ao usuário para criar/escolher uma
 pasta (File System Access API — Chrome/Edge/Android). O aplicativo grava
 automaticamente nesta pasta, a cada alteração:
 
-| Arquivo                                    | Conteúdo                              |
-| ------------------------------------------ | ------------------------------------- |
-| `backup-manual-do-sobrevivente.json`       | Snapshot mais recente dos dados       |
+| Arquivo                                       | Conteúdo                           |
+| --------------------------------------------- | ---------------------------------- |
+| `backup-manual-do-sobrevivente.json`          | Snapshot mais recente dos dados    |
 | `backup-manual-do-sobrevivente-anterior.json` | Cópia da versão anterior (rotação) |
-| `LEIA-ME.txt`                              | Explicação da pasta                   |
+| `LEIA-ME.txt`                                 | Explicação da pasta                |
 
 A restauração (mesclagem, vence o registro mais recente) fica em
-*Ajustes → Pasta de backup → Restaurar do backup*. Em navegadores sem
+_Ajustes → Pasta de backup → Restaurar do backup_. Em navegadores sem
 suporte à API (Safari/iOS), a seção não aparece e o backup é feito por
-exportação/importação de arquivo em *Ajustes*.
+exportação/importação de arquivo em _Ajustes_.
 
 ## Estrutura do projeto
 

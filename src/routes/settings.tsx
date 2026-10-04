@@ -31,6 +31,7 @@ import {
 } from "@/lib/cloud-sync";
 import { CloudUpload, CloudDownload, Trash2, Upload, Download, KeyRound } from "lucide-react";
 import { getReportSettings, saveReportSettings, sendReportNow } from "@/lib/report.functions";
+import { chavesServidor, type ChavesServidor } from "@/lib/intel.functions";
 import { BackupFolderCard } from "@/components/BackupFolderCard";
 import { ObsidianCard } from "@/components/ObsidianCard";
 import { usePwaInstall } from "@/lib/pwa";
@@ -105,6 +106,9 @@ function Settings() {
   const callGetReports = useServerFn(getReportSettings);
   const callSaveReports = useServerFn(saveReportSettings);
   const callSendReport = useServerFn(sendReportNow);
+  const callChaves = useServerFn(chavesServidor);
+  // Chaves que o servidor já providencia (FIRMS fica no servidor; AIS alimenta a conexão do navegador).
+  const [chavesServ, setChavesServ] = useState<ChavesServidor | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -122,6 +126,20 @@ function Settings() {
       alive = false;
       sub.subscription.unsubscribe();
     };
+  }, []);
+
+  // Consulta uma vez quais chaves o servidor já providencia (dicas em Ajustes).
+  useEffect(() => {
+    let alive = true;
+    callChaves()
+      .then((c) => {
+        if (alive) setChavesServ(c);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const refreshReports = useCallback(async () => {
@@ -407,36 +425,57 @@ function Settings() {
 
       <Section title="Chaves de inteligência (opcional)">
         <p className="text-xs text-muted-foreground">
-          Chaves gratuitas para habilitar as camadas extras do modo Osiris. Ficam salvas apenas
-          neste aparelho e são usadas só para consultar as fontes oficiais.
+          Camadas extras do modo Osiris. Chaves pessoais ficam salvas apenas neste aparelho e são
+          usadas só para consultar as fontes oficiais — e podem ficar vazias quando o app já vem com
+          chaves configuradas no servidor.
         </p>
         <div className="space-y-1">
           <Label htmlFor="chave-firms">NASA FIRMS — focos de calor</Label>
           <Input
             id="chave-firms"
             autoComplete="off"
-            placeholder="Cole aqui sua MAP_KEY da NASA FIRMS"
+            placeholder={
+              chavesServ?.firmsServidor
+                ? "Chave do servidor ativa — opcional"
+                : "Cole aqui sua MAP_KEY da NASA FIRMS"
+            }
             value={prefs.intelKeys.firms}
             onChange={(e) => update({ intelKeys: { ...prefs.intelKeys, firms: e.target.value } })}
           />
-          <p className="text-[10px] text-muted-foreground">
-            Cadastre grátis em firms.modaps.eosdis.nasa.gov (conta NASA Earthdata). A camada "Focos
-            de calor" ativa em poucos minutos.
-          </p>
+          {chavesServ?.firmsServidor ? (
+            <p className="text-[10px] text-tactical-orange">
+              Chave do servidor ativa — os focos de calor já funcionam; a sua é opcional.
+            </p>
+          ) : (
+            <p className="text-[10px] text-muted-foreground">
+              Cadastre grátis em firms.modaps.eosdis.nasa.gov (conta NASA Earthdata). A camada
+              "Focos de calor" ativa em poucos minutos.
+            </p>
+          )}
         </div>
         <div className="space-y-1">
           <Label htmlFor="chave-ais">AISStream.io — navios ao vivo</Label>
           <Input
             id="chave-ais"
             autoComplete="off"
-            placeholder="Cole aqui sua chave do AISStream.io"
+            placeholder={
+              chavesServ?.chaveAis
+                ? "Chave do servidor ativa — opcional"
+                : "Cole aqui sua chave do AISStream.io"
+            }
             value={prefs.intelKeys.ais}
             onChange={(e) => update({ intelKeys: { ...prefs.intelKeys, ais: e.target.value } })}
           />
-          <p className="text-[10px] text-muted-foreground">
-            Cadastre grátis em aisstream.io. Os navios aparecem ao redor da área visível do mapa,
-            com o modo Osiris e a camada "Navios" ligados.
-          </p>
+          {chavesServ?.chaveAis ? (
+            <p className="text-[10px] text-tactical-orange">
+              Chave do servidor ativa — os navios ao vivo já funcionam; a sua é opcional.
+            </p>
+          ) : (
+            <p className="text-[10px] text-muted-foreground">
+              Cadastre grátis em aisstream.io. Os navios aparecem ao redor da área visível do mapa,
+              com o modo Osiris e a camada "Navios" ligados.
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
           <KeyRound className="h-3.5 w-3.5 shrink-0" />

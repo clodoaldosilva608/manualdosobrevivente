@@ -56,8 +56,10 @@ bun run build      # check:all + build de produção em .output/
   Air Quality) só são acessadas via `src/lib/intel.functions.ts` e
   `src/lib/intel-v2.functions.ts` (server functions com cache em memória e
   fallback para os últimos dados bons); o navegador nunca chama as fontes
-  diretamente — exceção única: o WebSocket AIS do usuário (`src/lib/ais.ts`),
-  que conecta direto a aisstream.io com a chave pessoal dele. Novas camadas
+  diretamente — exceção única: o WebSocket AIS (`src/lib/ais.ts`), que conecta
+  direto a aisstream.io usando a chave pessoal do usuário ou a chave do
+  servidor entregada pela server function `chavesServidor`
+  (`AISSTREAM_API_KEY`; `FIRMS_MAP_KEY` nunca sai do servidor). Novas camadas
   nativas entram em `src/components/map/intel-layers.ts` (ordem de
   empilhamento fixa documentada no topo do arquivo), com toggle em
   `LINHAS_INTEL` e visibilidade persistida em `intelVis` (usePreferences).

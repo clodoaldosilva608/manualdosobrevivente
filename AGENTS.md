@@ -122,6 +122,27 @@ bun run build      # check:all + build de produção em .output/
   compartilhar (S.O.S). E2E em `tests/map-obsidian.spec.ts` substitui o
   seletor por handles falsos + patch do IndexedDB (handle → descritor
   serializável) — handles OPFS reais derrubam o Chromium headless.
+- **Projeção globo**: o mapa tático alterna plano (mercator) ↔ globo 3D
+  (`map.setProjection`, MapLibre 5) — botão "Globo" no rail, item "Globo 3D"
+  no menu e seção "Projeção do mapa" na folha de camadas; preferência
+  `projecao` no usePreferences. A projeção vive no estilo: reaplicada no
+  `load` e no `styledata` (troca de camada base). Coberto por
+  `tests/map-globo.spec.ts`.
+- **Layout do HUD desktop (sem sobreposições)**: o canto superior direito é
+  do hambúrguer + alternador (top-4); os controles nativos do MapLibre
+  descem para `top: 4.75rem` via CSS (`styles.css`, com `!important` — o CSS
+  do MapLibre é injetado depois e define top: 0); o rail de ações começa em
+  `md:top-[13.75rem]` em 2 colunas com `max-h` limitado; a bússola em
+  miniatura fica no canto INFERIOR ESQUERDO no desktop (`md:left-4
+md:bottom-11`, acima da escala) e o painel flutua à esquerda do rail de 2
+  colunas (`md:right-[10.5rem] md:bottom-14`) — o canto direito nunca é
+  coberto;
+  gráfico de elevação e diálogo de waypoint são centrados embaixo
+  (`md:left-1/2 md:-translate-x-1/2`); folhas inferiores têm
+  `max-h-[85dvh]` com rolagem interna (sem o corte, o topo do conteúdo
+  ficava acima da tela no PC). Qualquer novo elemento fixo deve passar pelo
+  teste de sobreposição (`tests/map-overlap.spec.ts`, desktop 1280×720 e
+  1366×640 além do celular 390×844).
 - **Segurança**: operações administrativas usam o cliente service role
   (`client.server.ts`) apenas em módulos `*.server.ts` — arquivos `*.functions.ts`
   e rotas vão para o bundle do cliente. Rotas autenticadas usam o middleware

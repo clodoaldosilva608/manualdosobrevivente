@@ -168,6 +168,17 @@
   }
 }
 
+/* Desktop: os controles nativos (zoom/bússola/geolocalização) descem para
+   não ficarem sob o hambúrguer e o alternador TÁTICO|OSIRIS (top-4, ~68px).
+   Termina acima do rail de ações, que agora começa em 13.75rem (220px).
+   !important: o CSS do MapLibre (importado depois) define top: 0 no mesmo
+   seletor e venceria pela ordem do bundle. */
+@media (min-width: 768px) {
+  .maplibregl-ctrl-top-right {
+    top: 4.75rem !important;
+  }
+}
+
 @layer utilities {
   .tap-target {
     min-height: 44px;

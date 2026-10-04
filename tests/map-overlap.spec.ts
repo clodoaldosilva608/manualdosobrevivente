@@ -291,3 +291,131 @@ describe("painel da bússola em telas baixas, paisagem e desktop", () => {
     await page.context().close();
   }, 180_000);
 });
+
+/** Abre o mapa em desktop e dispensa o onboarding se ele aparecer. */
+async function abrirMapaDesktop(browser: Browser, largura: number, altura: number): Promise<Page> {
+  const context = await browser.newContext({ viewport: { width: largura, height: altura } });
+  const page = await context.newPage();
+  await page.goto(BASE, { waitUntil: "domcontentloaded" });
+  await page.waitForSelector(".maplibregl-canvas", { timeout: 30_000 });
+  const pular = page.getByRole("button", { name: "Pular configuração" });
+  const apareceu = await pular
+    .waitFor({ state: "visible", timeout: 6_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (apareceu) {
+    await pular.click();
+    await pular.waitFor({ state: "hidden" });
+  }
+  // Acomoda a hidratação (painéis/persistência) antes de medir.
+  await page.waitForTimeout(2_000);
+  return page;
+}
+
+/** Nome → seletor de todos os elementos fixos do HUD desktop. */
+function seletoresDesktop(): Array<[string, string]> {
+  return [
+    ["alternador+menu", '[data-test="modo-mapa-desktop"]'],
+    ["controle nativo zoom", ".maplibregl-ctrl-top-right .maplibregl-ctrl-group >> nth=0"],
+    ["controle nativo geo", ".maplibregl-ctrl-top-right .maplibregl-ctrl-group >> nth=1"],
+    ["rail Osiris", 'button[title="Osiris"]'],
+    ["rail Boletim", 'button[title="Boletim"]'],
+    ["rail Camadas", 'button[title="Camadas"]'],
+    ["rail Ir para", 'button[title="Ir para"]'],
+    ["rail Medir", 'button[title="Medir"]'],
+    ["rail Marcador", 'button[title="Marcador"]'],
+    ["rail Bússola", 'button[title="Bússola"]'],
+    ["rail Globo", 'button[title="Globo"]'],
+    ["rail Limpar", 'button[title="Limpar"]'],
+    ["bússola mini", '[aria-label="Abrir bússola"]'],
+    ["painel centro", '[data-test="painel-centro"]:visible'],
+    ["painel posição", '[data-test="painel-posicao"]:visible'],
+    ["escala", ".maplibregl-ctrl-bottom-left"],
+    ["atribuição", ".maplibregl-ctrl-bottom-right"],
+  ];
+}
+
+describe("HUD do mapa em desktop", () => {
+  // 1280×720 é a janela típica de notebook com a barra do navegador;
+  // 1366×640 cobre janelas ainda mais baixas (onde a bússola mini invadia
+  // os botões do rail na versão anterior).
+  for (const [largura, altura] of [
+    [1280, 720],
+    [1366, 640],
+  ] as const) {
+    it(`miniatura, rail e controles não se sobrepõem em ${largura}×${altura}`, async () => {
+      const page = await abrirMapaDesktop(browser, largura, altura);
+
+      const caixas: Array<{ nome: string; ret: Retangulo }> = [];
+      for (const [nome, seletor] of seletoresDesktop()) {
+        const loc = page.locator(seletor).first();
+        await loc.waitFor({ state: "visible", timeout: 15_000 });
+        const box = (await loc.boundingBox()) as Retangulo | null;
+        expect(box, `elemento visível: ${nome} (${seletor})`).not.toBeNull();
+        caixas.push({ nome, ret: box as Retangulo });
+      }
+
+      // Nenhum par de elementos do HUD pode se sobrepor.
+      for (let i = 0; i < caixas.length; i++) {
+        for (let j = i + 1; j < caixas.length; j++) {
+          expect(
+            sobrepoe(caixas[i].ret, caixas[j].ret),
+            `${caixas[i].nome} sobrepõe ${caixas[j].nome}`,
+          ).toBe(false);
+        }
+      }
+
+      // Tudo dentro da viewport.
+      for (const { nome, ret } of caixas) {
+        expect(ret.x, `${nome} à esquerda da tela`).toBeGreaterThanOrEqual(0);
+        expect(ret.y, `${nome} acima da tela`).toBeGreaterThanOrEqual(0);
+        expect(ret.x + ret.width, `${nome} cortado à direita`).toBeLessThanOrEqual(largura);
+        expect(ret.y + ret.height, `${nome} cortado embaixo`).toBeLessThanOrEqual(altura);
+      }
+      await page.context().close();
+    }, 180_000);
+
+    it(`bússola em painel não cobre rail nem painéis em ${largura}×${altura}`, async () => {
+      const page = await abrirMapaDesktop(browser, largura, altura);
+
+      // Abre a bússola em modo painel pelo rail.
+      await page.locator('button[title="Bússola"]').click();
+      const painel = page.locator('div.compass-card:has(span:text-is("Bússola"))').first();
+      await painel.waitFor({ state: "visible", timeout: 10_000 });
+      const retPainel = (await painel.boundingBox()) as Retangulo;
+
+      const concorrentes: Array<[string, string]> = [
+        ["rail Osiris", 'button[title="Osiris"]'],
+        ["rail Boletim", 'button[title="Boletim"]'],
+        ["rail Camadas", 'button[title="Camadas"]'],
+        ["rail Ir para", 'button[title="Ir para"]'],
+        ["rail Medir", 'button[title="Medir"]'],
+        ["rail Marcador", 'button[title="Marcador"]'],
+        ["rail Bússola", 'button[title="Bússola"]'],
+        ["rail Globo", 'button[title="Globo"]'],
+        ["rail Limpar", 'button[title="Limpar"]'],
+        ["alternador+menu", '[data-test="modo-mapa-desktop"]'],
+        ["painel centro", '[data-test="painel-centro"]:visible'],
+        ["painel posição", '[data-test="painel-posicao"]:visible'],
+        ["atribuição", ".maplibregl-ctrl-bottom-right"],
+      ];
+      for (const [nome, seletor] of concorrentes) {
+        const loc = page.locator(seletor).first();
+        const box = (await loc.boundingBox()) as Retangulo | null;
+        if (!box) continue;
+        expect(sobrepoe(retPainel, box), `painel da bússola sobrepõe ${nome}`).toBe(false);
+      }
+
+      // O painel inteiro deve ficar dentro da viewport.
+      expect(retPainel.y).toBeGreaterThanOrEqual(0);
+      expect(retPainel.y + retPainel.height).toBeLessThanOrEqual(altura);
+      expect(retPainel.x).toBeGreaterThanOrEqual(0);
+      expect(retPainel.x + retPainel.width).toBeLessThanOrEqual(largura);
+
+      // Minimizar devolve a miniatura.
+      await page.getByRole("button", { name: "Minimizar bússola" }).click();
+      await page.locator('[aria-label="Abrir bússola"]').waitFor({ state: "visible" });
+      await page.context().close();
+    }, 180_000);
+  }
+});

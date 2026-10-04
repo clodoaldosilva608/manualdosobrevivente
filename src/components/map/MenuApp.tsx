@@ -21,6 +21,7 @@ import {
   DownloadCloud,
   Eraser,
   Eye,
+  Globe,
   Globe2,
   KeyRound,
   Layers,
@@ -44,7 +45,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import type { ModoMapa } from "@/components/map/MapModeSwitch";
 import { LINHAS_INTEL } from "@/components/map/intel-camadas-lista";
 
-export type AcaoMenuMapa = "goto" | "measure" | "marcador" | "bussola" | "limpar" | "elementos";
+export type AcaoMenuMapa =
+  "goto" | "measure" | "marcador" | "bussola" | "globo" | "limpar" | "elementos";
 export type AcaoMenuOsiris =
   "visao" | "hub" | "boletim" | "camadas" | "astro" | "iss" | "ip" | "dominio" | "chaves";
 
@@ -55,6 +57,7 @@ export interface MenuAppProps {
   /** Estado das ferramentas do mapa tático — realça o item ativo. */
   marcadorAtivo: boolean;
   bussolaAtiva: boolean;
+  globoAtivo: boolean;
   onAcaoMapa: (a: AcaoMenuMapa) => void;
   onAcaoOsiris: (a: AcaoMenuOsiris) => void;
 }
@@ -83,6 +86,12 @@ const FERRAMENTAS: Array<ItemMenu & { id: AcaoMenuMapa }> = [
   { id: "measure", rotulo: "Medir", dica: "Distância e área no mapa", icone: Ruler },
   { id: "marcador", rotulo: "Marcador", dica: "Marcar waypoint no mapa", icone: MapPin },
   { id: "bussola", rotulo: "Bússola", dica: "Orientação e declinação", icone: Compass },
+  {
+    id: "globo",
+    rotulo: "Globo 3D",
+    dica: "Projeção esférica do planeta",
+    icone: Globe,
+  },
   {
     id: "limpar",
     rotulo: "Limpar tela",
@@ -171,6 +180,7 @@ export function MenuApp({
   modo,
   marcadorAtivo,
   bussolaAtiva,
+  globoAtivo,
   onAcaoMapa,
   onAcaoOsiris,
 }: MenuAppProps) {
@@ -232,7 +242,13 @@ export function MenuApp({
                   rotulo={rotulo}
                   dica={dica}
                   ativo={
-                    id === "marcador" ? marcadorAtivo : id === "bussola" ? bussolaAtiva : false
+                    id === "marcador"
+                      ? marcadorAtivo
+                      : id === "bussola"
+                        ? bussolaAtiva
+                        : id === "globo"
+                          ? globoAtivo
+                          : false
                   }
                   onClick={() => onAcaoMapa(id)}
                   teste={`menu-item-${id}`}

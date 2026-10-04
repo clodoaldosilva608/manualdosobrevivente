@@ -29,6 +29,8 @@ export interface Preferences {
   mapaRotaciona: boolean;
   /** Centro do mapa travado em coordenadas digitadas (nulo = livre). */
   posicaoTravada: { lat: number; lng: number } | null;
+  /** Projeção do mapa tático: plana (mercator) ou globo 3D. */
+  projecao: "mercator" | "globe";
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -42,6 +44,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   telaVis: TELA_VIS_PADRAO,
   mapaRotaciona: false,
   posicaoTravada: null,
+  projecao: "mercator",
 };
 
 const KEY = "preferences";

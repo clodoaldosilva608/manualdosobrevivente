@@ -9,6 +9,7 @@ import {
   Compass,
   Download,
   Eraser,
+  Globe,
   Navigation2,
   X,
   Trash2,
@@ -358,6 +359,13 @@ export default function MapShell() {
   useEffect(() => {
     travaRef.current = posicaoTravada;
   }, [posicaoTravada]);
+  // Projeção do mapa tático: plana (mercator) ou globo 3D. A projeção vive no
+  // estilo — reaplicada no load e após qualquer troca de camada base.
+  const projecao = prefs.projecao;
+  const projecaoRef = useRef(projecao);
+  projecaoRef.current = projecao;
+  const alternarProjecao = () =>
+    updatePrefs({ projecao: projecao === "globe" ? "mercator" : "globe" });
   const [intel, setIntel] = useState<IntelSnapshot | null>(null);
   const [intelStatus, setIntelStatus] = useState<StatusIntel>("idle");
   const [noite, setNoite] = useState<GeoJSON.Feature | null>(null);
@@ -509,6 +517,11 @@ export default function MapShell() {
         // pode liberar o app antes do load e o styledata já ter criado tudo)
         adicionarFontesDesenho(map);
         sincronizarDesenho(map);
+        try {
+          map.setProjection({ type: projecaoRef.current });
+        } catch {
+          /* estilo ainda assentando — o styledata reaplica */
+        }
         setReady(true);
       });
       mapRef.current = map;
@@ -528,6 +541,12 @@ export default function MapShell() {
       // e reapresenta desenho/waypoints/posição.
       map.on("styledata", () => {
         sincronizarDesenho(map);
+        // A projeção vive no estilo: reapresenta após troca de camada base.
+        try {
+          map.setProjection({ type: projecaoRef.current });
+        } catch {
+          /* estilo interim — a próxima emissão de styledata reaplica */
+        }
         const s = intelRef.current;
         sincronizarCamadasIntel(map, {
           snapshot: s.snapshot,
@@ -591,6 +610,17 @@ export default function MapShell() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Reage à troca da projeção nas preferências enquanto o mapa está vivo.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    try {
+      map.setProjection({ type: projecao });
+    } catch {
+      /* estilo ainda não assentado — o styledata reaplica */
+    }
+  }, [projecao, ready]);
 
   // Redimensionamento: garante que o mapa acompanhe o container em qualquer tela
   useEffect(() => {
@@ -1347,6 +1377,10 @@ export default function MapShell() {
         irTatico();
         setCompassMode(compassMode === "mini" ? "panel" : "mini");
         break;
+      case "globo":
+        irTatico();
+        alternarProjecao();
+        break;
       case "limpar":
         irTatico();
         limparTela();
@@ -1526,9 +1560,10 @@ export default function MapShell() {
             <MapModeSwitch modo={modoMapa} onTrocar={(m) => updatePrefs({ mapMode: m })} />
           </div>
 
-          {/* Right-side action rail */}
+          {/* Right-side action rail — em 2 colunas no desktop para nunca
+              alcançar os cantos inferiores (bússola, gráfico, atribuição). */}
           <div
-            className={`absolute right-2 top-[max(0.5rem,env(safe-area-inset-top))] z-10 flex-col gap-2 md:top-36 ${
+            className={`absolute right-2 top-[max(0.5rem,env(safe-area-inset-top))] z-10 flex-col gap-2 md:top-[13.75rem] md:grid md:max-h-[calc(100dvh-19.75rem)] md:grid-cols-2 md:overflow-y-auto ${
               telaVis.ferramentas ? "flex" : "hidden"
             }`}
           >
@@ -1571,13 +1606,20 @@ export default function MapShell() {
               active={compassMode !== "mini"}
               onClick={() => setCompassMode(compassMode === "mini" ? "panel" : "mini")}
             />
+            <RailBtn
+              icon={Globe}
+              label="Globo"
+              active={projecao === "globe"}
+              onClick={alternarProjecao}
+            />
             <RailBtn icon={Eraser} label="Limpar" onClick={limparTela} />
           </div>
 
-          {/* Elevation chart */}
+          {/* Elevation chart — no desktop centrado embaixo, longe do rail
+              (direita) e da bússola (esquerda). */}
           {elevationData.length > 1 && (
             <div
-              className={`absolute left-2 right-2 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-10 hud-panel rounded-md p-3 md:left-auto md:right-4 md:bottom-4 md:w-[420px] ${
+              className={`absolute left-2 right-2 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-10 hud-panel rounded-md p-3 md:left-1/2 md:right-auto md:bottom-4 md:w-[420px] md:-translate-x-1/2 ${
                 newMarker ? "hidden md:block" : "block"
               }`}
             >
@@ -1623,9 +1665,10 @@ export default function MapShell() {
             </div>
           )}
 
-          {/* New marker dialog */}
+          {/* New marker dialog — centrado embaixo no desktop (mesma faixa do
+              gráfico de elevação, que fica oculto enquanto o diálogo abre). */}
           {newMarker && (
-            <div className="absolute left-2 right-2 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-4 md:left-auto md:right-4 md:w-96 z-20 hud-panel rounded-md p-4 space-y-3">
+            <div className="absolute left-2 right-2 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 hud-panel rounded-md p-4 space-y-3 md:left-1/2 md:right-auto md:bottom-4 md:w-96 md:-translate-x-1/2">
               <div className="flex items-center justify-between">
                 <span className="mono text-tactical-orange font-bold text-sm">NOVO WAYPOINT</span>
                 <button onClick={() => setNewMarker(null)}>
@@ -1689,7 +1732,7 @@ export default function MapShell() {
 
       {/* Sheets */}
       <Sheet open={openSheet === "layers"} onOpenChange={(o) => !o && setOpenSheet(null)}>
-        <SheetContent side="bottom" className="bg-card border-border">
+        <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto bg-card border-border">
           <SheetHeader>
             <SheetTitle className="mono text-tactical-orange">CAMADAS DO MAPA</SheetTitle>
           </SheetHeader>
@@ -1779,6 +1822,43 @@ export default function MapShell() {
                   ? "A Visão Osiris abre o globo 3D de inteligência global (OSIRIS self-hosted) em tela cheia, com painel de camadas próprio — o mapa tático continua intacto atrás do botão de voltar."
                   : "Navegação clássica: bússola, MGRS, medições e waypoints. Mude para o modo Osiris para abrir a Visão Osiris, o globo de inteligência global em tela cheia."}
               </p>
+              {modoMapa === "tatico" && (
+                <>
+                  <div className="mono mt-4 mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Projeção do mapa
+                  </div>
+                  <div className="grid grid-cols-2 gap-2" data-test="projecao-opcoes">
+                    <button
+                      type="button"
+                      data-test="projecao-plano"
+                      onClick={() => updatePrefs({ projecao: "mercator" })}
+                      className={`glove-tap rounded-md border p-3 mono text-sm ${
+                        projecao === "mercator"
+                          ? "border-tactical-orange bg-tactical-orange/10 text-tactical-orange"
+                          : "border-border hover:border-foreground/40"
+                      }`}
+                    >
+                      Plana (mapa)
+                    </button>
+                    <button
+                      type="button"
+                      data-test="projecao-globo"
+                      onClick={() => updatePrefs({ projecao: "globe" })}
+                      className={`glove-tap rounded-md border p-3 mono text-sm ${
+                        projecao === "globe"
+                          ? "border-tactical-orange bg-tactical-orange/10 text-tactical-orange"
+                          : "border-border hover:border-foreground/40"
+                      }`}
+                    >
+                      Globo 3D
+                    </button>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    O globo mostra o planeta como uma esfera — útil para rotas longas e para ver o
+                    dia e a noite; o mapa plano mantém a leitura de ruas e coordenadas local.
+                  </p>
+                </>
+              )}
             </section>
 
             <section>
@@ -1839,7 +1919,7 @@ export default function MapShell() {
       </Sheet>
 
       <Sheet open={openSheet === "goto"} onOpenChange={(o) => !o && setOpenSheet(null)}>
-        <SheetContent side="bottom" className="bg-card border-border">
+        <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto bg-card border-border">
           <SheetHeader>
             <SheetTitle className="mono text-tactical-orange">IR PARA COORDENADA</SheetTitle>
           </SheetHeader>
@@ -1863,7 +1943,7 @@ export default function MapShell() {
       </Sheet>
 
       <Sheet open={openSheet === "measure"} onOpenChange={(o) => !o && setOpenSheet(null)}>
-        <SheetContent side="bottom" className="bg-card border-border">
+        <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto bg-card border-border">
           <SheetHeader>
             <SheetTitle className="mono text-tactical-orange">MEDIÇÃO</SheetTitle>
           </SheetHeader>
@@ -1917,7 +1997,7 @@ export default function MapShell() {
       </Sheet>
 
       <Sheet open={openSheet === "boletim"} onOpenChange={(o) => !o && setOpenSheet(null)}>
-        <SheetContent side="bottom" className="bg-card border-border">
+        <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto bg-card border-border">
           <SheetHeader>
             <SheetTitle className="mono text-tactical-orange">BOLETIM DE INTELIGÊNCIA</SheetTitle>
           </SheetHeader>
@@ -2162,26 +2242,26 @@ export default function MapShell() {
         modo={modoMapa}
         marcadorAtivo={tool === "marker"}
         bussolaAtiva={compassMode !== "mini"}
+        globoAtivo={projecao === "globe"}
         onAcaoMapa={acaoMenu}
         onAcaoOsiris={acaoMenu}
       />
 
-      {/* Bússola flutuante sobre o mapa (só no modo tático, se visível) */}
+      {/* Bússola flutuante sobre o mapa (só no modo tático, se visível).
+          No desktop fica no canto INFERIOR ESQUERDO, acima da escala — o
+          canto direito pertence ao rail de ações e nunca é coberto. */}
       {modoMapa === "tatico" && telaVis.bussola && (
         <div
           className={
             compassMode === "full"
               ? "absolute inset-0 z-30 flex items-start justify-center overflow-y-auto bg-black/60 p-3 pb-24 backdrop-blur-md"
               : `absolute z-30 ${
-                  // Painel esticado entre o HUD superior (top ~328px, nunca
-                  // cobre CENTRO/MINHA POSIÇÃO) e a base (acima da barra
-                  // inferior no celular e da atribuição no desktop); à
-                  // esquerda da trilha de ações. O cartão se adapta a telas
-                  // baixas e paisagem em vez de esmagar a rosa sob os
-                  // controles de rotação/posição.
+                  // Painel: à esquerda da trilha (no desktop o rail tem 2
+                  // colunas — o painel fica 148px afastado da borda, entre
+                  // ele e o centro, sempre acima da atribuição).
                   compassMode === "panel"
-                    ? "right-[5.5rem] top-[20.5rem] bottom-8 md:top-auto md:bottom-10"
-                    : "right-2 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:bottom-10"
+                    ? "right-[5.5rem] top-[20.5rem] bottom-8 md:right-[10.5rem] md:top-auto md:bottom-14"
+                    : "right-2 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:left-4 md:right-auto md:bottom-11"
                 } ${elevationData.length > 1 || newMarker ? "hidden md:block" : "block"}`
           }
           onClick={

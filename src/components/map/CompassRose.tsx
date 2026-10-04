@@ -192,6 +192,10 @@ export default function CompassRose({
 
   const isMini = variant === "mini";
   const isFull = variant === "full";
+  // Nitidez: na miniatura o mostrador é pequeno — menos tiques, traços mais
+  // grossos e sem os números de grau (viram poeira em 88px).
+  const traco = isMini ? 1.6 : 1;
+  const visiveis = isMini ? ticks.filter((t) => t.deg % 10 === 0) : ticks;
 
   return (
     <div
@@ -200,112 +204,112 @@ export default function CompassRose({
     >
       <div
         className={`relative w-full aspect-square select-none touch-none ${
-          isMini ? "max-w-[5.5rem]" : isFull ? "max-w-[min(82vw,22rem)]" : "max-w-[min(52vw,13rem)]"
+          isMini ? "max-w-[5.5rem]" : isFull ? "max-w-[min(82vw,22rem)]" : "max-w-[min(52vw,12rem)]"
         }`}
-        style={{ perspective: "900px" }}
       >
         <div
           aria-hidden
           className="absolute inset-[6%] rounded-full bg-black/70 blur-xl"
           style={{ transform: "translateY(6%) scale(0.94)" }}
         />
-        <div
-          className="absolute inset-0"
-          style={{ transform: "rotateX(16deg)", transformStyle: "preserve-3d" }}
+        {/* Sem transform 3D: perspectiva rasteriza o SVG e borrava o mostrador.
+            Plano e com geometricPrecision a leitura fica nítida em qualquer DPI. */}
+        <svg
+          ref={ref}
+          viewBox="0 0 200 200"
+          role="slider"
+          tabIndex={0}
+          aria-label="Bússola tática"
+          aria-valuemin={0}
+          aria-valuemax={359}
+          aria-valuenow={Math.round(shown)}
+          shapeRendering="geometricPrecision"
+          textRendering="geometricPrecision"
+          className="absolute inset-0 h-full w-full cursor-grab active:cursor-grabbing"
+          onPointerDown={(e) => {
+            if (!onRotate) return;
+            (e.target as Element).setPointerCapture?.(e.pointerId);
+            dragRef.current = {
+              startAngle: angleFromEvent(e.clientX, e.clientY),
+              startHeading: trueHeading,
+            };
+          }}
+          onPointerMove={(e) => {
+            const d = dragRef.current;
+            if (!d || !onRotate) return;
+            const a = angleFromEvent(e.clientX, e.clientY);
+            onRotate(norm(d.startHeading - (a - d.startAngle)));
+          }}
+          onPointerUp={() => (dragRef.current = null)}
+          onPointerCancel={() => (dragRef.current = null)}
+          onKeyDown={(e) => {
+            if (!onRotate) return;
+            if (e.key === "ArrowLeft") onRotate(norm(trueHeading - 5));
+            if (e.key === "ArrowRight") onRotate(norm(trueHeading + 5));
+            if (e.key === "Home") onReset?.();
+          }}
         >
-          <svg
-            ref={ref}
-            viewBox="0 0 200 200"
-            role="slider"
-            tabIndex={0}
-            aria-label="Bússola tática"
-            aria-valuemin={0}
-            aria-valuemax={359}
-            aria-valuenow={Math.round(shown)}
-            className="absolute inset-0 h-full w-full cursor-grab active:cursor-grabbing"
-            onPointerDown={(e) => {
-              if (!onRotate) return;
-              (e.target as Element).setPointerCapture?.(e.pointerId);
-              dragRef.current = {
-                startAngle: angleFromEvent(e.clientX, e.clientY),
-                startHeading: trueHeading,
-              };
-            }}
-            onPointerMove={(e) => {
-              const d = dragRef.current;
-              if (!d || !onRotate) return;
-              const a = angleFromEvent(e.clientX, e.clientY);
-              onRotate(norm(d.startHeading - (a - d.startAngle)));
-            }}
-            onPointerUp={() => (dragRef.current = null)}
-            onPointerCancel={() => (dragRef.current = null)}
-            onKeyDown={(e) => {
-              if (!onRotate) return;
-              if (e.key === "ArrowLeft") onRotate(norm(trueHeading - 5));
-              if (e.key === "ArrowRight") onRotate(norm(trueHeading + 5));
-              if (e.key === "Home") onReset?.();
-            }}
-          >
-            <defs>
-              <radialGradient id="dial" cx="50%" cy="38%">
-                <stop offset="0%" stopColor="#22201d" />
-                <stop offset="70%" stopColor="#141312" />
-                <stop offset="100%" stopColor="#0b0a09" />
-              </radialGradient>
-              <linearGradient id="needleN" x1="0" y1="1" x2="0" y2="0">
-                <stop offset="0%" stopColor="#8c2f16" />
-                <stop offset="100%" stopColor="#FF6B35" />
-              </linearGradient>
-              <linearGradient id="needleS" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#e6e6e6" />
-                <stop offset="100%" stopColor="#8a8a8a" />
-              </linearGradient>
-            </defs>
+          <defs>
+            <radialGradient id="dial" cx="50%" cy="38%">
+              <stop offset="0%" stopColor="#22201d" />
+              <stop offset="70%" stopColor="#141312" />
+              <stop offset="100%" stopColor="#0b0a09" />
+            </radialGradient>
+            <linearGradient id="needleN" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0%" stopColor="#8c2f16" />
+              <stop offset="100%" stopColor="#FF6B35" />
+            </linearGradient>
+            <linearGradient id="needleS" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#e6e6e6" />
+              <stop offset="100%" stopColor="#8a8a8a" />
+            </linearGradient>
+          </defs>
 
-            {/* caixa */}
-            <circle cx="100" cy="100" r="98" fill="#0d0d0c" stroke="#3E4A3D" strokeWidth="3" />
+          {/* caixa */}
+          <circle cx="100" cy="100" r="98" fill="#0d0d0c" stroke="#3E4A3D" strokeWidth="3" />
+          <circle
+            cx="100"
+            cy="100"
+            r="90"
+            fill="url(#dial)"
+            stroke="#FF6B35"
+            strokeOpacity="0.35"
+          />
+          {/* sensor ativo: anel pulsante indica que o mostrador segue o aparelho */}
+          {sensorOn && (
             <circle
               cx="100"
               cy="100"
-              r="90"
-              fill="url(#dial)"
+              r="95"
+              fill="none"
               stroke="#FF6B35"
-              strokeOpacity="0.35"
+              strokeOpacity="0.5"
+              strokeWidth="1.5"
+              className="sensor-glow"
             />
-            {/* sensor ativo: anel pulsante indica que o mostrador segue o aparelho */}
-            {sensorOn && (
-              <circle
-                cx="100"
-                cy="100"
-                r="95"
-                fill="none"
-                stroke="#FF6B35"
-                strokeOpacity="0.5"
-                strokeWidth="1.5"
-                className="sensor-glow"
-              />
-            )}
+          )}
 
-            {/* limbo rotativo */}
-            <g style={{ transform: `rotate(${-shown}deg)`, transformOrigin: "100px 100px" }}>
-              {ticks.map((t) => {
-                const len = t.major ? 12 : t.mid ? 8 : 4;
-                const a = ((t.deg - 90) * Math.PI) / 180;
-                const r1 = 88;
-                const r2 = 88 - len;
-                return (
-                  <line
-                    key={t.deg}
-                    x1={100 + r1 * Math.cos(a)}
-                    y1={100 + r1 * Math.sin(a)}
-                    x2={100 + r2 * Math.cos(a)}
-                    y2={100 + r2 * Math.sin(a)}
-                    stroke={t.major ? "#FF6B35" : t.mid ? "#cfcfcf" : "#7d7d7d"}
-                    strokeWidth={t.major ? 1.6 : 0.8}
-                  />
-                );
-              })}
-              {ticks
+          {/* limbo rotativo */}
+          <g transform={`rotate(${-shown} 100 100)`}>
+            {visiveis.map((t) => {
+              const len = t.major ? 12 : t.mid ? 8 : 4;
+              const a = ((t.deg - 90) * Math.PI) / 180;
+              const r1 = 88;
+              const r2 = 88 - len;
+              return (
+                <line
+                  key={t.deg}
+                  x1={100 + r1 * Math.cos(a)}
+                  y1={100 + r1 * Math.sin(a)}
+                  x2={100 + r2 * Math.cos(a)}
+                  y2={100 + r2 * Math.sin(a)}
+                  stroke={t.major ? "#FF6B35" : t.mid ? "#d4d4d0" : "#8a8a86"}
+                  strokeWidth={(t.major ? 1.6 : 0.9) * traco}
+                />
+              );
+            })}
+            {!isMini &&
+              ticks
                 .filter((t) => t.major)
                 .map((t) => {
                   const p = markerAt(t.deg, 68);
@@ -315,8 +319,8 @@ export default function CompassRose({
                       x={p.x}
                       y={p.y + 3}
                       textAnchor="middle"
-                      fontSize="8"
-                      fill="#d7d3cc"
+                      fontSize="8.5"
+                      fill="#e3dfd7"
                       className="mono"
                       transform={`rotate(${t.deg} ${p.x} ${p.y})`}
                     >
@@ -324,212 +328,215 @@ export default function CompassRose({
                     </text>
                   );
                 })}
-              {CARDINALS.map((c) => {
-                const p = markerAt(c.deg, 78);
-                return (
-                  <text
-                    key={c.label}
-                    x={p.x}
-                    y={p.y + 4}
-                    textAnchor="middle"
-                    fontSize={c.label.length === 1 ? "13" : "9"}
-                    fontWeight="bold"
-                    fill={c.label === "N" ? "#FF6B35" : "#e8e4dd"}
-                    transform={`rotate(${c.deg} ${p.x} ${p.y})`}
-                  >
-                    {c.label}
-                  </text>
-                );
-              })}
-
-              {/* referências celestes e geográficas */}
-              <g>
-                {/* Sol: posição real, apagado quando abaixo do horizonte */}
-                <g opacity={celestial.sunAltitude > 0 ? 1 : 0.25}>
-                  <title>{`Sol — azimute ${formatDegrees(celestial.sunAzimuth ?? 0)} ${compassPoint(
-                    celestial.sunAzimuth ?? 0,
-                  )}${celestial.sunAltitude > 0 ? "" : " (abaixo do horizonte)"}`}</title>
-                  <circle cx={sunPt.x} cy={sunPt.y} r="6" fill="#F4A261" opacity="0.9" />
-                  <text x={sunPt.x} y={sunPt.y + 3} textAnchor="middle" fontSize="7" fill="#1a1a1a">
-                    ☀
-                  </text>
-                </g>
-                {/* Lua: posição real, apagada quando abaixo do horizonte */}
-                <g opacity={celestial.moonUp ? 1 : 0.25}>
-                  <title>{`Lua — azimute ${formatDegrees(celestial.moonAzimuth)} ${compassPoint(
-                    celestial.moonAzimuth,
-                  )}${celestial.moonUp ? "" : " (abaixo do horizonte)"}`}</title>
-                  <circle cx={moonPt.x} cy={moonPt.y} r="5.5" fill="#cbd5e1" opacity="0.9" />
-                  <text
-                    x={moonPt.x}
-                    y={moonPt.y + 2.5}
-                    textAnchor="middle"
-                    fontSize="6"
-                    fill="#1a1a1a"
-                  >
-                    ☾
-                  </text>
-                </g>
-                {/* Cruzeiro do Sul (sul) ou Polaris (norte) na posição real */}
-                <g opacity={celestial.starUp ? 1 : 0.25}>
-                  <title>{`${celestial.starName} — azimute ${formatDegrees(
-                    celestial.starAzimuth,
-                  )} ${compassPoint(celestial.starAzimuth)}${
-                    celestial.starUp ? "" : " (abaixo do horizonte)"
-                  }`}</title>
-                  {cruzDoSul ? (
-                    <>
-                      <line
-                        x1={starPt.x}
-                        y1={starPt.y - 5.5}
-                        x2={starPt.x}
-                        y2={starPt.y + 5.5}
-                        stroke="#8ecae6"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                      <line
-                        x1={starPt.x - 3.8}
-                        y1={starPt.y}
-                        x2={starPt.x + 3.8}
-                        y2={starPt.y}
-                        stroke="#8ecae6"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                      />
-                      <circle
-                        cx={starPt.x}
-                        cy={starPt.y}
-                        r="7.5"
-                        fill="none"
-                        stroke="#8ecae6"
-                        strokeOpacity="0.45"
-                        strokeWidth="0.8"
-                      />
-                    </>
-                  ) : (
-                    <text
-                      x={starPt.x}
-                      y={starPt.y + 3}
-                      textAnchor="middle"
-                      fontSize="9"
-                      fill="#8ecae6"
-                    >
-                      ✦
-                    </text>
-                  )}
-                </g>
+            {CARDINALS.map((c) => {
+              const p = markerAt(c.deg, 78);
+              return (
                 <text
-                  x={coastPt.x}
-                  y={coastPt.y + 3}
+                  key={c.label}
+                  x={p.x}
+                  y={p.y + 4}
                   textAnchor="middle"
-                  fontSize="8"
-                  fill="#3FA9F5"
+                  fontSize={c.label.length === 1 ? (isMini ? "15" : "13") : isMini ? "10.5" : "9"}
+                  fontWeight="bold"
+                  fill={c.label === "N" ? "#FF6B35" : "#e8e4dd"}
+                  transform={`rotate(${c.deg} ${p.x} ${p.y})`}
                 >
-                  ≈
+                  {c.label}
                 </text>
-                {wpPt && (
-                  <circle
-                    cx={wpPt.x}
-                    cy={wpPt.y}
-                    r="4"
-                    fill="none"
-                    stroke="#6BBF59"
-                    strokeWidth="2"
-                  />
-                )}
+              );
+            })}
+
+            {/* referências celestes e geográficas */}
+            <g>
+              {/* Sol: posição real, apagado quando abaixo do horizonte */}
+              <g opacity={celestial.sunAltitude > 0 ? 1 : 0.25}>
+                <title>{`Sol — azimute ${formatDegrees(celestial.sunAzimuth ?? 0)} ${compassPoint(
+                  celestial.sunAzimuth ?? 0,
+                )}${celestial.sunAltitude > 0 ? "" : " (abaixo do horizonte)"}`}</title>
+                <circle cx={sunPt.x} cy={sunPt.y} r="6" fill="#F4A261" opacity="0.9" />
+                <text x={sunPt.x} y={sunPt.y + 3} textAnchor="middle" fontSize="7" fill="#1a1a1a">
+                  ☀
+                </text>
               </g>
-
-              {/* leste, nascente e poente */}
-              <g>
-                <circle cx={eastPt.x} cy={eastPt.y} r="3" fill="#FFD166" />
+              {/* Lua: posição real, apagada quando abaixo do horizonte */}
+              <g opacity={celestial.moonUp ? 1 : 0.25}>
+                <title>{`Lua — azimute ${formatDegrees(celestial.moonAzimuth)} ${compassPoint(
+                  celestial.moonAzimuth,
+                )}${celestial.moonUp ? "" : " (abaixo do horizonte)"}`}</title>
+                <circle cx={moonPt.x} cy={moonPt.y} r="5.5" fill="#cbd5e1" opacity="0.9" />
                 <text
-                  x={eastPt.x}
-                  y={eastPt.y + 10}
+                  x={moonPt.x}
+                  y={moonPt.y + 2.5}
                   textAnchor="middle"
-                  fontSize="5.5"
-                  fill="#FFD166"
-                  transform={`rotate(90 ${eastPt.x} ${eastPt.y})`}
+                  fontSize="6"
+                  fill="#1a1a1a"
                 >
-                  LESTE
+                  ☾
                 </text>
-                {sunrisePt && (
+              </g>
+              {/* Cruzeiro do Sul (sul) ou Polaris (norte) na posição real */}
+              <g opacity={celestial.starUp ? 1 : 0.25}>
+                <title>{`${celestial.starName} — azimute ${formatDegrees(
+                  celestial.starAzimuth,
+                )} ${compassPoint(celestial.starAzimuth)}${
+                  celestial.starUp ? "" : " (abaixo do horizonte)"
+                }`}</title>
+                {cruzDoSul ? (
+                  <>
+                    <line
+                      x1={starPt.x}
+                      y1={starPt.y - 5.5}
+                      x2={starPt.x}
+                      y2={starPt.y + 5.5}
+                      stroke="#8ecae6"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                    <line
+                      x1={starPt.x - 3.8}
+                      y1={starPt.y}
+                      x2={starPt.x + 3.8}
+                      y2={starPt.y}
+                      stroke="#8ecae6"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    />
+                    <circle
+                      cx={starPt.x}
+                      cy={starPt.y}
+                      r="7.5"
+                      fill="none"
+                      stroke="#8ecae6"
+                      strokeOpacity="0.45"
+                      strokeWidth="0.8"
+                    />
+                  </>
+                ) : (
                   <text
-                    x={sunrisePt.x}
-                    y={sunrisePt.y + 3}
+                    x={starPt.x}
+                    y={starPt.y + 3}
                     textAnchor="middle"
-                    fontSize="7"
-                    fill="#F4A261"
+                    fontSize="9"
+                    fill="#8ecae6"
                   >
-                    ↑☀
-                  </text>
-                )}
-                {sunsetPt && (
-                  <text
-                    x={sunsetPt.x}
-                    y={sunsetPt.y + 3}
-                    textAnchor="middle"
-                    fontSize="7"
-                    fill="#E76F51"
-                  >
-                    ↓☀
+                    ✦
                   </text>
                 )}
               </g>
-
-              {/* vento: seta partindo da origem do vento em direção ao centro */}
-              {windOuter && windInner && (
-                <g className="wind-flow">
-                  <line
-                    x1={windOuter.x}
-                    y1={windOuter.y}
-                    x2={windInner.x}
-                    y2={windInner.y}
-                    stroke="#7FD1E8"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                  <circle cx={windInner.x} cy={windInner.y} r="3" fill="#7FD1E8" />
-                  <text
-                    x={windOuter.x}
-                    y={windOuter.y - 4}
-                    textAnchor="middle"
-                    fontSize="6"
-                    fill="#7FD1E8"
-                  >
-                    {windSpeed != null ? formatSpeed(windSpeed) : "vento"}
-                  </text>
-                </g>
+              <text x={coastPt.x} y={coastPt.y + 3} textAnchor="middle" fontSize="8" fill="#3FA9F5">
+                ≈
+              </text>
+              {wpPt && (
+                <circle
+                  cx={wpPt.x}
+                  cy={wpPt.y}
+                  r="4"
+                  fill="none"
+                  stroke="#6BBF59"
+                  strokeWidth="2"
+                />
               )}
-
-              {/* agulha */}
-              <polygon points="100,28 106,100 94,100" fill="url(#needleN)" />
-              <polygon points="100,172 106,100 94,100" fill="url(#needleS)" />
             </g>
 
-            {/* linha de fé fixa */}
-            <line x1="100" y1="6" x2="100" y2="26" stroke="#FF6B35" strokeWidth="2.5" />
-            <polygon points="100,4 94,-4 106,-4" fill="#FF6B35" />
-            <line
-              x1="100"
-              y1="34"
-              x2="100"
-              y2="166"
-              stroke="#FF6B35"
-              strokeOpacity="0.22"
-              strokeWidth="0.8"
+            {/* leste, nascente e poente */}
+            <g>
+              <circle cx={eastPt.x} cy={eastPt.y} r="3" fill="#FFD166" />
+              <text
+                x={eastPt.x}
+                y={eastPt.y + 10}
+                textAnchor="middle"
+                fontSize="5.5"
+                fill="#FFD166"
+                transform={`rotate(90 ${eastPt.x} ${eastPt.y})`}
+              >
+                LESTE
+              </text>
+              {sunrisePt && (
+                <text
+                  x={sunrisePt.x}
+                  y={sunrisePt.y + 3}
+                  textAnchor="middle"
+                  fontSize="7"
+                  fill="#F4A261"
+                >
+                  ↑☀
+                </text>
+              )}
+              {sunsetPt && (
+                <text
+                  x={sunsetPt.x}
+                  y={sunsetPt.y + 3}
+                  textAnchor="middle"
+                  fontSize="7"
+                  fill="#E76F51"
+                >
+                  ↓☀
+                </text>
+              )}
+            </g>
+
+            {/* vento: seta partindo da origem do vento em direção ao centro */}
+            {windOuter && windInner && (
+              <g className="wind-flow">
+                <line
+                  x1={windOuter.x}
+                  y1={windOuter.y}
+                  x2={windInner.x}
+                  y2={windInner.y}
+                  stroke="#7FD1E8"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <circle cx={windInner.x} cy={windInner.y} r="3" fill="#7FD1E8" />
+                <text
+                  x={windOuter.x}
+                  y={windOuter.y - 4}
+                  textAnchor="middle"
+                  fontSize="6"
+                  fill="#7FD1E8"
+                >
+                  {windSpeed != null ? formatSpeed(windSpeed) : "vento"}
+                </text>
+              </g>
+            )}
+
+            {/* agulha */}
+            <polygon
+              points="100,28 106,100 94,100"
+              fill="url(#needleN)"
+              stroke="#241f1b"
+              strokeWidth="0.6"
             />
-            <line
-              x1="34"
-              y1="100"
-              x2="166"
-              y2="100"
-              stroke="#FF6B35"
-              strokeOpacity="0.22"
-              strokeWidth="0.8"
+            <polygon
+              points="100,172 106,100 94,100"
+              fill="url(#needleS)"
+              stroke="#241f1b"
+              strokeWidth="0.6"
             />
-          </svg>
-        </div>
+          </g>
+
+          {/* linha de fé fixa */}
+          <line x1="100" y1="6" x2="100" y2="26" stroke="#FF6B35" strokeWidth="2.5" />
+          <polygon points="100,4 94,-4 106,-4" fill="#FF6B35" />
+          <line
+            x1="100"
+            y1="34"
+            x2="100"
+            y2="166"
+            stroke="#FF6B35"
+            strokeOpacity="0.22"
+            strokeWidth="0.8"
+          />
+          <line
+            x1="34"
+            y1="100"
+            x2="166"
+            y2="100"
+            stroke="#FF6B35"
+            strokeOpacity="0.22"
+            strokeWidth="0.8"
+          />
+        </svg>
 
         {!isMini && (
           <button

@@ -25,6 +25,10 @@ export interface Preferences {
   osirisVis: VisOsiris;
   /** Elementos da tela do mapa tático visíveis (HUD, bússola, waypoints…). */
   telaVis: TelaVisibilidade;
+  /** O mapa gira junto com a bússola (sensor do aparelho). */
+  mapaRotaciona: boolean;
+  /** Centro do mapa travado em coordenadas digitadas (nulo = livre). */
+  posicaoTravada: { lat: number; lng: number } | null;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -36,6 +40,8 @@ export const DEFAULT_PREFERENCES: Preferences = {
   intelKeys: INTEL_CHAVES_PADRAO,
   osirisVis: VIS_OSIRIS_PADRAO,
   telaVis: TELA_VIS_PADRAO,
+  mapaRotaciona: false,
+  posicaoTravada: null,
 };
 
 const KEY = "preferences";

@@ -91,6 +91,16 @@ bun run build      # check:all + build de produção em .output/
   (`posicaoEquatorialParaHorizontal` em `src/lib/celestial.ts`, via tempo
   sideral) — astros abaixo do horizonte aparecem apagados. Coberta por
   `tests/celestial.spec.ts` (unit) e `tests/map-bussola.spec.ts` (E2E).
+- **Rotação do mapa + posição travada**: preferências `mapaRotaciona` e
+  `posicaoTravada` (usePreferences/IndexedDB). A rotação assina o sensor com
+  `observarSensor` FORA do React (o MapShell não re-renderiza a cada leitura;
+  só `map.rotateTo` no bearing do rumo — mesmo alvo do mostrador). A trava
+  desativa dragPan/keyboard/scrollZoom/doubleClickZoom/boxZoom e desliga a
+  rotação por toque; `moveend` devolve o centro ao ponto fixado; qualquer
+  `flyTo` (MINHA POSIÇÃO, waypoints, hub) destrava antes. Os controles ficam na
+  seção MAPA do cartão da bússola (`src/components/map/mapa-controles.tsx`,
+  assinatura do sensor no componente folha via `MapaControlesComSensor`) e o
+  chip `mapa-travado` permite ver/destravar com a bússola minimizada.
 - **Segurança**: operações administrativas usam o cliente service role
   (`client.server.ts`) apenas em módulos `*.server.ts` — arquivos `*.functions.ts`
   e rotas vão para o bundle do cliente. Rotas autenticadas usam o middleware

@@ -18,6 +18,7 @@ import {
   Newspaper,
   Radar,
   RefreshCw,
+  Lock,
   Menu as MenuIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,11 @@ import {
   bearingDeg,
 } from "@/lib/geo";
 import { magneticDeclination } from "@/lib/declination";
-import { reativarSensorSeConfigurado } from "@/lib/bussola-sensor";
+import {
+  reativarSensorSeConfigurado,
+  observarSensor,
+  useSensorBussola,
+} from "@/lib/bussola-sensor";
 import {
   listWaypoints,
   saveWaypoint,
@@ -47,6 +52,7 @@ import {
 } from "@/lib/db";
 import { fetchElevations } from "@/lib/elevation.functions";
 import CompassRose from "@/components/map/CompassRose";
+import MapaControles, { MapaControlesComSensor } from "@/components/map/mapa-controles";
 import {
   formatDegrees,
   formatSignedDegrees,
@@ -259,10 +265,15 @@ function adicionarFontesDesenho(map: maplibregl.Map) {
   });
 }
 
+/** Normaliza um ângulo para [0, 360). */
+const norm360 = (graus: number) => ((graus % 360) + 360) % 360;
+
 export default function MapShell() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const userMovedRef = useRef(false);
+  // Espelho de prefs.posicaoTravada para os handlers imperativos do mapa.
+  const travaRef = useRef<{ lat: number; lng: number } | null>(null);
   const [ready, setReady] = useState(false);
   const [baseLayer, setBaseLayer] = useState<BaseLayerId>("topo");
   const [center, setCenter] = useState<[number, number]>([-47.8822, -15.7942]);
@@ -328,6 +339,12 @@ export default function MapShell() {
   const bussolaMagnetica = prefs.northRef === "magnetic";
   const alternarNorteBussola = () =>
     updatePrefs({ northRef: bussolaMagnetica ? "true" : "magnetic" });
+  // Rotação do mapa junto com a bússola e posição travada (coordenadas digitadas).
+  const mapaRotaciona = prefs.mapaRotaciona;
+  const posicaoTravada = prefs.posicaoTravada;
+  useEffect(() => {
+    travaRef.current = posicaoTravada;
+  }, [posicaoTravada]);
   const [intel, setIntel] = useState<IntelSnapshot | null>(null);
   const [intelStatus, setIntelStatus] = useState<StatusIntel>("idle");
   const [noite, setNoite] = useState<GeoJSON.Feature | null>(null);
@@ -454,6 +471,15 @@ export default function MapShell() {
         setCenter([c.lng, c.lat]);
         setHeading(map.getBearing());
       });
+      // Posição travada: qualquer movimento residual devolve ao ponto fixado.
+      map.on("moveend", () => {
+        const t = travaRef.current;
+        if (!t) return;
+        const c = map.getCenter();
+        if (Math.abs(c.lat - t.lat) > 1e-5 || Math.abs(c.lng - t.lng) > 1e-5) {
+          map.jumpTo({ center: [t.lng, t.lat] });
+        }
+      });
 
       map.on("load", () => {
         // sources for drawing + markers (idempotente: o timer de segurança
@@ -555,6 +581,49 @@ export default function MapShell() {
       window.removeEventListener("orientationchange", onResize);
     };
   }, []);
+
+  // Trava de posição: centro fixo nas coordenadas digitadas — arrasto,
+  // teclado, caixa e rotação por toque desativados; moveend devolve ao ponto.
+  useEffect(() => {
+    const mapa = mapRef.current;
+    if (!mapa || !ready) return;
+    if (posicaoTravada) {
+      mapa.stop();
+      mapa.dragPan.disable();
+      mapa.keyboard.disable();
+      mapa.scrollZoom.disable();
+      mapa.doubleClickZoom.disable();
+      mapa.boxZoom.disable();
+      mapa.touchZoomRotate.enable();
+      mapa.touchZoomRotate.disableRotation();
+      mapa.flyTo({ center: [posicaoTravada.lng, posicaoTravada.lat], essential: true });
+    } else {
+      mapa.dragPan.enable();
+      mapa.keyboard.enable();
+      mapa.scrollZoom.enable();
+      mapa.doubleClickZoom.enable();
+      mapa.boxZoom.enable();
+      mapa.touchZoomRotate.enable();
+      mapa.touchZoomRotate.enableRotation();
+    }
+  }, [posicaoTravada, ready]);
+
+  // Rotação do mapa junto com a bússola: assina o sensor FORA do React —
+  // o MapShell não re-renderiza a cada leitura, só o mapa gira.
+  useEffect(() => {
+    if (!mapaRotaciona || modoMapa !== "tatico") return;
+    return observarSensor((s) => {
+      if (s.rumoAparelho == null) return;
+      const mapa = mapRef.current;
+      if (!mapa) return;
+      const c = mapa.getCenter();
+      const decl = magneticDeclination(c.lat, c.lng);
+      const alvo = bussolaMagnetica ? norm360(s.rumoAparelho - decl) : s.rumoAparelho;
+      const diff = Math.abs(((alvo - mapa.getBearing() + 540) % 360) - 180);
+      if (diff < 0.5) return;
+      mapa.rotateTo(alvo, { duration: 0 });
+    });
+  }, [mapaRotaciona, modoMapa, bussolaMagnetica]);
 
   // Acompanha a posição do usuário em tempo real
   useEffect(() => {
@@ -937,9 +1006,30 @@ export default function MapShell() {
     };
   }, [tool, ready]);
 
-  const flyTo = useCallback((lng: number, lat: number, zoom = 14) => {
-    mapRef.current?.flyTo({ center: [lng, lat], zoom });
-  }, []);
+  const flyTo = useCallback(
+    (lng: number, lat: number, zoom = 14) => {
+      // Voar para outro lugar solta a trava — o usuário pediu outra posição.
+      if (travaRef.current) updatePrefs({ posicaoTravada: null });
+      mapRef.current?.flyTo({ center: [lng, lat], zoom });
+    },
+    [updatePrefs],
+  );
+
+  const travarPosicao = useCallback(
+    (lat: number, lng: number) => {
+      updatePrefs({ posicaoTravada: { lat, lng } });
+      toast.success("Mapa travado nas coordenadas", {
+        description: `${formatDecimalDegrees(lat)}, ${formatDecimalDegrees(
+          lng,
+        )} — o arrasto fica desativado.`,
+      });
+    },
+    [updatePrefs],
+  );
+  const destravarPosicao = useCallback(() => {
+    updatePrefs({ posicaoTravada: null });
+    toast.success("Mapa destravado");
+  }, [updatePrefs]);
 
   const handleGoto = () => {
     const c = parseCoordinate(gotoInput);
@@ -1223,14 +1313,14 @@ export default function MapShell() {
                 userPos={userPos}
                 onCentrar={() => {
                   if (!userPos) return toast.error("Sem localização disponível");
-                  mapRef.current?.flyTo({ center: [userPos.lng, userPos.lat], zoom: 15 });
+                  flyTo(userPos.lng, userPos.lat, 15);
                 }}
                 onUltimoLocal={() => {
                   try {
                     const raw = localStorage.getItem("tgis:last-position");
                     if (!raw) return toast.error("Nenhum local salvo");
                     const p = JSON.parse(raw) as { lng: number; lat: number };
-                    mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 14 });
+                    flyTo(p.lng, p.lat);
                   } catch {
                     toast.error("Nenhum local salvo");
                   }
@@ -1258,14 +1348,14 @@ export default function MapShell() {
                 userPos={userPos}
                 onCentrar={() => {
                   if (!userPos) return toast.error("Sem localização disponível");
-                  mapRef.current?.flyTo({ center: [userPos.lng, userPos.lat], zoom: 15 });
+                  flyTo(userPos.lng, userPos.lat, 15);
                 }}
                 onUltimoLocal={() => {
                   try {
                     const raw = localStorage.getItem("tgis:last-position");
                     if (!raw) return toast.error("Nenhum local salvo");
                     const p = JSON.parse(raw) as { lng: number; lat: number };
-                    mapRef.current?.flyTo({ center: [p.lng, p.lat], zoom: 14 });
+                    flyTo(p.lng, p.lat);
                   } catch {
                     toast.error("Nenhum local salvo");
                   }
@@ -1934,15 +2024,15 @@ export default function MapShell() {
                 ? "hud-panel rounded-full p-1.5 shadow-lg"
                 : compassMode === "panel"
                   ? "compass-card compass-in flex w-[min(66vw,19rem)] flex-col max-h-[calc(100dvh-25rem)] overflow-hidden md:max-h-[calc(100dvh-25.5rem)]"
-                  : "compass-card compass-in w-full max-w-md p-4"
+                  : "compass-card compass-in flex w-full max-w-md flex-col overflow-hidden"
             }
           >
             <div
-              className={`flex items-center justify-between gap-1 ${
+              className={`flex shrink-0 items-center justify-between gap-1 ${
                 compassMode === "panel"
                   ? "px-3 pt-3 pb-1"
                   : compassMode === "full"
-                    ? "mb-2"
+                    ? "px-4 pt-4 pb-1"
                     : "mb-1"
               }`}
             >
@@ -2010,7 +2100,9 @@ export default function MapShell() {
 
             {compassMode !== "mini" && (
               <div
-                className={compassMode === "panel" ? "min-h-0 flex-1 overflow-y-auto p-3 pt-1" : ""}
+                className={
+                  compassMode === "panel" ? "min-h-0 flex-1 overflow-y-auto p-3 pt-1" : "px-4 py-3"
+                }
               >
                 <CompassRose
                   heading={heading}
@@ -2031,7 +2123,46 @@ export default function MapShell() {
                 />
               </div>
             )}
+
+            {compassMode !== "mini" && (
+              <MapaControlesComSensor
+                className={
+                  compassMode === "panel"
+                    ? "shrink-0 border-t border-white/10 px-3 pb-2.5 pt-2"
+                    : "shrink-0 border-t border-white/10 px-4 pb-4 pt-3"
+                }
+                rotaciona={mapaRotaciona}
+                onRotaciona={(v) => updatePrefs({ mapaRotaciona: v })}
+                travado={posicaoTravada}
+                centroAtual={center}
+                onTravar={travarPosicao}
+                onDestravar={destravarPosicao}
+              />
+            )}
           </div>
+        </div>
+      )}
+
+      {/* Posição travada: chip flutuante para ver e destravar quando a seção
+          MAPA do cartão não está à vista (miniatura, Osiris ou bússola oculta) */}
+      {posicaoTravada && (compassMode === "mini" || modoMapa !== "tatico" || !telaVis.bussola) && (
+        <div
+          data-test="mapa-travado"
+          className="absolute bottom-[calc(4.75rem+env(safe-area-inset-bottom))] left-2 z-20 md:bottom-12 md:left-1/2 md:-translate-x-1/2"
+        >
+          <button
+            type="button"
+            onClick={destravarPosicao}
+            title="Destravar a posição do mapa"
+            aria-label="Destravar a posição do mapa"
+            className="hud-panel mono flex items-center gap-1.5 rounded-full px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-tactical-green shadow-lg"
+          >
+            <Lock className="h-3 w-3 shrink-0" />
+            <span>
+              {formatDecimalDegrees(posicaoTravada.lat)}, {formatDecimalDegrees(posicaoTravada.lng)}
+            </span>
+            <X className="h-3 w-3 shrink-0" />
+          </button>
         </div>
       )}
     </div>

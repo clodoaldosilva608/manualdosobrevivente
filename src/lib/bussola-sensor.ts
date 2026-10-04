@@ -134,6 +134,15 @@ export async function reativarSensorSeConfigurado(): Promise<boolean> {
   return ativarSensorBussola();
 }
 
+/** Observa o sensor FORA do React (ex.: rotação do mapa) sem re-render. */
+export function observarSensor(ouvinte: (estado: EstadoSensor) => void): () => void {
+  const tratar = () => ouvinte(estado);
+  ouvintes.add(tratar);
+  return () => {
+    ouvintes.delete(tratar);
+  };
+}
+
 /** Hook de leitura reativa do estado compartilhado do sensor. */
 export function useSensorBussola(): EstadoSensor {
   return useSyncExternalStore(inscrever, obterEstado, obterEstado);

@@ -34,6 +34,12 @@ export interface LocalGearItem {
   packed: boolean;
   /** Mochila à qual o item pertence (somente local — não vai para a nuvem). */
   mochila_id?: string | null;
+  /**
+   * Foto do item feita pelo usuário (galeria ou câmera), como data URL JPEG
+   * comprimido. Sem foto, a lista mostra o desenho padrão do item
+   * (imagemPadraoDoItem). Somente local — não vai para a nuvem.
+   */
+  img?: string | null;
   created_at: string;
   updated_at: string;
   dirty?: boolean;

@@ -66,6 +66,7 @@ import {
 } from "@/lib/obsidian";
 import { downloadText } from "@/lib/gpx-kml";
 import CompassRose from "@/components/map/CompassRose";
+import RedlineBoletim from "@/components/map/RedlineBoletim";
 import MapaControles, { MapaControlesComSensor } from "@/components/map/mapa-controles";
 import {
   formatDegrees,
@@ -1647,12 +1648,15 @@ export default function MapShell() {
           </div>
 
           {/* Elevation chart — no desktop centrado embaixo, longe do rail
-              (direita) e da bússola (esquerda). */}
+              (direita) e da bússola (esquerda). Sobe quando a redline está
+              ativa para não cobrir o letreiro. */}
           {elevationData.length > 1 && (
             <div
-              className={`absolute left-2 right-2 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-10 hud-panel rounded-md p-3 md:left-1/2 md:right-auto md:bottom-4 md:w-[420px] md:-translate-x-1/2 ${
-                newMarker ? "hidden md:block" : "block"
-              }`}
+              className={`absolute left-2 right-2 z-10 hud-panel rounded-md p-3 md:left-1/2 md:right-auto md:w-[420px] md:-translate-x-1/2 ${
+                telaVis.redline
+                  ? "bottom-[calc(7.25rem+env(safe-area-inset-bottom))] md:bottom-8"
+                  : "bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:bottom-4"
+              } ${newMarker ? "hidden md:block" : "block"}`}
             >
               <div className="flex items-center justify-between mono text-xs mb-1">
                 <span className="text-tactical-orange font-bold">{t("PERFIL DE ELEVAÇÃO")}</span>
@@ -1699,7 +1703,13 @@ export default function MapShell() {
           {/* New marker dialog — centrado embaixo no desktop (mesma faixa do
               gráfico de elevação, que fica oculto enquanto o diálogo abre). */}
           {newMarker && (
-            <div className="absolute left-2 right-2 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 hud-panel rounded-md p-4 space-y-3 md:left-1/2 md:right-auto md:bottom-4 md:w-96 md:-translate-x-1/2">
+            <div
+              className={`absolute left-2 right-2 z-20 hud-panel rounded-md p-4 space-y-3 md:left-1/2 md:right-auto md:w-96 md:-translate-x-1/2 ${
+                telaVis.redline
+                  ? "bottom-[calc(6.25rem+env(safe-area-inset-bottom))] md:bottom-8"
+                  : "bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-4"
+              }`}
+            >
               <div className="flex items-center justify-between">
                 <span className="mono text-tactical-orange font-bold text-sm">
                   {t("NOVO WAYPOINT")}
@@ -2653,7 +2663,11 @@ export default function MapShell() {
       {posicaoTravada && (compassMode === "mini" || modoMapa !== "tatico" || !telaVis.bussola) && (
         <div
           data-test="mapa-travado"
-          className="absolute bottom-[calc(4.75rem+env(safe-area-inset-bottom))] left-2 z-20 md:bottom-12 md:left-1/2 md:-translate-x-1/2"
+          className={`absolute left-2 z-20 md:bottom-12 md:left-1/2 md:-translate-x-1/2 ${
+            telaVis.redline && modoMapa === "tatico"
+              ? "bottom-[calc(6.25rem+env(safe-area-inset-bottom))]"
+              : "bottom-[calc(4.75rem+env(safe-area-inset-bottom))]"
+          }`}
         >
           <button
             type="button"
@@ -2669,6 +2683,23 @@ export default function MapShell() {
             <X className="h-3 w-3 shrink-0" />
           </button>
         </div>
+      )}
+
+      {/* Redline do boletim: letreiro fixo na barra inferior com TODAS as
+          informações do Boletim de Inteligência e da bússola em rotação. */}
+      {modoMapa === "tatico" && telaVis.redline && (
+        <RedlineBoletim
+          heading={heading}
+          declination={decl}
+          center={center}
+          altitude={userPos?.alt ?? null}
+          bearingToWaypoint={
+            waypoints[0]
+              ? bearingDeg(center, [waypoints[0].longitude, waypoints[0].latitude])
+              : null
+          }
+          waypointLabel={waypoints[0]?.title ?? null}
+        />
       )}
     </div>
   );

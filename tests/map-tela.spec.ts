@@ -74,11 +74,11 @@ describe("Tela do mapa tático — limpar e escolher elementos", () => {
     // Painéis do HUD presentes (mobile + desktop, o desktop só aparece via CSS).
     await esperarContagem(page, "painel-centro", 2);
 
-    // A folha de camadas abre pelo rail e mostra a seção com 7 toggles.
+    // A folha de camadas abre pelo rail e mostra a seção com 8 toggles.
     await page.locator('button[title="Camadas"]').click();
     const secao = page.locator('[data-test="tela-elementos"]');
     await secao.waitFor({ state: "visible", timeout: 10_000 });
-    expect(await secao.locator('[role="switch"]').count()).toBe(7);
+    expect(await secao.locator('[role="switch"]').count()).toBe(8);
     expect(await secao.locator('[data-test="tela-limpar"]').count()).toBe(1);
     expect(await secao.locator('[data-test="tela-restaurar"]').count()).toBe(1);
 

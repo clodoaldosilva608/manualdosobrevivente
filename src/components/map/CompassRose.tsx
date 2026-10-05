@@ -84,6 +84,7 @@ export default function CompassRose({
     sensorOn,
     rumoAparelho: deviceHeading,
     inclinacao: tilt,
+    nivel,
     ultimaLeitura,
     calibracao,
   } = useSensorBussola();
@@ -190,12 +191,23 @@ export default function CompassRose({
   const resumoCeleste = `Sol ${formatDegrees(celestial.sunAzimuth ?? 0)} · Lua ${formatDegrees(
     celestial.moonAzimuth,
   )} · ${celestial.starName} ${formatDegrees(celestial.starAzimuth)}`;
-  // Nível de bolha: desloca a bolha conforme a inclinação do aparelho (limitada a ±30°)
+  // Nível de bolha UNIVERSAL: com o vetor gravidade do motion funciona em
+  // qualquer posição (deitado, em pé, de lado, tela para baixo); sem motion,
+  // cai para beta/gamma do orientation (só deitado) para não ficar cego.
   const clamp = (v: number, m: number) => Math.max(-m, Math.min(m, v));
-  const bubbleX = tilt ? clamp(tilt.gamma, 30) / 30 : 0;
-  const bubbleY = tilt ? clamp(tilt.beta, 30) / 30 : 0;
-  const tiltTotal = tilt ? Math.min(90, Math.hypot(tilt.beta, tilt.gamma)) : null;
+  const bubbleX = nivel ? nivel.bolhaX : tilt ? clamp(tilt.gamma, 30) / 30 : 0;
+  const bubbleY = nivel ? nivel.bolhaY : tilt ? clamp(tilt.beta, 30) / 30 : 0;
+  const tiltTotal = nivel
+    ? nivel.total
+    : tilt
+      ? Math.min(90, Math.hypot(tilt.beta, tilt.gamma))
+      : null;
   const leveled = tiltTotal != null && tiltTotal < 2.5;
+  const rotuloPostura = nivel
+    ? nivel.nivelado
+      ? "deitado · nivelado"
+      : `${nivel.postura}${nivel.telaParaCima ? "" : " · tela p/ baixo"}`
+    : null;
 
   const isMini = variant === "mini";
   const isFull = variant === "full";
@@ -626,13 +638,14 @@ export default function CompassRose({
 
       {!isMini && (
         <>
-          {/* nível de bolha + nível do mar */}
+          {/* nível de bolha universal (qualquer posição) + nível do mar */}
           <div className="grid grid-cols-2 gap-2 w-full">
             <div className="rounded-md border border-border bg-background/50 p-2.5 flex flex-col items-center gap-1">
               <div className="mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                Nível de bolha
+                Nível de bolha · qualquer posição
               </div>
               <div
+                data-test="nivel-bolha"
                 className={`relative h-24 w-24 rounded-full border-2 ${
                   leveled ? "border-tactical-green" : "border-border"
                 } bg-background/70`}
@@ -647,10 +660,21 @@ export default function CompassRose({
                   }}
                 />
               </div>
-              <div className="mono text-[10px] text-muted-foreground">
-                {tiltTotal != null
-                  ? `Inclinação ${formatDegrees(tiltTotal)}${leveled ? " · nivelado" : ""}`
-                  : "Ative o sensor do aparelho"}
+              <div className="mono text-[10px] text-muted-foreground text-center leading-snug">
+                {tiltTotal != null ? (
+                  <>
+                    Inclinação {formatDegrees(tiltTotal)}
+                    {leveled ? " · nivelado" : ""}
+                    {nivel && (
+                      <span data-test="nivel-eixos" className="block">
+                        X {formatDegrees(nivel.angX, 1)} · Y {formatDegrees(nivel.angY, 1)}
+                        {rotuloPostura ? ` · ${rotuloPostura}` : ""}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  "Ative o sensor do aparelho"
+                )}
               </div>
             </div>
 
@@ -667,11 +691,14 @@ export default function CompassRose({
                 >
                   <div className="sea-wave absolute left-0 top-0 h-1.5 w-[200%] bg-tactical-blue/60" />
                 </div>
-                <div className="absolute left-1 right-1 top-1 mono text-[10px] text-tactical-orange font-bold">
+                <div
+                  data-test="nivel-mar-altitude"
+                  className="absolute left-1 right-1 top-1 mono text-[10px] text-tactical-orange font-bold"
+                >
                   {altitude != null ? `${formatNumber(altitude, 0)} m` : "—"}
                 </div>
                 <div className="absolute left-1 bottom-1 mono text-[9px] text-muted-foreground">
-                  acima do mar
+                  acima do nível do mar · GPS
                 </div>
               </div>
             </div>

@@ -23,6 +23,7 @@ import {
   type LeituraOrientacao,
 } from "@/lib/bussola-calculo";
 import { magneticDeclination } from "@/lib/declination";
+import { nivelUniversal, suavizarGravidade, type LeituraNivel } from "@/lib/nivel";
 
 export interface InclinacaoAparelho {
   beta: number;
@@ -36,6 +37,8 @@ export interface EstadoSensor {
   rumoAparelho: number | null;
   /** Inclinação (beta/gamma) para o nível de bolha. */
   inclinacao: InclinacaoAparelho | null;
+  /** Nível UNIVERSAL (vetor gravidade): funciona com o aparelho em qualquer posição. */
+  nivel: LeituraNivel | null;
   /** Carimbo (Date.now) da última leitura recebida — indica sensor vivo. */
   ultimaLeitura: number | null;
   /** Correção de calibração aplicada ao sensor, em graus (0 = sem correção). */
@@ -46,6 +49,7 @@ const ESTADO_INICIAL: EstadoSensor = {
   sensorOn: false,
   rumoAparelho: null,
   inclinacao: null,
+  nivel: null,
   ultimaLeitura: null,
   calibracao: 0,
 };
@@ -95,6 +99,9 @@ function lembrarCalibracao(valor: number) {
 
 let estado: EstadoSensor = { ...ESTADO_INICIAL, calibracao: lerCalibracao() };
 let listenerRegistrado = false;
+let motionRegistrado = false;
+/** Gravidade suavizada (frame do aparelho) — base do nível universal. */
+let gravidadeSuavizada: { x: number; y: number; z: number } | null = null;
 const ouvintes = new Set<() => void>();
 
 function notificar() {
@@ -144,6 +151,30 @@ function registrarOuvinteNativo() {
     definir(parcial);
   };
   window.addEventListener("deviceorientation", tratar as EventListener, true);
+  registrarOuvinteNivel();
+}
+
+/**
+ * Nível universal: ouve o devicemotion (vetor gravidade completo) e publica
+ * a leitura compensada pela rotação de tela — mede inclinação com o
+ * aparelho em QUALQUER posição (deitado, em pé, de lado, tela para baixo).
+ */
+function registrarOuvinteNivel() {
+  if (motionRegistrado) return;
+  motionRegistrado = true;
+  const tratar = (evento: DeviceMotionEvent) => {
+    const g = evento.accelerationIncludingGravity;
+    if (!g || typeof g.x !== "number" || typeof g.y !== "number" || typeof g.z !== "number") return;
+    gravidadeSuavizada = suavizarGravidade(gravidadeSuavizada, g.x, g.y, g.z);
+    const nivel = nivelUniversal(
+      gravidadeSuavizada.x,
+      gravidadeSuavizada.y,
+      gravidadeSuavizada.z,
+      anguloTelaAtual(),
+    );
+    if (nivel) definir({ nivel });
+  };
+  window.addEventListener("devicemotion", tratar as EventListener, true);
 }
 
 /** Ângulo de rotação da tela (0/90/180/270) em todos os motores. */
@@ -170,11 +201,25 @@ export async function ativarSensorBussola(): Promise<boolean> {
   type Construtor = typeof DeviceOrientationEvent & {
     requestPermission?: () => Promise<"granted" | "denied">;
   };
+  type ConstrutorMovimento = typeof DeviceMotionEvent & {
+    requestPermission?: () => Promise<"granted" | "denied">;
+  };
   const construtor = (
     typeof DeviceOrientationEvent !== "undefined" ? DeviceOrientationEvent : undefined
   ) as Construtor | undefined;
   if (!construtor) return false;
   if (estado.sensorOn) return true;
+  // iOS: a permissão do orientation cobre o rumo; o motion (nível universal)
+  // pede a sua separadamente — tenta, mas não bloqueia se negado.
+  const movimento = (typeof DeviceMotionEvent !== "undefined" ? DeviceMotionEvent : undefined) as
+    ConstrutorMovimento | undefined;
+  if (movimento && typeof movimento.requestPermission === "function") {
+    try {
+      await movimento.requestPermission();
+    } catch {
+      /* sem permissão de motion: o nível universal fica sem leitura */
+    }
+  }
   if (typeof construtor.requestPermission === "function") {
     try {
       if ((await construtor.requestPermission()) !== "granted") return false;

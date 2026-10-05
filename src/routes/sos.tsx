@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Siren, Flashlight, Share2, Antenna } from "lucide-react";
+import { Siren, Flashlight, Share2, Antenna, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatDD, formatDMS, formatMGRS } from "@/lib/coords";
@@ -8,6 +8,7 @@ import { formatDecimalDegrees } from "@/lib/format";
 import { toast } from "sonner";
 import { ShareSheet } from "@/components/ShareSheet";
 import { MENSAGENS_PRE_DEFINIDAS, padraoMorse, textoParaMorse, type PassoMorse } from "@/lib/morse";
+import { MorseSom } from "@/lib/morse-audio";
 
 export const Route = createFileRoute("/sos")({
   head: () => ({
@@ -38,6 +39,17 @@ const VELOCIDADES = [
   { rotulo: "RÁPIDO", unidade: 120 },
 ] as const;
 
+/** Preferência do som do Morse (persiste no aparelho). */
+const CHAVE_SOM = "tgis:sos-som";
+
+function somPreferido(): boolean {
+  try {
+    return localStorage.getItem(CHAVE_SOM) !== "0";
+  } catch {
+    return true;
+  }
+}
+
 function SOS() {
   const [pos, setPos] = useState<{ lng: number; lat: number } | null>(null);
   const [estroboAceso, setEstroboAceso] = useState(false);
@@ -47,6 +59,16 @@ function SOS() {
   const [mensagem, setMensagem] = useState("SOS");
   const [unidade, setUnidade] = useState<number>(200);
   const [shareOpen, setShareOpen] = useState(false);
+  /** Som do Morse: tom de áudio junto com a luz (padrão ligado). A leitura
+   *  da preferência fica no effect: no SSR não há localStorage, e o React 19
+   *  não corrige atributos divergentes na hidratação. */
+  const [som, setSom] = useState<boolean>(true);
+  useEffect(() => {
+    setSom(somPreferido());
+  }, []);
+  const somRef = useRef(som);
+  somRef.current = som;
+  const audioRef = useRef<MorseSom | null>(null);
   const torchTrackRef = useRef<MediaStreamTrack | null>(null);
   const timerRef = useRef<number | null>(null);
 
@@ -76,6 +98,10 @@ function SOS() {
     setEstroboAceso(false);
     setLetraAtual(-1);
     if (timerRef.current) clearTimeout(timerRef.current);
+    if (audioRef.current) {
+      audioRef.current.parar();
+      audioRef.current = null;
+    }
     if (torchTrackRef.current) {
       aplicarTocha(false);
       torchTrackRef.current.stop();
@@ -83,10 +109,17 @@ function SOS() {
     }
   }, [aplicarTocha]);
 
-  /** Liga o estrobo (tocha quando disponível + tela branca) no padrão informado. */
+  /** Liga o estrobo (tocha quando disponível + tela branca) e o tom de áudio
+   *  no padrão informado — luz e som seguem exatamente o mesmo pulso. */
   const transmitir = async (passos: PassoMorse[], tipo: "sos" | "texto") => {
     parar();
     setTransmitindo(tipo);
+    // O áudio precisa nascer no gesto do usuário: cria ANTES do getUserMedia.
+    if (somRef.current) {
+      const audio = new MorseSom();
+      audio.iniciar();
+      audioRef.current = audio;
+    }
     let torch = false;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -109,6 +142,7 @@ function SOS() {
       setEstroboAceso(passo.aceso);
       if (tipo === "texto") setLetraAtual(passo.letra);
       if (torch) aplicarTocha(passo.aceso);
+      audioRef.current?.definir(passo.aceso);
       i++;
       timerRef.current = window.setTimeout(tick, passo.ms);
     };
@@ -248,6 +282,56 @@ function SOS() {
             </div>
           </div>
 
+          {/* Som: tom de áudio acompanha a luz do estrobo */}
+          <div className="mt-3">
+            <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1.5">
+              Som do Morse (tom de 600 Hz junto com a luz)
+            </div>
+            <div className="flex gap-1.5" data-test="morse-som">
+              <button
+                type="button"
+                data-test="morse-som-ligado"
+                aria-pressed={som}
+                onClick={() => {
+                  const proximo = true;
+                  setSom(proximo);
+                  try {
+                    localStorage.setItem(CHAVE_SOM, "1");
+                  } catch {
+                    /* sem armazenamento */
+                  }
+                }}
+                className={`glove-tap mono inline-flex items-center gap-1 text-[11px] font-bold rounded border px-2.5 py-1 leading-none ${
+                  som
+                    ? "border-tactical-orange bg-tactical-orange/15 text-tactical-orange"
+                    : "border-border text-muted-foreground"
+                }`}
+              >
+                <Volume2 className="h-3.5 w-3.5" /> LIGADO
+              </button>
+              <button
+                type="button"
+                data-test="morse-som-desligado"
+                aria-pressed={!som}
+                onClick={() => {
+                  setSom(false);
+                  try {
+                    localStorage.setItem(CHAVE_SOM, "0");
+                  } catch {
+                    /* sem armazenamento */
+                  }
+                }}
+                className={`glove-tap mono inline-flex items-center gap-1 text-[11px] font-bold rounded border px-2.5 py-1 leading-none ${
+                  !som
+                    ? "border-tactical-orange bg-tactical-orange/15 text-tactical-orange"
+                    : "border-border text-muted-foreground"
+                }`}
+              >
+                <VolumeX className="h-3.5 w-3.5" /> DESLIGADO
+              </button>
+            </div>
+          </div>
+
           {morseTexto && (
             <div className="mt-3 rounded bg-background/60 border border-border p-2.5">
               <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground mb-1">
@@ -300,8 +384,8 @@ function SOS() {
 
           <p className="text-xs text-muted-foreground mt-3 mono">
             {transmitindo === "texto"
-              ? "TRANSMITINDO em Morse — a lanterna do celular pisca quando disponível e a tela inteira pisca junto."
-              : "Ponto, traço e pausas seguem o padrão internacional. Use a tocha à noite e a tela de dia."}
+              ? "TRANSMITINDO em Morse — a lanterna do celular pisca, a tela inteira pisca junto e o tom de 600 Hz soa no ritmo dos pulsos."
+              : "Ponto, traço e pausas seguem o padrão internacional. Use a tocha à noite e a tela de dia — o som ajuda a ser encontrado na neblina ou mata fechada."}
           </p>
         </div>
 

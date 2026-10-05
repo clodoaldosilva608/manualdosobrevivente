@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Backpack,
   Plus,
@@ -11,7 +11,11 @@ import {
   ChevronRight,
   PackageOpen,
   CalendarClock,
+  ImagePlus,
+  Camera,
+  X,
 } from "lucide-react";
+import { arquivoParaFoto, imagemPadraoDoItem } from "@/lib/item-imagem";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -101,6 +105,26 @@ function Inventory() {
   });
   const [editandoItemId, setEditandoItemId] = useState<string | null>(null);
 
+  /** Trava enquanto a foto escolhida está sendo comprimida. */
+  const [fotoEmAndamento, setFotoEmAndamento] = useState(false);
+  const inputGaleria = useRef<HTMLInputElement>(null);
+  const inputCamera = useRef<HTMLInputElement>(null);
+
+  /** Recebe a foto (galeria ou câmera), comprime e põe no rascunho do item. */
+  const receberFoto = async (file: File | undefined | null) => {
+    if (!file) return;
+    setFotoEmAndamento(true);
+    try {
+      const foto = await arquivoParaFoto(file);
+      setDraft((d) => ({ ...d, img: foto }));
+      toast.success(t("Foto do item registrada"));
+    } catch {
+      toast.error(t("Não foi possível usar esta imagem"));
+    } finally {
+      setFotoEmAndamento(false);
+    }
+  };
+
   const carregar = async () => {
     const [ms, is] = await Promise.all([listMochilas(), listGear()]);
     setMochilas(ms);
@@ -155,6 +179,8 @@ function Inventory() {
   const limparFormulario = () => {
     setDraft({ category: draft.category, quantity: 1, weight_g: 100, packed: false });
     setEditandoItemId(null);
+    if (inputGaleria.current) inputGaleria.current.value = "";
+    if (inputCamera.current) inputCamera.current.value = "";
   };
 
   const salvarItem = async () => {
@@ -173,6 +199,7 @@ function Inventory() {
         weight_g: Number(draft.weight_g) || 0,
         notes: draft.notes?.trim() || null,
         expires_at: draft.expires_at || null,
+        img: draft.img ?? null,
         mochila_id: draft.mochila_id ?? original.mochila_id ?? null,
         updated_at: new Date().toISOString(),
         dirty: true,
@@ -191,6 +218,7 @@ function Inventory() {
         notes: draft.notes?.trim() || null,
         expires_at: draft.expires_at || null,
         packed: false,
+        img: draft.img ?? null,
         mochila_id: abertaId && abertaId !== SEM_MOCHILA ? abertaId : null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -320,6 +348,8 @@ function Inventory() {
         onEditarItem={editarItem}
         onTogglePacked={togglePacked}
         onRemoverItem={remove}
+        onFoto={receberFoto}
+        fotoEmAndamento={fotoEmAndamento}
       />
     );
   }
@@ -650,6 +680,8 @@ function DetalheMochila({
   onEditarItem,
   onTogglePacked,
   onRemoverItem,
+  onFoto,
+  fotoEmAndamento,
 }: {
   mochila: LocalMochila | null;
   itens: LocalGearItem[];
@@ -665,8 +697,18 @@ function DetalheMochila({
   onEditarItem: (i: LocalGearItem) => void;
   onTogglePacked: (i: LocalGearItem) => void;
   onRemoverItem: (id: string) => void;
+  /** Recebe o arquivo de foto (galeria ou câmera) e registra no rascunho. */
+  onFoto: (file: File | null | undefined) => void;
+  fotoEmAndamento: boolean;
 }) {
   const { t } = useI18n();
+  const inputGaleria = useRef<HTMLInputElement>(null);
+  const inputCamera = useRef<HTMLInputElement>(null);
+  /** Lê o arquivo escolhido, registra e limpa o input (permite reenviar o mesmo). */
+  const pegarFoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onFoto(e.target.files?.[0]);
+    e.target.value = "";
+  };
   const totalG = itens.filter((i) => i.packed).reduce((s, i) => s + i.weight_g * i.quantity, 0);
   const empacotados = itens.filter((i) => i.packed).length;
   const excedeu = mochila ? totalG > mochila.limite_g : false;
@@ -810,6 +852,74 @@ function DetalheMochila({
               placeholder={t("Ex.: pederneira")}
             />
           </div>
+          {/* Imagem do item: desenho padrão ou foto própria (galeria/câmera) */}
+          <div className="md:col-span-5">
+            <Label className="text-xs">{t("Imagem do item")}</Label>
+            <div
+              data-test="item-imagem-bloco"
+              className="mt-1 flex flex-wrap items-center gap-3 rounded-md border border-border bg-background/50 p-2.5"
+            >
+              <img
+                data-test="item-imagem-preview"
+                src={draft.img || imagemPadraoDoItem(draft.name || "", draft.category || "tools")}
+                alt={t("Imagem do item")}
+                className="h-14 w-14 shrink-0 rounded-md border border-border bg-background object-contain p-1"
+              />
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  data-test="item-foto-galeria"
+                  onClick={() => inputGaleria.current?.click()}
+                  disabled={fotoEmAndamento}
+                  className="glove-tap mono inline-flex items-center gap-1.5 rounded border border-border px-2.5 py-1.5 text-[11px] uppercase tracking-wider text-foreground hover:border-tactical-orange/60 disabled:opacity-50"
+                >
+                  <ImagePlus className="h-4 w-4" /> {t("Enviar foto")}
+                </button>
+                <button
+                  type="button"
+                  data-test="item-foto-camera"
+                  onClick={() => inputCamera.current?.click()}
+                  disabled={fotoEmAndamento}
+                  className="glove-tap mono inline-flex items-center gap-1.5 rounded border border-tactical-orange/60 px-2.5 py-1.5 text-[11px] uppercase tracking-wider text-tactical-orange hover:bg-tactical-orange/10 disabled:opacity-50"
+                >
+                  <Camera className="h-4 w-4" /> {t("Tirar foto")}
+                </button>
+                {draft.img && (
+                  <button
+                    type="button"
+                    data-test="item-foto-remover"
+                    onClick={() => setDraft({ ...draft, img: null })}
+                    className="glove-tap mono inline-flex items-center gap-1.5 rounded border border-border px-2.5 py-1.5 text-[11px] uppercase tracking-wider text-muted-foreground hover:text-destructive"
+                  >
+                    <X className="h-4 w-4" /> {t("Remover foto")}
+                  </button>
+                )}
+              </div>
+              <p className="text-muted-foreground w-full text-[11px] leading-snug">
+                {fotoEmAndamento
+                  ? t("Comprimindo a foto…")
+                  : t("Sem foto, o item usa o desenho padrão. Sua foto fica guardada no aparelho.")}
+              </p>
+              {/* Galerias ocultas: galeria e câmera do aparelho */}
+              <input
+                ref={inputGaleria}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                data-test="item-input-galeria"
+                onChange={pegarFoto}
+              />
+              <input
+                ref={inputCamera}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                data-test="item-input-camera"
+                onChange={pegarFoto}
+              />
+            </div>
+          </div>
           <div>
             <Label className="text-xs">{t("Categoria")}</Label>
             <select
@@ -903,6 +1013,12 @@ function DetalheMochila({
             }`}
           >
             <div className="flex items-center gap-3">
+              <img
+                data-test="item-imagem"
+                src={i.img || imagemPadraoDoItem(i.name, i.category)}
+                alt={i.name}
+                className="h-11 w-11 shrink-0 rounded-md border border-border bg-background object-contain p-0.5"
+              />
               <input
                 type="checkbox"
                 checked={i.packed}

@@ -322,3 +322,33 @@
   border-top-color: #141414 !important;
   border-bottom-color: #141414 !important;
 }
+
+/* Redline do boletim — letreiro contínuo na barra inferior do mapa tático */
+@keyframes redline-slide {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.redline-track {
+  animation: redline-slide 90s linear infinite;
+  padding-right: 3rem;
+}
+.redline-track:first-child {
+  padding-left: 3rem;
+}
+.redline-edge {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, oklch(0.55 0.19 25 / 0.85), transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .redline-track {
+    animation: none;
+    padding-left: 0.75rem;
+  }
+}
+.redline-pausado .redline-track {
+  animation-play-state: paused;
+}

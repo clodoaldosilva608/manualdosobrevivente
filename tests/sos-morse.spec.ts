@@ -138,3 +138,70 @@ describe("SOS — mensagem escrita em código Morse no estrobo", () => {
     await page.context().close();
   }, 120_000);
 });
+
+describe("SOS — som do Morse (tom de áudio)", () => {
+  it("som vem LIGADO por padrão, desliga com clique e persiste", async () => {
+    const page = await abrirSOS(browser);
+    const ligado = page.locator('[data-test="morse-som-ligado"]');
+    const desligado = page.locator('[data-test="morse-som-desligado"]');
+    await ligado.waitFor({ state: "visible", timeout: 10_000 });
+
+    // Padrão: LIGADO selecionado.
+    expect(await ligado.getAttribute("aria-pressed")).toBe("true");
+    expect(await desligado.getAttribute("aria-pressed")).toBe("false");
+
+    // Desliga e recarrega: a preferência persiste no aparelho.
+    await desligado.click();
+    await page.waitForFunction(
+      () =>
+        document
+          .querySelector('[data-test="morse-som-desligado"]')
+          ?.getAttribute("aria-pressed") === "true",
+      null,
+      { timeout: 5_000 },
+    );
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page
+      .locator('[data-test="morse-entrada"]')
+      .waitFor({ state: "visible", timeout: 30_000 });
+    await dispensarOnboarding(page);
+    await page
+      .locator('[data-test="morse-som-desligado"][aria-pressed="true"]')
+      .waitFor({ state: "visible", timeout: 10_000 });
+
+    // Volta ao LIGADO para não vazar estado entre testes.
+    await page.locator('[data-test="morse-som-ligado"]').click();
+    await page.context().close();
+  }, 120_000);
+
+  it("transmissão com som ligado acontece sem erros (luz e tom juntos)", async () => {
+    const page = await abrirSOS(browser);
+    const erros: string[] = [];
+    page.on("pageerror", (e) => erros.push(String(e)));
+    await page.locator('[data-test="morse-som-ligado"]').click();
+
+    const botao = page.locator('[data-test="morse-transmitir"]');
+    await botao.click();
+    await page.waitForFunction(
+      () =>
+        (document.querySelector('[data-test="morse-transmitir"]')?.textContent ?? "").includes(
+          "PARAR",
+        ),
+      null,
+      { timeout: 10_000 },
+    );
+    // Alguns ciclos de pulso com o AudioContext ativo.
+    await page.waitForTimeout(1_500);
+    await botao.click();
+    await page.waitForFunction(
+      () =>
+        (document.querySelector('[data-test="morse-transmitir"]')?.textContent ?? "").includes(
+          "TRANSMITIR",
+        ),
+      null,
+      { timeout: 10_000 },
+    );
+    expect(erros).toEqual([]);
+    await page.context().close();
+  }, 120_000);
+});

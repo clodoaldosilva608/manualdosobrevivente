@@ -21,6 +21,8 @@ export interface TelaVisibilidade {
   waypoints: boolean;
   /** Controles nativos do mapa: zoom, navegação, GPS e escala. */
   controlesMapa: boolean;
+  /** Redline: letreiro inferior com o resumo do boletim e da bússola. */
+  redline: boolean;
 }
 
 export const TELA_VIS_PADRAO: TelaVisibilidade = {
@@ -31,6 +33,7 @@ export const TELA_VIS_PADRAO: TelaVisibilidade = {
   ferramentas: true,
   waypoints: true,
   controlesMapa: true,
+  redline: true,
 };
 
 export interface LinhaTela {
@@ -71,5 +74,10 @@ export const LINHAS_TELA: LinhaTela[] = [
     id: "controlesMapa",
     nome: "Controles do mapa",
     dica: "Zoom, escala e botão de centralizar no GPS",
+  },
+  {
+    id: "redline",
+    nome: "Redline do boletim",
+    dica: "Letreiro inferior com bússola, tempo, astros, mar e coordenadas",
   },
 ];

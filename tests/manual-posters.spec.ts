@@ -3,6 +3,20 @@ import { chromium, type Browser, type Page } from "playwright";
 
 const BASE = process.env["TEST_BASE_URL"] ?? "http://localhost:8080";
 
+/** Os dez pôsteres enviados pelo usuário — um verbete por imagem. */
+const POSTERES = [
+  "conhecimento-salva-vidas",
+  "agua-e-vida",
+  "cinco-pilares",
+  "seu-futuro-e-preparacao",
+  "preparacao-e-liberdade",
+  "mente-forte-sobrevive",
+  "disciplina-gera-resultados",
+  "sobreviver-e-uma-escolha",
+  "equipamento-e-vida",
+  "sobrevivencia-nao-e-sorte",
+];
+
 let browser: Browser;
 
 beforeAll(async () => {
@@ -13,18 +27,11 @@ afterAll(async () => {
   await browser?.close();
 });
 
-const NOVOS = [
-  ["Preparação", "Sobrevivência Não É Sorte"],
-  ["Preparação", "Esteja Pronto Antes da Emergência"],
-  ["Mentalidade", "Mente Forte Sobrevive"],
-  ["Água", "Água É Vida"],
-  ["Equipamento", "Equipamento É Vida"],
-] as const;
-
 async function abrirManual(browser: Browser): Promise<Page> {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
   await page.goto(`${BASE}/manual`, { waitUntil: "domcontentloaded" });
+  await page.getByText("MANUAL DE SOBREVIVÊNCIA").waitFor({ state: "visible", timeout: 30_000 });
   const pular = page.getByRole("button", { name: "Pular configuração" });
   const apareceu = await pular
     .waitFor({ state: "visible", timeout: 6_000 })
@@ -34,63 +41,48 @@ async function abrirManual(browser: Browser): Promise<Page> {
     await pular.click();
     await pular.waitFor({ state: "hidden" });
   }
-  await page.getByRole("heading", { name: "MANUAL DE SOBREVIVÊNCIA" }).waitFor({
-    state: "visible",
-    timeout: 15_000,
-  });
+  await page.waitForTimeout(1_000);
   return page;
 }
 
-describe("Manuais dos pôsteres do Centro de Sobrevivência", () => {
-  it.retry = 2;
-
-  it("lista os 10 novos verbetes organizados por categoria", async () => {
+describe("manual de sobrevivência — todos os pôsteres enviados com ensino", () => {
+  it("o índice lista os 17 verbetes (7 técnicos + 10 dos pôsteres) com miniatura", async () => {
     const page = await abrirManual(browser);
-    for (const [categoria, titulo] of NOVOS) {
-      const secao = page.locator("section", {
-        has: page.getByRole("heading", { name: categoria }),
-      });
-      await secao.getByText(titulo).waitFor({ state: "visible" });
-    }
-    const esperados = [
-      "Conhecimento Salva Vidas",
-      "Seu Futuro É Preparação",
-      "Preparação É Liberdade",
-      "Disciplina Gera Resultados",
-      "Sobreviver É Uma Escolha",
-    ];
-    for (const titulo of esperados) {
-      await page.getByText(titulo).waitFor({ state: "visible" });
-    }
-    await page.context().close();
-  });
+    const cartoes = page.locator('a[href^="/manual/"]');
+    await cartoes.first().waitFor({ state: "visible", timeout: 15_000 });
+    expect(await cartoes.count()).toBe(17);
 
-  it("abre o verbete Equipamento É Vida com imagem do pôster e checklist", async () => {
-    const page = await abrirManual(browser);
-    await page.getByText("Equipamento É Vida").first().click();
-    await page.getByRole("heading", { name: "Equipamento É Vida" }).waitFor({
-      state: "visible",
-      timeout: 15_000,
-    });
-    await page.getByRole("heading", { name: "Equipamento" }).first().waitFor({ state: "visible" });
-    await page.getByText("CHECKLIST DE CAMPO").waitFor({ state: "visible" });
-
-    const img = page.locator('img[alt*="mochila tática"]');
-    await img.waitFor({ state: "visible" });
-    await page.waitForFunction((el) => el?.naturalWidth > 0, await img.elementHandle(), {
-      timeout: 10_000,
-    });
+    // Cada cartão traz imagem com texto alternativo descritivo.
+    const semAlt = await cartoes.evaluateAll(
+      (els) => els.filter((el) => !el.querySelector("img")?.getAttribute("alt")).length,
+    );
+    expect(semAlt).toBe(0);
     await page.context().close();
-  });
+  }, 120_000);
 
-  it("abre o verbete Mente Forte com o método STOP", async () => {
-    const page = await abrirManual(browser);
-    await page.getByText("Mente Forte Sobrevive").first().click();
-    await page.getByRole("heading", { name: "Mente Forte Sobrevive" }).waitFor({
-      state: "visible",
-      timeout: 15_000,
-    });
-    await page.getByText(/método militar/i).waitFor({ state: "visible" });
-    await page.context().close();
-  });
+  for (const slug of POSTERES) {
+    it(`o pôster ${slug} aparece com a imagem e o ensino completo`, async () => {
+      const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+      const page = await context.newPage();
+      await page.goto(`${BASE}/manual/${slug}`, { waitUntil: "domcontentloaded" });
+
+      // Imagem do pôster carregada (naturalWidth > 0 = bytes reais no DOM).
+      const imagem = page.locator("main img, body img").first();
+      await imagem.waitFor({ state: "visible", timeout: 30_000 });
+      await page.waitForFunction(
+        () => {
+          const el = document.querySelector("img");
+          return el ? (el as HTMLImageElement).naturalWidth > 0 : false;
+        },
+        null,
+        { timeout: 30_000 },
+      );
+
+      // Ensino: artigo com conteúdo substancial + checklist de campo.
+      const corpo = await page.locator("article").innerText();
+      expect(corpo.length).toBeGreaterThan(400);
+      await page.getByText("CHECKLIST DE CAMPO").waitFor({ state: "visible", timeout: 10_000 });
+      await context.close();
+    }, 120_000);
+  }
 });

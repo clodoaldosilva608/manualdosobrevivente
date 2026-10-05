@@ -96,9 +96,7 @@ function EntryRow({ entry }: { entry: (typeof MANUAL)[number] }) {
           src={entry.image}
           alt={entry.imageAlt}
           loading="lazy"
-          width={1024}
-          height={576}
-          className="h-16 w-24 shrink-0 rounded object-cover border border-border"
+          className="h-20 w-16 shrink-0 rounded object-cover border border-border"
         />
         <div className="min-w-0">
           <div className="break-words font-semibold">{entry.title}</div>

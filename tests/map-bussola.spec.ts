@@ -1,9 +1,43 @@
 import { describe, expect, it, beforeAll, afterAll } from "vitest";
 import { chromium, type Browser, type Page } from "playwright";
+import { magneticDeclination } from "@/lib/declination";
+import { norm360 } from "@/lib/bussola-calculo";
 
 const BASE = process.env["TEST_BASE_URL"] ?? "http://localhost:8080";
 
+/** Centro padrão do mapa (Brasília) — a posição usada quando não há GPS. */
+const CENTRO_PADRAO = { lat: -15.7942, lng: -47.8822 };
+
+/**
+ * Rumo VERDADEIRO esperado para um alpha do sensor (deitado, gamma 0):
+ * magnético 360 − alpha + declinação do lugar (verdadeiro = magnético + decl).
+ */
+function rumoVerdadeiroEsperado(alpha: number): number {
+  return norm360(norm360(360 - alpha) + magneticDeclination(CENTRO_PADRAO.lat, CENTRO_PADRAO.lng));
+}
+
 let browser: Browser;
+
+/**
+ * Espera a leitura da miniatura chegar ao rumo alvo (±1°).
+ * Comparação numérica: a borda de arredondamento (x,5°) torna a string
+ * instável entre "x°" e "x+1°".
+ */
+async function esperarLeituraRumo(page: Page, alvo: number, timeout = 10_000) {
+  await page.waitForFunction(
+    (esperado) => {
+      const texto =
+        document.querySelector('[aria-label="Abrir bússola"] [data-test="bussola-leitura"]')
+          ?.textContent ?? "";
+      const numero = Number.parseFloat(texto.replace(",", "."));
+      if (!Number.isFinite(numero)) return false;
+      const diff = Math.abs(((numero - esperado + 540) % 360) - 180);
+      return diff <= 1;
+    },
+    alvo,
+    { timeout },
+  );
+}
 
 beforeAll(async () => {
   browser = await chromium.launch({ channel: "chromium" });
@@ -135,21 +169,14 @@ describe("bússola tática — miniatura funciona como a completa e mostra os as
     await page.locator('[data-test="bussola-sensor-on"]').waitFor({ state: "visible" });
 
     // Antes de minimizar: leitura de orientação sintética muda a miniatura
-    // (alpha 90 → rumo 270).
+    // (alpha 90 → magnético 270 → verdadeiro = 270 + declinação do lugar).
     await page.evaluate(() =>
       window.dispatchEvent(
         new DeviceOrientationEvent("deviceorientation", { alpha: 90, beta: 0, gamma: 0 }),
       ),
     );
-    await page.waitForFunction(
-      () =>
-        (
-          document.querySelector('[aria-label="Abrir bússola"] [data-test="bussola-leitura"]')
-            ?.textContent ?? ""
-        ).includes("270"),
-      null,
-      { timeout: 10_000 },
-    );
+    const rumoEsperado = rumoVerdadeiroEsperado(90);
+    await esperarLeituraRumo(page, rumoEsperado);
 
     // Abre a bússola completa e minimiza de volta para a miniatura.
     await page.locator('[aria-label="Abrir bússola"]').click();
@@ -160,21 +187,15 @@ describe("bússola tática — miniatura funciona como a completa e mostra os as
       .locator('[aria-label="Abrir bússola"] [data-test="bussola-leitura"]')
       .waitFor({ state: "visible", timeout: 10_000 });
 
-    // Depois de minimizar: continua acompanhando o sensor (alpha 180 → 180).
+    // Depois de minimizar: continua acompanhando o sensor
+    // (alpha 180 → magnético 180 → verdadeiro = 180 + declinação).
     await page.evaluate(() =>
       window.dispatchEvent(
         new DeviceOrientationEvent("deviceorientation", { alpha: 180, beta: 0, gamma: 0 }),
       ),
     );
-    await page.waitForFunction(
-      () =>
-        (
-          document.querySelector('[aria-label="Abrir bússola"] [data-test="bussola-leitura"]')
-            ?.textContent ?? ""
-        ).includes("180"),
-      null,
-      { timeout: 10_000 },
-    );
+    const rumoEsperado180 = rumoVerdadeiroEsperado(180);
+    await esperarLeituraRumo(page, rumoEsperado180);
     await page.context().close();
   }, 180_000);
 
@@ -206,15 +227,8 @@ describe("bússola tática — miniatura funciona como a completa e mostra os as
         new DeviceOrientationEvent("deviceorientation", { alpha: 90, beta: 0, gamma: 0 }),
       ),
     );
-    await page.waitForFunction(
-      () =>
-        (
-          document.querySelector('[aria-label="Abrir bússola"] [data-test="bussola-leitura"]')
-            ?.textContent ?? ""
-        ).includes("270"),
-      null,
-      { timeout: 10_000 },
-    );
+    const rumoReduzido = rumoVerdadeiroEsperado(90);
+    await esperarLeituraRumo(page, rumoReduzido);
     await context.close();
   }, 180_000);
 });
@@ -272,21 +286,22 @@ describe("bússola tática — mapa gira junto e trava em coordenadas digitadas"
       { timeout: 5_000 },
     );
 
-    // alpha 90 → rumo 270 → o mapa gira para o bearing 270.
+    // alpha 90 → magnético 270 → VERDADEIRO = 270 + declinação → o mapa gira
+    // para o rumo geográfico correto (o norte das cartas é o verdadeiro).
     await page.evaluate(() =>
       window.dispatchEvent(
         new DeviceOrientationEvent("deviceorientation", { alpha: 90, beta: 0, gamma: 0 }),
       ),
     );
-    await esperarBearing(page, 270);
+    await esperarBearing(page, rumoVerdadeiroEsperado(90));
 
-    // alpha 180 → rumo 180 → bearing 180.
+    // alpha 180 → verdadeiro = 180 + declinação → bearing segue.
     await page.evaluate(() =>
       window.dispatchEvent(
         new DeviceOrientationEvent("deviceorientation", { alpha: 180, beta: 0, gamma: 0 }),
       ),
     );
-    await esperarBearing(page, 180);
+    await esperarBearing(page, rumoVerdadeiroEsperado(180));
 
     // Desliga o switch: o bearing para de seguir o sensor.
     await rotacao.click();
@@ -304,7 +319,66 @@ describe("bússola tática — mapa gira junto e trava em coordenadas digitadas"
     );
     await page.waitForTimeout(800);
     const b = await bearingAtual(page);
-    expect(Math.abs(b - 180)).toBeLessThan(1);
+    const rumo180 = rumoVerdadeiroEsperado(180);
+    expect(Math.abs(((b - rumo180 + 540) % 360) - 180)).toBeLessThan(1);
+    await page.context().close();
+  }, 180_000);
+
+  it("a calibração pelo astro corrige o erro do sensor e o mapa segue o azimute real", async () => {
+    const page = await abrirMapaMobile(browser);
+
+    // Sensor ativo + rotação ligada no painel.
+    const sensor = page.locator('[data-test="bussola-sensor"]');
+    await sensor.waitFor({ state: "visible", timeout: 10_000 });
+    await sensor.click();
+    await page.locator('[data-test="bussola-sensor-on"]').waitFor({ state: "visible" });
+    await page.locator('[aria-label="Abrir bússola"]').click();
+    const rotacao = page.locator('[data-test="mapa-rotacao"]');
+    await rotacao.waitFor({ state: "visible", timeout: 10_000 });
+    await rotacao.click();
+
+    // Leitura crua com erro simulado: alpha 20 (verdadeiro 341,5° com decl −18,5°)
+    // — um magnetômetro descalibrado teria esse desvio permanente.
+    const ALFA_ENVIESADO = 20;
+    const despacharEnviesado = () =>
+      page.evaluate(
+        (a) =>
+          window.dispatchEvent(
+            new DeviceOrientationEvent("deviceorientation", { alpha: a, beta: 0, gamma: 0 }),
+          ),
+        ALFA_ENVIESADO,
+      );
+    await despacharEnviesado();
+    await esperarBearing(page, rumoVerdadeiroEsperado(ALFA_ENVIESADO));
+
+    // Astro de calibração: Sol acima do horizonte de dia, Lua à noite.
+    const { getCelestial } = await import("@/lib/celestial");
+    const astro = getCelestial(CENTRO_PADRAO.lat, CENTRO_PADRAO.lng, new Date());
+    const usarSol = astro.sunAltitude > 0;
+    const botaoCalibrar = usarSol
+      ? page.locator('[data-test="bussola-calibrar-sol"]')
+      : page.locator('[data-test="bussola-calibrar-lua"]');
+    const astroAcima = usarSol || astro.moonUp;
+    if (!astroAcima) {
+      // Nem Sol nem Lua agora: impossível calibrar pelo céu — encerra válido.
+      await page.context().close();
+      return;
+    }
+    await botaoCalibrar.waitFor({ state: "visible", timeout: 10_000 });
+    await botaoCalibrar.click();
+    await page
+      .locator('[data-test="bussola-aviso-calibracao"]')
+      .waitFor({ state: "visible", timeout: 10_000 });
+
+    // Com a correção aplicada, a MESMA leitura enviesada passa a apontar o
+    // azimute REAL do astro (o erro do sensor foi medido e cancelado).
+    const azimuteAstro = usarSol ? (astro.sunAzimuth ?? 0) : astro.moonAzimuth;
+    await despacharEnviesado();
+    await esperarBearing(page, azimuteAstro, 15_000);
+
+    // A célula de correção mostra o desvio aplicado (não-zero).
+    const correcao = await page.locator('[data-test="bussola-zerar-calibracao"]').isVisible();
+    expect(correcao).toBe(true);
     await page.context().close();
   }, 180_000);
 

@@ -44,6 +44,7 @@ import {
   reativarSensorSeConfigurado,
   observarSensor,
   useSensorBussola,
+  definirPosicaoSensor,
 } from "@/lib/bussola-sensor";
 import {
   listWaypoints,
@@ -281,9 +282,6 @@ function adicionarFontesDesenho(map: maplibregl.Map) {
     },
   });
 }
-
-/** Normaliza um ângulo para [0, 360). */
-const norm360 = (graus: number) => ((graus % 360) + 360) % 360;
 
 export default function MapShell() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -682,20 +680,20 @@ export default function MapShell() {
 
   // Rotação do mapa junto com a bússola: assina o sensor FORA do React —
   // o MapShell não re-renderiza a cada leitura, só o mapa gira.
+  // O sensor já entrega o rumo VERDADEIRO (magnético + declinação do lugar,
+  // compensado por inclinação e tela, com a calibração do usuário aplicada):
+  // o alvo do mapa é exatamente esse rumo — o norte das cartas é o geográfico.
   useEffect(() => {
     if (!mapaRotaciona || modoMapa !== "tatico") return;
     return observarSensor((s) => {
       if (s.rumoAparelho == null) return;
       const mapa = mapRef.current;
       if (!mapa) return;
-      const c = mapa.getCenter();
-      const decl = magneticDeclination(c.lat, c.lng);
-      const alvo = bussolaMagnetica ? norm360(s.rumoAparelho - decl) : s.rumoAparelho;
-      const diff = Math.abs(((alvo - mapa.getBearing() + 540) % 360) - 180);
-      if (diff < 0.5) return;
-      mapa.rotateTo(alvo, { duration: 0 });
+      const diff = Math.abs(((s.rumoAparelho - mapa.getBearing() + 540) % 360) - 180);
+      if (diff < 0.3) return;
+      mapa.rotateTo(s.rumoAparelho, { duration: 0 });
     });
-  }, [mapaRotaciona, modoMapa, bussolaMagnetica]);
+  }, [mapaRotaciona, modoMapa]);
 
   // Acompanha a posição do usuário em tempo real
   useEffect(() => {
@@ -709,6 +707,8 @@ export default function MapShell() {
           acc: pos.coords.accuracy,
         };
         setUserPos(p);
+        // A bússola usa a posição real do aparelho para a declinação local.
+        definirPosicaoSensor(p.lat, p.lng);
         try {
           localStorage.setItem(
             "tgis:last-position",
@@ -725,6 +725,13 @@ export default function MapShell() {
     );
     return () => navigator.geolocation.clearWatch(id);
   }, []);
+
+  // Sem GPS, a declinação da bússola segue o centro do mapa (a melhor
+  // estimativa disponível); com GPS, a posição real do aparelho manda.
+  useEffect(() => {
+    if (userPos) return;
+    definirPosicaoSensor(center[1], center[0]);
+  }, [center, userPos]);
 
   // Desenha a marcação fixa da posição atual
   useEffect(() => {

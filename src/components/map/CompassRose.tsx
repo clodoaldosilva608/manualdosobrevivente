@@ -13,7 +13,12 @@ import {
 } from "lucide-react";
 import { getCelestial } from "@/lib/celestial";
 import { nearestCoast, compassPoint } from "@/lib/coast";
-import { ativarSensorBussola, useSensorBussola } from "@/lib/bussola-sensor";
+import {
+  ativarSensorBussola,
+  calibrarComAstro,
+  useSensorBussola,
+  zerarCalibracaoBussola,
+} from "@/lib/bussola-sensor";
 import { fetchWeather } from "@/lib/weather.functions";
 import {
   formatDegrees,
@@ -80,7 +85,9 @@ export default function CompassRose({
     rumoAparelho: deviceHeading,
     inclinacao: tilt,
     ultimaLeitura,
+    calibracao,
   } = useSensorBussola();
+  const [avisoCalibracao, setAvisoCalibracao] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -689,12 +696,91 @@ export default function CompassRose({
             )}
           </div>
 
+          {/* Calibração pelo astro: mede o erro do sensor contra o azimute
+              astronômico real do Sol (ou da Lua à noite) e aplica a correção */}
+          {!isMini && (
+            <div className="rounded-md border border-border bg-background/50 p-2.5 w-full">
+              <div className="mono text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">
+                Calibração de precisão
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {sensorOn && celestial.sunAltitude > 0 && (
+                  <button
+                    type="button"
+                    data-test="bussola-calibrar-sol"
+                    onClick={() => {
+                      const r = calibrarComAstro(celestial.sunAzimuth ?? 0);
+                      setAvisoCalibracao(
+                        r == null
+                          ? "Sem leitura do sensor ainda — espere o SEN ficar verde."
+                          : `Correção de ${formatSignedDegrees(r)} aplicada. Aponte de novo para conferir.`,
+                      );
+                    }}
+                    className="glove-tap rounded-md border border-tactical-orange/60 text-tactical-orange px-3 py-1 mono text-[11px] uppercase tracking-widest"
+                  >
+                    Calibrar pelo Sol ({formatDegrees(celestial.sunAzimuth ?? 0)})
+                  </button>
+                )}
+                {sensorOn && celestial.sunAltitude <= 0 && celestial.moonUp && (
+                  <button
+                    type="button"
+                    data-test="bussola-calibrar-lua"
+                    onClick={() => {
+                      const r = calibrarComAstro(celestial.moonAzimuth);
+                      setAvisoCalibracao(
+                        r == null
+                          ? "Sem leitura do sensor ainda — espere o SEN ficar verde."
+                          : `Correção de ${formatSignedDegrees(r)} aplicada. Aponte de novo para conferir.`,
+                      );
+                    }}
+                    className="glove-tap rounded-md border border-tactical-orange/60 text-tactical-orange px-3 py-1 mono text-[11px] uppercase tracking-widest"
+                  >
+                    Calibrar pela Lua ({formatDegrees(celestial.moonAzimuth)})
+                  </button>
+                )}
+                {sensorOn && calibracao !== 0 && (
+                  <button
+                    type="button"
+                    data-test="bussola-zerar-calibracao"
+                    onClick={() => {
+                      zerarCalibracaoBussola();
+                      setAvisoCalibracao("Correção zerada — sensor no modelo puro.");
+                    }}
+                    className="glove-tap rounded-md border border-border text-muted-foreground px-3 py-1 mono text-[11px] uppercase tracking-widest"
+                  >
+                    Zerar correção
+                  </button>
+                )}
+              </div>
+              {sensorOn && (
+                <p className="text-[10px] text-muted-foreground mt-1.5 leading-snug">
+                  Aponte a borda superior do aparelho diretamente para o Sol (ou a Lua) e toque em
+                  calibrar: o erro do sensor é medido contra o azimute astronômico real e corrigido
+                  em todas as leituras.
+                </p>
+              )}
+              {avisoCalibracao && (
+                <p
+                  data-test="bussola-aviso-calibracao"
+                  className="text-[11px] text-tactical-orange mt-1.5 mono"
+                >
+                  {avisoCalibracao}
+                </p>
+              )}
+            </div>
+          )}
+
           <div
             className={`grid grid-cols-2 gap-2 w-full mono ${isFull ? "" : "max-h-40 overflow-y-auto"}`}
           >
             <Cell label="Rumo verdadeiro" value={formatDegrees(trueHeading)} />
             <Cell label="Rumo magnético" value={formatDegrees(norm(trueHeading - declination))} />
             <Cell label="Declinação" value={formatSignedDegrees(declination)} />
+            <Cell
+              label="Correção do sensor"
+              value={formatSignedDegrees(calibracao)}
+              hint={calibracao !== 0 ? "calibração pelo astro" : "sem correção aplicada"}
+            />
             <Cell
               label="Azimute p/ waypoint"
               value={bearingToWaypoint != null ? formatDegrees(bearingToWaypoint) : "—"}

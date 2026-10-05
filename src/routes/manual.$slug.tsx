@@ -95,9 +95,7 @@ function Entry() {
       <img
         src={entry.image}
         alt={entry.imageAlt}
-        width={1024}
-        height={576}
-        className="w-full rounded-md border border-border mb-6 object-cover"
+        className="w-full h-auto rounded-md border border-border mb-6"
       />
 
       <article className="prose prose-invert prose-headings:text-tactical-orange prose-strong:text-foreground max-w-none">

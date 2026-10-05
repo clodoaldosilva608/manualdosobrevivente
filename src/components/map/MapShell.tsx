@@ -119,6 +119,7 @@ import {
   type TelaVisibilidade,
 } from "@/components/map/tela-elementos";
 import { Switch } from "@/components/ui/switch";
+import { useI18n, tGlobal } from "@/lib/i18n";
 
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 
@@ -301,6 +302,7 @@ export default function MapShell() {
     void reativarSensorSeConfigurado();
   }, []);
   const [tool, setTool] = useState<Tool>("none");
+  const { t } = useI18n();
   const [drawCoords, setDrawCoords] = useState<[number, number][]>([]);
   const [waypoints, setWaypoints] = useState<LocalWaypoint[]>([]);
   const [openSheet, setOpenSheet] = useState<
@@ -1198,16 +1200,17 @@ export default function MapShell() {
     setOpenSheet(null);
     if (compassMode !== "mini") setCompassMode("mini");
     if (telaVis.waypoints) updatePrefs({ telaVis: { ...telaVis, waypoints: false } });
-    toast.success("Tela limpa", {
-      description:
+    toast.success(t("Tela limpa"), {
+      description: t(
         "Medições apagadas e waypoints ocultos do mapa — traga de volta em Camadas › Elementos da tela.",
+      ),
     });
   };
 
   /** Restaura todos os elementos da tela para o padrão (visíveis). */
   const restaurarTela = () => {
     updatePrefs({ telaVis: { ...TELA_VIS_PADRAO } });
-    toast.success("Elementos da tela restaurados");
+    toast.success(t("Elementos da tela restaurados"));
   };
 
   // Boletim de inteligência: garante dados frescos ao abrir o painel.
@@ -1452,8 +1455,8 @@ export default function MapShell() {
   const botaoMenu = (
     <button
       type="button"
-      title="Abrir menu"
-      aria-label="Abrir menu"
+      title={t("Abrir menu")}
+      aria-label={t("Abrir menu")}
       data-test="btn-menu-app"
       onClick={() => setOpenSheet("menu")}
       className="glove-tap hud-panel flex h-[30px] w-[36px] items-center justify-center rounded-md text-foreground"
@@ -1513,17 +1516,17 @@ export default function MapShell() {
               <PainelPosicao
                 userPos={userPos}
                 onCentrar={() => {
-                  if (!userPos) return toast.error("Sem localização disponível");
+                  if (!userPos) return toast.error(t("Sem localização disponível"));
                   flyTo(userPos.lng, userPos.lat, 15);
                 }}
                 onUltimoLocal={() => {
                   try {
                     const raw = localStorage.getItem("tgis:last-position");
-                    if (!raw) return toast.error("Nenhum local salvo");
+                    if (!raw) return toast.error(t("Nenhum local salvo"));
                     const p = JSON.parse(raw) as { lng: number; lat: number };
                     flyTo(p.lng, p.lat);
                   } catch {
-                    toast.error("Nenhum local salvo");
+                    toast.error(t("Nenhum local salvo"));
                   }
                 }}
               />
@@ -1548,17 +1551,17 @@ export default function MapShell() {
               <PainelPosicao
                 userPos={userPos}
                 onCentrar={() => {
-                  if (!userPos) return toast.error("Sem localização disponível");
+                  if (!userPos) return toast.error(t("Sem localização disponível"));
                   flyTo(userPos.lng, userPos.lat, 15);
                 }}
                 onUltimoLocal={() => {
                   try {
                     const raw = localStorage.getItem("tgis:last-position");
-                    if (!raw) return toast.error("Nenhum local salvo");
+                    if (!raw) return toast.error(t("Nenhum local salvo"));
                     const p = JSON.parse(raw) as { lng: number; lat: number };
                     flyTo(p.lng, p.lat);
                   } catch {
-                    toast.error("Nenhum local salvo");
+                    toast.error(t("Nenhum local salvo"));
                   }
                 }}
               />
@@ -1616,8 +1619,8 @@ export default function MapShell() {
                 setTool(tool === "marker" ? "none" : "marker");
                 toast.message(
                   tool === "marker"
-                    ? "Ferramenta de marcador desativada"
-                    : "Toque no mapa para marcar um waypoint",
+                    ? t("Ferramenta de marcador desativada")
+                    : t("Toque no mapa para marcar um waypoint"),
                 );
               }}
             />
@@ -1645,7 +1648,7 @@ export default function MapShell() {
               }`}
             >
               <div className="flex items-center justify-between mono text-xs mb-1">
-                <span className="text-tactical-orange font-bold">PERFIL DE ELEVAÇÃO</span>
+                <span className="text-tactical-orange font-bold">{t("PERFIL DE ELEVAÇÃO")}</span>
                 <button onClick={() => setElevationData([])}>
                   <X className="h-3.5 w-3.5 text-muted-foreground" />
                 </button>
@@ -1670,7 +1673,7 @@ export default function MapShell() {
                         border: "1px solid #333",
                         fontSize: 11,
                       }}
-                      formatter={(v: number) => [formatElevation(v), "Elevação"]}
+                      formatter={(v: number) => [formatElevation(v), t("Elevação")]}
                       labelFormatter={(d) => formatElevation(Number(d))}
                     />
                     <Area
@@ -1691,22 +1694,24 @@ export default function MapShell() {
           {newMarker && (
             <div className="absolute left-2 right-2 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 hud-panel rounded-md p-4 space-y-3 md:left-1/2 md:right-auto md:bottom-4 md:w-96 md:-translate-x-1/2">
               <div className="flex items-center justify-between">
-                <span className="mono text-tactical-orange font-bold text-sm">NOVO WAYPOINT</span>
+                <span className="mono text-tactical-orange font-bold text-sm">
+                  {t("NOVO WAYPOINT")}
+                </span>
                 <button onClick={() => setNewMarker(null)}>
                   <X className="h-4 w-4" />
                 </button>
               </div>
               <div className="space-y-2">
-                <Label className="text-xs">Título</Label>
+                <Label className="text-xs">{t("Título")}</Label>
                 <Input
                   autoFocus
                   value={newMarker.title}
                   onChange={(e) => setNewMarker({ ...newMarker, title: e.target.value })}
-                  placeholder="Ex: Fonte de água #3"
+                  placeholder={t("Ex: Fonte de água #3")}
                 />
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label className="text-xs">Categoria</Label>
+                    <Label className="text-xs">{t("Categoria")}</Label>
                     <select
                       className="w-full bg-input text-foreground rounded-md h-10 px-2 border border-border text-sm"
                       value={newMarker.category}
@@ -1720,13 +1725,13 @@ export default function MapShell() {
                     >
                       {Object.entries(CATEGORY_LABELS_PT).map(([id, label]) => (
                         <option key={id} value={id}>
-                          {label}
+                          {t(label)}
                         </option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <Label className="text-xs">Cor</Label>
+                    <Label className="text-xs">{t("Cor")}</Label>
                     <input
                       type="color"
                       value={newMarker.color}
@@ -1743,7 +1748,7 @@ export default function MapShell() {
                   onClick={saveNewMarker}
                   className="w-full bg-tactical-orange text-background hover:bg-tactical-orange/90 glove-tap"
                 >
-                  Salvar waypoint
+                  {t("Salvar waypoint")}
                 </Button>
               </div>
             </div>
@@ -1755,14 +1760,14 @@ export default function MapShell() {
       <Sheet open={openSheet === "layers"} onOpenChange={(o) => !o && setOpenSheet(null)}>
         <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto bg-card border-border">
           <SheetHeader>
-            <SheetTitle className="mono text-tactical-orange">CAMADAS DO MAPA</SheetTitle>
+            <SheetTitle className="mono text-tactical-orange">{t("CAMADAS DO MAPA")}</SheetTitle>
           </SheetHeader>
 
           <div className="mt-4 space-y-4">
             {modoMapa === "tatico" && (
               <section>
                 <div className="mono mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
-                  Camadas base
+                  {t("Camadas base")}
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {(Object.keys(BASE_LAYERS) as BaseLayerId[]).map((k) => (
@@ -1778,7 +1783,7 @@ export default function MapShell() {
                           : "border-border hover:border-foreground/40"
                       }`}
                     >
-                      {BASE_LAYERS[k].label}
+                      {t(BASE_LAYERS[k].label)}
                     </button>
                   ))}
                 </div>
@@ -1788,7 +1793,7 @@ export default function MapShell() {
             {modoMapa === "tatico" && (
               <section data-test="tela-elementos">
                 <div className="mono mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
-                  Elementos da tela
+                  {t("Elementos da tela")}
                 </div>
                 <div className="space-y-2">
                   {LINHAS_TELA.map((linha) => (
@@ -1797,14 +1802,14 @@ export default function MapShell() {
                       className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
                     >
                       <div className="min-w-0">
-                        <div className="text-sm">{linha.nome}</div>
+                        <div className="text-sm">{t(linha.nome)}</div>
                         <div className="truncate text-[10px] text-muted-foreground">
-                          {linha.dica}
+                          {t(linha.dica)}
                         </div>
                       </div>
                       <Switch
                         checked={telaVis[linha.id]}
-                        aria-label={`Ativar elemento ${linha.nome}`}
+                        aria-label={t("Ativar elemento {n}", { n: linha.nome })}
                         onCheckedChange={(v) =>
                           updatePrefs({ telaVis: { ...telaVis, [linha.id]: v } })
                         }
@@ -1819,7 +1824,7 @@ export default function MapShell() {
                     data-test="tela-limpar"
                     onClick={limparTela}
                   >
-                    <Eraser className="mr-1 h-4 w-4" /> Limpar tela
+                    <Eraser className="mr-1 h-4 w-4" /> {t("Limpar tela")}
                   </Button>
                   <Button
                     variant="secondary"
@@ -1827,7 +1832,7 @@ export default function MapShell() {
                     data-test="tela-restaurar"
                     onClick={restaurarTela}
                   >
-                    Restaurar tudo
+                    {t("Restaurar tudo")}
                   </Button>
                 </div>
               </section>
@@ -1835,18 +1840,22 @@ export default function MapShell() {
 
             <section>
               <div className="mono mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
-                Modo de visualização
+                {t("Modo de visualização")}
               </div>
               <MapModeSwitch modo={modoMapa} onTrocar={(m) => updatePrefs({ mapMode: m })} />
               <p className="mt-2 text-xs text-muted-foreground">
                 {modoMapa === "osiris"
-                  ? "A Visão Osiris abre o globo 3D de inteligência global (OSIRIS self-hosted) em tela cheia, com painel de camadas próprio — o mapa tático continua intacto atrás do botão de voltar."
-                  : "Navegação clássica: bússola, MGRS, medições e waypoints. Mude para o modo Osiris para abrir a Visão Osiris, o globo de inteligência global em tela cheia."}
+                  ? t(
+                      "A Visão Osiris abre o globo 3D de inteligência global (OSIRIS self-hosted) em tela cheia, com painel de camadas próprio — o mapa tático continua intacto atrás do botão de voltar.",
+                    )
+                  : t(
+                      "Navegação clássica: bússola, MGRS, medições e waypoints. Mude para o modo Osiris para abrir a Visão Osiris, o globo de inteligência global em tela cheia.",
+                    )}
               </p>
               {modoMapa === "tatico" && (
                 <>
                   <div className="mono mt-4 mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
-                    Projeção do mapa
+                    {t("Projeção do mapa")}
                   </div>
                   <div className="grid grid-cols-2 gap-2" data-test="projecao-opcoes">
                     <button
@@ -1859,7 +1868,7 @@ export default function MapShell() {
                           : "border-border hover:border-foreground/40"
                       }`}
                     >
-                      Plana (mapa)
+                      {t("Plana (mapa)")}
                     </button>
                     <button
                       type="button"
@@ -1871,12 +1880,13 @@ export default function MapShell() {
                           : "border-border hover:border-foreground/40"
                       }`}
                     >
-                      Globo 3D
+                      {t("Globo 3D")}
                     </button>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    O globo mostra o planeta como uma esfera — útil para rotas longas e para ver o
-                    dia e a noite; o mapa plano mantém a leitura de ruas e coordenadas local.
+                    {t(
+                      "O globo mostra o planeta como uma esfera — útil para rotas longas e para ver o dia e a noite; o mapa plano mantém a leitura de ruas e coordenadas local.",
+                    )}
                   </p>
                 </>
               )}
@@ -1884,7 +1894,7 @@ export default function MapShell() {
 
             <section>
               <div className="mono mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
-                Camadas de inteligência
+                {t("Camadas de inteligência")}
               </div>
               <div className="space-y-2">
                 {LINHAS_INTEL.map((linha) => {
@@ -1896,11 +1906,11 @@ export default function MapShell() {
                       className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
                     >
                       <div className="min-w-0">
-                        <div className="text-sm">{linha.nome}</div>
+                        <div className="text-sm">{t(linha.nome)}</div>
                         <div className="truncate text-[10px] text-muted-foreground">
                           {desabilitada
-                            ? "Sem dados agora — verifique a chave FIRMS (servidor ou Ajustes)"
-                            : linha.dica}
+                            ? t("Sem dados agora — verifique a chave FIRMS (servidor ou Ajustes)")
+                            : t(linha.dica)}
                         </div>
                         {linha.id === "navios" && intelVis.navios && (
                           <div
@@ -1908,11 +1918,13 @@ export default function MapShell() {
                             data-test="ais-status"
                           >
                             {statusAis === "ativo"
-                              ? `Ao vivo — ${formatInteger(navios.length)} navios na área`
+                              ? t("Ao vivo — {n} navios na área", {
+                                  n: formatInteger(navios.length),
+                                })
                               : statusAis === "conectando"
-                                ? "Conectando ao AISStream…"
+                                ? t("Conectando ao AISStream…")
                                 : statusAis === "erro"
-                                  ? "Falha na conexão AIS — nova tentativa em instantes"
+                                  ? t("Falha na conexão AIS — nova tentativa em instantes")
                                   : ""}
                           </div>
                         )}
@@ -1920,7 +1932,7 @@ export default function MapShell() {
                       <Switch
                         checked={intelVis[linha.id]}
                         disabled={desabilitada}
-                        aria-label={`Ativar camada ${linha.nome}`}
+                        aria-label={t("Ativar camada {n}", { n: linha.nome })}
                         onCheckedChange={(v) =>
                           updatePrefs({ intelVis: { ...intelVis, [linha.id]: v } })
                         }
@@ -1931,7 +1943,7 @@ export default function MapShell() {
               </div>
               {intelStatus === "erro" && (
                 <p className="mt-2 text-[10px] text-muted-foreground">
-                  Sem conexão agora — as camadas mostram os últimos dados coletados.
+                  {t("Sem conexão agora — as camadas mostram os últimos dados coletados.")}
                 </p>
               )}
             </section>
@@ -1942,7 +1954,7 @@ export default function MapShell() {
       <Sheet open={openSheet === "goto"} onOpenChange={(o) => !o && setOpenSheet(null)}>
         <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto bg-card border-border">
           <SheetHeader>
-            <SheetTitle className="mono text-tactical-orange">IR PARA COORDENADA</SheetTitle>
+            <SheetTitle className="mono text-tactical-orange">{t("IR PARA COORDENADA")}</SheetTitle>
           </SheetHeader>
           <div className="mt-4 space-y-3">
             <Input
@@ -1956,9 +1968,11 @@ export default function MapShell() {
               onClick={handleGoto}
               className="w-full bg-tactical-orange text-background glove-tap"
             >
-              Voar até o alvo
+              {t("Voar até o alvo")}
             </Button>
-            <p className="text-xs text-muted-foreground mono">Aceita formatos DD, DMS e MGRS.</p>
+            <p className="text-xs text-muted-foreground mono">
+              {t("Aceita formatos DD, DMS e MGRS.")}
+            </p>
           </div>
         </SheetContent>
       </Sheet>
@@ -1966,7 +1980,7 @@ export default function MapShell() {
       <Sheet open={openSheet === "measure"} onOpenChange={(o) => !o && setOpenSheet(null)}>
         <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto bg-card border-border">
           <SheetHeader>
-            <SheetTitle className="mono text-tactical-orange">MEDIÇÃO</SheetTitle>
+            <SheetTitle className="mono text-tactical-orange">{t("MEDIÇÃO")}</SheetTitle>
           </SheetHeader>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <Button
@@ -1974,22 +1988,22 @@ export default function MapShell() {
                 setTool("measure-line");
                 setDrawCoords([]);
                 setOpenSheet(null);
-                toast.message("Toque no mapa para adicionar pontos");
+                toast.message(t("Toque no mapa para adicionar pontos"));
               }}
               className="glove-tap"
             >
-              Distância linear
+              {t("Distância linear")}
             </Button>
             <Button
               onClick={() => {
                 setTool("measure-area");
                 setDrawCoords([]);
                 setOpenSheet(null);
-                toast.message("Toque no mapa para desenhar o polígono");
+                toast.message(t("Toque no mapa para desenhar o polígono"));
               }}
               className="glove-tap"
             >
-              Área do polígono
+              {t("Área do polígono")}
             </Button>
             <Button
               variant="secondary"
@@ -2000,7 +2014,7 @@ export default function MapShell() {
               }}
               className="glove-tap col-span-2"
             >
-              Gerar perfil de elevação
+              {t("Gerar perfil de elevação")}
             </Button>
             <Button
               variant="destructive"
@@ -2011,7 +2025,7 @@ export default function MapShell() {
               }}
               className="glove-tap col-span-2"
             >
-              Limpar e sair
+              {t("Limpar e sair")}
             </Button>
           </div>
         </SheetContent>
@@ -2020,11 +2034,15 @@ export default function MapShell() {
       <Sheet open={openSheet === "boletim"} onOpenChange={(o) => !o && setOpenSheet(null)}>
         <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto bg-card border-border">
           <SheetHeader>
-            <SheetTitle className="mono text-tactical-orange">BOLETIM DE INTELIGÊNCIA</SheetTitle>
+            <SheetTitle className="mono text-tactical-orange">
+              {t("BOLETIM DE INTELIGÊNCIA")}
+            </SheetTitle>
           </SheetHeader>
           <div className="mt-2 flex items-center justify-between gap-2">
             <span className="mono text-[10px] text-muted-foreground">
-              {boletimEm ? `Conferido às ${formatTime(boletimEm)} · centro do mapa` : ""}
+              {boletimEm
+                ? t("Conferido às {n} · centro do mapa", { n: formatTime(boletimEm) })
+                : ""}
             </span>
             <div className="flex items-center gap-2">
               <Button
@@ -2042,7 +2060,7 @@ export default function MapShell() {
                 className="glove-tap mono text-[11px]"
                 onClick={carregarBoletim}
               >
-                <RefreshCw className="mr-1 h-3.5 w-3.5" /> Atualizar
+                <RefreshCw className="mr-1 h-3.5 w-3.5" /> {t("Atualizar")}
               </Button>
             </div>
           </div>
@@ -2055,7 +2073,7 @@ export default function MapShell() {
             >
               <div className="flex items-center justify-between gap-2">
                 <p className="mono flex items-center gap-2 text-[12px] font-bold text-tactical-orange">
-                  <Siren className="h-3.5 w-3.5" /> MODO ALERTA
+                  <Siren className="h-3.5 w-3.5" /> {t("MODO ALERTA")}
                   {radarEm > 0 && (
                     <span
                       data-test="radar-total"
@@ -2071,14 +2089,18 @@ export default function MapShell() {
                   className="glove-tap h-7 mono text-[10px]"
                   onClick={() => setOpenSheet("alertas")}
                 >
-                  Radar completo
+                  {t("Radar completo")}
                 </Button>
               </div>
               <p className="mt-1 text-[10px] text-muted-foreground">
-                Radar de proximidade · referência: {userPos ? "minha posição" : "centro do mapa"}
+                {t("Radar de proximidade · referência: {n}", {
+                  n: userPos ? t("minha posição") : t("centro do mapa"),
+                })}
               </p>
               {radarAlertas.length === 0 ? (
-                <p className="mono mt-2 text-[11px] text-emerald-400">NENHUMA AMEAÇA NO RADAR</p>
+                <p className="mono mt-2 text-[11px] text-emerald-400">
+                  {t("NENHUMA AMEAÇA NO RADAR")}
+                </p>
               ) : (
                 <ul className="mt-2 space-y-1.5">
                   {radarAlertas.slice(0, 5).map((a) => (
@@ -2106,7 +2128,7 @@ export default function MapShell() {
                   ))}
                   {radarAlertas.length > 5 && (
                     <li className="text-[10px] text-muted-foreground">
-                      + {radarAlertas.length - 5} no radar completo
+                      {t("+ {n} no radar completo", { n: radarAlertas.length - 5 })}
                     </li>
                   )}
                 </ul>
@@ -2189,7 +2211,7 @@ export default function MapShell() {
                 </div>
               ) : (
                 <div className="text-muted-foreground">
-                  {alertas ? "Nenhum alerta laranja/vermelho ativo agora." : <SemDados />}
+                  {alertas ? t("Nenhum alerta laranja/vermelho ativo agora.") : <SemDados />}
                 </div>
               )}
             </SecaoBoletim>
@@ -2223,7 +2245,9 @@ export default function MapShell() {
                     ))}
                 </div>
               ) : (
-                <div className="text-muted-foreground">Nenhum sismo M4,5+ nas últimas 24 h.</div>
+                <div className="text-muted-foreground">
+                  {t("Nenhum sismo M4,5+ nas últimas 24 h.")}
+                </div>
               )}
             </SecaoBoletim>
 
@@ -2255,11 +2279,12 @@ export default function MapShell() {
             <SecaoBoletim titulo="ISS — ESTAÇÃO ESPACIAL INTERNACIONAL" fonte="WhereTheISS.at">
               {iss ? (
                 <div>
-                  Altitude {formatInteger(iss.altitudeKm)} km · {formatInteger(iss.velocidadeKmh)}{" "}
-                  km/h · {iss.visibilidade === "daylight" ? "iluminada" : "na sombra da Terra"}
+                  {t("Altitude")} {formatInteger(iss.altitudeKm)} km ·{" "}
+                  {formatInteger(iss.velocidadeKmh)} km/h ·{" "}
+                  {iss.visibilidade === "daylight" ? t("iluminada") : t("na sombra da Terra")}
                   <div className="text-[10px] text-muted-foreground">
-                    Posição {formatDecimalDegrees(iss.lat)}, {formatDecimalDegrees(iss.lng)} ·
-                    camada ativa no mapa mostra a trajetória.
+                    {t("Posição")} {formatDecimalDegrees(iss.lat)}, {formatDecimalDegrees(iss.lng)}{" "}
+                    ·{t("camada ativa no mapa mostra a trajetória.")}
                   </div>
                 </div>
               ) : (
@@ -2293,10 +2318,9 @@ export default function MapShell() {
             </SecaoBoletim>
 
             <p className="text-[10px] leading-relaxed text-muted-foreground">
-              Fontes ao vivo: USGS · NASA EONET/FIRMS · NOAA SWPC · GDACS · GDELT · WhereTheISS.at ·
-              Open-Meteo · rede ADS-B (adsb.lol) · AISStream (opcional). Referências curadas: zonas
-              de conflito, centrais nucleares e pontos marítimos estratégicos — não são feeds em
-              tempo real.
+              {t(
+                "Fontes ao vivo: USGS · NASA EONET/FIRMS · NOAA SWPC · GDACS · GDELT · WhereTheISS.at · Open-Meteo · rede ADS-B (adsb.lol) · AISStream (opcional). Referências curadas: zonas de conflito, centrais nucleares e pontos marítimos estratégicos — não são feeds em tempo real.",
+              )}
             </p>
           </div>
         </SheetContent>
@@ -2307,7 +2331,7 @@ export default function MapShell() {
         <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto bg-card border-border">
           <SheetHeader>
             <SheetTitle className="mono text-tactical-orange flex items-center gap-2">
-              <Siren className="h-4 w-4" /> MODO ALERTA
+              <Siren className="h-4 w-4" /> {t("MODO ALERTA")}
               {radarEm > 0 && (
                 <span
                   data-test="radar-total"
@@ -2320,8 +2344,10 @@ export default function MapShell() {
           </SheetHeader>
           <div className="mt-2 flex items-center justify-between gap-2">
             <span className="mono text-[10px] text-muted-foreground">
-              Radar de proximidade · referência: {userPos ? "minha posição" : "centro do mapa"}
-              {boletimEm ? ` · conferido às ${formatTime(boletimEm)}` : ""}
+              {t("Radar de proximidade · referência: {n}", {
+                n: userPos ? t("minha posição") : t("centro do mapa"),
+              })}
+              {boletimEm ? ` · ${t("conferido às {n}", { n: formatTime(boletimEm) })}` : ""}
             </span>
             <Button
               variant="secondary"
@@ -2329,17 +2355,17 @@ export default function MapShell() {
               className="glove-tap mono text-[11px]"
               onClick={carregarBoletim}
             >
-              <RefreshCw className="mr-1 h-3.5 w-3.5" /> Atualizar
+              <RefreshCw className="mr-1 h-3.5 w-3.5" /> {t("Atualizar")}
             </Button>
           </div>
 
           {radarAlertas.length === 0 ? (
             <div className="mt-6 mb-4 rounded-md border border-border bg-background/40 p-4 text-center">
-              <p className="mono text-sm text-emerald-400">NENHUMA AMEAÇA NO RADAR</p>
+              <p className="mono text-sm text-emerald-400">{t("NENHUMA AMEAÇA NO RADAR")}</p>
               <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
-                Nenhum foco de calor, sismo forte, evento natural ou alerta oficial próximo do ponto
-                de referência. O radar continua varrendo a cada 90 segundos enquanto o aplicativo
-                estiver aberto — e você pode mover o mapa para examinar outra região.
+                {t(
+                  "Nenhum foco de calor, sismo forte, evento natural ou alerta oficial próximo do ponto de referência. O radar continua varrendo a cada 90 segundos enquanto o aplicativo estiver aberto — e você pode mover o mapa para examinar outra região.",
+                )}
               </p>
             </div>
           ) : (
@@ -2404,7 +2430,7 @@ export default function MapShell() {
                               setOpenSheet(null);
                             }}
                           >
-                            <Crosshair className="mr-1 h-3 w-3" /> Ver no mapa
+                            <Crosshair className="mr-1 h-3 w-3" /> {t("Ver no mapa")}
                           </Button>
                         )}
                         {a.url && (
@@ -2414,7 +2440,7 @@ export default function MapShell() {
                             rel="noreferrer"
                             className="glove-tap inline-flex h-7 items-center rounded-md border border-border px-2 mono text-[10px] text-muted-foreground hover:text-foreground"
                           >
-                            Fonte oficial ↗
+                            {t("Fonte oficial ↗")}
                           </a>
                         )}
                       </div>
@@ -2426,10 +2452,9 @@ export default function MapShell() {
           )}
 
           <p className="mt-3 text-[10px] leading-relaxed text-muted-foreground">
-            Critérios do radar: focos de calor NASA FIRMS até 50 km (crítico até 15 km) · sismos
-            USGS M4+ até 600 km (crítico M5,5+ até 300 km ou aviso de tsunami) · alertas oficiais
-            GDACS até 1000 km (vermelho/laranja) e verdes até 300 km · eventos NASA EONET até 500 km
-            · tempestade geomagnética NOAA (global). Coleta a cada 90 s com cache offline.
+            {t(
+              "Critérios do radar: focos de calor NASA FIRMS até 50 km (crítico até 15 km) · sismos USGS M4+ até 600 km (crítico M5,5+ até 300 km ou aviso de tsunami) · alertas oficiais GDACS até 1000 km (vermelho/laranja) e verdes até 300 km · eventos NASA EONET até 500 km · tempestade geomagnética NOAA (global). Coleta a cada 90 s com cache offline.",
+            )}
           </p>
         </SheetContent>
       </Sheet>
@@ -2510,13 +2535,13 @@ export default function MapShell() {
               }`}
             >
               <span className="mono text-[10px] uppercase tracking-widest text-tactical-orange">
-                {compassMode === "mini" ? "" : "Bússola"}
+                {compassMode === "mini" ? "" : t("Bússola")}
               </span>
               <div className="flex items-center gap-1.5">
                 {compassMode !== "mini" && (
                   <button
                     type="button"
-                    aria-label="Minimizar bússola"
+                    aria-label={t("Minimizar bússola")}
                     className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-muted-foreground transition-colors hover:bg-white/10"
                     onClick={() => setCompassMode("mini")}
                   >
@@ -2526,7 +2551,7 @@ export default function MapShell() {
                 {compassMode === "panel" && (
                   <button
                     type="button"
-                    aria-label="Ver bússola em tela cheia"
+                    aria-label={t("Ver bússola em tela cheia")}
                     className="flex h-11 w-11 items-center justify-center rounded-full border border-tactical-orange/50 bg-tactical-orange/10 text-tactical-orange transition-colors hover:bg-tactical-orange/20"
                     onClick={() => setCompassMode("full")}
                   >
@@ -2536,7 +2561,7 @@ export default function MapShell() {
                 {compassMode === "full" && (
                   <button
                     type="button"
-                    aria-label="Reduzir bússola"
+                    aria-label={t("Reduzir bússola")}
                     className="flex h-11 w-11 items-center justify-center rounded-full border border-tactical-orange/50 bg-tactical-orange/10 text-tactical-orange transition-colors hover:bg-tactical-orange/20"
                     onClick={() => setCompassMode("panel")}
                   >
@@ -2549,8 +2574,8 @@ export default function MapShell() {
             <div
               role="button"
               tabIndex={0}
-              aria-label="Abrir bússola"
-              title="Abrir bússola"
+              aria-label={t("Abrir bússola")}
+              title={t("Abrir bússola")}
               className={compassMode === "mini" ? "block glove-tap cursor-pointer" : "hidden"}
               onClick={() => setCompassMode("panel")}
               onKeyDown={(e) => {
@@ -2626,8 +2651,8 @@ export default function MapShell() {
           <button
             type="button"
             onClick={destravarPosicao}
-            title="Destravar a posição do mapa"
-            aria-label="Destravar a posição do mapa"
+            title={t("Destravar a posição do mapa")}
+            aria-label={t("Destravar a posição do mapa")}
             className="hud-panel mono flex items-center gap-1.5 rounded-full px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-tactical-green shadow-lg"
           >
             <Lock className="h-3 w-3 shrink-0" />
@@ -2674,16 +2699,17 @@ function RailBtn({
   /** Contador de ameaças (MODO ALERTA) — pílula no canto do botão. */
   badge?: number;
 }) {
+  const { t } = useI18n();
   return (
     <button
       onClick={onClick}
-      title={label}
+      title={t(label)}
       className={`glove-tap hud-panel relative rounded-md flex flex-col items-center justify-center gap-0.5 px-2 py-0.5 md:py-1 mono text-[10px] ${
         active ? "text-tactical-orange border-tactical-orange" : "text-foreground"
       }`}
     >
       <Icon className="h-4 w-4 md:h-5 md:w-5" />
-      <span className="uppercase tracking-wider">{label}</span>
+      <span className="uppercase tracking-wider">{t(label)}</span>
       {badge != null && badge > 0 && (
         <span
           data-test="radar-badge"
@@ -2706,10 +2732,11 @@ function PainelCentro({
   decl: number;
   onCopy: (t: string) => void;
 }) {
+  const { t: trad } = useI18n();
   return (
     <div className="hud-panel rounded-md p-2 mono text-xs" data-test="painel-centro">
       <div className="flex items-center justify-between text-tactical-orange">
-        <span className="font-bold tracking-wider">CENTRO</span>
+        <span className="font-bold tracking-wider">{trad("CENTRO")}</span>
         <span>Δ {formatSignedDegrees(decl)}</span>
       </div>
       <div className="grid grid-cols-[60px_1fr] gap-x-2 mt-1 text-foreground">
@@ -2751,17 +2778,18 @@ function PainelPosicao({
   onCentrar: () => void;
   onUltimoLocal: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="hud-panel rounded-md p-2 mono text-xs" data-test="painel-posicao">
       <div className="flex items-center justify-between text-sky-400">
-        <span className="font-bold tracking-wider">MINHA POSIÇÃO</span>
-        <span>{userPos ? `± ${formatElevation(userPos.acc)}` : "aguardando sinal"}</span>
+        <span className="font-bold tracking-wider">{t("MINHA POSIÇÃO")}</span>
+        <span>{userPos ? `± ${formatElevation(userPos.acc)}` : t("aguardando sinal")}</span>
       </div>
       <div className="mt-1 grid grid-cols-3 gap-2 text-foreground">
-        <Cell label="Latitude" value={userPos ? formatDecimalDegrees(userPos.lat) : "—"} />
-        <Cell label="Longitude" value={userPos ? formatDecimalDegrees(userPos.lng) : "—"} />
+        <Cell label={t("Latitude")} value={userPos ? formatDecimalDegrees(userPos.lat) : "—"} />
+        <Cell label={t("Longitude")} value={userPos ? formatDecimalDegrees(userPos.lng) : "—"} />
         <Cell
-          label="Altitude"
+          label={t("Altitude")}
           value={userPos && userPos.alt != null ? formatElevation(userPos.alt) : "—"}
         />
       </div>
@@ -2771,14 +2799,14 @@ function PainelPosicao({
           className="glove-tap flex-1 rounded border border-sky-400/60 text-sky-400 py-1 uppercase tracking-wider"
           onClick={onCentrar}
         >
-          Centrar em mim
+          {t("Centrar em mim")}
         </button>
         <button
           type="button"
           className="glove-tap flex-1 rounded border border-border text-muted-foreground py-1 uppercase tracking-wider"
           onClick={onUltimoLocal}
         >
-          Último local
+          {t("Último local")}
         </button>
       </div>
     </div>
@@ -2828,7 +2856,7 @@ function LeituraMedicao({
 
 function copy(t: string) {
   navigator.clipboard?.writeText(t);
-  toast.success("Copiado", { description: t });
+  toast.success(tGlobal("Copiado"), { description: t });
 }
 
 function emptyFC() {
@@ -2886,11 +2914,12 @@ function SecaoBoletim({
   fonte: string;
   children: React.ReactNode;
 }) {
+  const { t } = useI18n();
   return (
     <section className="rounded-md border border-border bg-background/40 p-3">
       <div className="mono mb-1 flex items-baseline justify-between gap-2">
         <span className="text-[10px] font-bold uppercase tracking-widest text-tactical-orange">
-          {titulo}
+          {t(titulo)}
         </span>
         <span className="text-[9px] text-muted-foreground">{fonte}</span>
       </div>
@@ -2900,5 +2929,8 @@ function SecaoBoletim({
 }
 
 function SemDados() {
-  return <span className="text-muted-foreground">Aguardando coleta… toque em Atualizar.</span>;
+  const { t } = useI18n();
+  return (
+    <span className="text-muted-foreground">{t("Aguardando coleta… toque em Atualizar.")}</span>
+  );
 }

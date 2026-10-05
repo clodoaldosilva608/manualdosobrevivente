@@ -10,6 +10,7 @@ import {
   RotateCcw,
   ChevronRight,
   PackageOpen,
+  CalendarClock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,14 @@ import {
 import { garantirModelosCriados, restaurarModelosApagados } from "@/lib/mochilas-modelo";
 import { toast } from "sonner";
 import { formatDate, formatKilograms, formatWeight } from "@/lib/format";
+import { useI18n } from "@/lib/i18n";
+import {
+  resumoValidade,
+  statusValidade,
+  diasRestantes,
+  rotuloValidade,
+  corStatusValidade,
+} from "@/lib/validade";
 
 export const Route = createFileRoute("/inventory")({
   head: () => ({
@@ -70,6 +79,7 @@ const CATEGORY_LABEL: Record<string, string> = Object.fromEntries(
 const SEM_MOCHILA = "__sem";
 
 function Inventory() {
+  const { t } = useI18n();
   const [mochilas, setMochilas] = useState<LocalMochila[]>([]);
   const [items, setItems] = useState<LocalGearItem[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -112,6 +122,34 @@ function Inventory() {
   );
   const itensSemMochila = useMemo(() => items.filter((i) => !i.mochila_id), [items]);
 
+  /* -------------------------- Lembretes de validade -------------------------- */
+
+  const resumo = useMemo(
+    () => resumoValidade(items, (id) => mochilas.find((m) => m.id === id)?.nome ?? null),
+    [items, mochilas],
+  );
+  const alertasPorMochila = useMemo(() => {
+    const mapa = new Map<string | null, { total: number; vencidos: number }>();
+    for (const a of resumo.alertas) {
+      const chave = a.mochila_id ?? null;
+      const atual = mapa.get(chave) ?? { total: 0, vencidos: 0 };
+      atual.total++;
+      if (a.status === "vencido") atual.vencidos++;
+      mapa.set(chave, atual);
+    }
+    return mapa;
+  }, [resumo]);
+
+  // Aviso único por visita: itens vencidos exigem rotação imediata.
+  const avisouVencidos = useState({ atual: false })[0];
+  useEffect(() => {
+    if (avisouVencidos.atual || resumo.vencidos.length === 0) return;
+    avisouVencidos.atual = true;
+    toast.warning(t("{n} item(ns) vencido(s) na mochila", { n: resumo.vencidos.length }), {
+      description: t("Veja os lembretes de validade e troque antes de viajar."),
+    });
+  }, [resumo, avisouVencidos, t]);
+
   /* ----------------------------- Itens ----------------------------- */
 
   const limparFormulario = () => {
@@ -121,7 +159,7 @@ function Inventory() {
 
   const salvarItem = async () => {
     if (!draft.name?.trim()) {
-      toast.error("Nome obrigatório");
+      toast.error(t("Nome obrigatório"));
       return;
     }
     if (editandoItemId) {
@@ -141,7 +179,7 @@ function Inventory() {
       };
       await saveGear(proximo);
       setItems((x) => x.map((y) => (y.id === editandoItemId ? proximo : y)));
-      toast.success("Item atualizado");
+      toast.success(t("Item atualizado"));
     } else {
       const item: LocalGearItem = {
         id: crypto.randomUUID(),
@@ -160,7 +198,7 @@ function Inventory() {
       };
       await saveGear(item);
       setItems((x) => [...x, item]);
-      toast.success("Adicionado à mochila");
+      toast.success(t("Adicionado à mochila"));
     }
     limparFormulario();
   };
@@ -177,7 +215,7 @@ function Inventory() {
   };
 
   const remove = async (id: string) => {
-    if (!window.confirm("Remover este item?")) return;
+    if (!window.confirm(t("Remover este item?"))) return;
     await deleteGear(id);
     setItems((x) => x.filter((y) => y.id !== id));
   };
@@ -203,7 +241,7 @@ function Inventory() {
   const salvarMochila = async () => {
     const nome = nomeMochila.trim();
     if (!nome) {
-      toast.error("Nome obrigatório");
+      toast.error(t("Nome obrigatório"));
       return;
     }
     const agora = new Date().toISOString();
@@ -217,7 +255,7 @@ function Inventory() {
       };
       await saveMochila(proxima);
       setMochilas((x) => x.map((m) => (m.id === proxima.id ? proxima : m)));
-      toast.success("Mochila atualizada");
+      toast.success(t("Mochila atualizada"));
     } else {
       const nova: LocalMochila = {
         id: crypto.randomUUID(),
@@ -230,7 +268,7 @@ function Inventory() {
       };
       await saveMochila(nova);
       setMochilas((x) => [...x, nova]);
-      toast.success("Mochila criada");
+      toast.success(t("Mochila criada"));
       setAbertaId(nova.id);
     }
     setFormMochilaAberto(false);
@@ -250,14 +288,16 @@ function Inventory() {
     setMochilas((x) => x.filter((y) => y.id !== m.id));
     setItems((x) => x.map((y) => (y.mochila_id === m.id ? { ...y, mochila_id: null } : y)));
     if (abertaId === m.id) setAbertaId(null);
-    toast.success("Mochila excluída — os itens ficaram em SEM MOCHILA");
+    toast.success(t("Mochila excluída — os itens ficaram em SEM MOCHILA"));
   };
 
   const restaurarModelos = async () => {
     const criadas = await restaurarModelosApagados();
     await carregar();
     toast.success(
-      criadas ? `${criadas} modelo(s) restaurado(s)` : "Todos os modelos já estão na lista",
+      criadas
+        ? t("{n} modelo(s) restaurado(s)", { n: criadas })
+        : t("Todos os modelos já estão na lista"),
     );
   };
 
@@ -290,11 +330,12 @@ function Inventory() {
         <div className="min-w-0">
           <h1 className="mono flex min-w-0 items-start gap-2 text-xl font-bold tracking-wider text-tactical-orange sm:text-2xl md:text-3xl">
             <Backpack className="mt-0.5 h-6 w-6 shrink-0" />
-            <span className="min-w-0 break-words">MOCHILA DE EMERGÊNCIA</span>
+            <span className="min-w-0 break-words">{t("MOCHILA DE EMERGÊNCIA")}</span>
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Escolha uma mochila pronta (8h, 12h, 48h, 72h ou 300h) com os itens já definidos — ou
-            crie a sua. Tudo pode ser editado: itens, descrições e pesos.
+            {t(
+              "Escolha uma mochila pronta (8h, 12h, 48h, 72h ou 300h) com os itens já definidos — ou crie a sua. Tudo pode ser editado: itens, descrições e pesos.",
+            )}
           </p>
         </div>
         <Button
@@ -302,15 +343,59 @@ function Inventory() {
           size="sm"
           onClick={restaurarModelos}
           className="glove-tap shrink-0 text-muted-foreground hover:text-foreground"
-          title="Recria os modelos apagados"
+          title={t("Recria os modelos apagados")}
         >
           <RotateCcw className="h-4 w-4" />
-          <span className="hidden sm:inline ml-1">Restaurar modelos</span>
+          <span className="hidden sm:inline ml-1">{t("Restaurar modelos")}</span>
         </Button>
       </header>
 
+      {resumo.alertas.length > 0 && (
+        <section
+          data-test="lembretes-validade"
+          className="mb-6 rounded-md border border-tactical-amber/40 bg-tactical-amber/5 p-4"
+        >
+          <h2 className="mono flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-tactical-amber">
+            <CalendarClock className="h-4 w-4" />
+            {t("Lembretes de validade")}
+            <span className="rounded-full border border-tactical-amber/40 px-2 py-0.5 text-[10px]">
+              {resumo.alertas.length}
+            </span>
+          </h2>
+          <p className="text-muted-foreground mt-1 text-xs">
+            {t(
+              "Itens vencidos ou chegando ao prazo — troque, reabasteça e atualize a data antes de viajar.",
+            )}
+          </p>
+          <ul className="mt-3 space-y-1">
+            {resumo.alertas.map((a) => {
+              const rot = rotuloValidade(a.status, a.dias);
+              return (
+                <li key={a.item_id}>
+                  <button
+                    type="button"
+                    onClick={() => setAbertaId(a.mochila_id ?? SEM_MOCHILA)}
+                    className="glove-tap flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-accent"
+                  >
+                    <span
+                      className={`mono shrink-0 rounded border px-1.5 py-0.5 text-[10px] uppercase tracking-wider ${corStatusValidade(a.status)}`}
+                    >
+                      {t(rot.chave, rot.vars)}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm">{a.nome}</span>
+                    <span className="mono shrink-0 text-[10px] text-muted-foreground">
+                      {a.mochila_nome ?? t("SEM MOCHILA")} · {formatDate(a.expires_at)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
       {carregando ? (
-        <p className="text-muted-foreground py-12 text-center text-sm">Abrindo a mochila…</p>
+        <p className="text-muted-foreground py-12 text-center text-sm">{t("Abrindo a mochila…")}</p>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {mochilas.map((m) => (
@@ -318,6 +403,7 @@ function Inventory() {
               key={m.id}
               mochila={m}
               itens={items.filter((i) => i.mochila_id === m.id)}
+              alertas={alertasPorMochila.get(m.id)}
               onAbrir={() => setAbertaId(m.id)}
               onEditar={() => abrirEditarMochila(m)}
             />
@@ -327,6 +413,7 @@ function Inventory() {
             <CartaoMochila
               semMochila
               itens={itensSemMochila}
+              alertas={alertasPorMochila.get(null)}
               onAbrir={() => setAbertaId(SEM_MOCHILA)}
             />
           )}
@@ -337,8 +424,10 @@ function Inventory() {
             className="glove-tap flex min-h-32 flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-border bg-card/50 p-4 text-muted-foreground transition-colors hover:border-tactical-orange/60 hover:text-tactical-orange"
           >
             <Plus className="h-8 w-8" />
-            <span className="mono text-xs font-bold uppercase tracking-widest">Criar mochila</span>
-            <span className="text-xs">Monte uma do zero, do seu jeito</span>
+            <span className="mono text-xs font-bold uppercase tracking-widest">
+              {t("Criar mochila")}
+            </span>
+            <span className="text-xs">{t("Monte uma do zero, do seu jeito")}</span>
           </button>
         </div>
       )}
@@ -373,13 +462,16 @@ function CartaoMochila({
   onAbrir,
   onEditar,
   semMochila = false,
+  alertas,
 }: {
   mochila?: LocalMochila;
   itens: LocalGearItem[];
   onAbrir: () => void;
   onEditar?: () => void;
   semMochila?: boolean;
+  alertas?: { total: number; vencidos: number };
 }) {
+  const { t } = useI18n();
   const empacotados = itens.filter((i) => i.packed).length;
   const pesoG = itens.filter((i) => i.packed).reduce((s, i) => s + i.weight_g * i.quantity, 0);
   const pct = itens.length ? Math.round((empacotados / itens.length) * 100) : 0;
@@ -392,17 +484,33 @@ function CartaoMochila({
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="mono truncate text-base font-bold tracking-wider text-tactical-orange">
-                {semMochila ? "SEM MOCHILA" : mochila!.nome}
+                {semMochila ? t("SEM MOCHILA") : mochila!.nome}
               </h3>
+              {alertas && alertas.total > 0 && (
+                <span
+                  data-test="badge-validade"
+                  className={`mono flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-widest ${
+                    alertas.vencidos > 0
+                      ? "border-destructive/40 bg-destructive/10 text-destructive"
+                      : "border-tactical-amber/40 bg-tactical-amber/10 text-tactical-amber"
+                  }`}
+                  title={t("Itens com validade vencida ou chegando")}
+                >
+                  <AlertTriangle className="h-3 w-3" />
+                  {alertas.total}
+                </span>
+              )}
               {mochila?.modelo && (
                 <span className="mono rounded-full border border-tactical-orange/40 px-2 py-0.5 text-[10px] uppercase tracking-widest text-tactical-orange">
-                  modelo {mochila.modelo}
+                  {t("modelo {n}", { n: mochila.modelo })}
                 </span>
               )}
             </div>
             <p className="text-muted-foreground mt-1 line-clamp-2 text-xs">
               {semMochila
-                ? "Itens avulsos que não estão em nenhuma mochila. Abra e mova cada um para onde quiser."
+                ? t(
+                    "Itens avulsos que não estão em nenhuma mochila. Abra e mova cada um para onde quiser.",
+                  )
                 : mochila!.descricao}
             </p>
           </div>
@@ -410,13 +518,13 @@ function CartaoMochila({
         </div>
 
         <div className="mono mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-          <span>{itens.length} itens</span>
+          <span>{t("{n} itens", { n: itens.length })}</span>
           <span className="text-tactical-orange">
-            {empacotados}/{itens.length} empacotados
+            {empacotados}/{itens.length} {t("empacotados")}
           </span>
           <span className={excedeu ? "text-destructive" : ""}>
             {formatKilograms(pesoG)}
-            {mochila ? ` / ${formatKilograms(mochila.limite_g, 1)} limite` : ""}
+            {mochila ? ` / ${formatKilograms(mochila.limite_g, 1)} ${t("limite")}` : ""}
           </span>
         </div>
 
@@ -434,12 +542,12 @@ function CartaoMochila({
             type="button"
             onClick={onEditar}
             className="glove-tap text-muted-foreground hover:text-tactical-orange"
-            aria-label="Editar mochila"
-            title="Editar nome, descrição e limite de peso"
+            aria-label={t("Editar mochila")}
+            title={t("Editar nome, descrição e limite de peso")}
           >
             <Pencil className="h-4 w-4" />
           </button>
-          <span className="text-muted-foreground/60 text-xs">editar mochila</span>
+          <span className="text-muted-foreground/60 text-xs">{t("editar mochila")}</span>
         </div>
       )}
     </div>
@@ -471,33 +579,34 @@ function FormMochila({
   onSalvar: () => void;
   onCancelar: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/80 p-0 backdrop-blur-sm sm:items-center sm:p-4">
       <div className="max-h-[calc(100dvh_-_2rem)] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-border bg-card p-5 sm:rounded-3xl">
         <h3 className="mono mb-4 text-sm font-bold uppercase tracking-widest text-tactical-orange">
-          {editando ? "Editar mochila" : "Criar mochila"}
+          {editando ? t("Editar mochila") : t("Criar mochila")}
         </h3>
         <div className="space-y-3">
           <div>
-            <Label className="text-xs">Nome</Label>
+            <Label className="text-xs">{t("Nome")}</Label>
             <Input
               value={nome}
               onChange={(e) => onNome(e.target.value)}
-              placeholder="Ex.: mochila do carro"
+              placeholder={t("Ex.: mochila do carro")}
             />
           </div>
           <div>
-            <Label className="text-xs">Descrição (para que serve)</Label>
+            <Label className="text-xs">{t("Descrição (para que serve)")}</Label>
             <textarea
               value={descricao}
               onChange={(e) => onDescricao(e.target.value)}
-              placeholder="Ex.: kit que fica pronto no porta-malas para emergências na estrada"
+              placeholder={t("Ex.: kit que fica pronto no porta-malas para emergências na estrada")}
               className="bg-input w-full rounded-md border border-border p-2 text-sm"
               rows={3}
             />
           </div>
           <div>
-            <Label className="text-xs">Limite de peso (kg)</Label>
+            <Label className="text-xs">{t("Limite de peso (kg)")}</Label>
             <Input
               type="number"
               min={0}
@@ -510,10 +619,10 @@ function FormMochila({
               onClick={onSalvar}
               className="flex-1 bg-tactical-orange text-background glove-tap"
             >
-              Salvar
+              {t("Salvar")}
             </Button>
             <Button variant="outline" onClick={onCancelar} className="glove-tap">
-              Cancelar
+              {t("Cancelar")}
             </Button>
           </div>
         </div>
@@ -557,17 +666,11 @@ function DetalheMochila({
   onTogglePacked: (i: LocalGearItem) => void;
   onRemoverItem: (id: string) => void;
 }) {
+  const { t } = useI18n();
   const totalG = itens.filter((i) => i.packed).reduce((s, i) => s + i.weight_g * i.quantity, 0);
   const empacotados = itens.filter((i) => i.packed).length;
   const excedeu = mochila ? totalG > mochila.limite_g : false;
-  const expirando = useMemo(
-    () =>
-      itens.filter((i) => {
-        if (!i.expires_at) return false;
-        return new Date(i.expires_at).getTime() - Date.now() < 1000 * 60 * 60 * 24 * 30;
-      }).length,
-    [itens],
-  );
+  const resumoLocal = useMemo(() => resumoValidade(itens, () => null), [itens]);
 
   return (
     <div className="container mx-auto max-w-4xl p-4 pb-8 md:p-8">
@@ -576,13 +679,13 @@ function DetalheMochila({
         onClick={voltar}
         className="glove-tap mono text-muted-foreground mb-4 flex items-center gap-1 text-xs uppercase tracking-widest hover:text-tactical-orange"
       >
-        <ArrowLeft className="h-4 w-4" /> Todas as mochilas
+        <ArrowLeft className="h-4 w-4" /> {t("Todas as mochilas")}
       </button>
 
       <header className="mb-6">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <h1 className="mono min-w-0 text-xl font-bold tracking-wider text-tactical-orange sm:text-2xl">
-            {mochila ? mochila.nome : "ITENS SEM MOCHILA"}
+            {mochila ? mochila.nome : t("ITENS SEM MOCHILA")}
           </h1>
           {mochila && (
             <div className="flex shrink-0 gap-1">
@@ -592,7 +695,7 @@ function DetalheMochila({
                 onClick={() => onEditarMochila(mochila)}
                 className="glove-tap"
               >
-                <Pencil className="h-4 w-4" /> Editar mochila
+                <Pencil className="h-4 w-4" /> {t("Editar mochila")}
               </Button>
               <Button
                 variant="outline"
@@ -600,7 +703,7 @@ function DetalheMochila({
                 onClick={() => onExcluirMochila(mochila)}
                 className="glove-tap text-destructive hover:text-destructive"
               >
-                <Trash2 className="h-4 w-4" /> Excluir
+                <Trash2 className="h-4 w-4" /> {t("Excluir")}
               </Button>
             </div>
           )}
@@ -609,7 +712,9 @@ function DetalheMochila({
           <p className="text-muted-foreground mt-1 text-sm">
             {mochila
               ? mochila.descricao
-              : "Itens avulsos. Use o formulário abaixo para movê-los a uma mochila ao editar cada item."}
+              : t(
+                  "Itens avulsos. Use o formulário abaixo para movê-los a uma mochila ao editar cada item.",
+                )}
           </p>
         )}
       </header>
@@ -619,7 +724,7 @@ function DetalheMochila({
           className={`rounded-md border p-3 ${excedeu ? "border-destructive bg-destructive/10" : "border-border bg-card"}`}
         >
           <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            Peso empacotado
+            {t("Peso empacotado")}
           </div>
           <div
             className={`mono text-xl font-bold sm:text-2xl ${excedeu ? "text-destructive" : "text-tactical-orange"}`}
@@ -628,47 +733,85 @@ function DetalheMochila({
           </div>
           {mochila && (
             <div className="mono text-xs text-muted-foreground">
-              Limite {formatKilograms(mochila.limite_g, 1)}
+              {t("Limite {n}", { n: formatKilograms(mochila.limite_g, 1) })}
             </div>
           )}
         </div>
         <div className="rounded-md border border-border bg-card p-3">
           <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            Empacotados
+            {t("Empacotados")}
           </div>
           <div className="mono text-xl font-bold sm:text-2xl">
             {empacotados}/{itens.length}
           </div>
-          <div className="mono text-xs text-muted-foreground">{itens.length} itens no total</div>
+          <div className="mono text-xs text-muted-foreground">
+            {t("{n} itens no total", { n: itens.length })}
+          </div>
         </div>
         <div
-          className={`rounded-md border p-3 ${expirando ? "border-tactical-amber bg-tactical-amber/10" : "border-border bg-card"}`}
+          className={`rounded-md border p-3 ${resumoLocal.alertas.length > 0 ? "border-tactical-amber bg-tactical-amber/10" : "border-border bg-card"}`}
         >
           <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            Vencendo (30d)
+            {t("Alertas de validade")}
           </div>
           <div className="mono flex items-center gap-2 text-xl font-bold sm:text-2xl">
-            {expirando}
-            {expirando > 0 && <AlertTriangle className="text-tactical-amber h-5 w-5" />}
+            {resumoLocal.alertas.length}
+            {resumoLocal.alertas.length > 0 && (
+              <AlertTriangle className="text-tactical-amber h-5 w-5" />
+            )}
           </div>
+          {resumoLocal.vencidos.length > 0 && (
+            <div className="mono text-xs text-destructive">
+              {t("{n} vencido(s)", { n: resumoLocal.vencidos.length })}
+            </div>
+          )}
         </div>
       </div>
 
+      {resumoLocal.alertas.length > 0 && (
+        <section
+          data-test="lembretes-validade-detalhe"
+          className="mb-6 rounded-md border border-tactical-amber/40 bg-tactical-amber/5 p-4"
+        >
+          <h2 className="mono flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-tactical-amber">
+            <CalendarClock className="h-4 w-4" /> {t("Lembretes de validade")}
+          </h2>
+          <ul className="mt-3 space-y-1">
+            {resumoLocal.alertas.map((a) => {
+              const rot = rotuloValidade(a.status, a.dias);
+              return (
+                <li key={a.item_id} className="flex items-center gap-2">
+                  <span
+                    className={`mono shrink-0 rounded border px-1.5 py-0.5 text-[10px] uppercase tracking-wider ${corStatusValidade(a.status)}`}
+                  >
+                    {t(rot.chave, rot.vars)}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm">{a.nome}</span>
+                  <span className="mono shrink-0 text-[10px] text-muted-foreground">
+                    {formatDate(a.expires_at)}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
       <div className="mb-6 rounded-md border border-border bg-card p-4">
         <h3 className="mono text-xs uppercase tracking-widest text-muted-foreground mb-3">
-          {editandoItemId ? "Editar equipamento" : "Adicionar equipamento"}
+          {editandoItemId ? t("Editar equipamento") : t("Adicionar equipamento")}
         </h3>
         <div className="grid gap-2 md:grid-cols-5">
           <div className="md:col-span-2">
-            <Label className="text-xs">Nome</Label>
+            <Label className="text-xs">{t("Nome")}</Label>
             <Input
               value={draft.name || ""}
               onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-              placeholder="Ex.: pederneira"
+              placeholder={t("Ex.: pederneira")}
             />
           </div>
           <div>
-            <Label className="text-xs">Categoria</Label>
+            <Label className="text-xs">{t("Categoria")}</Label>
             <select
               className="bg-input h-10 w-full rounded-md border border-border px-2 text-sm"
               value={draft.category}
@@ -676,13 +819,13 @@ function DetalheMochila({
             >
               {CATEGORIES.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.label}
+                  {t(c.label)}
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <Label className="text-xs">Qtde</Label>
+            <Label className="text-xs">{t("Qtde")}</Label>
             <Input
               type="number"
               min={1}
@@ -691,7 +834,7 @@ function DetalheMochila({
             />
           </div>
           <div>
-            <Label className="text-xs">Peso (g)</Label>
+            <Label className="text-xs">{t("Peso (g)")}</Label>
             <Input
               type="number"
               min={0}
@@ -700,7 +843,7 @@ function DetalheMochila({
             />
           </div>
           <div className="md:col-span-2">
-            <Label className="text-xs">Validade (opcional)</Label>
+            <Label className="text-xs">{t("Validade (opcional)")}</Label>
             <Input
               type="date"
               value={draft.expires_at || ""}
@@ -709,13 +852,13 @@ function DetalheMochila({
           </div>
           {editandoItemId && (
             <div className="md:col-span-2">
-              <Label className="text-xs">Mover para mochila</Label>
+              <Label className="text-xs">{t("Mover para mochila")}</Label>
               <select
                 className="bg-input h-10 w-full rounded-md border border-border px-2 text-sm"
                 value={draft.mochila_id || ""}
                 onChange={(e) => setDraft({ ...draft, mochila_id: e.target.value || null })}
               >
-                <option value="">— Sem mochila —</option>
+                <option value="">— {t("Sem mochila")} —</option>
                 {mochilas.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.nome}
@@ -725,11 +868,11 @@ function DetalheMochila({
             </div>
           )}
           <div className="md:col-span-5">
-            <Label className="text-xs">Descrição (opcional)</Label>
+            <Label className="text-xs">{t("Descrição (opcional)")}</Label>
             <Input
               value={draft.notes || ""}
               onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
-              placeholder="Para que serve, dica de uso, observação…"
+              placeholder={t("Para que serve, dica de uso, observação…")}
             />
           </div>
           <div className="flex gap-2 md:col-span-5">
@@ -738,11 +881,11 @@ function DetalheMochila({
               className="flex-1 bg-tactical-orange text-background glove-tap sm:flex-none sm:px-8"
             >
               <Plus className="mr-1 h-4 w-4" />
-              {editandoItemId ? "Salvar alterações" : "Adicionar à mochila"}
+              {editandoItemId ? t("Salvar alterações") : t("Adicionar à mochila")}
             </Button>
             {editandoItemId && (
               <Button variant="outline" onClick={limparFormulario} className="glove-tap">
-                Cancelar
+                {t("Cancelar")}
               </Button>
             )}
           </div>
@@ -772,26 +915,28 @@ function DetalheMochila({
                 >
                   {i.name}
                 </div>
-                <div className="mono text-muted-foreground text-xs">
-                  {CATEGORY_LABEL[i.category] ?? i.category} · {i.quantity}× ·{" "}
-                  {formatWeight(i.weight_g)}
-                  {i.expires_at && ` · val ${formatDate(i.expires_at)}`}
+                <div className="mono text-muted-foreground text-xs flex flex-wrap items-center gap-1.5">
+                  <span>
+                    {t(CATEGORY_LABEL[i.category] ?? i.category)} · {i.quantity}× ·{" "}
+                    {formatWeight(i.weight_g)}
+                  </span>
+                  {i.expires_at && <SeloValidade expiresAt={i.expires_at} comData />}
                 </div>
                 {i.notes && <div className="mt-1 text-xs text-muted-foreground/90">{i.notes}</div>}
               </div>
               <button
                 onClick={() => onEditarItem(i)}
                 className="tap-target text-muted-foreground hover:text-tactical-orange"
-                aria-label="Editar item"
-                title="Editar item"
+                aria-label={t("Editar item")}
+                title={t("Editar item")}
               >
                 <Pencil className="h-4 w-4" />
               </button>
               <button
                 onClick={() => onRemoverItem(i.id)}
                 className="tap-target text-muted-foreground hover:text-destructive"
-                aria-label="Remover"
-                title="Remover item"
+                aria-label={t("Remover")}
+                title={t("Remover item")}
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -801,10 +946,33 @@ function DetalheMochila({
         {itens.length === 0 && (
           <li className="text-muted-foreground flex flex-col items-center gap-2 py-8 text-center text-sm">
             <PackageOpen className="h-8 w-8 opacity-50" />
-            Nenhum item ainda. {mochila ? "Adicione o primeiro no formulário acima." : ""}
+            {t("Nenhum item ainda.")} {mochila ? t("Adicione o primeiro no formulário acima.") : ""}
           </li>
         )}
       </ul>
     </div>
+  );
+}
+
+/* ---------------------------------------------------------------- */
+/* Selo de validade do item (usado na linha e nos lembretes)         */
+/* ---------------------------------------------------------------- */
+
+function SeloValidade({ expiresAt, comData = false }: { expiresAt: string; comData?: boolean }) {
+  const { t } = useI18n();
+  const status = statusValidade(expiresAt);
+  if (!status) return null;
+  const dias = diasRestantes(expiresAt);
+  const rot = rotuloValidade(status, dias);
+  return (
+    <span
+      data-test="selo-validade"
+      className={`mono inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] uppercase tracking-wider ${corStatusValidade(status)}`}
+    >
+      {t(rot.chave, rot.vars)}
+      {comData && (
+        <span className="font-normal normal-case opacity-70">· {formatDate(expiresAt)}</span>
+      )}
+    </span>
   );
 }

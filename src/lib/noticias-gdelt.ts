@@ -8,7 +8,7 @@
 import type { IntelNoticia } from "./intel.types";
 
 export const CONSULTA_GDELT =
-  '("earthquake" OR "volcanic eruption" OR "wildfire" OR "flood" OR "evacuation" OR "typhoon" OR "hurricane" OR "airstrike" OR "armed clash")';
+  '("earthquake" OR "earthquake" OR "volcanic eruption" OR "eruption" OR "volcano" OR "wildfire" OR "wildfire" OR "forest fire" OR "flood" OR "flood" OR "evacuation" OR "evacuation" OR "typhoon" OR "hurricane" OR "cyclone" OR "airstrike" OR "armed clash")';
 
 // A API DOC 2.0 é volátil em parâmetros (medido em produção, out/2026):
 // — "timespan=24h" devolve {"articles":[]} SEM EXCEÇÃO (o mesmo pedido sem
@@ -22,7 +22,7 @@ export interface VarianteGdelt {
   extra: string;
 }
 
-const QUALIFICADOR = "(sourcelang:eng OR sourcelang:por)";
+const QUALIFICADOR = "sourcelang:por";
 
 export const VARIANTES_GDELT: VarianteGdelt[] = [
   {
@@ -68,6 +68,9 @@ export function mapearNoticias(doc: GdeltDoc): IntelNoticia[] {
   const vistos = new Set<string>();
   for (const a of doc.articles ?? []) {
     if (!a.title || !a.url) continue;
+    // Boletim 100% em português: descarta qualquer artigo fora do idioma
+    // (defesa em profundidade — a consulta já pede sourcelang:por).
+    if (a.language && !a.language.toLowerCase().startsWith("por")) continue;
     const chave = a.title.slice(0, 80);
     if (vistos.has(chave)) continue;
     vistos.add(chave);

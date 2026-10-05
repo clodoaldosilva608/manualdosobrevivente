@@ -44,6 +44,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { ModoMapa } from "@/components/map/MapModeSwitch";
 import { LINHAS_INTEL } from "@/components/map/intel-camadas-lista";
+import { useI18n } from "@/lib/i18n";
 
 export type AcaoMenuMapa =
   "goto" | "measure" | "marcador" | "bussola" | "globo" | "limpar" | "elementos" | "alertas";
@@ -139,7 +140,7 @@ function RotuloSecao({ children }: { children: string }) {
   );
 }
 
-/** Linha do menu: ícone + rótulo + dica, com estado ativo opcional. */
+/** Linha do menu: ícone + rótulo + dica (traduzidos na renderização), com estado ativo opcional. */
 function LinhaItem({
   icone: Icone,
   rotulo,
@@ -148,6 +149,7 @@ function LinhaItem({
   onClick,
   teste,
 }: ItemMenu & { ativo?: boolean; onClick: () => void; teste: string }) {
+  const { t } = useI18n();
   return (
     <button
       type="button"
@@ -165,15 +167,15 @@ function LinhaItem({
             ativo ? "font-bold text-tactical-orange" : "text-foreground"
           }`}
         >
-          {rotulo}
+          {t(rotulo)}
         </span>
         <span className="block truncate text-[11px] leading-tight text-muted-foreground">
-          {dica}
+          {t(dica)}
         </span>
       </span>
       {ativo && (
         <span className="mono shrink-0 text-[9px] uppercase tracking-wider text-tactical-orange">
-          ativo
+          {t("ativo")}
         </span>
       )}
     </button>
@@ -192,6 +194,7 @@ export function MenuApp({
 }: MenuAppProps) {
   // Submenu do OSIRIS nasce aberto: é o agrupamento que diferencia o menu.
   const [osirisAberto, setOsirisAberto] = useState(true);
+  const { t } = useI18n();
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -202,17 +205,17 @@ export function MenuApp({
       >
         <SheetHeader className="border-b border-border p-4 pr-12">
           <SheetTitle className="mono text-sm font-bold uppercase tracking-widest text-tactical-orange">
-            Menu operacional
+            {t("Menu operacional")}
           </SheetTitle>
           <p className="text-xs text-muted-foreground">
-            Todas as funções do Manual do Sobrevivente
+            {t("Todas as funções do Manual do Sobrevivente")}
           </p>
         </SheetHeader>
 
         <div className="flex-1 space-y-4 overflow-y-auto p-3">
           {/* ── Navegação entre telas ── */}
           <section>
-            <RotuloSecao>Navegação</RotuloSecao>
+            <RotuloSecao>{t("Navegação")}</RotuloSecao>
             <ul className="space-y-0.5">
               {ROTAS.map(({ to, rotulo, dica, icone: Icone }) => (
                 <li key={to}>
@@ -225,10 +228,10 @@ export function MenuApp({
                     <Icone className="h-4 w-4 shrink-0 text-muted-foreground" />
                     <span className="min-w-0">
                       <span className="block mono text-[13px] leading-tight text-foreground">
-                        {rotulo}
+                        {t(rotulo)}
                       </span>
                       <span className="block truncate text-[11px] leading-tight text-muted-foreground">
-                        {dica}
+                        {t(dica)}
                       </span>
                     </span>
                   </Link>
@@ -239,7 +242,7 @@ export function MenuApp({
 
           {/* ── Ferramentas do mapa tático ── */}
           <section>
-            <RotuloSecao>Ferramentas do mapa</RotuloSecao>
+            <RotuloSecao>{t("Ferramentas do mapa")}</RotuloSecao>
             <div className="space-y-0.5">
               {FERRAMENTAS.map(({ id, rotulo, dica, icone }) => (
                 <LinhaItem
@@ -300,8 +303,9 @@ export function MenuApp({
         </div>
 
         <p className="border-t border-border p-3 text-[10px] leading-relaxed text-muted-foreground">
-          Fontes ao vivo: USGS · NASA EONET/FIRMS · NOAA SWPC · GDACS · GDELT · WhereTheISS.at ·
-          Open-Meteo · adsb.lol · AISStream (opcional)
+          {t(
+            "Fontes ao vivo: USGS · NASA EONET/FIRMS · NOAA SWPC · GDACS · GDELT · WhereTheISS.at · Open-Meteo · adsb.lol · AISStream (opcional)",
+          )}
         </p>
       </SheetContent>
     </Sheet>

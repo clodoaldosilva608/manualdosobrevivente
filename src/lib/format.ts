@@ -1,15 +1,25 @@
 /**
- * Fonte única de formatação pt-BR: números, datas, distâncias, áreas,
+ * Fonte única de formatação de números, datas, distâncias, áreas,
  * pesos, ângulos e coordenadas. Nenhuma tela deve usar toLocaleString/toFixed
  * diretamente — sempre passar por aqui.
+ *
+ * O locale padrão é pt-BR; o seletor de idiomas troca o locale em tempo de
+ * execução via definirLocale() (datas e números seguem o idioma escolhido).
  */
 
-const LOCALE = "pt-BR";
+let LOCALE = "pt-BR";
+
+/** Troca o locale de formatação (chamado pelo provedor de idioma). */
+export function definirLocale(locale: string) {
+  if (!locale || locale === LOCALE) return;
+  LOCALE = locale;
+  cache.clear();
+}
 
 const cache = new Map<string, Intl.NumberFormat>();
 
 function nf(min: number, max: number): Intl.NumberFormat {
-  const key = `${min}:${max}`;
+  const key = `${LOCALE}:${min}:${max}`;
   let f = cache.get(key);
   if (!f) {
     f = new Intl.NumberFormat(LOCALE, {

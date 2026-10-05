@@ -19,6 +19,7 @@ import { AutoCloudSync } from "@/components/AutoCloudSync";
 import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
 import { registerServiceWorker, useNovaVersao } from "@/lib/pwa";
 import { iniciarAutoBackup } from "@/lib/auto-backup";
+import { ProvedorIdioma } from "@/lib/i18n";
 
 function NotFoundComponent() {
   return (
@@ -182,17 +183,19 @@ function RootComponent() {
   }, []);
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthListener />
-      <AvisoNovaVersao />
-      <AutoCloudSync />
-      <WelcomeOnboarding />
-      <div className="flex min-h-screen flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0 md:pt-14">
-        <main className="flex-1 relative">
-          <Outlet />
-        </main>
-        <AppNav />
-      </div>
-      <Toaster theme="dark" position="top-center" richColors />
+      <ProvedorIdioma>
+        <AuthListener />
+        <AvisoNovaVersao />
+        <AutoCloudSync />
+        <WelcomeOnboarding />
+        <div className="flex min-h-screen flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0 md:pt-14">
+          <main className="flex-1 relative">
+            <Outlet />
+          </main>
+          <AppNav />
+        </div>
+        <Toaster theme="dark" position="top-center" richColors />
+      </ProvedorIdioma>
     </QueryClientProvider>
   );
 }

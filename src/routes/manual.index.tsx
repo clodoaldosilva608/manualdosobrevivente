@@ -4,6 +4,7 @@ import Fuse from "fuse.js";
 import { MANUAL, MANUAL_BY_CATEGORY, CATEGORY_LABELS } from "@/lib/manual-content";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/manual/")({
   head: () => ({
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/manual/")({
 });
 
 function ManualIndex() {
+  const { t } = useI18n();
   const [q, setQ] = useState("");
   const fuse = useMemo(
     () => new Fuse(MANUAL, { keys: ["title", "summary", "body"], threshold: 0.4 }),
@@ -38,10 +40,10 @@ function ManualIndex() {
     <div className="container mx-auto max-w-4xl p-4 pb-8 md:p-8">
       <header className="mb-6">
         <h1 className="mono text-tactical-orange text-2xl md:text-3xl font-bold tracking-wider">
-          MANUAL DE SOBREVIVÊNCIA
+          {t("MANUAL DE SOBREVIVÊNCIA")}
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
-          Referência de campo pronta para uso offline. Funciona sem sinal.
+          {t("Referência de campo pronta para uso offline. Funciona sem sinal.")}
         </p>
       </header>
 
@@ -50,7 +52,7 @@ function ManualIndex() {
         <Input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Buscar técnicas, condições, equipamentos..."
+          placeholder={t("Buscar técnicas, condições, equipamentos...")}
           className="pl-10 glove-tap"
         />
       </div>
@@ -61,14 +63,14 @@ function ManualIndex() {
             <EntryRow key={e.slug} entry={e} />
           ))}
           {results.length === 0 && (
-            <li className="text-muted-foreground text-sm">Nenhum resultado.</li>
+            <li className="text-muted-foreground text-sm">{t("Nenhum resultado.")}</li>
           )}
         </ul>
       ) : (
         Object.entries(MANUAL_BY_CATEGORY).map(([cat, items]) => (
           <section key={cat} className="mb-8">
             <h2 className="mono text-xs uppercase tracking-widest text-muted-foreground mb-2">
-              {CATEGORY_LABELS[cat as keyof typeof CATEGORY_LABELS]}
+              {t(CATEGORY_LABELS[cat as keyof typeof CATEGORY_LABELS])}
             </h2>
             <ul className="space-y-2">
               {items.map((e) => (

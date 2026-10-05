@@ -22,6 +22,7 @@ import { listAreas, deleteArea } from "@/lib/offline-tiles";
 import { waypointsToGPX, downloadText, parseGpxOrKml } from "@/lib/gpx-kml";
 import { formatInteger, formatDateTime, formatNumber } from "@/lib/format";
 import { usePreferences } from "@/hooks/usePreferences";
+import { useI18n, IDIOMAS } from "@/lib/i18n";
 import {
   pushLocalToCloud,
   pullCloudToLocal,
@@ -111,6 +112,7 @@ function Settings() {
   const [reportHistory, setReportHistory] = useState<ReportHistoryItem[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const { prefs, update } = usePreferences();
+  const { t, idioma, definir } = useI18n();
   const callPush = useServerFn(pushAll);
   const callPull = useServerFn(pullAll);
   const callGetReports = useServerFn(getReportSettings);
@@ -181,9 +183,9 @@ function Settings() {
       }
       setReportHistory(result.history);
     } catch {
-      toast.error("Não foi possível carregar os relatórios");
+      toast.error(t("Não foi possível carregar os relatórios"));
     }
-  }, [callGetReports, email]);
+  }, [callGetReports, email, t]);
 
   useEffect(() => {
     void refreshReports();
@@ -242,11 +244,11 @@ function Settings() {
   const exportGPX = async () => {
     try {
       const wps = await listWaypoints();
-      if (!wps.length) return toast.error("Nenhum waypoint para exportar");
+      if (!wps.length) return toast.error(t("Nenhum waypoint para exportar"));
       downloadText(`waypoints-${Date.now()}.gpx`, waypointsToGPX(wps));
-      toast.success(`${formatInteger(wps.length)} waypoints exportados`);
+      toast.success(t("{n} waypoints exportados", { n: formatInteger(wps.length) }));
     } catch {
-      toast.error("Não foi possível exportar os waypoints");
+      toast.error(t("Não foi possível exportar os waypoints"));
     }
   };
 
@@ -386,14 +388,40 @@ function Settings() {
     <div className="container mx-auto max-w-2xl space-y-6 p-4 pb-8 md:p-8">
       <header>
         <h1 className="mono text-tactical-orange text-2xl md:text-3xl font-bold tracking-wider">
-          AJUSTES
+          {t("AJUSTES")}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Conta, preferências, backup e dados salvos no aparelho.
+          {t("Conta, preferências, backup e dados salvos no aparelho.")}
         </p>
       </header>
 
-      <Section title="Conta">
+      <Section title={t("Idioma do aplicativo")}>
+        <p className="text-xs text-muted-foreground">
+          {t(
+            "O padrão é o português do Brasil. A escolha fica guardada neste aparelho — conteúdo de fontes externas pode continuar no idioma original.",
+          )}
+        </p>
+        <div className="flex flex-wrap gap-2" data-test="seletor-idioma">
+          {IDIOMAS.map((op) => (
+            <button
+              key={op.id}
+              type="button"
+              data-test={`idioma-${op.id}`}
+              onClick={() => definir(op.id)}
+              className={`glove-tap rounded-md border px-3 py-2 mono text-xs uppercase tracking-wider ${
+                idioma === op.id
+                  ? "border-tactical-orange text-tactical-orange bg-tactical-orange/10"
+                  : "border-border text-muted-foreground hover:text-foreground"
+              }`}
+              title={op.pt}
+            >
+              {op.nativo}
+            </button>
+          ))}
+        </div>
+      </Section>
+
+      <Section title={t("Conta")}>
         {contaLocal ? (
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0">
@@ -402,42 +430,45 @@ function Settings() {
                 <span className="text-muted-foreground">· {contaLocal.email}</span>
               </p>
               <p className="text-[10px] text-muted-foreground">
-                Conta local deste aparelho — pronta para a nuvem quando o banco de dados existir.
+                {t(
+                  "Conta local deste aparelho — pronta para a nuvem quando o banco de dados existir.",
+                )}
               </p>
             </div>
             <Link to="/conta" className="shrink-0">
               <Button variant="outline" className="glove-tap">
-                <UserRound className="h-4 w-4" /> Gerenciar
+                <UserRound className="h-4 w-4" /> {t("Gerenciar")}
               </Button>
             </Link>
           </div>
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-muted-foreground">
-              Nenhuma conta neste aparelho. Crie a sua conta local — ela fica guardada aqui,
-              funciona offline e estará pronta para sincronizar com a nuvem no futuro.
+              {t(
+                "Nenhuma conta neste aparelho. Crie a sua conta local — ela fica guardada aqui, funciona offline e estará pronta para sincronizar com a nuvem no futuro.",
+              )}
             </p>
             <Link to="/conta" className="shrink-0">
               <Button className="glove-tap bg-tactical-orange text-background hover:bg-tactical-orange/90">
-                <UserRound className="h-4 w-4" /> Criar conta
+                <UserRound className="h-4 w-4" /> {t("Criar conta")}
               </Button>
             </Link>
           </div>
         )}
       </Section>
 
-      <Section title="Preferências">
+      <Section title={t("Preferências")}>
         <Choice
-          label="Unidades"
+          label={t("Unidades")}
           value={prefs.units}
           options={[
-            { id: "metric", label: "Métrico" },
-            { id: "nautical", label: "Náutico" },
+            { id: "metric", label: t("Métrico") },
+            { id: "nautical", label: t("Náutico") },
           ]}
           onChange={(v) => update({ units: v as "metric" | "nautical" })}
         />
         <Choice
-          label="Coordenada padrão"
+          label={t("Coordenada padrão")}
           value={prefs.coordFormat}
           options={[
             { id: "DD", label: "DD" },
@@ -447,104 +478,106 @@ function Settings() {
           onChange={(v) => update({ coordFormat: v as "DD" | "DMS" | "MGRS" })}
         />
         <Choice
-          label="Referência de norte"
+          label={t("Referência de norte")}
           value={prefs.northRef}
           options={[
-            { id: "true", label: "Verdadeiro" },
-            { id: "magnetic", label: "Magnético" },
+            { id: "true", label: t("Verdadeiro") },
+            { id: "magnetic", label: t("Magnético") },
           ]}
           onChange={(v) => update({ northRef: v as "true" | "magnetic" })}
         />
       </Section>
 
-      <Section title="Chaves de inteligência (opcional)">
+      <Section title={t("Chaves de inteligência (opcional)")}>
         <p className="text-xs text-muted-foreground">
-          Camadas extras do modo Osiris. Chaves pessoais ficam salvas apenas neste aparelho e são
-          usadas só para consultar as fontes oficiais — e podem ficar vazias quando o app já vem com
-          chaves configuradas no servidor.
+          {t(
+            "Camadas extras do modo Osiris. Chaves pessoais ficam salvas apenas neste aparelho e são usadas só para consultar as fontes oficiais — e podem ficar vazias quando o app já vem com chaves configuradas no servidor.",
+          )}
         </p>
         <div className="space-y-1">
-          <Label htmlFor="chave-firms">NASA FIRMS — focos de calor</Label>
+          <Label htmlFor="chave-firms">{t("NASA FIRMS — focos de calor")}</Label>
           <Input
             id="chave-firms"
             autoComplete="off"
             placeholder={
               chavesServ?.firmsServidor
-                ? "Chave do servidor ativa — opcional"
-                : "Cole aqui sua MAP_KEY da NASA FIRMS"
+                ? t("Chave do servidor ativa — opcional")
+                : t("Cole aqui sua MAP_KEY da NASA FIRMS")
             }
             value={prefs.intelKeys.firms}
             onChange={(e) => update({ intelKeys: { ...prefs.intelKeys, firms: e.target.value } })}
           />
           {chavesServ?.firmsServidor ? (
             <p className="text-[10px] text-tactical-orange">
-              Chave do servidor ativa — os focos de calor já funcionam; a sua é opcional.
+              {t("Chave do servidor ativa — os focos de calor já funcionam; a sua é opcional.")}
             </p>
           ) : (
             <p className="text-[10px] text-muted-foreground">
-              Cadastre grátis em firms.modaps.eosdis.nasa.gov (conta NASA Earthdata). A camada
-              "Focos de calor" ativa em poucos minutos.
+              {t(
+                'Cadastre grátis em firms.modaps.eosdis.nasa.gov (conta NASA Earthdata). A camada "Focos de calor" ativa em poucos minutos.',
+              )}
             </p>
           )}
         </div>
         <div className="space-y-1">
-          <Label htmlFor="chave-ais">AISStream.io — navios ao vivo</Label>
+          <Label htmlFor="chave-ais">{t("AISStream.io — navios ao vivo")}</Label>
           <Input
             id="chave-ais"
             autoComplete="off"
             placeholder={
               chavesServ?.chaveAis
-                ? "Chave do servidor ativa — opcional"
-                : "Cole aqui sua chave do AISStream.io"
+                ? t("Chave do servidor ativa — opcional")
+                : t("Cole aqui sua chave do AISStream.io")
             }
             value={prefs.intelKeys.ais}
             onChange={(e) => update({ intelKeys: { ...prefs.intelKeys, ais: e.target.value } })}
           />
           {chavesServ?.chaveAis ? (
             <p className="text-[10px] text-tactical-orange">
-              Chave do servidor ativa — os navios ao vivo já funcionam; a sua é opcional.
+              {t("Chave do servidor ativa — os navios ao vivo já funcionam; a sua é opcional.")}
             </p>
           ) : (
             <p className="text-[10px] text-muted-foreground">
-              Cadastre grátis em aisstream.io. Os navios aparecem ao redor da área visível do mapa,
-              com o modo Osiris e a camada "Navios" ligados.
+              {t(
+                'Cadastre grátis em aisstream.io. Os navios aparecem ao redor da área visível do mapa, com o modo Osiris e a camada "Navios" ligados.',
+              )}
             </p>
           )}
         </div>
         <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
           <KeyRound className="h-3.5 w-3.5 shrink-0" />
-          Nenhum dado destas chaves sai do seu aparelho além da consulta direta à fonte.
+          {t("Nenhum dado destas chaves sai do seu aparelho além da consulta direta à fonte.")}
         </div>
       </Section>
 
-      <Section title="Dados no aparelho">
+      <Section title={t("Dados no aparelho")}>
         <div className="grid grid-cols-2 gap-3">
-          <Stat label="Waypoints" value={counts ? formatInteger(counts.waypoints) : "—"} />
-          <Stat label="Itens da mochila" value={counts ? formatInteger(counts.gear) : "—"} />
+          <Stat label={t("Waypoints")} value={counts ? formatInteger(counts.waypoints) : "—"} />
+          <Stat label={t("Itens da mochila")} value={counts ? formatInteger(counts.gear) : "—"} />
           <Stat
-            label="Checklist concluído"
+            label={t("Checklist concluído")}
             value={counts ? formatInteger(counts.checklist) : "—"}
           />
-          <Stat label="Tópicos baixados" value={counts ? formatInteger(counts.manual) : "—"} />
-          <Stat label="Áreas de mapa" value={counts ? formatInteger(counts.areas) : "—"} />
+          <Stat label={t("Tópicos baixados")} value={counts ? formatInteger(counts.manual) : "—"} />
+          <Stat label={t("Áreas de mapa")} value={counts ? formatInteger(counts.areas) : "—"} />
           <Stat
-            label="Espaço dos mapas"
+            label={t("Espaço dos mapas")}
             value={counts ? `${formatNumber(counts.bytes / 1024 / 1024, 1)} MB` : "—"}
           />
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
           <Button onClick={exportGPX} className="glove-tap w-full">
-            <Download className="h-4 w-4" /> Exportar GPX
+            <Download className="h-4 w-4" /> {t("Exportar GPX")}
           </Button>
           <Button onClick={exportBackup} variant="secondary" className="glove-tap w-full">
-            <Download className="h-4 w-4" /> Backup completo
+            <Download className="h-4 w-4" /> {t("Backup completo")}
           </Button>
           <Button
             variant="secondary"
             className="glove-tap w-full sm:col-span-2"
             onClick={() => fileRef.current?.click()}
           >
-            <Upload className="h-4 w-4" /> Importar GPX ou KML
+            <Upload className="h-4 w-4" /> {t("Importar GPX ou KML")}
           </Button>
           <input
             ref={fileRef}
@@ -560,61 +593,62 @@ function Settings() {
         </div>
       </Section>
 
-      <Section title="Nuvem (opcional)">
+      <Section title={t("Nuvem (opcional)")}>
         <div className="rounded border border-border/70 px-3 py-2">
           {loadingSession ? (
-            <p className="text-xs text-muted-foreground">Verificando sessão…</p>
+            <p className="text-xs text-muted-foreground">{t("Verificando sessão…")}</p>
           ) : email ? (
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="mono text-xs break-all">{email}</span>
               <Button variant="destructive" size="sm" onClick={signOut} className="glove-tap">
-                Sair
+                {t("Sair")}
               </Button>
             </div>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Sincronização entre aparelhos via Supabase (experimental):{" "}
+              {t("Sincronização entre aparelhos via Supabase (experimental):")}{" "}
               <Link to="/login" className="text-tactical-orange underline">
-                entre com a conta de nuvem
+                {t("entre com a conta de nuvem")}
               </Link>
               .
             </p>
           )}
         </div>
         <p className="text-xs text-muted-foreground">
-          Seus dados vivem neste aparelho. A nuvem só é usada se você ativar a sincronização e
-          entrar com sua conta.
+          {t(
+            "Seus dados vivem neste aparelho. A nuvem só é usada se você ativar a sincronização e entrar com sua conta.",
+          )}
         </p>
         <label className="flex items-center gap-3 text-sm">
           <Checkbox
             checked={autoSync}
             onCheckedChange={(checked) => void alternarAutoSync(checked === true)}
-            aria-label="Sincronizar automaticamente com a nuvem"
+            aria-label={t("Sincronizar automaticamente com a nuvem")}
           />
-          Sincronizar automaticamente com a nuvem
+          {t("Sincronizar automaticamente com a nuvem")}
         </label>
         <p className="text-xs text-muted-foreground">
           {lastSync
-            ? `Última sincronização: ${formatDateTime(lastSync)}`
-            : "Nada sincronizado ainda."}
+            ? t("Última sincronização: {n}", { n: formatDateTime(lastSync) })
+            : t("Nada sincronizado ainda.")}
         </p>
         <div className="grid gap-2 sm:grid-cols-2">
           <Button
             onClick={doPush}
             disabled={busy !== null}
             className="glove-tap w-full"
-            title={email ? undefined : "Entre na conta para usar a nuvem"}
+            title={email ? undefined : t("Entre na conta para usar a nuvem")}
           >
-            <CloudUpload className="h-4 w-4" /> Enviar para a nuvem
+            <CloudUpload className="h-4 w-4" /> {t("Enviar para a nuvem")}
           </Button>
           <Button
             onClick={doPull}
             disabled={busy !== null}
             variant="secondary"
             className="glove-tap w-full"
-            title={email ? undefined : "Entre na conta para usar a nuvem"}
+            title={email ? undefined : t("Entre na conta para usar a nuvem")}
           >
-            <CloudDownload className="h-4 w-4" /> Trazer da nuvem
+            <CloudDownload className="h-4 w-4" /> {t("Trazer da nuvem")}
           </Button>
         </div>
       </Section>
@@ -623,45 +657,49 @@ function Settings() {
 
       <ObsidianCard />
 
-      <Section title="Aplicativo">
+      <Section title={t("Aplicativo")}>
         {instalado ? (
           <p className="text-sm text-tactical-green">
-            Aplicativo instalado — rodando em tela cheia com suporte offline.
+            {t("Aplicativo instalado — rodando em tela cheia com suporte offline.")}
           </p>
         ) : podeInstalar ? (
           <div className="space-y-2">
             <Button onClick={() => void instalar()} className="glove-tap w-full">
-              <Download className="h-4 w-4" /> Instalar aplicativo
+              <Download className="h-4 w-4" /> {t("Instalar aplicativo")}
             </Button>
             <p className="text-xs text-muted-foreground">
-              Instale para abrir em tela cheia e usar mesmo sem internet.
+              {t("Instale para abrir em tela cheia e usar mesmo sem internet.")}
             </p>
           </div>
         ) : (
           <p className="text-xs text-muted-foreground">
             {plataforma === "ios"
-              ? "Para instalar no iPhone/iPad: botão Compartilhar no Safari → “Adicionar à Tela de Início”."
-              : "Para instalar: use a opção “Instalar aplicativo” do navegador ou o ícone na barra de endereço."}
+              ? t(
+                  'Para instalar no iPhone/iPad: botão Compartilhar no Safari → "Adicionar à Tela de Início".',
+                )
+              : t(
+                  'Para instalar: use a opção "Instalar aplicativo" do navegador ou o ícone na barra de endereço.',
+                )}
           </p>
         )}
       </Section>
 
       {email && (
-        <Section title="Relatório semanal por e-mail">
+        <Section title={t("Relatório semanal por e-mail")}>
           <label className="flex items-center gap-3 text-sm">
             <Checkbox
               checked={reportForm.enabled}
               onCheckedChange={(checked) =>
                 setReportForm((current) => ({ ...current, enabled: checked === true }))
               }
-              aria-label="Ativar relatório semanal"
+              aria-label={t("Ativar relatório semanal")}
             />
-            Enviar relatório automaticamente
+            {t("Enviar relatório automaticamente")}
           </label>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="space-y-1">
               <span className="mono text-[10px] uppercase text-muted-foreground">
-                Dia da semana
+                {t("Dia da semana")}
               </span>
               <select
                 value={reportForm.weekday}
@@ -673,17 +711,19 @@ function Settings() {
                 }
                 className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
               >
-                <option value={0}>Domingo</option>
-                <option value={1}>Segunda-feira</option>
-                <option value={2}>Terça-feira</option>
-                <option value={3}>Quarta-feira</option>
-                <option value={4}>Quinta-feira</option>
-                <option value={5}>Sexta-feira</option>
-                <option value={6}>Sábado</option>
+                <option value={0}>{t("Domingo")}</option>
+                <option value={1}>{t("Segunda-feira")}</option>
+                <option value={2}>{t("Terça-feira")}</option>
+                <option value={3}>{t("Quarta-feira")}</option>
+                <option value={4}>{t("Quinta-feira")}</option>
+                <option value={5}>{t("Sexta-feira")}</option>
+                <option value={6}>{t("Sábado")}</option>
               </select>
             </label>
             <label className="space-y-1">
-              <span className="mono text-[10px] uppercase text-muted-foreground">Horário</span>
+              <span className="mono text-[10px] uppercase text-muted-foreground">
+                {t("Horário")}
+              </span>
               <Input
                 type="time"
                 value={reportForm.local_time}
@@ -693,7 +733,9 @@ function Settings() {
               />
             </label>
             <label className="space-y-1 sm:col-span-2">
-              <span className="mono text-[10px] uppercase text-muted-foreground">Destinatário</span>
+              <span className="mono text-[10px] uppercase text-muted-foreground">
+                {t("Destinatário")}
+              </span>
               <Input
                 type="email"
                 value={reportForm.recipient_email}
@@ -703,7 +745,7 @@ function Settings() {
                     recipient_email: event.target.value,
                   }))
                 }
-                placeholder="voce@exemplo.com"
+                placeholder={t("voce@exemplo.com")}
               />
             </label>
           </div>
@@ -713,7 +755,7 @@ function Settings() {
               onClick={saveReports}
               disabled={busy !== null || !reportForm.recipient_email}
             >
-              Salvar programação
+              {t("Salvar programação")}
             </Button>
             <Button
               type="button"
@@ -721,11 +763,13 @@ function Settings() {
               onClick={sendReport}
               disabled={busy !== null || !reportForm.recipient_email}
             >
-              Enviar agora
+              {t("Enviar agora")}
             </Button>
           </div>
           <div className="space-y-2">
-            <h3 className="mono text-[10px] uppercase text-muted-foreground">Histórico recente</h3>
+            <h3 className="mono text-[10px] uppercase text-muted-foreground">
+              {t("Histórico recente")}
+            </h3>
             {reportHistory.length ? (
               reportHistory.map((item) => (
                 <div
@@ -736,29 +780,29 @@ function Settings() {
                   <span
                     className={item.status === "sent" ? "text-tactical-green" : "text-destructive"}
                   >
-                    {item.status === "sent" ? "Enviado" : "Falhou"}
+                    {item.status === "sent" ? t("Enviado") : t("Falhou")}
                   </span>
                   <span className="w-full break-words text-muted-foreground">
-                    {formatInteger(item.waypoint_count)} waypoints ·{" "}
-                    {formatInteger(item.gear_count)} itens · {formatInteger(item.checklist_count)}{" "}
-                    concluídos
+                    {formatInteger(item.waypoint_count)} {t("waypoints")} ·{" "}
+                    {formatInteger(item.gear_count)} {t("itens")} ·{" "}
+                    {formatInteger(item.checklist_count)} {t("concluídos")}
                   </span>
                 </div>
               ))
             ) : (
-              <p className="text-xs text-muted-foreground">Nenhum envio registrado.</p>
+              <p className="text-xs text-muted-foreground">{t("Nenhum envio registrado.")}</p>
             )}
           </div>
         </Section>
       )}
 
-      <Section title="Limpeza">
+      <Section title={t("Limpeza")}>
         <div className="grid gap-2 sm:grid-cols-2">
           <Button variant="secondary" onClick={clearMaps} className="glove-tap w-full">
-            <Trash2 className="h-4 w-4" /> Apagar mapas offline
+            <Trash2 className="h-4 w-4" /> {t("Apagar mapas offline")}
           </Button>
           <Button variant="destructive" onClick={clearAll} className="glove-tap w-full">
-            <Trash2 className="h-4 w-4" /> Apagar dados locais
+            <Trash2 className="h-4 w-4" /> {t("Apagar dados locais")}
           </Button>
         </div>
       </Section>

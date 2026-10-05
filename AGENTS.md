@@ -171,3 +171,31 @@ md:bottom-11`, acima da escala) e o painel flutua à esquerda do rail de 2
   (global). UI: resumo no topo do BOLETIM (selo vermelho no botão do rail) +
   folha dedicada "MODO ALERTA" (menu › Modo Alerta ou "Radar completo").
   E2E em `tests/map-alerta.spec.ts`.
+
+## Idioma, SOS, validade e prontidão offline (out/2026)
+
+- **Internacionalização**: `src/lib/i18n/` — o padrão é pt-BR (as chaves dos
+  dicionários são as próprias strings pt-BR); seletor em Ajustes com
+  español/English/Русский/中文/日本語. Escolha em `localStorage["tgis:idioma"]`,
+  aplicada após a hidratação (SSR continua pt-BR; `html lang` troca no cliente).
+  `t()` tem fallback progressivo: chave ausente exibe o pt-BR original. Datas e
+  números seguem o idioma via `definirLocale()` (`src/lib/format.ts`). Os
+  dicionários (`dic-*.ts`) são GERADOS por `scripts/gerar-dicionarios.py` a
+  partir de `scripts/tabela_{a,b,c}.py` — não editar à mão; sincronia de chaves
+  garantida por `tests/i18n.spec.ts`.
+- **Botão SOS**: na navegação inferior é um botão circular vermelho elevado no
+  centro (celular) e item vermelho no desktop (`data-test="nav-sos"`).
+- **Validade da mochila**: `src/lib/validade.ts` (puro, `tests/validade.spec.ts`)
+  classifica itens por `expires_at` (vencido/crítico ≤7d/atenção ≤30d/próximo
+  ≤90d/ok); a Mochila mostra painel "Lembretes de validade" na lista e no
+  detalhe, selo por item e badge no cartão (`data-test="lembretes-validade*"`).
+- **Teste de prontidão offline**: `src/lib/prontidao-offline.ts` (classificação
+  pura em `tests/prontidao.spec.ts`) + seção na página Offline que verifica
+  Service Worker, cache do shell, /offline.html, áreas, manual, banco local e
+  rede — veredito PRONTO/PARCIAL/NÃO PRONTO (`data-test="prontidao-*"`).
+- **Manuais dos pôsteres**: 10 verbetes novos em `src/lib/manual-content.ts`
+  com imagens em `public/manuals/*.jpg` (geradas de pôsteres do Centro de
+  Sobrevivência; JPEG ≤340 KB) e categorias novas
+  preparação/mentalidade/equipamento.
+- **Boletim 100% pt-BR**: GDELT agora pede `sourcelang:por` com palavras-chave
+  bilíngues e `mapearNoticias` descarta artigos fora do português.

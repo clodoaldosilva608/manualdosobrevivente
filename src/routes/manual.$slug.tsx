@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import { ChevronLeft, Check } from "lucide-react";
 import { MANUAL, CATEGORY_LABELS } from "@/lib/manual-content";
 import { getChecklist, setChecklist } from "@/lib/db";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/manual/$slug")({
   head: ({ params }) => {
@@ -39,6 +40,7 @@ export const Route = createFileRoute("/manual/$slug")({
 
 function Entry() {
   const { slug } = Route.useParams();
+  const { t } = useI18n();
   const entry = MANUAL.find((e) => e.slug === slug);
   const [checks, setChecks] = useState<Record<string, boolean>>({});
 
@@ -81,11 +83,11 @@ function Entry() {
         to="/manual"
         className="inline-flex items-center text-sm text-muted-foreground mb-4 hover:text-foreground"
       >
-        <ChevronLeft className="h-4 w-4" /> Manual
+        <ChevronLeft className="h-4 w-4" /> {t("Manual")}
       </Link>
 
       <div className="mono text-[10px] uppercase tracking-widest text-tactical-orange mb-1">
-        {CATEGORY_LABELS[entry.category]}
+        {t(CATEGORY_LABELS[entry.category])}
       </div>
       <h1 className="mb-2 break-words text-2xl font-bold md:text-3xl">{entry.title}</h1>
       <p className="text-muted-foreground mb-4">{entry.summary}</p>
@@ -105,7 +107,7 @@ function Entry() {
       {entry.checklist && (
         <div className="mt-8 rounded-md border border-border p-4 bg-card">
           <h2 className="mono text-tactical-orange text-sm font-bold mb-3 tracking-widest">
-            CHECKLIST DE CAMPO
+            {t("CHECKLIST DE CAMPO")}
           </h2>
           <ul className="space-y-2">
             {entry.checklist.map((item: string, i: number) => (

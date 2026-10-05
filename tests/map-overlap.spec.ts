@@ -81,11 +81,15 @@ describe("HUD do mapa em celular (390×844)", () => {
     const seletores = [
       'div.hud-panel:has(span:text-is("CENTRO"))',
       'div.hud-panel:has(span:text-is("MINHA POSIÇÃO"))',
+      'button[title="Osiris"]',
+      'button[title="Boletim"]',
       'button[title="Camadas"]',
       'button[title="Ir para"]',
       'button[title="Medir"]',
       'button[title="Marcador"]',
       'button[title="Bússola"]',
+      'button[title="Globo"]',
+      'button[title="Limpar"]',
       '[aria-label="Abrir bússola"]',
     ];
 

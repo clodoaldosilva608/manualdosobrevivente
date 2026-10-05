@@ -161,3 +161,13 @@ md:bottom-11`, acima da escala) e o painel flutua à esquerda do rail de 2
 - Scheduled reports use one protected public server route and a workspace-owned
   mail connection; report preferences and delivery history remain owner-scoped
   in the database.
+
+- **MODO ALERTA (radar de proximidade)**: `src/lib/alerta-radar.ts` (puro,
+  coberto por `tests/alerta-radar.spec.ts`) cruza o snapshot intel + alertas
+  GDACS com a posição do operador (GPS ou centro do mapa) e devolve ameaças
+  com nível por distância: focos FIRMS até 50 km (crítico até 15 km), sismos
+  USGS M4+ até 600 km (crítico M5,5+ a 300 km ou tsunami), GDACS vermelho/
+  laranja até 1000 km (verde até 300 km), EONET até 500 km e tempestade Kp
+  (global). UI: resumo no topo do BOLETIM (selo vermelho no botão do rail) +
+  folha dedicada "MODO ALERTA" (menu › Modo Alerta ou "Radar completo").
+  E2E em `tests/map-alerta.spec.ts`.

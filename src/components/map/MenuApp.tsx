@@ -46,7 +46,7 @@ import type { ModoMapa } from "@/components/map/MapModeSwitch";
 import { LINHAS_INTEL } from "@/components/map/intel-camadas-lista";
 
 export type AcaoMenuMapa =
-  "goto" | "measure" | "marcador" | "bussola" | "globo" | "limpar" | "elementos";
+  "goto" | "measure" | "marcador" | "bussola" | "globo" | "limpar" | "elementos" | "alertas";
 export type AcaoMenuOsiris =
   "visao" | "hub" | "boletim" | "camadas" | "astro" | "iss" | "ip" | "dominio" | "chaves";
 
@@ -82,6 +82,12 @@ const ROTAS: Array<ItemMenu & { to: string }> = [
 
 /** Ferramentas do HUD tático — exigem o mapa nativo. */
 const FERRAMENTAS: Array<ItemMenu & { id: AcaoMenuMapa }> = [
+  {
+    id: "alertas",
+    rotulo: "Modo Alerta",
+    dica: "Radar de ameaças próximas de você",
+    icone: Siren,
+  },
   { id: "goto", rotulo: "Ir para", dica: "Voar até coordenadas", icone: Navigation2 },
   { id: "measure", rotulo: "Medir", dica: "Distância e área no mapa", icone: Ruler },
   { id: "marcador", rotulo: "Marcador", dica: "Marcar waypoint no mapa", icone: MapPin },

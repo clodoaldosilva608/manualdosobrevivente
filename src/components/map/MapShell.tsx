@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import type maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
@@ -22,6 +22,7 @@ import {
   Lock,
   Menu as MenuIcon,
   NotebookPen,
+  Siren,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -78,6 +79,7 @@ import {
 import { useServerFn } from "@tanstack/react-start";
 import { usePreferences } from "@/hooks/usePreferences";
 import { chavesServidor, fetchIntelSnapshot } from "@/lib/intel.functions";
+import { avaliarProximidade, contarAmeacas, horaRelativa } from "@/lib/alerta-radar";
 import {
   fetchVoos,
   fetchIss,
@@ -302,7 +304,7 @@ export default function MapShell() {
   const [drawCoords, setDrawCoords] = useState<[number, number][]>([]);
   const [waypoints, setWaypoints] = useState<LocalWaypoint[]>([]);
   const [openSheet, setOpenSheet] = useState<
-    null | "menu" | "layers" | "goto" | "measure" | "markers" | "boletim" | "hub"
+    null | "menu" | "layers" | "goto" | "measure" | "markers" | "boletim" | "alertas" | "hub"
   >(null);
   const [compassMode, setCompassModeState] = useState<"mini" | "panel" | "full">("mini");
   useEffect(() => {
@@ -382,6 +384,18 @@ export default function MapShell() {
   // Chave AIS do servidor (usada quando o usuário não cadastrou a própria).
   const [chaveAisServidor, setChaveAisServidor] = useState("");
   const [boletimEm, setBoletimEm] = useState(0);
+  // MODO ALERTA — radar de proximidade: ameaças perto do operador (minha
+  // posição quando há GPS; senão o centro do mapa, igual ao boletim).
+  const radarAlertas = useMemo(
+    () =>
+      avaliarProximidade(
+        intel,
+        alertas,
+        userPos ? { lng: userPos.lng, lat: userPos.lat } : { lng: center[0], lat: center[1] },
+      ),
+    [intel, alertas, userPos, center],
+  );
+  const radarEm = useMemo(() => contarAmeacas(radarAlertas), [radarAlertas]);
   // Seção do Hub Osiris aberta diretamente pelas ferramentas da plataforma.
   const [hubSecao, setHubSecao] = useState<string | undefined>(undefined);
   const callIntel = useServerFn(fetchIntelSnapshot);
@@ -1402,6 +1416,11 @@ export default function MapShell() {
         setOpenSheet("boletim");
         carregarBoletim();
         break;
+      case "alertas":
+        irTatico();
+        setOpenSheet("alertas");
+        carregarBoletim();
+        break;
       case "camadas":
         irTatico();
         setOpenSheet("layers");
@@ -1563,7 +1582,7 @@ export default function MapShell() {
           {/* Right-side action rail — em 2 colunas no desktop para nunca
               alcançar os cantos inferiores (bússola, gráfico, atribuição). */}
           <div
-            className={`absolute right-2 top-[max(0.5rem,env(safe-area-inset-top))] z-10 flex-col gap-2 md:top-[13.75rem] md:grid md:max-h-[calc(100dvh-19.75rem)] md:grid-cols-2 md:overflow-y-auto ${
+            className={`absolute right-2 top-[calc(0.5rem+env(safe-area-inset-top))] z-10 max-h-[calc(100dvh-17rem)] flex-col gap-1 overflow-y-auto md:top-[13.75rem] md:grid md:gap-2 md:max-h-[calc(100dvh-19.75rem)] md:grid-cols-2 ${
               telaVis.ferramentas ? "flex" : "hidden"
             }`}
           >
@@ -1579,6 +1598,8 @@ export default function MapShell() {
             <RailBtn
               icon={Newspaper}
               label="Boletim"
+              active={radarEm > 0}
+              badge={radarEm}
               onClick={() => {
                 setOpenSheet("boletim");
                 carregarBoletim();
@@ -2027,6 +2048,71 @@ export default function MapShell() {
           </div>
 
           <div className="mt-3 max-h-[62dvh] space-y-3 overflow-y-auto pr-1">
+            {/* MODO ALERTA — resumo do radar de proximidade no topo do boletim */}
+            <div
+              data-test="radar-resumo"
+              className="rounded-md border border-border bg-background/40 p-3"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p className="mono flex items-center gap-2 text-[12px] font-bold text-tactical-orange">
+                  <Siren className="h-3.5 w-3.5" /> MODO ALERTA
+                  {radarEm > 0 && (
+                    <span
+                      data-test="radar-total"
+                      className="rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white"
+                    >
+                      {radarEm}
+                    </span>
+                  )}
+                </p>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="glove-tap h-7 mono text-[10px]"
+                  onClick={() => setOpenSheet("alertas")}
+                >
+                  Radar completo
+                </Button>
+              </div>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                Radar de proximidade · referência: {userPos ? "minha posição" : "centro do mapa"}
+              </p>
+              {radarAlertas.length === 0 ? (
+                <p className="mono mt-2 text-[11px] text-emerald-400">NENHUMA AMEAÇA NO RADAR</p>
+              ) : (
+                <ul className="mt-2 space-y-1.5">
+                  {radarAlertas.slice(0, 5).map((a) => (
+                    <li key={a.id} className="flex items-start gap-2 text-[11px] leading-snug">
+                      <span
+                        aria-hidden
+                        className={`mt-1 h-2 w-2 shrink-0 rounded-full ${
+                          a.nivel === "critico"
+                            ? "bg-red-500"
+                            : a.nivel === "atencao"
+                              ? "bg-amber-400"
+                              : "bg-emerald-400"
+                        }`}
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="font-semibold">{a.titulo}</span>
+                        {a.distanciaKm != null && <> · a {formatNumber(a.distanciaKm, 1)} km</>}
+                        {(() => {
+                          const rel = horaRelativa(a.hora, Date.now());
+                          return rel ? ` · ${rel}` : "";
+                        })()}
+                        <span className="text-muted-foreground"> · {a.fonte}</span>
+                      </span>
+                    </li>
+                  ))}
+                  {radarAlertas.length > 5 && (
+                    <li className="text-[10px] text-muted-foreground">
+                      + {radarAlertas.length - 5} no radar completo
+                    </li>
+                  )}
+                </ul>
+              )}
+            </div>
+
             <SecaoBoletim titulo="CLIMA ESPACIAL" fonte="NOAA SWPC">
               {intel?.climaEspacial ? (
                 <div>
@@ -2213,6 +2299,138 @@ export default function MapShell() {
               tempo real.
             </p>
           </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* MODO ALERTA — radar de proximidade (ameaças perto do operador) */}
+      <Sheet open={openSheet === "alertas"} onOpenChange={(o) => !o && setOpenSheet(null)}>
+        <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto bg-card border-border">
+          <SheetHeader>
+            <SheetTitle className="mono text-tactical-orange flex items-center gap-2">
+              <Siren className="h-4 w-4" /> MODO ALERTA
+              {radarEm > 0 && (
+                <span
+                  data-test="radar-total"
+                  className="rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white"
+                >
+                  {radarEm}
+                </span>
+              )}
+            </SheetTitle>
+          </SheetHeader>
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <span className="mono text-[10px] text-muted-foreground">
+              Radar de proximidade · referência: {userPos ? "minha posição" : "centro do mapa"}
+              {boletimEm ? ` · conferido às ${formatTime(boletimEm)}` : ""}
+            </span>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="glove-tap mono text-[11px]"
+              onClick={carregarBoletim}
+            >
+              <RefreshCw className="mr-1 h-3.5 w-3.5" /> Atualizar
+            </Button>
+          </div>
+
+          {radarAlertas.length === 0 ? (
+            <div className="mt-6 mb-4 rounded-md border border-border bg-background/40 p-4 text-center">
+              <p className="mono text-sm text-emerald-400">NENHUMA AMEAÇA NO RADAR</p>
+              <p className="mt-2 text-[12px] leading-relaxed text-muted-foreground">
+                Nenhum foco de calor, sismo forte, evento natural ou alerta oficial próximo do ponto
+                de referência. O radar continua varrendo a cada 90 segundos enquanto o aplicativo
+                estiver aberto — e você pode mover o mapa para examinar outra região.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-3 max-h-[62dvh] space-y-2 overflow-y-auto pr-1">
+              {radarAlertas.map((a) => (
+                <div
+                  key={a.id}
+                  data-test="radar-item"
+                  className="rounded-md border border-border bg-background/40 p-3"
+                >
+                  <div className="flex items-start gap-2">
+                    <span
+                      aria-hidden
+                      className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${
+                        a.nivel === "critico"
+                          ? "bg-red-500"
+                          : a.nivel === "atencao"
+                            ? "bg-amber-400"
+                            : "bg-emerald-400"
+                      }`}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="mono text-[13px] font-bold leading-tight">{a.titulo}</p>
+                      <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                        {a.detalhe}
+                      </p>
+                      <p className="mono mt-1.5 text-[10px] text-muted-foreground">
+                        {a.fonte}
+                        {a.distanciaKm != null && (
+                          <>
+                            {" · "}
+                            <span
+                              className={
+                                a.nivel === "critico"
+                                  ? "text-red-400"
+                                  : a.nivel === "atencao"
+                                    ? "text-amber-400"
+                                    : ""
+                              }
+                            >
+                              a {formatNumber(a.distanciaKm, 1)} km
+                            </span>
+                          </>
+                        )}
+                        {(() => {
+                          const rel = horaRelativa(a.hora, Date.now());
+                          return rel ? ` · ${rel}` : "";
+                        })()}
+                      </p>
+                      <div className="mt-2 flex items-center gap-2">
+                        {a.lng != null && a.lat != null && (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="glove-tap h-7 mono text-[10px]"
+                            onClick={() => {
+                              flyTo(
+                                a.lng as number,
+                                a.lat as number,
+                                (a.distanciaKm ?? 0) < 10 ? 12 : (a.distanciaKm ?? 0) < 50 ? 10 : 8,
+                              );
+                              setOpenSheet(null);
+                            }}
+                          >
+                            <Crosshair className="mr-1 h-3 w-3" /> Ver no mapa
+                          </Button>
+                        )}
+                        {a.url && (
+                          <a
+                            href={a.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="glove-tap inline-flex h-7 items-center rounded-md border border-border px-2 mono text-[10px] text-muted-foreground hover:text-foreground"
+                          >
+                            Fonte oficial ↗
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <p className="mt-3 text-[10px] leading-relaxed text-muted-foreground">
+            Critérios do radar: focos de calor NASA FIRMS até 50 km (crítico até 15 km) · sismos
+            USGS M4+ até 600 km (crítico M5,5+ até 300 km ou aviso de tsunami) · alertas oficiais
+            GDACS até 1000 km (vermelho/laranja) e verdes até 300 km · eventos NASA EONET até 500 km
+            · tempestade geomagnética NOAA (global). Coleta a cada 90 s com cache offline.
+          </p>
         </SheetContent>
       </Sheet>
 
@@ -2447,22 +2665,33 @@ function RailBtn({
   label,
   onClick,
   active,
+  badge,
 }: {
   icon: typeof Crosshair;
   label: string;
   onClick: () => void;
   active?: boolean;
+  /** Contador de ameaças (MODO ALERTA) — pílula no canto do botão. */
+  badge?: number;
 }) {
   return (
     <button
       onClick={onClick}
       title={label}
-      className={`glove-tap hud-panel rounded-md flex flex-col items-center justify-center gap-0.5 px-2 py-1 mono text-[10px] ${
+      className={`glove-tap hud-panel relative rounded-md flex flex-col items-center justify-center gap-0.5 px-2 py-0.5 md:py-1 mono text-[10px] ${
         active ? "text-tactical-orange border-tactical-orange" : "text-foreground"
       }`}
     >
-      <Icon className="h-5 w-5" />
+      <Icon className="h-4 w-4 md:h-5 md:w-5" />
       <span className="uppercase tracking-wider">{label}</span>
+      {badge != null && badge > 0 && (
+        <span
+          data-test="radar-badge"
+          className="absolute -top-1.5 -right-1.5 min-w-[1.15rem] rounded-full bg-red-600 px-1 text-center text-[9px] font-bold leading-[1.15rem] text-white"
+        >
+          {badge > 99 ? "99+" : badge}
+        </span>
+      )}
     </button>
   );
 }

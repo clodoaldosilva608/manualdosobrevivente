@@ -50,7 +50,16 @@ import { LINHAS_INTEL } from "@/components/map/intel-camadas-lista";
 import { useI18n } from "@/lib/i18n";
 
 export type AcaoMenuMapa =
-  "goto" | "measure" | "marcador" | "bussola" | "globo" | "limpar" | "elementos" | "alertas" | "rota" | "noturno";
+  | "goto"
+  | "measure"
+  | "marcador"
+  | "bussola"
+  | "globo"
+  | "limpar"
+  | "elementos"
+  | "alertas"
+  | "rota"
+  | "noturno";
 export type AcaoMenuOsiris =
   "visao" | "hub" | "boletim" | "camadas" | "astro" | "iss" | "ip" | "dominio" | "chaves";
 

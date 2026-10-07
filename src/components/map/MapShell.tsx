@@ -42,6 +42,7 @@ import {
   distanceMeters,
 } from "@/lib/geo";
 import { magneticDeclination } from "@/lib/declination";
+import { norm360 } from "@/lib/bussola-calculo";
 import {
   reativarSensorSeConfigurado,
   observarSensor,
@@ -383,7 +384,7 @@ export default function MapShell() {
   const avisoCirculosEm = useRef(0);
   const sensorRef = useRef<number | null>(null);
   const [openSheet, setOpenSheet] = useState<
-    null
+    | null
     | "menu"
     | "layers"
     | "goto"

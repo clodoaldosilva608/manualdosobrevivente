@@ -488,6 +488,64 @@ function Settings() {
         />
       </Section>
 
+      <Section title={t("Uso noturno")}>
+        <p className="text-xs text-muted-foreground">
+          A visão noturna vermelha (padrão de campo militar) preserva a adaptação do olho ao escuro:
+          dá para ler o aparelho de noite sem "cegar" a visão nem atrair atenção.
+        </p>
+        <Choice
+          label="Modo noturno"
+          value={prefs.visaoNoturna ? "on" : "off"}
+          options={[
+            { id: "off", label: "Desligado" },
+            { id: "on", label: "Visão noturna" },
+          ]}
+          onChange={(v) => update({ visaoNoturna: v === "on" })}
+        />
+        {prefs.visaoNoturna && (
+          <>
+            <div className="space-y-1">
+              <label
+                htmlFor="noturno-vermelho"
+                className="mono text-[10px] uppercase tracking-widest text-muted-foreground"
+              >
+                Intensidade do vermelho · {Math.round(prefs.noturnoVermelho * 100)}%
+              </label>
+              <input
+                id="noturno-vermelho"
+                type="range"
+                min={0.3}
+                max={1}
+                step={0.05}
+                value={prefs.noturnoVermelho}
+                onChange={(e) => update({ noturnoVermelho: Number(e.target.value) })}
+                className="w-full accent-tactical-orange"
+                data-test="noturno-vermelho"
+              />
+            </div>
+            <div className="space-y-1">
+              <label
+                htmlFor="noturno-escurecer"
+                className="mono text-[10px] uppercase tracking-widest text-muted-foreground"
+              >
+                Escurecer tela · {Math.round(prefs.noturnoEscurecer * 100)}%
+              </label>
+              <input
+                id="noturno-escurecer"
+                type="range"
+                min={0}
+                max={0.75}
+                step={0.05}
+                value={prefs.noturnoEscurecer}
+                onChange={(e) => update({ noturnoEscurecer: Number(e.target.value) })}
+                className="w-full accent-tactical-orange"
+                data-test="noturno-escurecer"
+              />
+            </div>
+          </>
+        )}
+      </Section>
+
       <Section title={t("Chaves de inteligência (opcional)")}>
         <p className="text-xs text-muted-foreground">
           {t(

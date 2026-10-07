@@ -27,6 +27,26 @@ sem conexão — e os dados sincronizam na nuvem quando uma conta está conectad
   zona de perigo, forrageio, cache) com importação/exportação em GPX e KML.
 - **Bússola digital** — HUD interativo com direção, azimute até o próximo
   waypoint e referência norte verdadeiro/magnético.
+- **Treinamento de bússola (/tutorial)** — curso interativo passo a passo
+  (8 lições + quiz): partes do instrumento, norte verdadeiro × magnético,
+  orientar o mapa, tomar marcações, seguir rumos, contra-rumo e dicas de
+  campo — com exercícios que usam o sensor real do aparelho (arrastar a
+  luneta ou girar-se até o rumo-alvo), progresso e insígnia final salvos no
+  dispositivo. Acessível pelo menu hambúrguer, banner no Manual e botão no
+  cartão da bússola.
+- **Modo noturno** — visão noturna vermelha (padrão de campo militar) que
+  preserva a adaptação do olho ao escuro: troca os tokens do design system
+  por tons de vermelho + tinta multiply sobre o mapa/marcadores + escurecimento
+  ajustável, com intensidades configuráveis em Ajustes › Uso noturno,
+  atalho no menu hambúrguer e aplicação ANTES da hidratação (sem flash de
+  tela clara ao reabrir o app).
+- **Guia de Rota** — navegação por waypoints com trilha gravada
+  (breadcrumbs a cada 10 m), tudo offline: painel de navegação com distância,
+  rumo, ETA e seta de correção; alerta FORA DA ROTA por desvio transversal
+  (>100 m); avanço automático ao entrar no raio de chegada (25 m); detecção
+  de "andando em círculos" (deslocamento líquido × percorrido); "Voltar ao
+  início" pela trilha gravada e exportação GPX da rota/trilha. A rota ativa
+  sobrevive ao fechamento do app e a trilha fica salva no banco local.
 - **Visão Osiris (inteligência global)** — alterne o mapa entre "Tático" e
   "Osiris": o modo Osiris abre em tela cheia o globo 3D do OSIRIS
   self-hosted (mesma apresentação da visão-osiris do Centro de Sobrevivência),

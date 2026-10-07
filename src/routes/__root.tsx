@@ -20,6 +20,9 @@ import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
 import { registerServiceWorker, useNovaVersao } from "@/lib/pwa";
 import { iniciarAutoBackup } from "@/lib/auto-backup";
 import { ProvedorIdioma } from "@/lib/i18n";
+import { SCRIPT_PRE_HIDRATACAO, aplicarVisaoNoturna } from "@/lib/visao-noturna";
+import { getSetting } from "@/lib/db";
+import type { Preferences } from "@/hooks/usePreferences";
 
 function NotFoundComponent() {
   return (
@@ -133,6 +136,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
     <html lang="pt-BR" className="dark">
       <head>
         <HeadContent />
+        {/* Modo noturno antes da hidratação: quem já ligou a visão noturna
+            não vê flash de tela clara ao reabrir o app. */}
+        <script dangerouslySetInnerHTML={{ __html: SCRIPT_PRE_HIDRATACAO }} />
       </head>
       <body>
         {children}
@@ -175,6 +181,38 @@ function AuthListener() {
   return null;
 }
 
+/**
+ * Sincroniza o modo noturno (visão vermelha) com as preferências do
+ * aparelho — global, vale para todas as telas. Lê direto do banco local e
+ * reage ao evento de dados locais (cada instância de usePreferences tem
+ * estado próprio; o evento é o barramento compartilhado).
+ */
+function SincronizadorNoturno() {
+  useEffect(() => {
+    let alive = true;
+    const aplicar = async () => {
+      try {
+        const v = await getSetting<Partial<Preferences>>("preferences");
+        if (!alive) return;
+        aplicarVisaoNoturna({
+          ativa: v?.visaoNoturna ?? false,
+          vermelho: v?.noturnoVermelho ?? 0.85,
+          escurecer: v?.noturnoEscurecer ?? 0.2,
+        });
+      } catch {
+        /* armazenamento indisponível */
+      }
+    };
+    void aplicar();
+    window.addEventListener("tactical-gis:local-data-changed", aplicar);
+    return () => {
+      alive = false;
+      window.removeEventListener("tactical-gis:local-data-changed", aplicar);
+    };
+  }, []);
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useEffect(() => {
@@ -184,6 +222,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ProvedorIdioma>
+        <SincronizadorNoturno />
         <AuthListener />
         <AvisoNovaVersao />
         <AutoCloudSync />

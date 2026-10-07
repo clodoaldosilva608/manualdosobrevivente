@@ -31,6 +31,12 @@ export interface Preferences {
   posicaoTravada: { lat: number; lng: number } | null;
   /** Projeção do mapa tático: plana (mercator) ou globo 3D. */
   projecao: "mercator" | "globe";
+  /** Modo noturno: visão vermelha que preserva a adaptação ao escuro. */
+  visaoNoturna: boolean;
+  /** Intensidade da tinta vermelha (0–1). */
+  noturnoVermelho: number;
+  /** Escurecimento adicional da tela (0–0,75). */
+  noturnoEscurecer: number;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -45,6 +51,9 @@ export const DEFAULT_PREFERENCES: Preferences = {
   mapaRotaciona: false,
   posicaoTravada: null,
   projecao: "mercator",
+  visaoNoturna: false,
+  noturnoVermelho: 0.85,
+  noturnoEscurecer: 0.2,
 };
 
 const KEY = "preferences";

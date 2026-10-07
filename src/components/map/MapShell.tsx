@@ -19,6 +19,7 @@ import {
   Newspaper,
   Radar,
   RefreshCw,
+  GraduationCap,
   Lock,
   Menu as MenuIcon,
   NotebookPen,
@@ -38,6 +39,7 @@ import {
   formatArea,
   samplePath,
   bearingDeg,
+  distanceMeters,
 } from "@/lib/geo";
 import { magneticDeclination } from "@/lib/declination";
 import {
@@ -64,7 +66,19 @@ import {
   salvarNotaObsidian,
   SUBPASTA_BOLETINS,
 } from "@/lib/obsidian";
-import { downloadText } from "@/lib/gpx-kml";
+import { downloadText, pathToGPX } from "@/lib/gpx-kml";
+import {
+  andandoEmCirculos,
+  carregarNavegacao,
+  carregarTrilha,
+  PASSO_TRILHA_M,
+  salvarNavegacao,
+  salvarTrilha,
+  statusNavegacao,
+  type RotaSalva,
+  type StatusNavegacao,
+} from "@/lib/rota";
+import { BannerNavegacao, PainelRota } from "@/components/map/GuiaRota";
 import CompassRose from "@/components/map/CompassRose";
 import RedlineBoletim from "@/components/map/RedlineBoletim";
 import MapaControles, { MapaControlesComSensor } from "@/components/map/mapa-controles";
@@ -79,6 +93,7 @@ import {
   formatTime,
 } from "@/lib/format";
 import { useServerFn } from "@tanstack/react-start";
+import { useNavigate } from "@tanstack/react-router";
 import { usePreferences } from "@/hooks/usePreferences";
 import { chavesServidor, fetchIntelSnapshot } from "@/lib/intel.functions";
 import { avaliarProximidade, contarAmeacas, horaRelativa } from "@/lib/alerta-radar";
@@ -282,6 +297,47 @@ function adicionarFontesDesenho(map: maplibregl.Map) {
       "text-halo-width": 2,
     },
   });
+  // Guia de Rota: linha e pontos da rota + anel do alvo atual + trilha.
+  map.addSource("rota", { type: "geojson", data: emptyFC() });
+  map.addLayer({
+    id: "rota-line",
+    type: "line",
+    source: "rota",
+    filter: ["==", "$type", "LineString"],
+    paint: { "line-color": "#FF6B35", "line-width": 3.5, "line-opacity": 0.95 },
+  });
+  map.addLayer({
+    id: "rota-pontos",
+    type: "circle",
+    source: "rota",
+    filter: ["all", ["==", "$type", "Point"], ["!=", ["get", "alvo"], true]],
+    paint: {
+      "circle-radius": 6,
+      "circle-color": "#FF6B35",
+      "circle-stroke-color": "#121212",
+      "circle-stroke-width": 2,
+    },
+  });
+  map.addLayer({
+    id: "rota-alvo",
+    type: "circle",
+    source: "rota",
+    filter: ["all", ["==", "$type", "Point"], ["==", ["get", "alvo"], true]],
+    paint: {
+      "circle-radius": 13,
+      "circle-color": "#FF6728",
+      "circle-opacity": 0.25,
+      "circle-stroke-color": "#FFB380",
+      "circle-stroke-width": 2.5,
+    },
+  });
+  map.addSource("trilha", { type: "geojson", data: emptyFC() });
+  map.addLayer({
+    id: "trilha-line",
+    type: "line",
+    source: "trilha",
+    paint: { "line-color": "#38BDF8", "line-width": 3, "line-opacity": 0.85 },
+  });
 }
 
 export default function MapShell() {
@@ -304,8 +360,39 @@ export default function MapShell() {
   const { t } = useI18n();
   const [drawCoords, setDrawCoords] = useState<[number, number][]>([]);
   const [waypoints, setWaypoints] = useState<LocalWaypoint[]>([]);
+
+  // ---- Guia de Rota: rota por waypoints + trilha gravada (offline) ----
+  const [rota, setRota] = useState<RotaSalva | null>(null);
+  const [indiceRota, setIndiceRota] = useState(0);
+  const [navegando, setNavegando] = useState(false);
+  const [navStatus, setNavStatus] = useState<StatusNavegacao | null>(null);
+  const [trilha, setTrilha] = useState<Array<[number, number]>>([]);
+  const [gravando, setGravando] = useState(false);
+  const [velMS, setVelMS] = useState<number | null>(null);
+  // Espelhos para o handler do watchPosition (nasce uma vez, sem recriar o
+  // watch a cada mudança de estado) e para a leitura direta do sensor.
+  const navRef = useRef({
+    navegando: false,
+    gravando: false,
+    rota: null as RotaSalva | null,
+    indice: 0,
+  });
+  const trilhaRef = useRef<Array<[number, number]>>([]);
+  const trilhaIniciadaEm = useRef<string | null>(null);
+  const persistiuTrilhaEm = useRef(0);
+  const avisoCirculosEm = useRef(0);
+  const sensorRef = useRef<number | null>(null);
   const [openSheet, setOpenSheet] = useState<
-    null | "menu" | "layers" | "goto" | "measure" | "markers" | "boletim" | "alertas" | "hub"
+    null
+    | "menu"
+    | "layers"
+    | "goto"
+    | "measure"
+    | "markers"
+    | "boletim"
+    | "alertas"
+    | "hub"
+    | "rota"
   >(null);
   const [compassMode, setCompassModeState] = useState<"mini" | "panel" | "full">("mini");
   useEffect(() => {
@@ -348,6 +435,7 @@ export default function MapShell() {
 
   // ---- Modo Osiris (inteligência global) ----
   const { prefs, update: updatePrefs } = usePreferences();
+  const navegar = useNavigate();
   const modoMapa = prefs.mapMode;
   const intelVis = prefs.intelVis;
   const telaVis = prefs.telaVis;
@@ -446,10 +534,51 @@ export default function MapShell() {
     coords: drawCoords,
     tool,
     waypoints,
+    rota: null as RotaSalva | null,
+    indiceRota: 0,
+    trilha: [] as Array<[number, number]>,
   });
   useEffect(() => {
-    desenhoRef.current = { coords: drawCoords, tool, waypoints };
-  }, [drawCoords, tool, waypoints]);
+    desenhoRef.current = { coords: drawCoords, tool, waypoints, rota, indiceRota, trilha };
+  }, [drawCoords, tool, waypoints, rota, indiceRota, trilha]);
+
+  // Espelho do estado de navegação para o handler do GPS (closure imutável).
+  useEffect(() => {
+    navRef.current = { navegando, gravando, rota, indice: indiceRota };
+  }, [navegando, gravando, rota, indiceRota]);
+
+  // Rumo do operador pelo sensor do aparelho — lido fora do React pelo
+  // handler do GPS para a correção de rumo do guia.
+  useEffect(
+    () =>
+      observarSensor((s) => {
+        sensorRef.current = s.rumoAparelho;
+      }),
+    [],
+  );
+
+  // Retoma a navegação ao reabrir o app (a rota ativa sobrevive ao reload);
+  // a trilha gravada é recarregada para consulta/volta ao início.
+  useEffect(() => {
+    void (async () => {
+      try {
+        const nav = await carregarNavegacao();
+        if (nav?.rota?.pontos?.length) {
+          setRota(nav.rota);
+          setIndiceRota(Math.min(nav.indice, nav.rota.pontos.length - 1));
+          setNavegando(true);
+        }
+        const t = await carregarTrilha();
+        if (t?.pontos?.length) {
+          trilhaRef.current = t.pontos;
+          trilhaIniciadaEm.current = t.iniciada_em;
+          setTrilha(t.pontos);
+        }
+      } catch {
+        /* armazenamento indisponível */
+      }
+    })();
+  }, []);
 
   // Visibilidade dos elementos da tela (espelho para os handlers do mapa).
   const telaVisRef = useRef<TelaVisibilidade>(telaVis);
@@ -472,6 +601,10 @@ export default function MapShell() {
     wp?.setData(waypointsFC(d.waypoints));
     const dr = map.getSource("draw") as maplibregl.GeoJSONSource | undefined;
     dr?.setData(drawFC(d.coords, d.tool));
+    const rt = map.getSource("rota") as maplibregl.GeoJSONSource | undefined;
+    rt?.setData(rotaFC(d.rota, d.indiceRota));
+    const tr = map.getSource("trilha") as maplibregl.GeoJSONSource | undefined;
+    tr?.setData(trilhaFC(d.trilha));
     const vis = telaVisRef.current;
     const aplicar = (id: string, ativo: boolean) => {
       if (map.getLayer(id)) {
@@ -483,6 +616,14 @@ export default function MapShell() {
     aplicar("user-position-accuracy", vis.pontoPosicao);
     aplicar("user-position-dot", vis.pontoPosicao);
   }, []);
+
+  // Reapresenta rota/trilha no mapa quando mudam (o styledata cobre a troca
+  // de camada base reexecutando sincronizarDesenho).
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    sincronizarDesenho(map);
+  }, [rota, trilha, indiceRota, ready, sincronizarDesenho]);
 
   // Init map (client only)
   useEffect(() => {
@@ -710,6 +851,7 @@ export default function MapShell() {
         setUserPos(p);
         // A bússola usa a posição real do aparelho para a declinação local.
         definirPosicaoSensor(p.lat, p.lng);
+        setVelMS(pos.coords.speed ?? null);
         try {
           localStorage.setItem(
             "tgis:last-position",
@@ -717,6 +859,67 @@ export default function MapShell() {
           );
         } catch {
           /* armazenamento indisponível */
+        }
+
+        // ---- Guia de Rota: gravação de trilha + navegação guiada ----
+        const n = navRef.current;
+        if (n.gravando) {
+          const ult = trilhaRef.current[trilhaRef.current.length - 1];
+          if (!ult || distanceMeters([ult[0], ult[1]], [p.lng, p.lat]) >= PASSO_TRILHA_M) {
+            const nova = [...trilhaRef.current, [p.lng, p.lat] as [number, number]];
+            trilhaRef.current = nova;
+            setTrilha(nova);
+            if (Date.now() - persistiuTrilhaEm.current > 30_000) {
+              persistiuTrilhaEm.current = Date.now();
+              void salvarTrilha({
+                pontos: nova,
+                iniciada_em: trilhaIniciadaEm.current ?? new Date().toISOString(),
+                atualizada_em: new Date().toISOString(),
+              });
+            }
+            if (
+              nova.length % 20 === 0 &&
+              andandoEmCirculos(nova) &&
+              Date.now() - avisoCirculosEm.current > 600_000
+            ) {
+              avisoCirculosEm.current = Date.now();
+              toast.warning("Você pode estar andando em círculos", {
+                description:
+                  "Percorreu bastante distância sem se afastar do ponto de partida. Confirme o rumo na bússola.",
+              });
+            }
+          }
+        }
+        if (n.navegando && n.rota && n.rota.pontos.length > 0) {
+          const indice = Math.min(n.indice, n.rota.pontos.length - 1);
+          const vel = pos.coords.speed;
+          const rumoGps = vel != null && vel >= 0.5 ? (pos.coords.heading ?? null) : null;
+          const rumoOperador =
+            rumoGps ??
+            (sensorRef.current != null
+              ? norm360(sensorRef.current + magneticDeclination(p.lat, p.lng))
+              : null);
+          const st = statusNavegacao({ pos: p, rota: n.rota, indice, rumoOperador });
+          setNavStatus(st);
+          if (st.chegou) {
+            if (indice < n.rota.pontos.length - 1) {
+              const proximo = indice + 1;
+              setIndiceRota(proximo);
+              navRef.current.indice = proximo;
+              void salvarNavegacao({ rota: n.rota, indice: proximo });
+              toast.success(`Chegou: ${n.rota.pontos[indice].nome}`, {
+                description: `Próximo ponto: ${n.rota.pontos[proximo].nome}`,
+              });
+            } else {
+              navRef.current.navegando = false;
+              setNavegando(false);
+              setNavStatus(null);
+              void salvarNavegacao(null);
+              toast.success("Chegada! Rota concluída.", {
+                description: "Todos os waypoints foram alcançados.",
+              });
+            }
+          }
         }
       },
       () => {
@@ -1221,6 +1424,160 @@ export default function MapShell() {
     toast.success(t("Elementos da tela restaurados"));
   };
 
+  // ---- Guia de Rota: ações do painel (folha ROTAS) ----
+  const persistirRota = (nova: RotaSalva | null, indice = indiceRota) => {
+    setRota(nova);
+    void salvarNavegacao(nova ? { rota: nova, indice } : null);
+  };
+
+  const adicionarPosicaoNaRota = () => {
+    if (!userPos) return toast.error("Sem localização disponível");
+    const ponto = {
+      lat: userPos.lat,
+      lng: userPos.lng,
+      nome: `Ponto ${(rota?.pontos.length ?? 0) + 1}`,
+    };
+    if (!rota) {
+      persistirRota({
+        id: crypto.randomUUID(),
+        nome: "Rota nova",
+        pontos: [ponto],
+        criada_em: new Date().toISOString(),
+      });
+      toast.success("Rota criada com a sua posição atual");
+    } else {
+      persistirRota({ ...rota, pontos: [...rota.pontos, ponto] });
+      toast.success(`Ponto adicionado: ${ponto.nome}`);
+    }
+  };
+
+  const adicionarWaypointNaRota = (id: string) => {
+    const w = waypoints.find((x) => x.id === id);
+    if (!w) return toast.error("Waypoint não encontrado");
+    if (!rota) {
+      persistirRota({
+        id: crypto.randomUUID(),
+        nome: "Rota nova",
+        pontos: [{ lat: w.latitude, lng: w.longitude, nome: w.title }],
+        criada_em: new Date().toISOString(),
+      });
+    } else {
+      persistirRota({
+        ...rota,
+        pontos: [...rota.pontos, { lat: w.latitude, lng: w.longitude, nome: w.title }],
+      });
+    }
+    toast.success(`Waypoint adicionado: ${w.title}`);
+  };
+
+  const removerPontoRota = (i: number) => {
+    if (!rota) return;
+    const pontos = rota.pontos.filter((_, k) => k !== i);
+    persistirRota({ ...rota, pontos });
+    if (indiceRota >= pontos.length) setIndiceRota(Math.max(0, pontos.length - 1));
+  };
+
+  const moverPontoRota = (i: number, direcao: -1 | 1) => {
+    if (!rota) return;
+    const j = i + direcao;
+    if (j < 0 || j >= rota.pontos.length) return;
+    const pontos = [...rota.pontos];
+    [pontos[i], pontos[j]] = [pontos[j], pontos[i]];
+    persistirRota({ ...rota, pontos });
+  };
+
+  const renomearRota = (nome: string) => {
+    if (rota) persistirRota({ ...rota, nome });
+  };
+
+  const iniciarNavegacao = () => {
+    if (!rota || rota.pontos.length === 0) return;
+    setIndiceRota(0);
+    setNavegando(true);
+    setNavStatus(null);
+    void salvarNavegacao({ rota, indice: 0 });
+    setOpenSheet(null);
+    toast.success("Navegação iniciada", {
+      description: `Alvo atual: ${rota.pontos[0].nome}. Siga o painel superior.`,
+    });
+  };
+
+  const pararNavegacao = () => {
+    setNavegando(false);
+    setNavStatus(null);
+    void salvarNavegacao(null);
+    toast.message("Navegação encerrada");
+  };
+
+  const alternarGravacaoTrilha = () => {
+    if (!gravando) {
+      const semente: Array<[number, number]> = userPos ? [[userPos.lng, userPos.lat]] : [];
+      trilhaRef.current = semente;
+      trilhaIniciadaEm.current = new Date().toISOString();
+      persistiuTrilhaEm.current = Date.now();
+      setTrilha(semente);
+      setGravando(true);
+      toast.success("Gravando trilha", {
+        description: "Um ponto a cada 10 m. O app avisa se você andar em círculos.",
+      });
+    } else {
+      setGravando(false);
+      if (trilhaRef.current.length > 1) {
+        void salvarTrilha({
+          pontos: trilhaRef.current,
+          iniciada_em: trilhaIniciadaEm.current ?? new Date().toISOString(),
+          atualizada_em: new Date().toISOString(),
+        });
+        toast.success("Trilha salva no aparelho");
+      }
+    }
+  };
+
+  const voltarAoInicio = () => {
+    const inicio = trilha[0];
+    if (!inicio) return toast.error("Nenhuma trilha gravada");
+    const rotaVolta: RotaSalva = {
+      id: crypto.randomUUID(),
+      nome: "Início da trilha",
+      pontos: [{ lat: inicio[1], lng: inicio[0], nome: "Início da trilha" }],
+      criada_em: new Date().toISOString(),
+    };
+    setRota(rotaVolta);
+    setIndiceRota(0);
+    setNavegando(true);
+    setNavStatus(null);
+    void salvarNavegacao({ rota: rotaVolta, indice: 0 });
+    setOpenSheet(null);
+    toast.success("Navegando de volta ao início da trilha");
+  };
+
+  const exportarRotaGPX = () => {
+    if (!rota || rota.pontos.length === 0) return;
+    const nome = (rota.nome || "rota").replace(/[^\w-]+/g, "-").slice(0, 40);
+    downloadText(
+      `${nome}.gpx`,
+      pathToGPX(
+        rota.nome,
+        rota.pontos.map((p) => [p.lng, p.lat]),
+      ),
+    );
+    toast.success("GPX da rota exportado");
+  };
+
+  const exportarTrilhaGPX = () => {
+    if (trilha.length < 2) return toast.error("Trilha muito curta para exportar");
+    downloadText("trilha.gpx", pathToGPX("Trilha gravada", trilha));
+    toast.success("GPX da trilha exportado");
+  };
+
+  const apagarTrilha = () => {
+    trilhaRef.current = [];
+    trilhaIniciadaEm.current = null;
+    setTrilha([]);
+    void salvarTrilha(null);
+    toast.success("Trilha apagada");
+  };
+
   // Boletim de inteligência: garante dados frescos ao abrir o painel.
   const carregarBoletim = useCallback(() => {
     setBoletimEm(Date.now());
@@ -1414,6 +1771,19 @@ export default function MapShell() {
         irTatico();
         setOpenSheet("layers");
         break;
+      case "rota":
+        irTatico();
+        setOpenSheet("rota");
+        break;
+      case "noturno":
+        // Modo noturno é global — não devolve ao tático.
+        updatePrefs({ visaoNoturna: !prefs.visaoNoturna });
+        toast.success(prefs.visaoNoturna ? "Modo noturno desativado" : "Modo noturno ativado", {
+          description: prefs.visaoNoturna
+            ? undefined
+            : "Visão vermelha preserva a adaptação ao escuro.",
+        });
+        break;
       case "visao":
         // Já dentro da Visão Osiris o item é apenas um retorno visual.
         if (modoMapa !== "osiris") updatePrefs({ mapMode: "osiris" });
@@ -1542,6 +1912,20 @@ export default function MapShell() {
             {(tool === "measure-line" || tool === "measure-area") && (
               <LeituraMedicao tool={tool} lineLen={lineLen} areaFmt={areaFmt} onClear={clearDraw} />
             )}
+            {navegando && rota && (
+              <BannerNavegacao
+                alvoNome={rota.pontos[Math.min(indiceRota, rota.pontos.length - 1)].nome}
+                progressoAtual={Math.min(indiceRota, rota.pontos.length - 1)}
+                progressoTotal={rota.pontos.length}
+                status={navStatus}
+                velocidadeMS={velMS}
+                onCentralizar={() => {
+                  const alvo = rota.pontos[Math.min(indiceRota, rota.pontos.length - 1)];
+                  flyTo(alvo.lng, alvo.lat, 16);
+                }}
+                onParar={pararNavegacao}
+              />
+            )}
           </div>
 
           {/* HUD superior desktop: posições absolutas clássicas */}
@@ -1575,6 +1959,24 @@ export default function MapShell() {
               />
             )}
           </div>
+          {/* Banner de navegação desktop: centro superior, entre os painéis
+              da esquerda e o alternador/hambúrguer da direita. */}
+          {navegando && rota && (
+            <div className="absolute left-1/2 top-4 z-10 hidden w-[min(440px,40vw)] -translate-x-1/2 md:block">
+              <BannerNavegacao
+                alvoNome={rota.pontos[Math.min(indiceRota, rota.pontos.length - 1)].nome}
+                progressoAtual={Math.min(indiceRota, rota.pontos.length - 1)}
+                progressoTotal={rota.pontos.length}
+                status={navStatus}
+                velocidadeMS={velMS}
+                onCentralizar={() => {
+                  const alvo = rota.pontos[Math.min(indiceRota, rota.pontos.length - 1)];
+                  flyTo(alvo.lng, alvo.lat, 16);
+                }}
+                onParar={pararNavegacao}
+              />
+            </div>
+          )}
           {(tool === "measure-line" || tool === "measure-area") && (
             <div className="absolute left-1/2 top-32 z-10 hidden -translate-x-1/2 md:block">
               <LeituraMedicao tool={tool} lineLen={lineLen} areaFmt={areaFmt} onClear={clearDraw} />
@@ -1990,6 +2392,44 @@ export default function MapShell() {
             <p className="text-xs text-muted-foreground mono">
               {t("Aceita formatos DD, DMS e MGRS.")}
             </p>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={openSheet === "rota"} onOpenChange={(o) => !o && setOpenSheet(null)}>
+        <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto bg-card border-border">
+          <SheetHeader>
+            <SheetTitle className="mono text-tactical-orange">GUIA DE ROTA</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4" data-test="painel-rota">
+            <PainelRota
+              rota={rota}
+              navegando={navegando}
+              gravando={gravando}
+              trilha={
+                trilha.length > 0
+                  ? {
+                      pontos: trilha,
+                      iniciada_em: trilhaIniciadaEm.current ?? "",
+                      atualizada_em: "",
+                    }
+                  : null
+              }
+              waypoints={waypoints}
+              temPosicao={!!userPos}
+              onAdicionarPosicao={adicionarPosicaoNaRota}
+              onAdicionarWaypoint={adicionarWaypointNaRota}
+              onRemoverPonto={removerPontoRota}
+              onMoverPonto={moverPontoRota}
+              onRenomearRota={renomearRota}
+              onIniciar={iniciarNavegacao}
+              onParar={pararNavegacao}
+              onAlternarGravacao={alternarGravacaoTrilha}
+              onVoltarInicio={voltarAoInicio}
+              onExportarRota={exportarRotaGPX}
+              onExportarTrilha={exportarTrilhaGPX}
+              onApagarTrilha={apagarTrilha}
+            />
           </div>
         </SheetContent>
       </Sheet>
@@ -2558,6 +2998,17 @@ export default function MapShell() {
                 {compassMode !== "mini" && (
                   <button
                     type="button"
+                    aria-label="Aprender a usar a bússola"
+                    title="Aprender a usar a bússola — treinamento interativo"
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-tactical-orange/50 bg-tactical-orange/10 text-tactical-orange transition-colors hover:bg-tactical-orange/20"
+                    onClick={() => navegar({ to: "/tutorial" })}
+                  >
+                    <GraduationCap className="h-4 w-4" />
+                  </button>
+                )}
+                {compassMode !== "mini" && (
+                  <button
+                    type="button"
                     aria-label={t("Minimizar bússola")}
                     className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-muted-foreground transition-colors hover:bg-white/10"
                     onClick={() => setCompassMode("mini")}
@@ -2910,6 +3361,43 @@ function waypointsFC(ws: LocalWaypoint[]) {
     })),
   };
 }
+/** Rota como LineString + pontos (o alvo atual recebe alvo:true para o anel). */
+function rotaFC(rota: RotaSalva | null, indice: number) {
+  if (!rota || rota.pontos.length === 0) return emptyFC();
+  const coords = rota.pontos.map((p) => [p.lng, p.lat] as [number, number]);
+  const features: GeoJSON.Feature[] = [];
+  if (coords.length >= 2) {
+    features.push({
+      type: "Feature",
+      properties: {},
+      geometry: { type: "LineString", coordinates: coords },
+    });
+  }
+  rota.pontos.forEach((p, i) => {
+    features.push({
+      type: "Feature",
+      properties: { i, alvo: i === indice, nome: p.nome },
+      geometry: { type: "Point", coordinates: [p.lng, p.lat] },
+    });
+  });
+  return { type: "FeatureCollection" as const, features };
+}
+
+/** Trilha gravada como LineString ([lng, lat] — ordem GeoJSON). */
+function trilhaFC(pontos: Array<[number, number]>) {
+  if (pontos.length < 2) return emptyFC();
+  return {
+    type: "FeatureCollection" as const,
+    features: [
+      {
+        type: "Feature" as const,
+        properties: {},
+        geometry: { type: "LineString" as const, coordinates: pontos },
+      },
+    ],
+  };
+}
+
 function drawFC(coords: [number, number][], tool: Tool) {
   if (coords.length === 0) return emptyFC();
   const features: GeoJSON.Feature[] = coords.map((c, i) => ({

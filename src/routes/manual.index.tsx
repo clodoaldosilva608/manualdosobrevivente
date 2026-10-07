@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import Fuse from "fuse.js";
+import { GraduationCap } from "lucide-react";
 import { MANUAL, MANUAL_BY_CATEGORY, CATEGORY_LABELS } from "@/lib/manual-content";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
@@ -56,6 +57,24 @@ function ManualIndex() {
           className="pl-10 glove-tap"
         />
       </div>
+
+      {/* Treinamento interativo — o complemento prático do verbete de navegação */}
+      <Link
+        to="/tutorial"
+        data-test="manual-tutorial-banner"
+        className="mb-6 flex items-center gap-3 rounded-md border border-tactical-orange/50 bg-tactical-orange/10 p-3 transition-colors hover:bg-tactical-orange/20"
+      >
+        <GraduationCap className="h-6 w-6 shrink-0 text-tactical-orange" />
+        <div className="min-w-0">
+          <div className="font-semibold text-tactical-orange">
+            Treinamento interativo de bússola
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Aprenda passo a passo com exercícios usando o sensor do aparelho — curso completo com
+            quiz.
+          </div>
+        </div>
+      </Link>
 
       {q.trim() ? (
         <ul className="space-y-2">

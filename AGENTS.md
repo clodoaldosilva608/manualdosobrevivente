@@ -128,6 +128,39 @@ bun run build      # check:all + build de produção em .output/
   `projecao` no usePreferences. A projeção vive no estilo: reaplicada no
   `load` e no `styledata` (troca de camada base). Coberto por
   `tests/map-globo.spec.ts`.
+- **Treinamento de bússola**: curso interativo em `/tutorial`
+  (`src/routes/tutorial.tsx`, dados em `src/lib/tutorial-bussola.ts`, player em
+  `src/components/tutorial/TutorialBussola.tsx` e rosa interativa em
+  `RosaTutorial.tsx`). Exercícios: "explorar" (arraste livre), "marcacao"
+  (encaixar a luneta no rumo-alvo ±4°) e "rumo" (sensor do aparelho via
+  `bussola-sensor.ts`; sem sensor, simulador). Progresso + quiz (mínimo 3/4)
+  ficam no `localStorage` (`tgis:tutorial-bussola`) e a insígnia
+  "OPERADOR ORIENTADO" exige todas as lições. Entradas: item "Treinamento" no
+  menu (ROTAS), banner em /manual e botão de formatura no cartão da bússola.
+  Coberto por `tests/tutorial.spec.ts`.
+- **Modo noturno (visão noturna vermelha)**: preferências `visaoNoturna`,
+  `noturnoVermelho` e `noturnoEscurecer` no usePreferences; aplicação global
+  em `src/lib/visao-noturna.ts` — classe `modo-noturno` no `<html>` (tokens
+  vermelhos em `styles.css`) + dois overlays não-interativos (tinta vermelha
+  `mix-blend-mode: multiply` sobre o mapa e dimmer preto). O espelho em
+  `localStorage` (`tgis:visao-noturna`) é aplicado por script inline no
+  `RootShell` ANTES da hidratação (sem flash claro); `SincronizadorNoturno`
+  no `__root.tsx` mantém o estado global em dia. Controles: Ajustes › Uso
+  noturno (toggle + intensidades) e item "Modo noturno" no menu (ação global,
+  NÃO devolve ao tático). Coberto por `tests/noturno-rota.spec.ts`.
+- **Guia de Rota**: matemática e armazenamento puros em `src/lib/rota.ts`
+  (desvio transversal, status de navegação, detecção de círculos, ETA;
+  rota/trilha persistidas na loja de settings do IndexedDB). Integração no
+  MapShell: camadas `rota`/`trilha` em `adicionarFontesDesenho` + `rotaFC`/
+  `trilhaFC` (sobrevivem à troca de base via `sincronizarDesenho`), gravação
+  da trilha dentro do `watchPosition` (um ponto a cada 10 m, persistência
+  a cada 30 s), navegação com `navRef`/`trilhaRef` (refs — o watch nasce
+  uma vez), rumo do operador = GPS course (≥0,5 m/s) ou sensor + declinação.
+  UI: `src/components/map/GuiaRota.tsx` (banner HUD no fluxo superior mobile
+  e absoluto no desktop + folha "rota" pelo rail/menu). Constantes de campo:
+  raio de chegada 25 m, desvio tolerado 100 m, aviso de círculos a cada
+  10 min. Coberto por `tests/rota.spec.ts` (unit) e
+  `tests/noturno-rota.spec.ts` (E2E).
 - **Layout do HUD desktop (sem sobreposições)**: o canto superior direito é
   do hambúrguer + alternador (top-4); os controles nativos do MapLibre
   descem para `top: 4.75rem` via CSS (`styles.css`, com `!important` — o CSS

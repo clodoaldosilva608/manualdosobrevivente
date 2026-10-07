@@ -23,16 +23,19 @@ import {
   Eye,
   Globe,
   Globe2,
+  GraduationCap,
   KeyRound,
   Layers,
   LayoutDashboard,
   UserRound,
   Map,
   MapPin,
+  Moon,
   Navigation2,
   Network,
   Newspaper,
   Radar,
+  Route as RouteIcon,
   Ruler,
   Satellite,
   Server,
@@ -47,7 +50,7 @@ import { LINHAS_INTEL } from "@/components/map/intel-camadas-lista";
 import { useI18n } from "@/lib/i18n";
 
 export type AcaoMenuMapa =
-  "goto" | "measure" | "marcador" | "bussola" | "globo" | "limpar" | "elementos" | "alertas";
+  "goto" | "measure" | "marcador" | "bussola" | "globo" | "limpar" | "elementos" | "alertas" | "rota" | "noturno";
 export type AcaoMenuOsiris =
   "visao" | "hub" | "boletim" | "camadas" | "astro" | "iss" | "ip" | "dominio" | "chaves";
 
@@ -72,6 +75,12 @@ interface ItemMenu {
 /** Telas do aplicativo (mesmas rotas da navegação inferior/superior). */
 const ROTAS: Array<ItemMenu & { to: string }> = [
   { to: "/", rotulo: "Mapa", dica: "Mapa tático e navegação", icone: Map },
+  {
+    to: "/tutorial",
+    rotulo: "Treinamento",
+    dica: "Aprenda a usar a bússola passo a passo",
+    icone: GraduationCap,
+  },
   { to: "/manual", rotulo: "Manual", dica: "Técnicas de sobrevivência", icone: BookOpen },
   { to: "/inventory", rotulo: "Mochila", dica: "Inventário de equipamentos", icone: Backpack },
   { to: "/sos", rotulo: "SOS", dica: "Emergências e primeiros socorros", icone: Siren },
@@ -81,7 +90,7 @@ const ROTAS: Array<ItemMenu & { to: string }> = [
   { to: "/conta", rotulo: "Conta", dica: "Perfil local do operador", icone: UserRound },
 ];
 
-/** Ferramentas do HUD tático — exigem o mapa nativo. */
+/** Ferramentas do HUD tático — exigem o mapa nativo (noturno é global). */
 const FERRAMENTAS: Array<ItemMenu & { id: AcaoMenuMapa }> = [
   {
     id: "alertas",
@@ -90,9 +99,21 @@ const FERRAMENTAS: Array<ItemMenu & { id: AcaoMenuMapa }> = [
     icone: Siren,
   },
   { id: "goto", rotulo: "Ir para", dica: "Voar até coordenadas", icone: Navigation2 },
+  {
+    id: "rota",
+    rotulo: "Guia de rota",
+    dica: "Navegação por waypoints e trilha gravada",
+    icone: RouteIcon,
+  },
   { id: "measure", rotulo: "Medir", dica: "Distância e área no mapa", icone: Ruler },
   { id: "marcador", rotulo: "Marcador", dica: "Marcar waypoint no mapa", icone: MapPin },
   { id: "bussola", rotulo: "Bússola", dica: "Orientação e declinação", icone: Compass },
+  {
+    id: "noturno",
+    rotulo: "Modo noturno",
+    dica: "Visão vermelha que preserva o escuro",
+    icone: Moon,
+  },
   {
     id: "globo",
     rotulo: "Globo 3D",

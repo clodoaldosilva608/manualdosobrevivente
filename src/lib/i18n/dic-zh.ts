@@ -432,4 +432,21 @@ export const DIC_ZH: Record<string, string> = {
   "Áreas de mapa": "地图区域",
   "Última sincronização: {n}": "上次同步：{n}",
   "Último local": "上次位置",
+
+  /* Convite para amigos (BotaoConvidar / ConviteSheet) */
+  "CONVOQUE O ESQUADRÃO": "集结你的小队",
+  "Compartilhar do aparelho": "使用设备分享",
+  "Copiar convite": "复制邀请",
+  "Convite copiado — cole na conversa": "邀请已复制 — 请粘贴到对话中",
+  "Convites enviados": "已发送邀请",
+  "Convide os amigos": "邀请朋友",
+  "Convidar amigos": "邀请朋友",
+  "Escolha para onde enviar o convite.": "选择发送邀请的方式。",
+  "Mande o Manual para quem ainda se perde na trilha.": "把手册发给还在路上迷路的人。",
+  "Ninguém se orienta sozinho: mande o Manual para quem treina com você.":
+    "没有人独自辨向：把手册发给与你一同训练的人。",
+  "Não foi possível copiar — selecione o texto": "无法复制 — 请选中文本",
+  "Obrigado por divulgar o Manual": "感谢传播手册",
+  "Descobri o MANUAL DO SOBREVIVENTE: curso de bússola guiado, guia de rota que evita andar em círculos, mapas offline, SOS Morse e mochila inteligente. Funciona no navegador, até sem internet. Confira:":
+    "我发现了 MANUAL DO SOBREVIVENTE：循序渐进的指南针课程、防止绕圈的路线引导、离线地图、摩尔斯电码SOS和智能背包。在浏览器中即可使用，无需联网。来看看：",
 };

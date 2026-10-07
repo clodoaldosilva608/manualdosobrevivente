@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import RosaTutorial from "@/components/tutorial/RosaTutorial";
+import { BotaoConvidar } from "@/components/ConviteSheet";
 import {
   PASSOS_BUSSOLA,
   QUIZ_BUSSOLA,
@@ -142,6 +143,12 @@ export default function TutorialBussola() {
                 Pratique um percurso curto esta semana e use o <strong>Guia de Rota</strong> do mapa
                 para consolidar — navegação é músculo.
               </p>
+              <p className="mt-4 text-sm text-muted-foreground">
+                Convide quem você quer ver orientado também:
+              </p>
+              <div className="mt-2 flex justify-center">
+                <BotaoConvidar variant="outline" className="glove-tap" />
+              </div>
             </>
           ) : (
             <>

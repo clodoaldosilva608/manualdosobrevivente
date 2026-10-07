@@ -444,4 +444,22 @@ export const DIC_ES: Record<string, string> = {
   "Áreas de mapa": "Áreas de mapa",
   "Última sincronização: {n}": "Última sincronización: {n}",
   "Último local": "Último lugar",
+
+  /* Convite para amigos (BotaoConvidar / ConviteSheet) */
+  "CONVOQUE O ESQUADRÃO": "CONVOQUE EL ESCUADRÓN",
+  "Compartilhar do aparelho": "Compartir del dispositivo",
+  "Copiar convite": "Copiar invitación",
+  "Convite copiado — cole na conversa": "Invitación copiada — péguela en la conversación",
+  "Convites enviados": "Invitaciones enviadas",
+  "Convide os amigos": "Invite a los amigos",
+  "Convidar amigos": "Invitar a los amigos",
+  "Escolha para onde enviar o convite.": "Elija adónde enviar la invitación.",
+  "Mande o Manual para quem ainda se perde na trilha.":
+    "Envíe el Manual a quien todavía se pierde en la senda.",
+  "Ninguém se orienta sozinho: mande o Manual para quem treina com você.":
+    "Nadie se orienta solo: envíe el Manual a quien entrena con usted.",
+  "Não foi possível copiar — selecione o texto": "No se pudo copiar — seleccione el texto",
+  "Obrigado por divulgar o Manual": "Gracias por divulgar el Manual",
+  "Descobri o MANUAL DO SOBREVIVENTE: curso de bússola guiado, guia de rota que evita andar em círculos, mapas offline, SOS Morse e mochila inteligente. Funciona no navegador, até sem internet. Confira:":
+    "Encontré el MANUAL DO SOBREVIVENTE: curso de brújula guiado, guía de ruta que evita caminar en círculos, mapas sin conexión, SOS Morse y mochila inteligente. Funciona en el navegador, incluso sin internet. Mire:",
 };

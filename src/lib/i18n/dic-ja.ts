@@ -440,4 +440,23 @@ export const DIC_JA: Record<string, string> = {
   "Áreas de mapa": "マップエリア",
   "Última sincronização: {n}": "前回の同期: {n}",
   "Último local": "前回の場所",
+
+  /* Convite para amigos (BotaoConvidar / ConviteSheet) */
+  "CONVOQUE O ESQUADRÃO": "分隊を招集せよ",
+  "Compartilhar do aparelho": "端末で共有",
+  "Copiar convite": "招待をコピー",
+  "Convite copiado — cole na conversa": "招待をコピーしました — 会話に貼り付けてください",
+  "Convites enviados": "送信した招待",
+  "Convide os amigos": "友人を招待する",
+  "Convidar amigos": "友人を招待",
+  "Escolha para onde enviar o convite.": "招待の送信先を選んでください。",
+  "Mande o Manual para quem ainda se perde na trilha.":
+    "まだ道に迷う人にマニュアルを送りましょう。",
+  "Ninguém se orienta sozinho: mande o Manual para quem treina com você.":
+    "一人で針路を取る必要はありません：一緒に訓練する仲間にマニュアルを送りましょう。",
+  "Não foi possível copiar — selecione o texto":
+    "コピーできませんでした — テキストを選択してください",
+  "Obrigado por divulgar o Manual": "マニュアルの拡散に感謝します",
+  "Descobri o MANUAL DO SOBREVIVENTE: curso de bússola guiado, guia de rota que evita andar em círculos, mapas offline, SOS Morse e mochila inteligente. Funciona no navegador, até sem internet. Confira:":
+    "MANUAL DO SOBREVIVENTE を見つけました：ステップ式コンパス講座、同じ場所をぐるぐる歩かないルートガイド、オフライン地図、モールスSOS、スマートなバックパック。ブラウザで動作し、オフラインでも使えます。ぜひ見てください：",
 };

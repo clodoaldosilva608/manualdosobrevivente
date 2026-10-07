@@ -16,6 +16,8 @@ import {
 import { listAreas } from "@/lib/offline-tiles";
 import { downloadText } from "@/lib/gpx-kml";
 import { formatInteger, formatDateTime, formatNumber } from "@/lib/format";
+import { useI18n } from "@/lib/i18n";
+import { BotaoConvidar } from "@/components/ConviteSheet";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -149,6 +151,7 @@ ${rows(
 }
 
 function Dashboard() {
+  const { t } = useI18n();
   const [snap, setSnap] = useState<Snapshot | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -227,6 +230,16 @@ function Dashboard() {
           <FileText className="h-4 w-4 mr-1" /> Exportar PDF
         </Button>
       </div>
+
+      <section className="tactical-grid mt-6 rounded-md border border-tactical-orange/40 bg-tactical-orange/5 p-4">
+        <h2 className="mono text-xs uppercase tracking-widest text-tactical-orange">
+          {t("CONVOQUE O ESQUADRÃO")}
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {t("Ninguém se orienta sozinho: mande o Manual para quem treina com você.")}
+        </p>
+        <BotaoConvidar className="glove-tap mt-3 w-full sm:w-auto" />
+      </section>
 
       <section className="mt-6 rounded-md border border-border bg-background/50 p-3">
         <h2 className="mono text-[11px] uppercase tracking-widest text-muted-foreground">

@@ -443,4 +443,22 @@ export const DIC_RU: Record<string, string> = {
   "Áreas de mapa": "Области карт",
   "Última sincronização: {n}": "Последняя синхронизация: {n}",
   "Último local": "Последнее место",
+
+  /* Convite para amigos (BotaoConvidar / ConviteSheet) */
+  "CONVOQUE O ESQUADRÃO": "СОБЕРИТЕ ОТРЯД",
+  "Compartilhar do aparelho": "Поделиться через устройство",
+  "Copiar convite": "Скопировать приглашение",
+  "Convite copiado — cole na conversa": "Приглашение скопировано — вставьте его в переписку",
+  "Convites enviados": "Приглашений отправлено",
+  "Convide os amigos": "Пригласите друзей",
+  "Convidar amigos": "Пригласить друзей",
+  "Escolha para onde enviar o convite.": "Выберите, куда отправить приглашение.",
+  "Mande o Manual para quem ainda se perde na trilha.":
+    "Отправьте Наставление тому, кто ещё сбивается с пути.",
+  "Ninguém se orienta sozinho: mande o Manual para quem treina com você.":
+    "Никто не ориентируется в одиночку: отправьте Наставление тем, кто тренируется с вами.",
+  "Não foi possível copiar — selecione o texto": "Не удалось скопировать — выделите текст",
+  "Obrigado por divulgar o Manual": "Спасибо за распространение Наставления",
+  "Descobri o MANUAL DO SOBREVIVENTE: curso de bússola guiado, guia de rota que evita andar em círculos, mapas offline, SOS Morse e mochila inteligente. Funciona no navegador, até sem internet. Confira:":
+    "Я нашёл MANUAL DO SOBREVIVENTE: пошаговый курс компаса, навигатор, который не даёт ходить кругами, офлайн-карты, SOS азбукой Морзе и умный рюкзак. Работает в браузере даже без интернета. Посмотрите:",
 };

@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "check:i18n": "node scripts/check-i18n.mjs",
     "format": "prettier --write .",
-    "test": "vitest run tests/format.spec.ts tests/celestial.spec.ts tests/alerta-radar.spec.ts tests/chaves.spec.ts tests/conta.spec.ts tests/satelite.spec.ts tests/validade.spec.ts tests/prontidao.spec.ts tests/i18n.spec.ts tests/morse.spec.ts tests/bussola-calculo.spec.ts tests/nivel.spec.ts tests/item-imagem.spec.ts tests/rota.spec.ts",
+    "test": "vitest run tests/format.spec.ts tests/celestial.spec.ts tests/alerta-radar.spec.ts tests/chaves.spec.ts tests/conta.spec.ts tests/satelite.spec.ts tests/validade.spec.ts tests/prontidao.spec.ts tests/i18n.spec.ts tests/morse.spec.ts tests/bussola-calculo.spec.ts tests/nivel.spec.ts tests/item-imagem.spec.ts tests/rota.spec.ts tests/convite.spec.ts",
     "test:e2e": "vitest run tests/i18n-ssr.spec.ts tests/map-responsive.spec.ts tests/map-overlap.spec.ts tests/map-osiris.spec.ts tests/map-menu.spec.ts tests/map-tela.spec.ts tests/map-intel.spec.ts tests/map-bussola.spec.ts tests/map-globo.spec.ts tests/map-obsidian.spec.ts tests/mochila.spec.ts tests/conta-fluxo.spec.ts tests/map-alerta.spec.ts tests/idioma.spec.ts tests/prontidao-offline.spec.ts tests/manual-posters.spec.ts tests/mochila-validade.spec.ts tests/sos-morse.spec.ts tests/mochila-imagem.spec.ts tests/map-redline.spec.ts tests/tutorial.spec.ts tests/noturno-rota.spec.ts",
     "typecheck": "tsc --noEmit",
     "check:all": "bun run lint && bun run check:i18n && bun run test"

@@ -43,6 +43,7 @@ import { getReportSettings, saveReportSettings, sendReportNow } from "@/lib/repo
 import { chavesServidor, type ChavesServidor } from "@/lib/intel.functions";
 import { BackupFolderCard } from "@/components/BackupFolderCard";
 import { ObsidianCard } from "@/components/ObsidianCard";
+import { BotaoConvidar } from "@/components/ConviteSheet";
 import { usePwaInstall } from "@/lib/pwa";
 import { contaAtiva, type ContaLocal } from "@/lib/conta";
 
@@ -740,6 +741,13 @@ function Settings() {
                 )}
           </p>
         )}
+      </Section>
+
+      <Section title={t("Convide os amigos")}>
+        <p className="text-sm text-muted-foreground">
+          {t("Mande o Manual para quem ainda se perde na trilha.")}
+        </p>
+        <BotaoConvidar className="glove-tap w-full" />
       </Section>
 
       {email && (

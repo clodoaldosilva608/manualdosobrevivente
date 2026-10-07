@@ -449,4 +449,8 @@ export const DIC_ZH: Record<string, string> = {
   "Obrigado por divulgar o Manual": "感谢传播手册",
   "Descobri o MANUAL DO SOBREVIVENTE: curso de bússola guiado, guia de rota que evita andar em círculos, mapas offline, SOS Morse e mochila inteligente. Funciona no navegador, até sem internet. Confira:":
     "我发现了 MANUAL DO SOBREVIVENTE：循序渐进的指南针课程、防止绕圈的路线引导、离线地图、摩尔斯电码SOS和智能背包。在浏览器中即可使用，无需联网。来看看：",
+
+  /* Abertura em vídeo (SplashAbertura) */
+  Pular: "跳过",
+  "Pular abertura": "跳过片头",
 };

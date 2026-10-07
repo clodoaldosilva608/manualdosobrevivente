@@ -459,4 +459,8 @@ export const DIC_EN: Record<string, string> = {
   "Obrigado por divulgar o Manual": "Thanks for spreading the Manual",
   "Descobri o MANUAL DO SOBREVIVENTE: curso de bússola guiado, guia de rota que evita andar em círculos, mapas offline, SOS Morse e mochila inteligente. Funciona no navegador, até sem internet. Confira:":
     "I found MANUAL DO SOBREVIVENTE: a guided compass course, a route guide that keeps you from walking in circles, offline maps, Morse SOS and a smart pack. It runs in the browser, even without internet. Check it out:",
+
+  /* Abertura em vídeo (SplashAbertura) */
+  Pular: "Skip",
+  "Pular abertura": "Skip intro",
 };

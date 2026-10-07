@@ -459,4 +459,8 @@ export const DIC_JA: Record<string, string> = {
   "Obrigado por divulgar o Manual": "マニュアルの拡散に感謝します",
   "Descobri o MANUAL DO SOBREVIVENTE: curso de bússola guiado, guia de rota que evita andar em círculos, mapas offline, SOS Morse e mochila inteligente. Funciona no navegador, até sem internet. Confira:":
     "MANUAL DO SOBREVIVENTE を見つけました：ステップ式コンパス講座、同じ場所をぐるぐる歩かないルートガイド、オフライン地図、モールスSOS、スマートなバックパック。ブラウザで動作し、オフラインでも使えます。ぜひ見てください：",
+
+  /* Abertura em vídeo (SplashAbertura) */
+  Pular: "スキップ",
+  "Pular abertura": "オープニングをスキップ",
 };

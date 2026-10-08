@@ -19,7 +19,12 @@ export function registerServiceWorker() {
   if (typeof window === "undefined") return;
   if (!("serviceWorker" in navigator)) return;
   if (!import.meta.env.PROD) return;
-  window.addEventListener("load", () => {
+
+  // Se a hidratação terminar depois do evento "load" (rede lenta, PWA já
+  // instalado, abertura em vídeo), um listener de load jamais dispararia e o
+  // worker nunca seria registrado — por isso registra imediatamente quando a
+  // página já carregou.
+  const registrar = () => {
     navigator.serviceWorker
       .register("/sw.js", { scope: "/" })
       .then((registro) => {
@@ -42,7 +47,13 @@ export function registerServiceWorker() {
       .catch(() => {
         /* instalação offline degradada — o app continua funcionando */
       });
-  });
+  };
+
+  if (document.readyState === "complete") {
+    registrar();
+  } else {
+    window.addEventListener("load", registrar, { once: true });
+  }
   // Depois que o novo trabalhador assumir (por conta do botão Atualizar),
   // recarrega uma única vez para entrar na versão nova.
   navigator.serviceWorker.addEventListener("controllerchange", () => {

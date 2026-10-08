@@ -625,6 +625,7 @@ export default function MapShell() {
 
   /** Dados + visibilidade das camadas de desenho/waypoints/posição (idempotente). */
   const sincronizarDesenho = useCallback((map: maplibregl.Map) => {
+    if (!map) return;
     const d = desenhoRef.current;
     const wp = map.getSource("waypoints") as maplibregl.GeoJSONSource | undefined;
     wp?.setData(waypointsFC(d.waypoints));
@@ -725,6 +726,7 @@ export default function MapShell() {
       // Após qualquer troca de estilo, reconstrói as camadas de inteligência
       // e reapresenta desenho/waypoints/posição.
       map.on("styledata", () => {
+        if (cancelled) return;
         sincronizarDesenho(map);
         // A projeção vive no estilo: reapresenta após troca de camada base.
         try {
@@ -804,6 +806,12 @@ export default function MapShell() {
       if (liberarSemTiles !== undefined) window.clearTimeout(liberarSemTiles);
       delete (window as unknown as { __tacticalMap?: unknown }).__tacticalMap;
       controlesRef.current = { nav: null, geo: null, escala: null };
+      // Desliga os overlays ANTES de destruir o mapa: os controladores precisam
+      // remover as camadas num mapa VIVO — depois de remove(), getLayer/addSource
+      // derrubam a tela ("Cannot read properties of undefined (reading 'getLayer')").
+      radarRef.current?.desativar();
+      ventoRef.current?.desativar();
+      temperaturaRef.current?.desativar();
       mapRef.current?.remove();
       mapRef.current = null;
     };
@@ -1110,7 +1118,8 @@ export default function MapShell() {
     // re-add custom sources after style swap — dados e visibilidade juntos,
     // senão medições e waypoints desaparecem ao trocar a camada base
     mapRef.current.once("styledata", () => {
-      const map = mapRef.current!;
+      const map = mapRef.current;
+      if (!map) return;
       adicionarFontesDesenho(map);
       sincronizarDesenho(map);
     });

@@ -126,6 +126,7 @@ const CAMADAS_COM_POPUP = CAMADAS_EM_ORDEM.filter(
  * ficar sobre a camada base mas sob todos os marcadores de inteligência.
  */
 export function ancoraIntel(map: ML): string | undefined {
+  if (!map) return undefined;
   for (const id of CAMADAS_EM_ORDEM) if (map.getLayer(id)) return id;
   return undefined;
 }
@@ -144,6 +145,7 @@ function garantirFonte(map: ML, id: string, data: GeoJSON.FeatureCollection | Ge
 }
 
 function adicionarCamada(map: ML, camada: maplibregl.LayerSpecification, abaixoDe?: string) {
+  if (!map) return;
   const antes = abaixoDe && map.getLayer(abaixoDe) ? abaixoDe : undefined;
   map.addLayer(camada, antes);
 }
@@ -318,6 +320,7 @@ export interface EntradaSincronizacaoIntel {
 
 /** Cria/atualiza as camadas de inteligência conforme visibilidade e dados. */
 export function sincronizarCamadasIntel(map: ML, entrada: EntradaSincronizacaoIntel) {
+  if (!map) return;
   const {
     snapshot,
     conflitos,
@@ -1091,6 +1094,7 @@ export function sincronizarCamadasIntel(map: ML, entrada: EntradaSincronizacaoIn
 
 /** Remove camadas e fontes de inteligência (volta ao modo tático limpo). */
 export function removerCamadasIntel(map: ML) {
+  if (!map) return;
   for (const id of CAMADAS_EM_ORDEM) {
     if (map.getLayer(id)) map.removeLayer(id);
   }

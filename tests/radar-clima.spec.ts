@@ -1,5 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
+  ControladorRadar,
+  ControladorRasterSimples,
   cardeal,
   interpretarIndice,
   rotuloQuadro,
@@ -155,5 +157,92 @@ describe("urlTileOwm (OpenWeatherMap)", () => {
   it("devolve vazio sem chave — a camada nem tenta ligar", () => {
     expect(urlTileOwm("vento", "")).toBe("");
     expect(urlTileOwm("vento", "   ")).toBe("");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Resistência a mapa destruído — regressão do crash
+// "Cannot read properties of undefined (reading 'getLayer')" ao sair do mapa:
+// o MapShell desmontava e os controladores tentavam tocar um mapa removido.
+// ---------------------------------------------------------------------------
+
+type MapaFalso = {
+  getLayer: ReturnType<typeof vi.fn>;
+  getSource: ReturnType<typeof vi.fn>;
+  addSource: ReturnType<typeof vi.fn>;
+  addLayer: ReturnType<typeof vi.fn>;
+  removeLayer: ReturnType<typeof vi.fn>;
+  removeSource: ReturnType<typeof vi.fn>;
+  once: ReturnType<typeof vi.fn>;
+};
+
+function mapaFalso(): MapaFalso {
+  return {
+    getLayer: vi.fn(() => undefined),
+    getSource: vi.fn(() => undefined),
+    addSource: vi.fn(),
+    addLayer: vi.fn(),
+    removeLayer: vi.fn(),
+    removeSource: vi.fn(),
+    once: vi.fn(),
+  };
+}
+
+/** Dispara o evento "remove" que o controlador registrou no mapa. */
+function destruirMapa(map: MapaFalso): void {
+  const chamada = map.once.mock.calls.find(([tipo]) => tipo === "remove");
+  if (!chamada) throw new Error('controlador não registrou listener "remove"');
+  (chamada[1] as () => void)();
+}
+
+describe("ControladorRadar — sobrevive a map.remove()", () => {
+  it("desativar após o mapa ser destruído não toca o mapa nem lança erro", () => {
+    const map = mapaFalso();
+    const ctl = new ControladorRadar(map as never);
+    destruirMapa(map);
+    expect(() => ctl.desativar()).not.toThrow();
+    expect(map.getLayer).not.toHaveBeenCalled();
+    expect(map.removeLayer).not.toHaveBeenCalled();
+    expect(map.getSource).not.toHaveBeenCalled();
+  });
+
+  it("sincronizar após o mapa ser destruído é inofensivo", () => {
+    const map = mapaFalso();
+    const ctl = new ControladorRadar(map as never);
+    destruirMapa(map);
+    expect(() => ctl.sincronizar()).not.toThrow();
+  });
+
+  it("com mapa vivo, desativar remove a camada normalmente", () => {
+    const map = mapaFalso();
+    map.getLayer.mockReturnValue({}); // camada presente no estilo
+    map.getSource.mockReturnValue({});
+    const ctl = new ControladorRadar(map as never);
+    ctl.desativar();
+    expect(map.getLayer).toHaveBeenCalledWith("intel-radar");
+    expect(map.removeLayer).toHaveBeenCalledWith("intel-radar");
+    expect(map.removeSource).toHaveBeenCalledWith("intel-radar");
+  });
+});
+
+describe("ControladorRasterSimples — sobrevive a map.remove()", () => {
+  it("desativar após o mapa ser destruído não toca o mapa nem lança erro", () => {
+    const map = mapaFalso();
+    const ctl = new ControladorRasterSimples(map as never, "intel-vento");
+    destruirMapa(map);
+    expect(() => ctl.desativar()).not.toThrow();
+    expect(map.getLayer).not.toHaveBeenCalled();
+    expect(map.removeLayer).not.toHaveBeenCalled();
+  });
+
+  it("com mapa vivo, desativar remove a camada normalmente", () => {
+    const map = mapaFalso();
+    map.getLayer.mockReturnValue({}); // camada presente no estilo
+    map.getSource.mockReturnValue({});
+    const ctl = new ControladorRasterSimples(map as never, "intel-vento");
+    ctl.desativar();
+    expect(map.getLayer).toHaveBeenCalledWith("intel-vento");
+    expect(map.removeLayer).toHaveBeenCalledWith("intel-vento");
+    expect(map.removeSource).toHaveBeenCalledWith("intel-vento");
   });
 });

@@ -200,6 +200,8 @@ export class ControladorRadar {
   private animando = true;
   private timerFrame: number | null = null;
   private timerRefresco: number | null = null;
+  /** True quando o mapa foi destruído — nenhuma operação de mapa é mais tentada. */
+  private destruido = false;
   /** Camada intel existente abaixo da qual o radar entra (definido pelo MapShell). */
   abaixoDe?: string;
   aoEstado?: (estado: EstadoRadar) => void;
@@ -207,6 +209,14 @@ export class ControladorRadar {
 
   constructor(map: ML) {
     this.map = map;
+    // Congela o controlador quando o mapa é destruído (MapShell desmontou):
+    // para os timers e bloqueia qualquer operação posterior — chamar
+    // getLayer/addSource num mapa removido derruba a tela ("Sinal perdido").
+    map.once("remove", () => {
+      this.destruido = true;
+      this.ativo = false;
+      this.pararTimers();
+    });
   }
 
   /** Estado atual da fila — o MapShell usa para reconstruir o HUD. */
@@ -220,6 +230,7 @@ export class ControladorRadar {
   }
 
   async ativar(): Promise<void> {
+    if (this.destruido) return;
     this.ativo = true;
     this.aoEstado?.("carregando");
     try {
@@ -233,7 +244,7 @@ export class ControladorRadar {
       if (this.ativo) this.aoEstado?.("erro");
       return;
     }
-    if (!this.ativo) return;
+    if (!this.ativo || this.destruido) return;
     // Apresenta o quadro mais recente do passado (o "agora" do radar).
     this.indice = Math.max(0, this.quadros.length - 1 - this.contarPrevisoes());
     this.apresentar();
@@ -261,6 +272,7 @@ export class ControladorRadar {
    * garante que ela sumiu quando desligada. Sem refetch: os quadros ficam.
    */
   sincronizar(): void {
+    if (this.destruido) return;
     if (this.ativo && this.quadros.length > 0) {
       this.apresentar();
     } else {
@@ -301,6 +313,7 @@ export class ControladorRadar {
 
   /** Cria (ou atualiza) fonte + camada raster ancorada abaixo das intel. */
   private apresentar(): void {
+    if (this.destruido) return;
     const map = this.map;
     const url = this.urlAtual();
     const fonte = map.getSource(ID_FONTE) as maplibregl.RasterTileSource | undefined;
@@ -334,6 +347,7 @@ export class ControladorRadar {
 
   /** Fallback quando setTiles não está disponível: recria fonte e camada. */
   private recriarCamada(url: string): void {
+    if (this.destruido) return;
     this.removerCamada();
     const map = this.map;
     map.addSource(ID_FONTE, {
@@ -349,6 +363,7 @@ export class ControladorRadar {
   }
 
   private removerCamada(): void {
+    if (this.destruido) return;
     const map = this.map;
     if (map.getLayer(ID_CAMADA)) map.removeLayer(ID_CAMADA);
     if (map.getSource(ID_FONTE)) map.removeSource(ID_FONTE);
@@ -378,16 +393,24 @@ export class ControladorRasterSimples {
   private atribuicao = "";
   private opacidade = 0.7;
   private ativo = false;
+  /** True quando o mapa foi destruído — nenhuma operação de mapa é mais tentada. */
+  private destruido = false;
   /** Camada intel existente abaixo da qual esta entra (definido pelo MapShell). */
   abaixoDe?: string;
 
   constructor(map: ML, id: string) {
     this.map = map;
     this.id = id;
+    // Mesmo contrato do ControladorRadar: congelado após map.remove().
+    map.once("remove", () => {
+      this.destruido = true;
+      this.ativo = false;
+    });
   }
 
   /** Apresenta (ou atualiza) a camada com o template de tiles informado. */
   ativar(url: string, atribuicao: string, opacidade = 0.7): void {
+    if (this.destruido) return;
     this.ativo = true;
     this.url = url;
     this.atribuicao = atribuicao;
@@ -406,11 +429,13 @@ export class ControladorRasterSimples {
    * que sumiu quando desligada. Sem refetch: o template de tiles fica.
    */
   sincronizar(): void {
+    if (this.destruido) return;
     if (this.ativo && this.url) this.apresentar();
     else this.remover();
   }
 
   private apresentar(): void {
+    if (this.destruido) return;
     const map = this.map;
     const fonte = map.getSource(this.id) as maplibregl.RasterTileSource | undefined;
     if (fonte && map.getLayer(this.id)) {
@@ -440,6 +465,7 @@ export class ControladorRasterSimples {
   }
 
   private remover(): void {
+    if (this.destruido) return;
     const map = this.map;
     if (map.getLayer(this.id)) map.removeLayer(this.id);
     if (map.getSource(this.id)) map.removeSource(this.id);

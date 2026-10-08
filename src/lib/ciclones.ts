@@ -104,6 +104,16 @@ function texto(v: unknown): string {
   return typeof v === "string" ? v : typeof v === "number" ? String(v) : "";
 }
 
+/**
+ * Chave de agrupamento da tempestade. Nem todas as camadas do serviço têm
+ * STORMID (pontos de projeção, trilhas e cone não têm) — o nome é a chave
+ * estável presente em todas e é único entre os ciclones ativos.
+ */
+function chaveStorm(p: Record<string, unknown>): string {
+  const nome = texto(p["STORMNAME"]).toUpperCase();
+  return nome || texto(p["STORMID"]).toUpperCase();
+}
+
 function fcVazio(): GeoJSON.FeatureCollection {
   return { type: "FeatureCollection", features: [] };
 }
@@ -140,7 +150,7 @@ export function montarConjunto(
   const ultimas = new Map<string, GeoJSON.Feature>();
   for (const f of obs.features ?? []) {
     const p = f.properties ?? {};
-    const id = texto(p["STORMID"]);
+    const id = chaveStorm(p);
     const geom = f.geometry as { type?: string; coordinates?: [number, number] } | null;
     if (!id || geom?.type !== "Point" || !Array.isArray(geom.coordinates)) continue;
     const dtg = num(p["DTG"]);
@@ -171,7 +181,7 @@ export function montarConjunto(
   const movimento = new Map<string, { dir: number; spd: number }>();
   for (const f of prev.features ?? []) {
     const p = f.properties ?? {};
-    const id = texto(p["STORMID"]);
+    const id = chaveStorm(p);
     const tau = num(p["TAU"]);
     if (!id || tau !== 0 || movimento.has(id)) continue;
     movimento.set(id, { dir: num(p["TCDIR"]), spd: num(p["TCSPD"]) });
@@ -192,7 +202,7 @@ export function montarConjunto(
     .filter((f) => (f.geometry as { type?: string } | null)?.type === "LineString")
     .map((f) => {
       const p = f.properties ?? {};
-      const id = texto(p["STORMID"]);
+      const id = chaveStorm(p);
       const u = ultimas.get(id);
       return {
         type: "Feature" as const,
@@ -214,7 +224,7 @@ export function montarConjunto(
       const kt = num(p["MAXWIND"]);
       const cat = categoriaCiclone(kt);
       const tau = num(p["TAU"]);
-      const id = texto(p["STORMID"]);
+      const id = chaveStorm(p);
       // A cor de cada ponto acompanha a intensidade prevista daquele instante
       // (mesma leitura do Zoom Earth: a trilha esfria/aquenta ao longo da
       // projeção).
@@ -242,7 +252,7 @@ export function montarConjunto(
     .filter((f) => (f.geometry as { type?: string } | null)?.type === "LineString")
     .map((f) => {
       const p = f.properties ?? {};
-      const id = texto(p["STORMID"]);
+      const id = chaveStorm(p);
       const u = ultimas.get(id);
       return {
         type: "Feature" as const,
@@ -258,10 +268,13 @@ export function montarConjunto(
   // --- cone de erro ---
   const conesFC = fcVazio();
   conesFC.features = (cones.features ?? [])
-    .filter((f) => (f.geometry as { type?: string } | null)?.type === "Polygon")
+    .filter((f) => {
+      const t = (f.geometry as { type?: string } | null)?.type;
+      return t === "Polygon" || t === "MultiPolygon";
+    })
     .map((f) => {
       const p = f.properties ?? {};
-      const id = texto(p["STORMID"]);
+      const id = chaveStorm(p);
       const u = ultimas.get(id);
       return {
         type: "Feature" as const,
@@ -296,15 +309,14 @@ async function consultarCamada(cId: number, outFields: string): Promise<EsriFC> 
 
 /** Coleta o retrato completo dos ciclones ativos (5 consultas em paralelo). */
 export async function coletarCiclones(): Promise<ConjuntoCiclones> {
+  // Cada camada tem campos próprios — pedir campo inexistente devolve HTTP
+  // 200 com corpo de erro e zero feições ("'outFields' parameter is invalid").
   const [obs, obsLinhas, prev, prevLinhas, cones] = await Promise.all([
     consultarCamada(1, "STORMID,STORMNAME,STORMTYPE,BASIN,DTG,INTENSITY,MSLP"),
-    consultarCamada(3, "STORMID,STORMNAME,BASIN"),
-    consultarCamada(
-      0,
-      "STORMID,STORMNAME,STORMTYPE,BASIN,TAU,MAXWIND,GUST,MSLP,TCDIR,TCSPD,FLDATELBL",
-    ),
-    consultarCamada(2, "STORMID,STORMNAME,BASIN"),
-    consultarCamada(4, "STORMID,STORMNAME,MAX_SS,MAX_WIND,MAX_LABEL,BASIN"),
+    consultarCamada(3, "STORMNAME,BASIN"),
+    consultarCamada(0, "STORMNAME,STORMTYPE,BASIN,TAU,MAXWIND,GUST,MSLP,TCDIR,TCSPD,FLDATELBL"),
+    consultarCamada(2, "STORMNAME,BASIN"),
+    consultarCamada(4, "STORMNAME,MAX_SS,MAX_WIND,MAX_LABEL,BASIN"),
   ]);
   return montarConjunto(obs, obsLinhas, prev, prevLinhas, cones);
 }

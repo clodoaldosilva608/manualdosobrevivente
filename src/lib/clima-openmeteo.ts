@@ -455,12 +455,34 @@ export class ControladorVento {
 const NX_TEMP = 9;
 const NY_TEMP = 7;
 
+/** FeatureCollection a partir das leituras (puro). */
+function fcDeLeituras(leituras: LeituraGrade[]): GeoJSON.FeatureCollection {
+  return {
+    type: "FeatureCollection",
+    features: leituras.map((l) => ({
+      type: "Feature" as const,
+      geometry: { type: "Point" as const, coordinates: [l.lng, l.lat] },
+      properties: {
+        temperatura: Math.round(l.temperatura),
+        rotulo: rotuloTemperatura(l.temperatura),
+        cor: corTemperatura(l.temperatura),
+        codigo: l.codigo,
+        severo: l.codigo >= 95,
+        ventoMs: Math.round(l.ventoMs),
+      },
+    })),
+  };
+}
+
 export class ControladorTemperatura {
   private map: ML;
   private ativo = false;
   private destruido = false;
   private timerRefresco: number | null = null;
   private timerDebounce: number | null = null;
+  /** Últimas leituras — o sincronizar reapresenta sem refetch (o styledata dispara a cada mudança de estilo). */
+  private ultimo: LeituraGrade[] | null = null;
+  private coletando = false;
   private aoMove = () => {
     if (!this.ativo || this.destruido) return;
     if (this.timerDebounce !== null) window.clearTimeout(this.timerDebounce);
@@ -484,7 +506,10 @@ export class ControladorTemperatura {
   ativar(): void {
     if (this.destruido) return;
     this.ativo = true;
-    this.aoEstado?.("carregando");
+    if (this.ultimo) {
+      this.aplicar(this.ultimo);
+      return;
+    }
     void this.coletar();
     this.timerRefresco = window.setInterval(() => void this.coletar(), INTERVALO_REFRESCO_MS);
     this.map.on("moveend", this.aoMove);
@@ -492,6 +517,7 @@ export class ControladorTemperatura {
 
   desativar(): void {
     this.ativo = false;
+    this.ultimo = null;
     if (this.timerRefresco !== null) window.clearInterval(this.timerRefresco);
     this.timerRefresco = null;
     if (this.timerDebounce !== null) window.clearTimeout(this.timerDebounce);
@@ -501,15 +527,20 @@ export class ControladorTemperatura {
     this.aoEstado?.("off");
   }
 
-  /** Reapresenta após troca de estilo/camada base (styledata). */
+  /** Reapresenta após troca de estilo/camada base (styledata) — sem refetch. */
   sincronizar(): void {
     if (this.destruido) return;
-    if (this.ativo) void this.coletar();
-    else this.remover();
+    if (this.ativo && this.ultimo) {
+      this.aplicar(this.ultimo);
+    } else if (!this.ativo) {
+      this.remover();
+    }
   }
 
   private async coletar(): Promise<void> {
-    if (!this.ativo || this.destruido) return;
+    if (!this.ativo || this.destruido || this.coletando) return;
+    this.coletando = true;
+    this.aoEstado?.("carregando");
     try {
       const b = this.map.getBounds();
       const r: Retangulo = {
@@ -523,10 +554,13 @@ export class ControladorTemperatura {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const leituras = interpretarGrade(await res.json(), pontos);
       if (!this.ativo || this.destruido) return;
+      this.ultimo = leituras;
       this.aplicar(leituras);
       this.aoEstado?.("ativo");
     } catch {
       if (this.ativo && !this.destruido) this.aoEstado?.("erro");
+    } finally {
+      this.coletando = false;
     }
   }
 
@@ -534,23 +568,13 @@ export class ControladorTemperatura {
     if (this.destruido) return;
     try {
       const map = this.map;
-      this.remover();
-      const fc: GeoJSON.FeatureCollection = {
-        type: "FeatureCollection",
-        features: leituras.map((l) => ({
-          type: "Feature" as const,
-          geometry: { type: "Point" as const, coordinates: [l.lng, l.lat] },
-          properties: {
-            temperatura: Math.round(l.temperatura),
-            rotulo: rotuloTemperatura(l.temperatura),
-            cor: corTemperatura(l.temperatura),
-            codigo: l.codigo,
-            severo: l.codigo >= 95,
-            ventoMs: Math.round(l.ventoMs),
-          },
-        })),
-      };
-      map.addSource(FONTE, { type: "geojson", data: fc as never });
+      // Idempotente: fonte existente só atualiza os dados (recriar tudo a
+      // cada apresentação alimenta o styledata com novas emissões).
+      if (map.getSource(FONTE)) {
+        (map.getSource(FONTE) as maplibregl.GeoJSONSource).setData(fcDeLeituras(leituras) as never);
+        return;
+      }
+      map.addSource(FONTE, { type: "geojson", data: fcDeLeituras(leituras) as never });
       map.addLayer(
         {
           id: CAMADA_CIRCULO,

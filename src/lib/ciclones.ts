@@ -340,15 +340,20 @@ function popupCiclone(p: Record<string, unknown>): string {
 export type EstadoCiclones = "off" | "carregando" | "ativo" | "erro";
 
 /**
- * Liga/desliga e atualiza as camadas de ciclones. As fontes GeoJSON são
- * recriadas no estilo atual a cada apresentação (dados pequenos, poucas
- * vezes por minuto) — o `sincronizar()` cobre trocas de camada base.
+ * Liga/desliga e atualiza as camadas de ciclones. O retrato coletado fica
+ * em cache: o `sincronizar()` reapresenta sem refetch (o styledata dispara
+ * a cada mudança de estilo — consultar de novo em cada emissão criaria um
+ * ciclo de consultas). O refresco periódico roda a cada 10 minutos.
  */
 export class ControladorCiclones {
   private map: ML;
   private ativo = false;
   private destruido = false;
   private timer: number | null = null;
+  /** Coleta em andamento — evita consultas paralelas (o styledata dispara a cada mudança de estilo). */
+  private coletando = false;
+  /** Último retrato coletado — o sincronizar reapresenta sem refetch. */
+  private ultimo: ConjuntoCiclones | null = null;
   private removerClique: (() => void) | null = null;
   abaixoDe?: string;
   aoEstado?: (estado: EstadoCiclones, total: number) => void;
@@ -363,21 +368,44 @@ export class ControladorCiclones {
     });
   }
 
-  async ativar(): Promise<void> {
+  ativar(): void {
     if (this.destruido) return;
     this.ativo = true;
-    this.aoEstado?.("carregando", 0);
+    if (this.ultimo) {
+      // Já tem retrato: reapresenta de imediato (o styledata do MapShell
+      // dispara várias vezes — refetch a cada emissão derrubaria o ciclo).
+      this.apresentar(this.ultimo);
+      return;
+    }
+    void this.carregar();
+  }
+
+  /** Coleta com guard de reentrância e agenda o refresco periódico. */
+  private async carregar(): Promise<void> {
+    if (this.destruido || !this.ativo || this.coletando) return;
+    this.coletando = true;
+    this.aoEstado?.("carregando", this.ultimo?.nomes.length ?? 0);
     try {
       const conjunto = await coletarCiclones();
       if (!this.ativo || this.destruido) return;
-      this.aplicar(conjunto);
+      this.ultimo = conjunto;
+      this.apresentar(conjunto);
       this.aoEstado?.("ativo", conjunto.nomes.length);
     } catch {
       if (this.ativo && !this.destruido) this.aoEstado?.("erro", 0);
-      return;
+    } finally {
+      this.coletando = false;
     }
-    if (this.timer !== null) window.clearInterval(this.timer);
-    this.timer = window.setInterval(() => void this.ativar(), INTERVALO_REFRESCO_MS);
+    if (this.timer === null && !this.destruido) {
+      this.timer = window.setInterval(() => {
+        if (this.ativo && !this.destruido && !this.coletando) void this.carregar();
+      }, INTERVALO_REFRESCO_MS);
+    }
+  }
+
+  /** Força coleta nova (primeira ativação ou refresco). */
+  refrescar(): void {
+    void this.carregar();
   }
 
   desativar(): void {
@@ -388,13 +416,14 @@ export class ControladorCiclones {
     this.aoEstado?.("off", 0);
   }
 
-  /** Reapresenta após troca de estilo/camada base (styledata). */
+  /** Reapresenta após troca de estilo/camada base (styledata) — sem refetch. */
   sincronizar(): void {
-    if (this.destruido || !this.ativo) {
-      if (!this.destruido && !this.ativo) this.remover();
-      return;
+    if (this.destruido) return;
+    if (this.ativo && this.ultimo) {
+      this.apresentar(this.ultimo);
+    } else if (!this.ativo) {
+      this.remover();
     }
-    void this.ativar();
   }
 
   private remover(): void {
@@ -413,10 +442,31 @@ export class ControladorCiclones {
     }
   }
 
-  private aplicar(c: ConjuntoCiclones): void {
+  private apresentar(c: ConjuntoCiclones): void {
     if (this.destruido) return;
     try {
       const map = this.map;
+      // Idempotente: se a fonte já existe, só atualiza os dados — recriar
+      // tudo a cada apresentação alimenta o styledata com novas emissões.
+      const fonteExiste = (id: string): boolean => !!map.getSource(id);
+      if (
+        fonteExiste(FONTE_CONE) &&
+        fonteExiste(FONTE_HIST) &&
+        fonteExiste(FONTE_PREV_LINHA) &&
+        fonteExiste(FONTE_PREV_PONTO) &&
+        fonteExiste(FONTE_OBS)
+      ) {
+        (map.getSource(FONTE_CONE) as maplibregl.GeoJSONSource).setData(c.cones as never);
+        (map.getSource(FONTE_HIST) as maplibregl.GeoJSONSource).setData(c.historico as never);
+        (map.getSource(FONTE_PREV_LINHA) as maplibregl.GeoJSONSource).setData(
+          c.previsaoLinhas as never,
+        );
+        (map.getSource(FONTE_PREV_PONTO) as maplibregl.GeoJSONSource).setData(
+          c.previsaoPontos as never,
+        );
+        (map.getSource(FONTE_OBS) as maplibregl.GeoJSONSource).setData(c.observados as never);
+        return;
+      }
       this.remover();
       const fonte = (id: string, fc: GeoJSON.FeatureCollection): void => {
         map.addSource(id, { type: "geojson", data: fc as never });

@@ -15,12 +15,12 @@ export const getReportSettings = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const [settings, history] = await Promise.all([
       context.supabase
-        .from("weekly_report_settings")
+        .from("manual_weekly_report_settings")
         .select("*")
         .eq("user_id", context.userId)
         .maybeSingle(),
       context.supabase
-        .from("report_delivery_history")
+        .from("manual_report_delivery_history")
         .select("*")
         .eq("user_id", context.userId)
         .order("sent_at", { ascending: false })
@@ -36,7 +36,7 @@ export const saveReportSettings = createServerFn({ method: "POST" })
   .inputValidator((input) => SettingsInput.parse(input))
   .handler(async ({ context, data }) => {
     const { error } = await context.supabase
-      .from("weekly_report_settings")
+      .from("manual_weekly_report_settings")
       .upsert({ ...data, user_id: context.userId }, { onConflict: "user_id" });
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -46,7 +46,7 @@ export const sendReportNow = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
-      .from("weekly_report_settings")
+      .from("manual_weekly_report_settings")
       .select("*")
       .eq("user_id", context.userId)
       .maybeSingle();

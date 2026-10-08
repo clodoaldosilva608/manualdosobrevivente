@@ -21,7 +21,7 @@ export const listWaypointsRemote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
-      .from("waypoints")
+      .from("manual_waypoints")
       .select("*")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
@@ -34,7 +34,7 @@ export const upsertWaypoint = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const row = { ...data, user_id: context.userId };
     const { data: out, error } = await context.supabase
-      .from("waypoints")
+      .from("manual_waypoints")
       .upsert(row)
       .select()
       .single();
@@ -46,7 +46,7 @@ export const deleteWaypointRemote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ context, data }) => {
-    const { error } = await context.supabase.from("waypoints").delete().eq("id", data.id);
+    const { error } = await context.supabase.from("manual_waypoints").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -65,7 +65,10 @@ const GearInput = z.object({
 export const listGearRemote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase.from("gear_items").select("*").order("category");
+    const { data, error } = await context.supabase
+      .from("manual_gear_items")
+      .select("*")
+      .order("category");
     if (error) throw new Error(error.message);
     return { items: data ?? [] };
   });
@@ -76,7 +79,7 @@ export const upsertGearRemote = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const row = { ...data, user_id: context.userId };
     const { data: out, error } = await context.supabase
-      .from("gear_items")
+      .from("manual_gear_items")
       .upsert(row)
       .select()
       .single();
@@ -88,7 +91,7 @@ export const deleteGearRemote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ context, data }) => {
-    const { error } = await context.supabase.from("gear_items").delete().eq("id", data.id);
+    const { error } = await context.supabase.from("manual_gear_items").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -108,7 +111,7 @@ const ChecklistInput = z.object({
 export const listChecklistRemote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase.from("checklist_state").select("*");
+    const { data, error } = await context.supabase.from("manual_checklist_state").select("*");
     if (error) throw new Error(error.message);
     return { items: data ?? [] };
   });
@@ -120,7 +123,7 @@ export const pushChecklistRemote = createServerFn({ method: "POST" })
     if (!data.items.length) return { count: 0 };
     const rows = data.items.map((i) => ({ ...i, user_id: context.userId }));
     const { error } = await context.supabase
-      .from("checklist_state")
+      .from("manual_checklist_state")
       .upsert(rows, { onConflict: "user_id,key" });
     if (error) throw new Error(error.message);
     return { count: rows.length };
@@ -149,18 +152,18 @@ export const pushAll = createServerFn({ method: "POST" })
     const uid = context.userId;
     if (data.waypoints.length) {
       const { error } = await context.supabase
-        .from("waypoints")
+        .from("manual_waypoints")
         .upsert(data.waypoints.map((w) => ({ ...w, user_id: uid })));
       if (error) throw new Error(error.message);
     }
     if (data.gear.length) {
       const { error } = await context.supabase
-        .from("gear_items")
+        .from("manual_gear_items")
         .upsert(data.gear.map((g) => ({ ...g, user_id: uid })));
       if (error) throw new Error(error.message);
     }
     if (data.checklist.length) {
-      const { error } = await context.supabase.from("checklist_state").upsert(
+      const { error } = await context.supabase.from("manual_checklist_state").upsert(
         data.checklist.map((c) => ({ ...c, user_id: uid })),
         { onConflict: "user_id,key" },
       );
@@ -168,7 +171,7 @@ export const pushAll = createServerFn({ method: "POST" })
     }
     if (data.preferences) {
       const { error } = await context.supabase
-        .from("app_preferences")
+        .from("manual_app_preferences")
         .upsert({ ...data.preferences, user_id: uid }, { onConflict: "user_id" });
       if (error) throw new Error(error.message);
     }
@@ -184,10 +187,10 @@ export const pullAll = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const [wp, gi, cs, preferences] = await Promise.all([
-      context.supabase.from("waypoints").select("*"),
-      context.supabase.from("gear_items").select("*"),
-      context.supabase.from("checklist_state").select("*"),
-      context.supabase.from("app_preferences").select("*").maybeSingle(),
+      context.supabase.from("manual_waypoints").select("*"),
+      context.supabase.from("manual_gear_items").select("*"),
+      context.supabase.from("manual_checklist_state").select("*"),
+      context.supabase.from("manual_app_preferences").select("*").maybeSingle(),
     ]);
     if (wp.error) throw new Error(wp.error.message);
     if (gi.error) throw new Error(gi.error.message);

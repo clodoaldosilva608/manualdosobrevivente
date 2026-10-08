@@ -1,7 +1,7 @@
 import type { Database } from "@/integrations/supabase/types";
 
 type AdminClient = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
-type ReportSettings = Database["public"]["Tables"]["weekly_report_settings"]["Row"];
+type ReportSettings = Database["public"]["Tables"]["manual_weekly_report_settings"]["Row"];
 
 // Gateway de envio de e-mail compatível com a API do Gmail (envio via /users/me/messages/send).
 // Configure as variáveis abaixo no ambiente do servidor (veja .env.example).
@@ -34,10 +34,16 @@ function reportBody(counts: { waypoints: number; gear: number; checklist: number
 
 async function getCounts(admin: AdminClient, userId: string) {
   const [waypoints, gear, checklist] = await Promise.all([
-    admin.from("waypoints").select("id", { count: "exact", head: true }).eq("user_id", userId),
-    admin.from("gear_items").select("id", { count: "exact", head: true }).eq("user_id", userId),
     admin
-      .from("checklist_state")
+      .from("manual_waypoints")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId),
+    admin
+      .from("manual_gear_items")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId),
+    admin
+      .from("manual_checklist_state")
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
       .eq("done", true),
@@ -91,7 +97,7 @@ export async function sendWeeklyReport(
     errorMessage = error instanceof Error ? error.message.slice(0, 1000) : "Falha desconhecida";
   }
 
-  const { error: historyError } = await admin.from("report_delivery_history").insert({
+  const { error: historyError } = await admin.from("manual_report_delivery_history").insert({
     user_id: settings.user_id,
     recipient_email: settings.recipient_email,
     waypoint_count: counts.waypoints,
@@ -102,7 +108,7 @@ export async function sendWeeklyReport(
   });
   if (historyError) throw new Error(historyError.message);
   const { error: updateError } = await admin
-    .from("weekly_report_settings")
+    .from("manual_weekly_report_settings")
     .update({ last_sent_at: new Date().toISOString() })
     .eq("user_id", settings.user_id);
   if (updateError) throw new Error(updateError.message);

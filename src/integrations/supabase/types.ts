@@ -6,6 +6,14 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+/**
+ * Tipos do banco compartilhado "sobrevivência-core" (Supabase mbterwktxczsyevcudoz).
+ *
+ * REGRA DE OURO DO ECOSSISTEMA: o Manual só enxerga e só declara as tabelas
+ * com prefixo manual_* — as tabelas do portal (products, ebooks, courses,
+ * waypoints, profiles, routes, ...) pertencem ao Centro de Sobrevivência e
+ * NUNCA são acessadas por este aplicativo. O isolamento é garantido por RLS.
+ */
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
@@ -14,7 +22,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      app_preferences: {
+      manual_app_preferences: {
         Row: {
           coord_format: string
           north_ref: string
@@ -38,7 +46,7 @@ export type Database = {
         }
         Relationships: []
       }
-      checklist_state: {
+      manual_checklist_state: {
         Row: {
           done: boolean
           id: string
@@ -62,43 +70,7 @@ export type Database = {
         }
         Relationships: []
       }
-      custom_tile_sources: {
-        Row: {
-          attribution: string | null
-          created_at: string
-          id: string
-          kind: string
-          max_zoom: number
-          min_zoom: number
-          name: string
-          url: string
-          user_id: string
-        }
-        Insert: {
-          attribution?: string | null
-          created_at?: string
-          id?: string
-          kind?: string
-          max_zoom?: number
-          min_zoom?: number
-          name: string
-          url: string
-          user_id: string
-        }
-        Update: {
-          attribution?: string | null
-          created_at?: string
-          id?: string
-          kind?: string
-          max_zoom?: number
-          min_zoom?: number
-          name?: string
-          url?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      gear_items: {
+      manual_gear_items: {
         Row: {
           category: string
           created_at: string
@@ -140,34 +112,7 @@ export type Database = {
         }
         Relationships: []
       }
-      profiles: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          display_name: string | null
-          id: string
-          units: string
-          updated_at: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          display_name?: string | null
-          id: string
-          units?: string
-          updated_at?: string
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          display_name?: string | null
-          id?: string
-          units?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      report_delivery_history: {
+      manual_report_delivery_history: {
         Row: {
           checklist_count: number
           error_message: string | null
@@ -203,97 +148,7 @@ export type Database = {
         }
         Relationships: []
       }
-      routes: {
-        Row: {
-          created_at: string
-          description: string | null
-          distance_m: number | null
-          elevation_gain_m: number | null
-          geometry: Json
-          id: string
-          name: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          distance_m?: number | null
-          elevation_gain_m?: number | null
-          geometry: Json
-          id?: string
-          name: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          distance_m?: number | null
-          elevation_gain_m?: number | null
-          geometry?: Json
-          id?: string
-          name?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      saved_maps: {
-        Row: {
-          active_layer: string
-          center_lat: number
-          center_lng: number
-          created_at: string
-          id: string
-          name: string
-          user_id: string
-          zoom: number
-        }
-        Insert: {
-          active_layer?: string
-          center_lat: number
-          center_lng: number
-          created_at?: string
-          id?: string
-          name: string
-          user_id: string
-          zoom?: number
-        }
-        Update: {
-          active_layer?: string
-          center_lat?: number
-          center_lng?: number
-          created_at?: string
-          id?: string
-          name?: string
-          user_id?: string
-          zoom?: number
-        }
-        Relationships: []
-      }
-      user_roles: {
-        Row: {
-          created_at: string
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
-        }
-        Relationships: []
-      }
-      waypoints: {
+      manual_waypoints: {
         Row: {
           category: string
           color: string
@@ -338,7 +193,7 @@ export type Database = {
         }
         Relationships: []
       }
-      weekly_report_settings: {
+      manual_weekly_report_settings: {
         Row: {
           created_at: string
           enabled: boolean
@@ -379,16 +234,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
-      app_role: "admin" | "user"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -515,8 +364,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      app_role: ["admin", "user"],
-    },
+    Enums: {},
   },
 } as const

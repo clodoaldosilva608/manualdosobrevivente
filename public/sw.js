@@ -10,7 +10,7 @@
  * Bump de versão: altere VERSAO ao mudar a lógica deste arquivo — os caches
  * antigos são apagados na ativação.
  */
-const VERSAO = "v31";
+const VERSAO = "v32";
 const CACHE_SHELL = `shell-${VERSAO}`;
 const CACHE_ASSETS = `assets-${VERSAO}`;
 const CACHE_RUNTIME = `runtime-${VERSAO}`;

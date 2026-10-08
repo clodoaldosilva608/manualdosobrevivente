@@ -354,6 +354,33 @@ exportação/importação de arquivo em _Ajustes_.
 └── wrangler.jsonc         # Config do deploy alternativo no Cloudflare
 ```
 
+## Banco compartilhado com o Centro de Sobrevivência (ecossistema)
+
+O Manual e o portal **Centro de Sobrevivência**
+(centrodesobrevivencia.vercel.app) utilizam o **mesmo projeto Supabase**
+("sobrevivência-core", região sa-east-1) com **identidade compartilhada e dados
+isolados**:
+
+- **Regra de ouro** — nenhum projeto modifica o código do outro. Os dois apps
+  apenas compartilham o mesmo banco e se linkam.
+- **auth.users** é a identidade comum: uma única conta serve os dois produtos
+  (cadastro por e-mail/senha e login com Google).
+- **Tabelas do Manual** usam obrigatoriamente o prefixo `manual_*`:
+  `manual_waypoints`, `manual_gear_items`, `manual_checklist_state`,
+  `manual_app_preferences`, `manual_weekly_report_settings`,
+  `manual_report_delivery_history` (migration versionada em
+  `supabase/migrations/20261008090000_manual_schema_sobrevivencia_core.sql`).
+- **Tabelas do portal** (`products`, `ebooks`, `courses`, `waypoints`,
+  `profiles`, `routes`, ...) pertencem ao Centro — este aplicativo **não as
+  declara em `types.ts`, não consulta e não escreve**. O isolamento é garantido
+  por Row Level Security (cada operador só acessa as próprias linhas) e as
+  policies têm nome `manual_*`.
+- O trigger `handle_new_user` do portal cria o perfil comum automaticamente a
+  cada novo cadastro — efeito de dados desejado do ecossistema, sem acoplamento
+  de código.
+- `types.ts` declara **somente** as tabelas `manual_*`: o TypeScript impede
+  acidentalmente qualquer consulta cruzada.
+
 ## Arquitetura
 
 - **Local-first** — alterações de dados do usuário disparam um evento único

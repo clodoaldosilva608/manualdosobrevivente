@@ -25,6 +25,14 @@ bun run build      # check:all + build de produção em .output/
 
 ## Convenções importantes
 
+- **Banco compartilhado (ecossistema)**: o app usa o MESMO projeto Supabase do
+  portal Centro de Sobrevivência. Toda tabela do Manual tem o prefixo
+  `manual_*` com RLS por `user_id` (policies nomeadas `manual_*`); as tabelas
+  do portal (`products`, `ebooks`, `waypoints`, `profiles`, `routes`, ...)
+  são intocadas e **não** constam em `src/integrations/supabase/types.ts` —
+  jamais consulte-as aqui, e nunca altere código do portal a partir deste repo
+  (e vice-versa). Migration de referência:
+  `supabase/migrations/20261008090000_manual_schema_sobrevivencia_core.sql`.
 - **Idioma**: todo texto de interface e comentários de código em pt-BR. O ESLint
   (`eslint-rules/i18n-pt-br.js`) bloqueia literais em inglês nas telas e exige o
   utilitário central de formatação (`src/lib/format.ts`) para números e datas.

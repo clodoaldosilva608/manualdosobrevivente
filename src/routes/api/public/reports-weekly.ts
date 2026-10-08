@@ -10,7 +10,7 @@ export const Route = createFileRoute("/api/public/reports-weekly")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { isReportDue, sendWeeklyReport } = await import("@/lib/report.server");
         const { data, error } = await supabaseAdmin
-          .from("weekly_report_settings")
+          .from("manual_weekly_report_settings")
           .select("*")
           .eq("enabled", true);
         if (error) return Response.json({ success: false }, { status: 500 });

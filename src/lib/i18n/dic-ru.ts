@@ -491,7 +491,7 @@ export const DIC_RU: Record<string, string> = {
   "Satélite ao vivo": "Спутник в реальном времени",
   "Satélite e clima ao vivo": "Спутник и погода в реальном времени",
   "Satélite, radar, vento e temperatura no Zoom Earth — abre no ponto atual do mapa. Radar de chuva por RainViewer e clima pontual por Open-Meteo.com, sem chave de API.":
-    "Спутник, радар, ветер и температура на Zoom Earth — открывается в текущей точке карты. Радар от RainViewer и погода от Open-Meteo.com, без ключа API.",
+    "Спутник, радар, ветер, температура, циклоны и облака в реальном времени прямо на карте — кнопка открывает Zoom Earth в текущей точке. Радар — RainViewer, циклоны — NOAA NHC/JTWC, облака — NASA GIBS, погода — Open-Meteo, без ключа API.",
   "Sem conexão ao radar — nova tentativa ao reabrir":
     "Нет связи с радаром — повторная попытка при повторном открытии",
   "Tempo indisponível": "Погода недоступна",
@@ -499,6 +499,20 @@ export const DIC_RU: Record<string, string> = {
   "Trovoada com granizo": "Гроза с градом",
   "Zoom Earth: radar, vento e temperatura": "Zoom Earth: радар, ветер и температура",
   "Vento (superfície)": "Ветер (у поверхности)",
+  "Ciclones e tempestades": "Циклоны и штормы",
+  "NOAA NHC/JTWC · posição, rota e projeção — Atlântico, Pacífico e Índico":
+    "NOAA NHC/JTWC · положение, трек и прогноз — Атлантика, Тихий и Индийский океаны",
+  "Nuvens ao vivo (satélite)": "Облака в реальном времени (спутник)",
+  "GOES-Leste (NASA GIBS) · imagem GeoColor a cada 10 minutos":
+    "GOES-East (NASA GIBS) · снимок GeoColor каждые 10 минут",
+  "Open-Meteo · partículas animadas do vento a 10 m — sem chave":
+    "Open-Meteo · анимированные частицы ветра на высоте 10 м — без ключа",
+  "Open-Meteo · temperatura a 2 m em cores — sem chave":
+    "Open-Meteo · температура на высоте 2 м цветом — без ключа",
+  "Ao vivo — {n} ciclone(s)": "В реальном времени — {n} циклон(ов)",
+  "Conectando aos ciclones…": "Подключение к циклонам…",
+  "Sem conexão aos ciclones — nova tentativa ao reabrir":
+    "Нет связи с циклонами — повтор при повторном открытии",
   "Temperatura (superfície)": "Температура (у поверхности)",
   "OpenWeatherMap · vento a 10 m com direção — requer chave grátis (Ajustes)":
     "OpenWeatherMap · ветер на 10 м с направлением — нужен бесплатный ключ (Настройки)",

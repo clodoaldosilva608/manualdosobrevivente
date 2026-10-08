@@ -56,14 +56,54 @@ export function corVeredito(veredito: VereditoProntidao): string {
   }
 }
 
+/**
+ * Tenta registrar o service worker na hora do teste quando nenhuma
+ * registração existe — auto-cura: o registro acontece no carregamento da
+ * página, mas pode ter falhado por rede instável no arranque (ou o aparelho
+ * ter aberto offline). Com internet, o teste passa a consertar o próprio
+ * problema em vez de só reportar vermelho. Espera até ~6 s pela ativação.
+ */
+async function autorregistrar(): Promise<boolean> {
+  if (!import.meta.env.PROD) return false; // em dev o SW é desligado de propósito (HMR)
+  try {
+    await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  } catch {
+    return false;
+  }
+  const prazo = Date.now() + 6_000;
+  while (Date.now() < prazo) {
+    await new Promise((r) => setTimeout(r, 500));
+    if (navigator.serviceWorker.controller) return true;
+    const reg = await navigator.serviceWorker.getRegistrations();
+    if (reg.length > 0) return true; // registrado — controle vem no claim/recarga
+  }
+  return false;
+}
+
 async function verificarServiceWorker(): Promise<VerificacaoProntidao> {
   const rotulo = "Service Worker";
   if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) {
     return { id: "sw", rotulo, estado: "falha", detalhe: "Navegador sem suporte", critica: true };
   }
   try {
-    const controller = navigator.serviceWorker.controller;
-    const registracoes = await navigator.serviceWorker.getRegistrations();
+    let controller = navigator.serviceWorker.controller;
+    let registracoes = await navigator.serviceWorker.getRegistrations();
+    // Sem registro e com rede: tenta registrar agora e reavalia (auto-cura).
+    if (!controller && registracoes.length === 0 && navigator.onLine) {
+      const ok = await autorregistrar();
+      controller = navigator.serviceWorker.controller;
+      registracoes = await navigator.serviceWorker.getRegistrations();
+      if (ok && (controller || registracoes.length > 0)) {
+        return {
+          id: "sw",
+          rotulo,
+          estado: controller ? "ok" : "aviso",
+          detalhe: controller
+            ? "Ativo e controlando a página"
+            : "Registrado agora — recarregue para ativar",
+        };
+      }
+    }
     if (controller) {
       return { id: "sw", rotulo, estado: "ok", detalhe: "Ativo e controlando a página" };
     }
@@ -75,7 +115,13 @@ async function verificarServiceWorker(): Promise<VerificacaoProntidao> {
         detalhe: "Registrado, mas ainda controla esta página — recarregue para ativar",
       };
     }
-    return { id: "sw", rotulo, estado: "falha", detalhe: "Não registrado", critica: true };
+    return {
+      id: "sw",
+      rotulo,
+      estado: "falha",
+      detalhe: import.meta.env.PROD ? "Não registrado" : "Só registra em build de produção",
+      critica: true,
+    };
   } catch {
     return { id: "sw", rotulo, estado: "falha", detalhe: "Falha ao consultar", critica: true };
   }

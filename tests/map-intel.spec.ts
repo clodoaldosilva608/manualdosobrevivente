@@ -58,10 +58,10 @@ describe("Camadas de inteligência no mapa tático", () => {
     const page = await abrirMapaMobile(browser);
     await abrirCamadas(page);
 
-    // 16 camadas de inteligência com alternadores próprios (17 desde o vento/temperatura).
+    // 17 camadas de inteligência com alternadores próprios (19 desde ciclones/nuvens).
     const alternadores = page.getByRole("switch", { name: /^Ativar camada / });
     await alternadores.first().waitFor({ state: "visible" });
-    expect(await alternadores.count()).toBe(17);
+    expect(await alternadores.count()).toBe(19);
 
     // Sismos vem ativo por padrão: a camada existe no mapa tático.
     await page.waitForFunction(

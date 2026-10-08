@@ -492,7 +492,7 @@ export const DIC_ES: Record<string, string> = {
   "Satélite ao vivo": "Satélite en vivo",
   "Satélite e clima ao vivo": "Satélite y clima en vivo",
   "Satélite, radar, vento e temperatura no Zoom Earth — abre no ponto atual do mapa. Radar de chuva por RainViewer e clima pontual por Open-Meteo.com, sem chave de API.":
-    "Satélite, radar, viento y temperatura en Zoom Earth — se abre en el punto actual del mapa. Radar de lluvia por RainViewer y clima puntual por Open-Meteo.com, sin clave de API.",
+    "Satélite, radar, viento, temperatura, ciclones y nubes en vivo en el propio mapa — el botón abre Zoom Earth en el punto actual. Radar por RainViewer, ciclones por NOAA NHC/JTWC, nubes por NASA GIBS y clima por Open-Meteo, sin clave de API.",
   "Sem conexão ao radar — nova tentativa ao reabrir":
     "Sin conexión al radar — se reintentará al reabrir",
   "Tempo indisponível": "Tiempo no disponible",
@@ -500,6 +500,20 @@ export const DIC_ES: Record<string, string> = {
   "Trovoada com granizo": "Tormenta con granizo",
   "Zoom Earth: radar, vento e temperatura": "Zoom Earth: radar, viento y temperatura",
   "Vento (superfície)": "Viento (superficie)",
+  "Ciclones e tempestades": "Ciclones y tormentas",
+  "NOAA NHC/JTWC · posição, rota e projeção — Atlântico, Pacífico e Índico":
+    "NOAA NHC/JTWC · posición, ruta y proyección — Atlántico, Pacífico e Índico",
+  "Nuvens ao vivo (satélite)": "Nubes en vivo (satélite)",
+  "GOES-Leste (NASA GIBS) · imagem GeoColor a cada 10 minutos":
+    "GOES-Este (NASA GIBS) · imagen GeoColor cada 10 minutos",
+  "Open-Meteo · partículas animadas do vento a 10 m — sem chave":
+    "Open-Meteo · partículas animadas del viento a 10 m — sin clave",
+  "Open-Meteo · temperatura a 2 m em cores — sem chave":
+    "Open-Meteo · temperatura a 2 m en colores — sin clave",
+  "Ao vivo — {n} ciclone(s)": "En vivo — {n} ciclone(s)",
+  "Conectando aos ciclones…": "Conectando a los ciclones…",
+  "Sem conexão aos ciclones — nova tentativa ao reabrir":
+    "Sin conexión a los ciclones — nuevo intento al reabrir",
   "Temperatura (superfície)": "Temperatura (superficie)",
   "OpenWeatherMap · vento a 10 m com direção — requer chave grátis (Ajustes)":
     "OpenWeatherMap · viento a 10 m con dirección — requiere clave gratuita (Ajustes)",

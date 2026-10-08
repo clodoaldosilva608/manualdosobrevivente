@@ -77,9 +77,13 @@ export interface IntelVisibilidade {
   incendios: boolean;
   /** Radar de chuva ao vivo (RainViewer) — precipitação + nowcast. */
   radar: boolean;
-  /** Vento a 10 m em tiles ao vivo (OpenWeatherMap — requer chave do operador). */
+  /** Ciclones tropicais ao vivo (NOAA NHC/JTWC) — rota e projeção. */
+  ciclones: boolean;
+  /** Nuvens ao vivo — imagem GeoColor do GOES-Leste (NASA GIBS). */
+  nuvens: boolean;
+  /** Vento a 10 m com partículas animadas (Open-Meteo — keyless). */
   vento: boolean;
-  /** Temperatura a 2 m em tiles ao vivo (OpenWeatherMap — requer chave do operador). */
+  /** Temperatura a 2 m em cores (Open-Meteo — keyless). */
   temperatura: boolean;
   /** Voos ao vivo (ADS-B) — militares globais + civis perto do centro. */
   voos: boolean;
@@ -108,6 +112,8 @@ export const INTEL_VIS_PADRAO: IntelVisibilidade = {
   noite: false,
   incendios: true,
   radar: false,
+  ciclones: false,
+  nuvens: false,
   vento: false,
   temperatura: false,
   voos: true,

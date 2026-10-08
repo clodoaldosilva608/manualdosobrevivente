@@ -72,15 +72,27 @@ export const LINHAS_INTEL: LinhaIntel[] = [
     cor: "#60A5FA",
   },
   {
+    id: "ciclones",
+    nome: "Ciclones e tempestades",
+    dica: "NOAA NHC/JTWC · posição, rota e projeção — Atlântico, Pacífico e Índico",
+    cor: "#F43F5E",
+  },
+  {
+    id: "nuvens",
+    nome: "Nuvens ao vivo (satélite)",
+    dica: "GOES-Leste (NASA GIBS) · imagem GeoColor a cada 10 minutos",
+    cor: "#E2E8F0",
+  },
+  {
     id: "vento",
     nome: "Vento (superfície)",
-    dica: "OpenWeatherMap · vento a 10 m com direção — requer chave grátis (Ajustes)",
+    dica: "Open-Meteo · partículas animadas do vento a 10 m — sem chave",
     cor: "#34D399",
   },
   {
     id: "temperatura",
     nome: "Temperatura (superfície)",
-    dica: "OpenWeatherMap · temperatura a 2 m em cores — requer chave grátis (Ajustes)",
+    dica: "Open-Meteo · temperatura a 2 m em cores — sem chave",
     cor: "#F472B6",
   },
   {

@@ -21,15 +21,16 @@ type ML = maplibregl.Map;
 export const URL_ZOOM_EARTH = "https://zoom.earth/maps/satellite/#view=";
 
 /**
- * Deep link do Zoom Earth posicionado no ponto atual do mapa, com radar de
- * chuva, focos de calor e mira já ativados (mesma paleta de overlays que o
- * Manual usa). Zoom limitado à faixa que o Zoom Earth aceita (1–20).
+ * Deep link do Zoom Earth posicionado no ponto atual do mapa, com a mesma
+ * paleta de overlays que o Manual replica internamente (radar, vento, focos
+ * de calor, temperatura e mira). Zoom limitado à faixa aceita pelo Zoom
+ * Earth (1–20).
  */
 export function urlZoomEarth(lng: number, lat: number, zoom: number): string {
   const la = lat.toFixed(4);
   const lo = lng.toFixed(4);
   const z = Math.min(20, Math.max(1, zoom)).toFixed(2);
-  return `${URL_ZOOM_EARTH}${la},${lo},${z}z/overlays=radar,fires,crosshair`;
+  return `${URL_ZOOM_EARTH}${la},${lo},${z}z/overlays=radar,wind,fires,temperatures,crosshair`;
 }
 
 // ---------------------------------------------------------------------------
@@ -92,6 +93,15 @@ export function interpretarIndice(dados: RespostaRainViewer): IndiceRadar | null
 export function urlQuadro(host: string, caminho: string): string {
   return `${host}${caminho}/256/{z}/{x}/{y}/2/1_1.png`;
 }
+
+/**
+ * Nuvens ao vivo — imagem GeoColor do satélite GOES-Leste (NASA GIBS, keyless).
+ * O tempo "default" devolve sempre o quadro mais recente do disco (10 min),
+ * sem precisar de timestamp no cliente. O TMS Level7 limita o zoom nativo a 7
+ * — acima disso o MapLibre amplia o próprio tile (overzoom via maxzoom).
+ */
+export const URL_NUVENS_GOES =
+  "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GOES-East_ABI_GeoColor/default/default/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png";
 
 /**
  * Rótulo do quadro relativo a agora: "-30 min" (passado), "AGORA" (±2 min)
@@ -314,35 +324,42 @@ export class ControladorRadar {
   /** Cria (ou atualiza) fonte + camada raster ancorada abaixo das intel. */
   private apresentar(): void {
     if (this.destruido) return;
-    const map = this.map;
-    const url = this.urlAtual();
-    const fonte = map.getSource(ID_FONTE) as maplibregl.RasterTileSource | undefined;
-    if (fonte && map.getLayer(ID_CAMADA)) {
-      try {
-        fonte.setTiles([url]);
-      } catch {
-        this.recriarCamada(url);
+    // O intervalo de animação pode disparar no meio de uma troca de camada
+    // base — qualquer getLayer/addSource nesse instante derruba a tela
+    // ("Sinal perdido"). Engole o erro: o styledata reapresenta depois.
+    try {
+      const map = this.map;
+      const url = this.urlAtual();
+      const fonte = map.getSource(ID_FONTE) as maplibregl.RasterTileSource | undefined;
+      if (fonte && map.getLayer(ID_CAMADA)) {
+        try {
+          fonte.setTiles([url]);
+        } catch {
+          this.recriarCamada(url);
+        }
+        this.aoQuadro?.(this.infoAtual() as InfoQuadro);
+        return;
       }
-      this.aoQuadro?.(this.infoAtual() as InfoQuadro);
-      return;
-    }
-    this.removerCamada();
-    map.addSource(ID_FONTE, {
-      type: "raster",
-      tiles: [url],
-      tileSize: 256,
-      attribution: "Radar © RainViewer",
-    });
-    map.addLayer(
-      {
-        id: ID_CAMADA,
+      this.removerCamada();
+      map.addSource(ID_FONTE, {
         type: "raster",
-        source: ID_FONTE,
-        paint: { "raster-opacity": 0.7, "raster-fade-duration": 300 },
-      },
-      this.abaixoDe && map.getLayer(this.abaixoDe) ? this.abaixoDe : undefined,
-    );
-    this.aoQuadro?.(this.infoAtual() as InfoQuadro);
+        tiles: [url],
+        tileSize: 256,
+        attribution: "Radar © RainViewer",
+      });
+      map.addLayer(
+        {
+          id: ID_CAMADA,
+          type: "raster",
+          source: ID_FONTE,
+          paint: { "raster-opacity": 0.7, "raster-fade-duration": 300 },
+        },
+        this.abaixoDe && map.getLayer(this.abaixoDe) ? this.abaixoDe : undefined,
+      );
+      this.aoQuadro?.(this.infoAtual() as InfoQuadro);
+    } catch {
+      /* estilo em troca — o styledata reapresenta */
+    }
   }
 
   /** Fallback quando setTiles não está disponível: recria fonte e camada. */
@@ -364,9 +381,13 @@ export class ControladorRadar {
 
   private removerCamada(): void {
     if (this.destruido) return;
-    const map = this.map;
-    if (map.getLayer(ID_CAMADA)) map.removeLayer(ID_CAMADA);
-    if (map.getSource(ID_FONTE)) map.removeSource(ID_FONTE);
+    try {
+      const map = this.map;
+      if (map.getLayer(ID_CAMADA)) map.removeLayer(ID_CAMADA);
+      if (map.getSource(ID_FONTE)) map.removeSource(ID_FONTE);
+    } catch {
+      /* estilo em troca — nada a remover */
+    }
   }
 
   private mostrarQuadro(i: number): void {
@@ -392,6 +413,8 @@ export class ControladorRasterSimples {
   private url = "";
   private atribuicao = "";
   private opacidade = 0.7;
+  /** Zoom nativo máximo da fonte (overzoom do MapLibre acima disso). */
+  private maxZoom?: number;
   private ativo = false;
   /** True quando o mapa foi destruído — nenhuma operação de mapa é mais tentada. */
   private destruido = false;
@@ -409,12 +432,13 @@ export class ControladorRasterSimples {
   }
 
   /** Apresenta (ou atualiza) a camada com o template de tiles informado. */
-  ativar(url: string, atribuicao: string, opacidade = 0.7): void {
+  ativar(url: string, atribuicao: string, opacidade = 0.7, maxZoom?: number): void {
     if (this.destruido) return;
     this.ativo = true;
     this.url = url;
     this.atribuicao = atribuicao;
     this.opacidade = opacidade;
+    this.maxZoom = maxZoom;
     this.apresentar();
   }
 
@@ -436,38 +460,49 @@ export class ControladorRasterSimples {
 
   private apresentar(): void {
     if (this.destruido) return;
-    const map = this.map;
-    const fonte = map.getSource(this.id) as maplibregl.RasterTileSource | undefined;
-    if (fonte && map.getLayer(this.id)) {
-      try {
-        fonte.setTiles([this.url]);
-        return;
-      } catch {
-        this.remover();
+    // Mesma proteção do radar: o styledata de troca de base pode cruzar com
+    // esta apresentação — engole o erro e deixa o styledata refazer.
+    try {
+      const map = this.map;
+      const fonte = map.getSource(this.id) as maplibregl.RasterTileSource | undefined;
+      if (fonte && map.getLayer(this.id)) {
+        try {
+          fonte.setTiles([this.url]);
+          return;
+        } catch {
+          this.remover();
+        }
       }
-    }
-    this.remover();
-    map.addSource(this.id, {
-      type: "raster",
-      tiles: [this.url],
-      tileSize: 256,
-      attribution: this.atribuicao,
-    });
-    map.addLayer(
-      {
-        id: this.id,
+      this.remover();
+      map.addSource(this.id, {
         type: "raster",
-        source: this.id,
-        paint: { "raster-opacity": this.opacidade, "raster-fade-duration": 300 },
-      },
-      this.abaixoDe && map.getLayer(this.abaixoDe) ? this.abaixoDe : undefined,
-    );
+        tiles: [this.url],
+        tileSize: 256,
+        attribution: this.atribuicao,
+        maxzoom: this.maxZoom,
+      });
+      map.addLayer(
+        {
+          id: this.id,
+          type: "raster",
+          source: this.id,
+          paint: { "raster-opacity": this.opacidade, "raster-fade-duration": 300 },
+        },
+        this.abaixoDe && map.getLayer(this.abaixoDe) ? this.abaixoDe : undefined,
+      );
+    } catch {
+      /* estilo em troca — o styledata reapresenta */
+    }
   }
 
   private remover(): void {
     if (this.destruido) return;
-    const map = this.map;
-    if (map.getLayer(this.id)) map.removeLayer(this.id);
-    if (map.getSource(this.id)) map.removeSource(this.id);
+    try {
+      const map = this.map;
+      if (map.getLayer(this.id)) map.removeLayer(this.id);
+      if (map.getSource(this.id)) map.removeSource(this.id);
+    } catch {
+      /* estilo em troca — nada a remover */
+    }
   }
 }

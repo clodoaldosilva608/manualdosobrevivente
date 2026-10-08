@@ -13,10 +13,10 @@ import {
 import type { QuadroRadar } from "../src/lib/radar-clima";
 
 describe("urlZoomEarth", () => {
-  it("monta o deep link com a visão atual e os overlays do Manual", () => {
+  it("monta o deep link com a visão atual e os overlays do Manual (iguais ao Zoom Earth)", () => {
     const url = urlZoomEarth(-35.164266, -8.057354, 9.63);
     expect(url).toBe(
-      "https://zoom.earth/maps/satellite/#view=-8.0574,-35.1643,9.63z/overlays=radar,fires,crosshair",
+      "https://zoom.earth/maps/satellite/#view=-8.0574,-35.1643,9.63z/overlays=radar,wind,fires,temperatures,crosshair",
     );
   });
 

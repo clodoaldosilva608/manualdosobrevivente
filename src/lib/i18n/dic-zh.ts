@@ -478,13 +478,25 @@ export const DIC_ZH: Record<string, string> = {
   "Satélite ao vivo": "实时卫星",
   "Satélite e clima ao vivo": "实时卫星与天气",
   "Satélite, radar, vento e temperatura no Zoom Earth — abre no ponto atual do mapa. Radar de chuva por RainViewer e clima pontual por Open-Meteo.com, sem chave de API.":
-    "在 Zoom Earth 上查看卫星、雷达、风和气温 — 会打开到当前地图位置。降雨雷达来自 RainViewer，定点天气来自 Open-Meteo.com，无需 API 密钥。",
+    "卫星、雷达、风、气温、气旋和云图直接在地图上实时显示 — 按钮会在当前点位打开 Zoom Earth。雷达来自 RainViewer，气旋来自 NOAA NHC/JTWC，云图来自 NASA GIBS，天气来自 Open-Meteo，无需 API 密钥。",
   "Sem conexão ao radar — nova tentativa ao reabrir": "无法连接雷达 — 重新打开时将再次尝试",
   "Tempo indisponível": "天气信息不可用",
   Trovoada: "雷暴",
   "Trovoada com granizo": "雷暴伴冰雹",
   "Zoom Earth: radar, vento e temperatura": "Zoom Earth：雷达、风力和气温",
   "Vento (superfície)": "地面风",
+  "Ciclones e tempestades": "气旋与风暴",
+  "NOAA NHC/JTWC · posição, rota e projeção — Atlântico, Pacífico e Índico":
+    "NOAA NHC/JTWC · 位置、路径与预报 — 大西洋、太平洋和印度洋",
+  "Nuvens ao vivo (satélite)": "实时云图（卫星）",
+  "GOES-Leste (NASA GIBS) · imagem GeoColor a cada 10 minutos":
+    "GOES-East（NASA GIBS）· 每 10 分钟更新 GeoColor 图像",
+  "Open-Meteo · partículas animadas do vento a 10 m — sem chave":
+    "Open-Meteo · 10 米高度风场动画粒子 — 无需密钥",
+  "Open-Meteo · temperatura a 2 m em cores — sem chave": "Open-Meteo · 2 米高度气温着色 — 无需密钥",
+  "Ao vivo — {n} ciclone(s)": "实时 — {n} 个气旋",
+  "Conectando aos ciclones…": "正在连接气旋数据…",
+  "Sem conexão aos ciclones — nova tentativa ao reabrir": "气旋数据连接失败 — 重新打开时自动重试",
   "Temperatura (superfície)": "地面温度",
   "OpenWeatherMap · vento a 10 m com direção — requer chave grátis (Ajustes)":
     "OpenWeatherMap · 10 米高度风场含方向 — 需要免费密钥（设置）",

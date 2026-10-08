@@ -133,11 +133,13 @@ import {
 import {
   ControladorRadar,
   ControladorRasterSimples,
-  urlTileOwm,
   urlZoomEarth,
+  URL_NUVENS_GOES,
   type EstadoRadar,
   type InfoQuadro,
 } from "@/lib/radar-clima";
+import { ControladorCiclones, type EstadoCiclones } from "@/lib/ciclones";
+import { ControladorTemperatura, ControladorVento, type EstadoClima } from "@/lib/clima-openmeteo";
 import { CAMERAS } from "@/lib/intel-cameras";
 import { CABOS } from "@/lib/intel-cables";
 import { tleServidor } from "@/lib/satelite.functions";
@@ -489,10 +491,17 @@ export default function MapShell() {
   const [radarQuadro, setRadarQuadro] = useState<InfoQuadro | null>(null);
   const [radarAnimando, setRadarAnimando] = useState(true);
   const radarRef = useRef<ControladorRadar | null>(null);
-  // Vento e temperatura (OpenWeatherMap): camadas raster estáticas com chave
-  // do operador — nascer como o radar e sobrevivem às trocas de camada base.
-  const ventoRef = useRef<ControladorRasterSimples | null>(null);
-  const temperaturaRef = useRef<ControladorRasterSimples | null>(null);
+  // Ciclones tropicais (NHC/JTWC) — posição, rota, projeção e cone de erro.
+  const [ciclonesEstado, setCiclonesEstado] = useState<EstadoCiclones>("off");
+  const [ciclonesTotal, setCiclonesTotal] = useState(0);
+  const ciclonesRef = useRef<ControladorCiclones | null>(null);
+  // Nuvens ao vivo (GOES-Leste/NASA GIBS): raster estático tipo simples.
+  const nuvensRef = useRef<ControladorRasterSimples | null>(null);
+  // Vento e temperatura (Open-Meteo, sem chave): partículas + pontos coloridos.
+  const [ventoEstado, setVentoEstado] = useState<EstadoClima>("off");
+  const [tempEstado, setTempEstado] = useState<EstadoClima>("off");
+  const ventoRef = useRef<ControladorVento | null>(null);
+  const temperaturaRef = useRef<ControladorTemperatura | null>(null);
   const [navios, setNavios] = useState<IntelNavio[]>([]);
   const [statusAis, setStatusAis] = useState<StatusAis | "off">("off");
   // Satélites de observação (TLE do servidor + propagação SGP4 no aparelho).
@@ -724,44 +733,55 @@ export default function MapShell() {
       liberarSemTiles = window.setTimeout(() => setReady(true), 3000);
 
       // Após qualquer troca de estilo, reconstrói as camadas de inteligência
-      // e reapresenta desenho/waypoints/posição.
+      // e reapresenta desenho/waypoints/posição. O try/catch é a última linha
+      // de defesa do crash "Sinal perdido": durante a troca de camada base o
+      // estilo pode estar interim — qualquer getLayer/addSource nesse instante
+      // lançaria e derrubaria a tela inteira (barra de erro do __root).
       map.on("styledata", () => {
         if (cancelled) return;
-        sincronizarDesenho(map);
-        // A projeção vive no estilo: reapresenta após troca de camada base.
         try {
-          map.setProjection({ type: projecaoRef.current });
-        } catch {
-          /* estilo interim — a próxima emissão de styledata reaplica */
-        }
-        const s = intelRef.current;
-        sincronizarCamadasIntel(map, {
-          snapshot: s.snapshot,
-          conflitos: CONFLITOS,
-          noite: s.noite,
-          vis: s.vis,
-          voos: s.voos,
-          iss: s.iss,
-          alertas: s.alertas,
-          navios: s.navios,
-          cameras: CAMERAS,
-          cabos: CABOS,
-          noticias: s.noticias,
-          satelites: s.satelites,
-        });
-        // Radar raster (RainViewer): reapresenta abaixo das intel após a troca
-        // de camada base — a âncora é recalculada porque o estilo mudou.
-        if (radarRef.current) {
-          radarRef.current.abaixoDe = ancoraIntel(map);
-          radarRef.current.sincronizar();
-        }
-        // Vento e temperatura (OpenWeatherMap): mesmo contrato do radar —
-        // reapresentam sob as inteligências quando a base troca.
-        for (const ctl of [ventoRef.current, temperaturaRef.current]) {
-          if (ctl) {
-            ctl.abaixoDe = ancoraIntel(map);
-            ctl.sincronizar();
+          sincronizarDesenho(map);
+          // A projeção vive no estilo: reapresenta após troca de camada base.
+          try {
+            map.setProjection({ type: projecaoRef.current });
+          } catch {
+            /* estilo interim — a próxima emissão de styledata reaplica */
           }
+          const s = intelRef.current;
+          sincronizarCamadasIntel(map, {
+            snapshot: s.snapshot,
+            conflitos: CONFLITOS,
+            noite: s.noite,
+            vis: s.vis,
+            voos: s.voos,
+            iss: s.iss,
+            alertas: s.alertas,
+            navios: s.navios,
+            cameras: CAMERAS,
+            cabos: CABOS,
+            noticias: s.noticias,
+            satelites: s.satelites,
+          });
+          // Overlays de clima/raster: reapresentam abaixo das intel após a
+          // troca de camada base — a âncora é recalculada porque o estilo mudou.
+          if (radarRef.current) {
+            radarRef.current.abaixoDe = ancoraIntel(map);
+            radarRef.current.sincronizar();
+          }
+          if (nuvensRef.current) {
+            nuvensRef.current.abaixoDe = ancoraIntel(map);
+            nuvensRef.current.sincronizar();
+          }
+          if (temperaturaRef.current) {
+            temperaturaRef.current.abaixoDe = ancoraIntel(map);
+            temperaturaRef.current.sincronizar();
+          }
+          // Ciclones vivem no topo: recarregam direto (fontes recriadas).
+          ciclonesRef.current?.sincronizar();
+          // Vento em canvas não depende do estilo — nada a reapresentar.
+          ventoRef.current?.sincronizar();
+        } catch {
+          /* estilo interim — a próxima emissão de styledata refaz */
         }
       });
 
@@ -810,6 +830,8 @@ export default function MapShell() {
       // remover as camadas num mapa VIVO — depois de remove(), getLayer/addSource
       // derrubam a tela ("Cannot read properties of undefined (reading 'getLayer')").
       radarRef.current?.desativar();
+      ciclonesRef.current?.desativar();
+      nuvensRef.current?.desativar();
       ventoRef.current?.desativar();
       temperaturaRef.current?.desativar();
       mapRef.current?.remove();
@@ -847,38 +869,67 @@ export default function MapShell() {
   // Descarte do controlador na saída da tela (para timers e camada).
   useEffect(() => () => radarRef.current?.desativar(), []);
 
-  // Vento a 10 m (OpenWeatherMap): raster estático ligado pela camada de
-  // inteligência — exige chave pessoal (Ajustes) porque o serviço é pago.
+  // Ciclones tropicais (NHC/JTWC): liga/desliga pela camada de inteligência.
+  // O controlador nasce uma vez e sobrevive às trocas de camada base via
+  // styledata (sincronizar recarrega os dados para o estilo novo).
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    if (!ventoRef.current) ventoRef.current = new ControladorRasterSimples(map, "intel-vento");
-    const ctl = ventoRef.current;
+    if (!ciclonesRef.current) ciclonesRef.current = new ControladorCiclones(map);
+    const ctl = ciclonesRef.current;
+    ctl.aoEstado = (estado, total) => {
+      setCiclonesEstado(estado);
+      setCiclonesTotal(total);
+    };
+    if (intelVis.ciclones) void ctl.ativar();
+    else ctl.desativar();
+  }, [intelVis.ciclones, ready]);
+
+  // Descarte do controlador de ciclones na saída da tela.
+  useEffect(() => () => ciclonesRef.current?.desativar(), []);
+
+  // Nuvens ao vivo (GOES-Leste, NASA GIBS): raster simples, sem chave —
+  // imagem GeoColor do disco completo, sempre o quadro mais recente.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    if (!nuvensRef.current) nuvensRef.current = new ControladorRasterSimples(map, "intel-nuvens");
+    const ctl = nuvensRef.current;
     ctl.abaixoDe = ancoraIntel(map);
-    const chave = prefs.intelKeys.owm.trim();
-    if (intelVis.vento && chave) {
-      ctl.ativar(urlTileOwm("vento", chave), "Clima © OpenWeatherMap", 0.75);
+    if (intelVis.nuvens) {
+      ctl.ativar(URL_NUVENS_GOES, "Satélite © NOAA/NASA GIBS", 0.85, 7);
     } else {
       ctl.desativar();
     }
-  }, [intelVis.vento, prefs.intelKeys.owm, ready]);
+  }, [intelVis.nuvens, ready]);
 
-  // Temperatura a 2 m (OpenWeatherMap): mesmo padrão do vento, cores em vez
-  // de setas — a chave é a mesma cadastrada em Ajustes.
+  // Descarte das nuvens na saída da tela.
+  useEffect(() => () => nuvensRef.current?.desativar(), []);
+
+  // Vento a 10 m (Open-Meteo, sem chave): partículas animadas em canvas por
+  // cima do mapa — a grade é amostrada do retângulo visível e interpolada.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !containerRef.current) return;
+    if (!ventoRef.current) ventoRef.current = new ControladorVento(map, containerRef.current);
+    const ctl = ventoRef.current;
+    ctl.aoEstado = (e) => setVentoEstado(e);
+    if (intelVis.vento) ctl.ativar();
+    else ctl.desativar();
+  }, [intelVis.vento, ready]);
+
+  // Temperatura a 2 m (Open-Meteo, sem chave): pontos coloridos com rótulo —
+  // mesma grade e mesma fonte do vento, ancorada sob as inteligências.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    if (!temperaturaRef.current)
-      temperaturaRef.current = new ControladorRasterSimples(map, "intel-temperatura");
+    if (!temperaturaRef.current) temperaturaRef.current = new ControladorTemperatura(map);
     const ctl = temperaturaRef.current;
     ctl.abaixoDe = ancoraIntel(map);
-    const chave = prefs.intelKeys.owm.trim();
-    if (intelVis.temperatura && chave) {
-      ctl.ativar(urlTileOwm("temperatura", chave), "Clima © OpenWeatherMap", 0.65);
-    } else {
-      ctl.desativar();
-    }
-  }, [intelVis.temperatura, prefs.intelKeys.owm, ready]);
+    ctl.aoEstado = (e) => setTempEstado(e);
+    if (intelVis.temperatura) ctl.ativar();
+    else ctl.desativar();
+  }, [intelVis.temperatura, ready]);
 
   // Descarte das camadas de clima (vento/temperatura) na saída da tela.
   useEffect(
@@ -2573,27 +2624,24 @@ export default function MapShell() {
                                 : t("Conectando ao radar…")}
                           </div>
                         )}
+                        {linha.id === "ciclones" && intelVis.ciclones && (
+                          <div
+                            className="mono mt-1 text-[10px] text-tactical-orange"
+                            data-test="ciclones-status"
+                          >
+                            {ciclonesEstado === "ativo"
+                              ? t("Ao vivo — {n} ciclone(s)", { n: formatInteger(ciclonesTotal) })
+                              : ciclonesEstado === "erro"
+                                ? t("Sem conexão aos ciclones — nova tentativa ao reabrir")
+                                : t("Conectando aos ciclones…")}
+                          </div>
+                        )}
                       </div>
                       <Switch
                         checked={intelVis[linha.id]}
                         disabled={desabilitada}
                         aria-label={t("Ativar camada {n}", { n: linha.nome })}
                         onCheckedChange={(v) => {
-                          // Vento/temperatura consomem a cota da chave pessoal:
-                          // sem chave cadastrada o alternador não liga — em vez
-                          // de falhar em silêncio, aponta o caminho (Ajustes).
-                          if (
-                            (linha.id === "vento" || linha.id === "temperatura") &&
-                            v &&
-                            !prefs.intelKeys.owm.trim()
-                          ) {
-                            toast.info(t("Camada requer chave OpenWeatherMap"), {
-                              description: t(
-                                "Cadastre grátis em Ajustes — Chaves de inteligência.",
-                              ),
-                            });
-                            return;
-                          }
                           updatePrefs({ intelVis: { ...intelVis, [linha.id]: v } });
                         }}
                       />
@@ -2628,7 +2676,7 @@ export default function MapShell() {
               </Button>
               <p className="mt-2 text-xs text-muted-foreground">
                 {t(
-                  "Satélite, radar, vento e temperatura no Zoom Earth — abre no ponto atual do mapa. Radar de chuva por RainViewer e clima pontual por Open-Meteo.com, sem chave de API.",
+                  "Satélite, radar, vento, temperatura, ciclones e nuvens ao vivo no próprio mapa — o botão abre o Zoom Earth no ponto atual. Radar por RainViewer, ciclones por NOAA NHC/JTWC, nuvens por NASA GIBS e clima por Open-Meteo, sem chave de API.",
                 )}
               </p>
             </section>

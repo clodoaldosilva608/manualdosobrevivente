@@ -490,7 +490,7 @@ export const DIC_EN: Record<string, string> = {
   "Satélite ao vivo": "Live satellite",
   "Satélite e clima ao vivo": "Live satellite and weather",
   "Satélite, radar, vento e temperatura no Zoom Earth — abre no ponto atual do mapa. Radar de chuva por RainViewer e clima pontual por Open-Meteo.com, sem chave de API.":
-    "Satellite, radar, wind and temperature on Zoom Earth — opens at the current map point. Rain radar by RainViewer and point weather by Open-Meteo.com, no API key needed.",
+    "Satellite, radar, wind, temperature, cyclones and clouds live on the map itself — the button opens Zoom Earth at the current point. Radar by RainViewer, cyclones by NOAA NHC/JTWC, clouds by NASA GIBS and weather by Open-Meteo, no API key needed.",
   "Sem conexão ao radar — nova tentativa ao reabrir":
     "No radar connection — will retry when reopened",
   "Tempo indisponível": "Weather unavailable",
@@ -498,6 +498,20 @@ export const DIC_EN: Record<string, string> = {
   "Trovoada com granizo": "Thunderstorm with hail",
   "Zoom Earth: radar, vento e temperatura": "Zoom Earth: radar, wind and temperature",
   "Vento (superfície)": "Surface wind",
+  "Ciclones e tempestades": "Cyclones and storms",
+  "NOAA NHC/JTWC · posição, rota e projeção — Atlântico, Pacífico e Índico":
+    "NOAA NHC/JTWC · position, track and forecast — Atlantic, Pacific and Indian",
+  "Nuvens ao vivo (satélite)": "Live clouds (satellite)",
+  "GOES-Leste (NASA GIBS) · imagem GeoColor a cada 10 minutos":
+    "GOES-East (NASA GIBS) · GeoColor imagery every 10 minutes",
+  "Open-Meteo · partículas animadas do vento a 10 m — sem chave":
+    "Open-Meteo · animated 10 m wind particles — no key needed",
+  "Open-Meteo · temperatura a 2 m em cores — sem chave":
+    "Open-Meteo · 2 m temperature in colors — no key needed",
+  "Ao vivo — {n} ciclone(s)": "Live — {n} cyclone(s)",
+  "Conectando aos ciclones…": "Connecting to cyclones…",
+  "Sem conexão aos ciclones — nova tentativa ao reabrir":
+    "No cyclone connection — will retry when reopened",
   "Temperatura (superfície)": "Surface temperature",
   "OpenWeatherMap · vento a 10 m com direção — requer chave grátis (Ajustes)":
     "OpenWeatherMap · 10 m wind with direction — requires free key (Settings)",

@@ -489,7 +489,7 @@ export const DIC_JA: Record<string, string> = {
   "Satélite ao vivo": "ライブ衛星",
   "Satélite e clima ao vivo": "ライブ衛星と天気",
   "Satélite, radar, vento e temperatura no Zoom Earth — abre no ponto atual do mapa. Radar de chuva por RainViewer e clima pontual por Open-Meteo.com, sem chave de API.":
-    "Zoom Earth で衛星・レーダー・風・気温を表示 — 現在の地図位置で開きます。雨雲レーダーは RainViewer、定点天気は Open-Meteo.com 提供、API キー不要。",
+    "衛星・レーダー・風・気温・サイクロン・雲をマップ上でライブ表示 — ボタンは現在地点で Zoom Earth を開きます。レーダーは RainViewer、サイクロンは NOAA NHC/JTWC、雲は NASA GIBS、天気は Open-Meteo、キー不要。",
   "Sem conexão ao radar — nova tentativa ao reabrir":
     "レーダーに接続できません — 再度開くと再試行します",
   "Tempo indisponível": "天気情報なし",
@@ -497,6 +497,20 @@ export const DIC_JA: Record<string, string> = {
   "Trovoada com granizo": "雷雨（ひょう付き）",
   "Zoom Earth: radar, vento e temperatura": "Zoom Earth：レーダー・風・気温",
   "Vento (superfície)": "地上風",
+  "Ciclones e tempestades": "サイクロンと嵐",
+  "NOAA NHC/JTWC · posição, rota e projeção — Atlântico, Pacífico e Índico":
+    "NOAA NHC/JTWC · 位置・経路・進路予測 — 大西洋・太平洋・インド洋",
+  "Nuvens ao vivo (satélite)": "リアルタイム雲画像（衛星）",
+  "GOES-Leste (NASA GIBS) · imagem GeoColor a cada 10 minutos":
+    "GOES-East（NASA GIBS）· 10分ごとの GeoColor 画像",
+  "Open-Meteo · partículas animadas do vento a 10 m — sem chave":
+    "Open-Meteo · 地上 10 m の風のアニメーション粒子 — キー不要",
+  "Open-Meteo · temperatura a 2 m em cores — sem chave":
+    "Open-Meteo · 地上 2 m の気温を色分け表示 — キー不要",
+  "Ao vivo — {n} ciclone(s)": "ライブ — {n} 個のサイクロン",
+  "Conectando aos ciclones…": "サイクロンに接続中…",
+  "Sem conexão aos ciclones — nova tentativa ao reabrir":
+    "サイクロンに接続できません — 再度開くと再試行します",
   "Temperatura (superfície)": "地上気温",
   "OpenWeatherMap · vento a 10 m com direção — requer chave grátis (Ajustes)":
     "OpenWeatherMap · 10 m の風と方向 — 無料キーが必要（設定）",

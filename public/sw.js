@@ -10,7 +10,7 @@
  * Bump de versão: altere VERSAO ao mudar a lógica deste arquivo — os caches
  * antigos são apagados na ativação.
  */
-const VERSAO = "v32";
+const VERSAO = "v33";
 const CACHE_SHELL = `shell-${VERSAO}`;
 const CACHE_ASSETS = `assets-${VERSAO}`;
 const CACHE_RUNTIME = `runtime-${VERSAO}`;
@@ -23,7 +23,14 @@ const BANNER_CONVITE_URLS = ["/banner-convite.png"];
 const MAX_ASSETS = 120;
 const MAX_RUNTIME = 400;
 
-const HOSTS_DE_TILES = ["tile.opentopomap.org", "openstreetmap.org", "server.arcgisonline.com"];
+const HOSTS_DE_TILES = [
+  "tile.opentopomap.org",
+  "openstreetmap.org",
+  "server.arcgisonline.com",
+  // Imagem GeoColor do GOES-Leste (nuvens ao vivo): URL estável "default" —
+  // o último quadro visto fica disponível offline.
+  "gibs.earthdata.nasa.gov",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

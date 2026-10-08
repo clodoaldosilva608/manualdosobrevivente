@@ -54,7 +54,7 @@ describe("Satélite ao vivo (Zoom Earth), radar de chuva e mira central", () => 
 
     // Camada "Radar de chuva" presente entre as inteligências (17 alternadores com vento/temperatura).
     const alternadores = page.getByRole("switch", { name: /^Ativar camada / });
-    expect(await alternadores.count()).toBe(17);
+    expect(await alternadores.count()).toBe(19);
 
     // Liga o radar: chip HUD nasce (mobile no fluxo superior, desktop oculto).
     await page.getByRole("switch", { name: "Ativar camada Radar de chuva" }).click();

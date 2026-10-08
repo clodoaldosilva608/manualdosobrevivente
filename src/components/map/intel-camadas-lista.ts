@@ -66,6 +66,12 @@ export const LINHAS_INTEL: LinhaIntel[] = [
   },
   { id: "noite", nome: "Dia e noite", dica: "Terminador solar em tempo real", cor: "#94A3B8" },
   {
+    id: "radar",
+    nome: "Radar de chuva",
+    dica: "RainViewer · precipitação das últimas 2 horas + previsão animada",
+    cor: "#60A5FA",
+  },
+  {
     id: "navios",
     nome: "Navios ao vivo (AIS)",
     dica: "AISStream.io · transponders ao redor do mapa (chave do servidor ou pessoal em Ajustes)",

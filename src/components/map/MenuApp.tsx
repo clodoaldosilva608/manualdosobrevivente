@@ -17,6 +17,7 @@ import {
   Backpack,
   BookOpen,
   ChevronDown,
+  CloudSun,
   Compass,
   DownloadCloud,
   Eraser,
@@ -59,7 +60,8 @@ export type AcaoMenuMapa =
   | "elementos"
   | "alertas"
   | "rota"
-  | "noturno";
+  | "noturno"
+  | "zoomearth";
 export type AcaoMenuOsiris =
   "visao" | "hub" | "boletim" | "camadas" | "astro" | "iss" | "ip" | "dominio" | "chaves";
 
@@ -117,6 +119,12 @@ const FERRAMENTAS: Array<ItemMenu & { id: AcaoMenuMapa }> = [
   { id: "measure", rotulo: "Medir", dica: "Distância e área no mapa", icone: Ruler },
   { id: "marcador", rotulo: "Marcador", dica: "Marcar waypoint no mapa", icone: MapPin },
   { id: "bussola", rotulo: "Bússola", dica: "Orientação e declinação", icone: Compass },
+  {
+    id: "zoomearth",
+    rotulo: "Satélite ao vivo",
+    dica: "Zoom Earth: radar, vento e temperatura",
+    icone: CloudSun,
+  },
   {
     id: "noturno",
     rotulo: "Modo noturno",

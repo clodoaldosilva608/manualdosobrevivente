@@ -466,4 +466,37 @@ export const DIC_ES: Record<string, string> = {
   /* Abertura em vídeo (SplashAbertura) */
   Pular: "Saltar",
   "Pular abertura": "Saltar la apertura",
+  /* Satélite ao vivo (Zoom Earth), radar de chuva e mira central */
+  "Abrir Zoom Earth no ponto atual": "Abrir Zoom Earth en el punto actual",
+  "Animar radar": "Animar radar",
+  "Ao vivo — {n} quadros": "En vivo — {n} cuadros",
+  "Céu limpo": "Cielo despejado",
+  "Chuva congelante": "Lluvia helada",
+  "Chuva forte": "Lluvia fuerte",
+  "Chuva fraca": "Lluvia débil",
+  "Chuva moderada": "Lluvia moderada",
+  "Conectando ao radar…": "Conectando al radar…",
+  "Cruz fixa no centro do mapa para leitura de coordenadas":
+    "Cruz fija en el centro del mapa para lectura de coordenadas",
+  Encoberto: "Cubierto",
+  Garoa: "Llovizna",
+  "Mira central": "Mira central",
+  Neblina: "Neblina",
+  Neve: "Nieve",
+  "Parcialmente nublado": "Parcialmente nublado",
+  "Pausar animação do radar": "Pausar animación del radar",
+  "Predominantemente limpo": "Predominantemente despejado",
+  "Radar de chuva": "Radar de lluvia",
+  "RainViewer · precipitação das últimas 2 horas + previsão animada":
+    "RainViewer · precipitación de las últimas 2 horas + previsión animada",
+  "Satélite ao vivo": "Satélite en vivo",
+  "Satélite e clima ao vivo": "Satélite y clima en vivo",
+  "Satélite, radar, vento e temperatura no Zoom Earth — abre no ponto atual do mapa. Radar de chuva por RainViewer e clima pontual por Open-Meteo.com, sem chave de API.":
+    "Satélite, radar, viento y temperatura en Zoom Earth — se abre en el punto actual del mapa. Radar de lluvia por RainViewer y clima puntual por Open-Meteo.com, sin clave de API.",
+  "Sem conexão ao radar — nova tentativa ao reabrir":
+    "Sin conexión al radar — se reintentará al reabrir",
+  "Tempo indisponível": "Tiempo no disponible",
+  Trovoada: "Tormenta",
+  "Trovoada com granizo": "Tormenta con granizo",
+  "Zoom Earth: radar, vento e temperatura": "Zoom Earth: radar, viento y temperatura",
 };

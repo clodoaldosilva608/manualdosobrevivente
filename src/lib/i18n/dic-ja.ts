@@ -463,4 +463,37 @@ export const DIC_JA: Record<string, string> = {
   /* Abertura em vídeo (SplashAbertura) */
   Pular: "スキップ",
   "Pular abertura": "オープニングをスキップ",
+  /* Satélite ao vivo (Zoom Earth), radar de chuva e mira central */
+  "Abrir Zoom Earth no ponto atual": "現在の地点で Zoom Earth を開く",
+  "Animar radar": "レーダーを再生",
+  "Ao vivo — {n} quadros": "ライブ — {n} コマ",
+  "Céu limpo": "快晴",
+  "Chuva congelante": "着氷性の雨",
+  "Chuva forte": "強い雨",
+  "Chuva fraca": "弱い雨",
+  "Chuva moderada": "適度な雨",
+  "Conectando ao radar…": "レーダーに接続中…",
+  "Cruz fixa no centro do mapa para leitura de coordenadas":
+    "座標を読み取るための地図中央の固定十字",
+  Encoberto: "曇天",
+  Garoa: "霧雨",
+  "Mira central": "中央レティクル",
+  Neblina: "霧",
+  Neve: "雪",
+  "Parcialmente nublado": "所により曇り",
+  "Pausar animação do radar": "レーダーを一時停止",
+  "Predominantemente limpo": "おおむね晴れ",
+  "Radar de chuva": "雨雲レーダー",
+  "RainViewer · precipitação das últimas 2 horas + previsão animada":
+    "RainViewer · 過去2時間の降水 + アニメーション予報",
+  "Satélite ao vivo": "ライブ衛星",
+  "Satélite e clima ao vivo": "ライブ衛星と天気",
+  "Satélite, radar, vento e temperatura no Zoom Earth — abre no ponto atual do mapa. Radar de chuva por RainViewer e clima pontual por Open-Meteo.com, sem chave de API.":
+    "Zoom Earth で衛星・レーダー・風・気温を表示 — 現在の地図位置で開きます。雨雲レーダーは RainViewer、定点天気は Open-Meteo.com 提供、API キー不要。",
+  "Sem conexão ao radar — nova tentativa ao reabrir":
+    "レーダーに接続できません — 再度開くと再試行します",
+  "Tempo indisponível": "天気情報なし",
+  Trovoada: "雷雨",
+  "Trovoada com granizo": "雷雨（ひょう付き）",
+  "Zoom Earth: radar, vento e temperatura": "Zoom Earth：レーダー・風・気温",
 };

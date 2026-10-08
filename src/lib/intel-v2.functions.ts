@@ -7,6 +7,7 @@
  * - GDACS — alertas oficiais de desastre (UE/ONU, 5 tipos de evento);
  * - GDELT DOC — manchetes globais de emergência (24 h);
  * - Open-Meteo Air Quality — qualidade do ar pontual.
+ * - Open-Meteo Forecast — clima pontual (temperatura, vento, WMO) do centro do mapa.
  *
  * Todas passam por cache em memória (globalThis) com fallback para os
  * últimos dados bons. O cliente nunca acessa as fontes diretamente,
@@ -14,8 +15,16 @@
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import type { IntelAlerta, IntelAr, IntelIss, IntelNoticia, IntelVoo } from "./intel.types";
+import type {
+  IntelAlerta,
+  IntelAr,
+  IntelClima,
+  IntelIss,
+  IntelNoticia,
+  IntelVoo,
+} from "./intel.types";
 import { mapearNoticias, urlGdelt, VARIANTES_GDELT, type GdeltDoc } from "./noticias-gdelt";
+import { cardeal, rotuloWMO } from "./radar-clima";
 
 /** Busca JSON com tempo limite para não travar a resposta do servidor. */
 async function buscarJson<T>(url: string, timeoutMs = 12_000): Promise<T> {
@@ -500,6 +509,63 @@ export const fetchAr = createServerFn({ method: "GET" })
         classificacao,
         nivel,
         medidoEm: c?.time ?? "",
+      };
+    });
+  });
+
+// ---------------------------------------------------------------------------
+// Clima pontual (Open-Meteo Forecast) — temperatura/vento do centro do mapa
+// ---------------------------------------------------------------------------
+
+const TTL_CLIMA = 900_000;
+
+const ClimaInputSchema = z.object({
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+});
+
+interface ClimaResposta {
+  current?: {
+    time?: string;
+    temperature_2m?: number;
+    relative_humidity_2m?: number;
+    apparent_temperature?: number;
+    precipitation?: number;
+    weather_code?: number;
+    wind_speed_10m?: number;
+    wind_direction_10m?: number;
+    wind_gusts_10m?: number;
+    cloud_cover?: number;
+  };
+}
+
+export const fetchClima = createServerFn({ method: "GET" })
+  .inputValidator((input) => ClimaInputSchema.parse(input))
+  .handler(async ({ data }): Promise<IntelClima | null> => {
+    const chave = `clima:${data.lat.toFixed(1)}:${data.lng.toFixed(1)}`;
+    return comCache<IntelClima | null>(chave, TTL_CLIMA, async () => {
+      const url =
+        `https://api.open-meteo.com/v1/forecast?latitude=${data.lat.toFixed(3)}` +
+        `&longitude=${data.lng.toFixed(3)}` +
+        `&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,` +
+        `weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,cloud_cover&timezone=UTC`;
+      const r = await buscarJson<ClimaResposta>(url, 10_000);
+      const c = r.current;
+      if (!c || typeof c.temperature_2m !== "number") return null;
+      const dir = typeof c.wind_direction_10m === "number" ? c.wind_direction_10m : 0;
+      return {
+        temperatura: Math.round(c.temperature_2m * 10) / 10,
+        aparente: Math.round((c.apparent_temperature ?? c.temperature_2m) * 10) / 10,
+        umidade: Math.round(c.relative_humidity_2m ?? 0),
+        precipitacao: Math.round((c.precipitation ?? 0) * 10) / 10,
+        codigoWmo: typeof c.weather_code === "number" ? c.weather_code : -1,
+        rotulo: rotuloWMO(typeof c.weather_code === "number" ? c.weather_code : NaN),
+        ventoKmh: Math.round(c.wind_speed_10m ?? 0),
+        rajadaKmh: Math.round(c.wind_gusts_10m ?? 0),
+        direcaoGraus: dir,
+        direcao: cardeal(dir),
+        nuvens: Math.round(c.cloud_cover ?? 0),
+        medidoEm: c.time ?? "",
       };
     });
   });

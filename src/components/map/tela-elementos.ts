@@ -23,6 +23,8 @@ export interface TelaVisibilidade {
   controlesMapa: boolean;
   /** Redline: letreiro inferior com o resumo do boletim e da bússola. */
   redline: boolean;
+  /** Mira central: cruz fixa no centro do mapa (leitura de coordenadas). */
+  mira: boolean;
 }
 
 export const TELA_VIS_PADRAO: TelaVisibilidade = {
@@ -34,6 +36,7 @@ export const TELA_VIS_PADRAO: TelaVisibilidade = {
   waypoints: true,
   controlesMapa: true,
   redline: true,
+  mira: false,
 };
 
 export interface LinhaTela {
@@ -79,5 +82,10 @@ export const LINHAS_TELA: LinhaTela[] = [
     id: "redline",
     nome: "Redline do boletim",
     dica: "Letreiro inferior com bússola, tempo, astros, mar e coordenadas",
+  },
+  {
+    id: "mira",
+    nome: "Mira central",
+    dica: "Cruz fixa no centro do mapa para leitura de coordenadas",
   },
 ];

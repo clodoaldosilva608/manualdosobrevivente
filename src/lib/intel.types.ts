@@ -75,6 +75,8 @@ export interface IntelVisibilidade {
   conflitos: boolean;
   noite: boolean;
   incendios: boolean;
+  /** Radar de chuva ao vivo (RainViewer) — precipitação + nowcast. */
+  radar: boolean;
   /** Voos ao vivo (ADS-B) — militares globais + civis perto do centro. */
   voos: boolean;
   /** ISS + satélites de observação (TLE/Celestrak propagado no aparelho). */
@@ -101,6 +103,7 @@ export const INTEL_VIS_PADRAO: IntelVisibilidade = {
   conflitos: true,
   noite: false,
   incendios: true,
+  radar: false,
   voos: true,
   satelites: true,
   alertas: true,
@@ -207,6 +210,34 @@ export interface IntelAr {
   ozonio: number;
   classificacao: string;
   nivel: "boa" | "razoavel" | "moderada" | "pobre" | "muito-pobre" | "extrema";
+  medidoEm: string;
+}
+
+/** Clima pontual no centro do mapa (Open-Meteo Forecast). */
+export interface IntelClima {
+  /** Temperatura do ar a 2 m em °C. */
+  temperatura: number;
+  /** Sensação térmica em °C. */
+  aparente: number;
+  /** Umidade relativa em %. */
+  umidade: number;
+  /** Precipitação acumulada na última hora em mm. */
+  precipitacao: number;
+  /** Código WMO bruto (para quem quiser reclassificar). */
+  codigoWmo: number;
+  /** Rótulo do tempo em pt-BR — chave de tradução dos dicionários. */
+  rotulo: string;
+  /** Vento a 10 m em km/h. */
+  ventoKmh: number;
+  /** Rajada máxima em km/h. */
+  rajadaKmh: number;
+  /** Direção do vento em graus verdadeiros. */
+  direcaoGraus: number;
+  /** Direção cardeal (N, NE, L…). */
+  direcao: string;
+  /** Nuvens totais em %. */
+  nuvens: number;
+  /** ISO 8601 UTC da leitura. */
   medidoEm: string;
 }
 

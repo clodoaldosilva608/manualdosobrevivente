@@ -120,6 +120,16 @@ const CAMADAS_COM_POPUP = CAMADAS_EM_ORDEM.filter(
   (id) => !id.endsWith("-label") && id !== CAMADA_ISS_PEGADA && id !== CAMADA_ESTREITO_ANEL,
 );
 
+/**
+ * Primeira camada de inteligência presente no estilo — usada como âncora
+ * "abaixo de" por overlays raster externos (radar de chuva), que precisam
+ * ficar sobre a camada base mas sob todos os marcadores de inteligência.
+ */
+export function ancoraIntel(map: ML): string | undefined {
+  for (const id of CAMADAS_EM_ORDEM) if (map.getLayer(id)) return id;
+  return undefined;
+}
+
 function fonteVazia() {
   return { type: "FeatureCollection" as const, features: [] };
 }

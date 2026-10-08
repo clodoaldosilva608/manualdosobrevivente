@@ -24,6 +24,9 @@ import {
   Menu as MenuIcon,
   NotebookPen,
   Siren,
+  ExternalLink,
+  Pause,
+  Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -104,6 +107,7 @@ import {
   fetchAlertas,
   fetchNoticias,
   fetchAr,
+  fetchClima,
 } from "@/lib/intel-v2.functions";
 import { conectarAis, type StatusAis } from "@/lib/ais";
 import { buscarNoticiasNavegador } from "@/lib/noticias-gdelt";
@@ -112,6 +116,7 @@ import { poligonoNoturno } from "@/lib/intel-night";
 import type {
   IntelAlerta,
   IntelAr,
+  IntelClima,
   IntelIss,
   IntelNavio,
   IntelNoticia,
@@ -120,7 +125,17 @@ import type {
   IntelVisibilidade,
   IntelVoo,
 } from "@/lib/intel.types";
-import { sincronizarCamadasIntel, registrarPopupsIntel } from "@/components/map/intel-layers";
+import {
+  sincronizarCamadasIntel,
+  registrarPopupsIntel,
+  ancoraIntel,
+} from "@/components/map/intel-layers";
+import {
+  ControladorRadar,
+  urlZoomEarth,
+  type EstadoRadar,
+  type InfoQuadro,
+} from "@/lib/radar-clima";
 import { CAMERAS } from "@/lib/intel-cameras";
 import { CABOS } from "@/lib/intel-cables";
 import { tleServidor } from "@/lib/satelite.functions";
@@ -466,6 +481,12 @@ export default function MapShell() {
   const [alertas, setAlertas] = useState<IntelAlerta[] | null>(null);
   const [noticias, setNoticias] = useState<IntelNoticia[] | null>(null);
   const [ar, setAr] = useState<IntelAr | null>(null);
+  // Radar de chuva (RainViewer) e clima pontual do centro (Open-Meteo).
+  const [clima, setClima] = useState<IntelClima | null>(null);
+  const [radarEstado, setRadarEstado] = useState<EstadoRadar>("off");
+  const [radarQuadro, setRadarQuadro] = useState<InfoQuadro | null>(null);
+  const [radarAnimando, setRadarAnimando] = useState(true);
+  const radarRef = useRef<ControladorRadar | null>(null);
   const [navios, setNavios] = useState<IntelNavio[]>([]);
   const [statusAis, setStatusAis] = useState<StatusAis | "off">("off");
   // Satélites de observação (TLE do servidor + propagação SGP4 no aparelho).
@@ -494,6 +515,7 @@ export default function MapShell() {
   const callAlertas = useServerFn(fetchAlertas);
   const callNoticias = useServerFn(fetchNoticias);
   const callAr = useServerFn(fetchAr);
+  const callClima = useServerFn(fetchClima);
   const callChaves = useServerFn(chavesServidor);
 
   // No modo Osiris o mapa usa o estilo Tático Escuro como base.
@@ -719,6 +741,12 @@ export default function MapShell() {
           noticias: s.noticias,
           satelites: s.satelites,
         });
+        // Radar raster (RainViewer): reapresenta abaixo das intel após a troca
+        // de camada base — a âncora é recalculada porque o estilo mudou.
+        if (radarRef.current) {
+          radarRef.current.abaixoDe = ancoraIntel(map);
+          radarRef.current.sincronizar();
+        }
       });
 
       map.on("load", () => {
@@ -778,6 +806,36 @@ export default function MapShell() {
       /* estilo ainda não assentado — o styledata reaplica */
     }
   }, [projecao, ready]);
+
+  // Radar de chuva (RainViewer): liga/desliga com a camada de inteligência.
+  // O controlador nasce uma vez e sobrevive às trocas de camada base via
+  // styledata (sincronizar). O âncora é recalculada a cada ativação.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    if (!radarRef.current) radarRef.current = new ControladorRadar(map);
+    const ctl = radarRef.current;
+    ctl.abaixoDe = ancoraIntel(map);
+    ctl.aoEstado = (e) => setRadarEstado(e);
+    ctl.aoQuadro = (info) => setRadarQuadro(info);
+    if (intelVis.radar) void ctl.ativar();
+    else ctl.desativar();
+  }, [intelVis.radar, ready]);
+
+  // Descarte do controlador na saída da tela (para timers e camada).
+  useEffect(() => () => radarRef.current?.desativar(), []);
+
+  // Clima pontual do centro (Open-Meteo): só consulta com o radar ligado,
+  // com atraso após o mapa parar de se mover (debounce pelos timers).
+  useEffect(() => {
+    if (!ready || modoMapa !== "tatico" || !intelVis.radar) return;
+    const id = window.setTimeout(() => {
+      void callClima({ data: { lat: center[1], lng: center[0] } })
+        .then((c) => setClima(c))
+        .catch(() => {});
+    }, 1200);
+    return () => window.clearTimeout(id);
+  }, [ready, modoMapa, intelVis.radar, center, callClima]);
 
   // Redimensionamento: garante que o mapa acompanhe o container em qualquer tela
   useEffect(() => {
@@ -1579,6 +1637,48 @@ export default function MapShell() {
     toast.success("Trilha apagada");
   };
 
+  // Chip HUD do radar de chuva + clima pontual: mobile entra no fluxo vertical
+  // do HUD superior (filhos nunca se sobrepõem); desktop fica sob o painel de
+  // posição, na mesma coluna — nenhuma posição absoluta nova, sem risco de
+  // cobrir bússola, rail ou redline.
+  const chipRadar = intelVis.radar && (
+    <div className="hud-panel rounded-md px-3 py-2" data-test="chip-radar">
+      <div className="flex items-center justify-between gap-2">
+        <span className="mono text-[10px] uppercase tracking-widest text-tactical-orange">
+          {t("Radar de chuva")}
+        </span>
+        <button
+          className="glove-tap text-muted-foreground hover:text-foreground"
+          aria-label={radarAnimando ? t("Pausar animação do radar") : t("Animar radar")}
+          onClick={() => setRadarAnimando(radarRef.current?.alternarAnimacao() ?? true)}
+        >
+          {radarAnimando ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+        </button>
+      </div>
+      <div className="mono mt-0.5 text-xs" data-test="radar-quadro">
+        {radarEstado === "ativo"
+          ? `${radarQuadro?.rotulo ?? "—"} · ${
+              radarQuadro
+                ? `${radarQuadro.atual + 1}/${formatInteger(radarQuadro.total)}`
+                : t("Conectando ao radar…")
+            }`
+          : radarEstado === "erro"
+            ? t("Sem conexão ao radar — nova tentativa ao reabrir")
+            : t("Conectando ao radar…")}
+      </div>
+      {clima && (
+        <div
+          className="mono mt-0.5 text-[11px] text-muted-foreground"
+          title="Weather data by Open-Meteo.com"
+          data-test="chip-clima"
+        >
+          {formatNumber(clima.temperatura, 1)}°C · {formatNumber(clima.ventoKmh, 0)} km/h{" "}
+          {clima.direcao} · {t(clima.rotulo)}
+        </div>
+      )}
+    </div>
+  );
+
   // Boletim de inteligência: garante dados frescos ao abrir o painel.
   const carregarBoletim = useCallback(() => {
     setBoletimEm(Date.now());
@@ -1776,6 +1876,15 @@ export default function MapShell() {
         irTatico();
         setOpenSheet("rota");
         break;
+      case "zoomearth": {
+        // Abre o Zoom Earth voando até o ponto atual do mapa (deep link).
+        window.open(
+          urlZoomEarth(center[0], center[1], mapRef.current?.getZoom() ?? 9),
+          "_blank",
+          "noopener",
+        );
+        break;
+      }
       case "noturno":
         // Modo noturno é global — não devolve ao tático.
         updatePrefs({ visaoNoturna: !prefs.visaoNoturna });
@@ -1910,6 +2019,7 @@ export default function MapShell() {
                 }}
               />
             )}
+            {chipRadar}
             {(tool === "measure-line" || tool === "measure-area") && (
               <LeituraMedicao tool={tool} lineLen={lineLen} areaFmt={areaFmt} onClear={clearDraw} />
             )}
@@ -1959,6 +2069,7 @@ export default function MapShell() {
                 }}
               />
             )}
+            {chipRadar && <div className="mt-2">{chipRadar}</div>}
           </div>
           {/* Banner de navegação desktop: centro superior, entre os painéis
               da esquerda e o alternador/hambúrguer da direita. */}
@@ -1981,6 +2092,31 @@ export default function MapShell() {
           {(tool === "measure-line" || tool === "measure-area") && (
             <div className="absolute left-1/2 top-32 z-10 hidden -translate-x-1/2 md:block">
               <LeituraMedicao tool={tool} lineLen={lineLen} areaFmt={areaFmt} onClear={clearDraw} />
+            </div>
+          )}
+
+          {/* Mira central (crosshair): fixa no centro do mapa, não interativa —
+              igual à do Zoom Earth, para leitura de coordenadas do PainelCentro. */}
+          {modoMapa === "tatico" && telaVis.mira && ready && (
+            <div
+              data-test="mira-central"
+              className="pointer-events-none absolute left-1/2 top-1/2 z-[5] -translate-x-1/2 -translate-y-1/2"
+            >
+              <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+                <g stroke="#121212" strokeWidth="3.6" strokeLinecap="round" opacity="0.9">
+                  <line x1="17" y1="3" x2="17" y2="12" />
+                  <line x1="17" y1="22" x2="17" y2="31" />
+                  <line x1="3" y1="17" x2="12" y2="17" />
+                  <line x1="22" y1="17" x2="31" y2="17" />
+                </g>
+                <g stroke="#FF6728" strokeWidth="1.6" strokeLinecap="round">
+                  <line x1="17" y1="3" x2="17" y2="12" />
+                  <line x1="17" y1="22" x2="17" y2="31" />
+                  <line x1="3" y1="17" x2="12" y2="17" />
+                  <line x1="22" y1="17" x2="31" y2="17" />
+                </g>
+                <circle cx="17" cy="17" r="2.4" fill="none" stroke="#FF6728" strokeWidth="1.4" />
+              </svg>
             </div>
           )}
 
@@ -2348,6 +2484,20 @@ export default function MapShell() {
                                   : ""}
                           </div>
                         )}
+                        {linha.id === "radar" && intelVis.radar && (
+                          <div
+                            className="mono mt-1 text-[10px] text-tactical-orange"
+                            data-test="radar-status"
+                          >
+                            {radarEstado === "ativo"
+                              ? t("Ao vivo — {n} quadros", {
+                                  n: formatInteger(radarQuadro?.total ?? 0),
+                                })
+                              : radarEstado === "erro"
+                                ? t("Sem conexão ao radar — nova tentativa ao reabrir")
+                                : t("Conectando ao radar…")}
+                          </div>
+                        )}
                       </div>
                       <Switch
                         checked={intelVis[linha.id]}
@@ -2366,6 +2516,31 @@ export default function MapShell() {
                   {t("Sem conexão agora — as camadas mostram os últimos dados coletados.")}
                 </p>
               )}
+            </section>
+
+            <section data-test="secao-satelite">
+              <div className="mono mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+                {t("Satélite e clima ao vivo")}
+              </div>
+              <Button
+                variant="secondary"
+                className="glove-tap w-full"
+                data-test="btn-zoom-earth"
+                onClick={() =>
+                  window.open(
+                    urlZoomEarth(center[0], center[1], mapRef.current?.getZoom() ?? 9),
+                    "_blank",
+                    "noopener",
+                  )
+                }
+              >
+                <ExternalLink className="mr-1 h-4 w-4" /> {t("Abrir Zoom Earth no ponto atual")}
+              </Button>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {t(
+                  "Satélite, radar, vento e temperatura no Zoom Earth — abre no ponto atual do mapa. Radar de chuva por RainViewer e clima pontual por Open-Meteo.com, sem chave de API.",
+                )}
+              </p>
             </section>
           </div>
         </SheetContent>

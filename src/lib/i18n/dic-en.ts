@@ -463,4 +463,38 @@ export const DIC_EN: Record<string, string> = {
   /* Abertura em vídeo (SplashAbertura) */
   Pular: "Skip",
   "Pular abertura": "Skip intro",
+
+  /* Satélite ao vivo (Zoom Earth), radar de chuva e mira central */
+  "Abrir Zoom Earth no ponto atual": "Open Zoom Earth at the current point",
+  "Animar radar": "Animate radar",
+  "Ao vivo — {n} quadros": "Live — {n} frames",
+  "Céu limpo": "Clear sky",
+  "Chuva congelante": "Freezing rain",
+  "Chuva forte": "Heavy rain",
+  "Chuva fraca": "Light rain",
+  "Chuva moderada": "Moderate rain",
+  "Conectando ao radar…": "Connecting to the radar…",
+  "Cruz fixa no centro do mapa para leitura de coordenadas":
+    "Fixed cross at the map center for coordinate reading",
+  Encoberto: "Overcast",
+  Garoa: "Drizzle",
+  "Mira central": "Center crosshair",
+  Neblina: "Fog",
+  Neve: "Snow",
+  "Parcialmente nublado": "Partly cloudy",
+  "Pausar animação do radar": "Pause radar animation",
+  "Predominantemente limpo": "Mostly clear",
+  "Radar de chuva": "Rain radar",
+  "RainViewer · precipitação das últimas 2 horas + previsão animada":
+    "RainViewer · precipitation from the last 2 hours + animated forecast",
+  "Satélite ao vivo": "Live satellite",
+  "Satélite e clima ao vivo": "Live satellite and weather",
+  "Satélite, radar, vento e temperatura no Zoom Earth — abre no ponto atual do mapa. Radar de chuva por RainViewer e clima pontual por Open-Meteo.com, sem chave de API.":
+    "Satellite, radar, wind and temperature on Zoom Earth — opens at the current map point. Rain radar by RainViewer and point weather by Open-Meteo.com, no API key needed.",
+  "Sem conexão ao radar — nova tentativa ao reabrir":
+    "No radar connection — will retry when reopened",
+  "Tempo indisponível": "Weather unavailable",
+  Trovoada: "Thunderstorm",
+  "Trovoada com granizo": "Thunderstorm with hail",
+  "Zoom Earth: radar, vento e temperatura": "Zoom Earth: radar, wind and temperature",
 };

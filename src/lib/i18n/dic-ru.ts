@@ -465,4 +465,37 @@ export const DIC_RU: Record<string, string> = {
   /* Abertura em vídeo (SplashAbertura) */
   Pular: "Пропустить",
   "Pular abertura": "Пропустить заставку",
+  /* Satélite ao vivo (Zoom Earth), radar de chuva e mira central */
+  "Abrir Zoom Earth no ponto atual": "Открыть Zoom Earth в текущей точке",
+  "Animar radar": "Анимация радара",
+  "Ao vivo — {n} quadros": "Прямой эфир — {n} кадров",
+  "Céu limpo": "Ясно",
+  "Chuva congelante": "Ледяной дождь",
+  "Chuva forte": "Сильный дождь",
+  "Chuva fraca": "Небольшой дождь",
+  "Chuva moderada": "Умеренный дождь",
+  "Conectando ao radar…": "Подключение к радару…",
+  "Cruz fixa no centro do mapa para leitura de coordenadas":
+    "Неподвижный крест в центре карты для чтения координат",
+  Encoberto: "Пасмурно",
+  Garoa: "Морось",
+  "Mira central": "Центральная марка",
+  Neblina: "Туман",
+  Neve: "Снег",
+  "Parcialmente nublado": "Переменная облачность",
+  "Pausar animação do radar": "Пауза анимации радара",
+  "Predominantemente limpo": "Преимущественно ясно",
+  "Radar de chuva": "Радар осадков",
+  "RainViewer · precipitação das últimas 2 horas + previsão animada":
+    "RainViewer · осадки за последние 2 часа + анимированный прогноз",
+  "Satélite ao vivo": "Спутник в реальном времени",
+  "Satélite e clima ao vivo": "Спутник и погода в реальном времени",
+  "Satélite, radar, vento e temperatura no Zoom Earth — abre no ponto atual do mapa. Radar de chuva por RainViewer e clima pontual por Open-Meteo.com, sem chave de API.":
+    "Спутник, радар, ветер и температура на Zoom Earth — открывается в текущей точке карты. Радар от RainViewer и погода от Open-Meteo.com, без ключа API.",
+  "Sem conexão ao radar — nova tentativa ao reabrir":
+    "Нет связи с радаром — повторная попытка при повторном открытии",
+  "Tempo indisponível": "Погода недоступна",
+  Trovoada: "Гроза",
+  "Trovoada com granizo": "Гроза с градом",
+  "Zoom Earth: radar, vento e temperatura": "Zoom Earth: радар, ветер и температура",
 };

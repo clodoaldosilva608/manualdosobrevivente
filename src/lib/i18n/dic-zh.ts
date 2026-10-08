@@ -484,4 +484,25 @@ export const DIC_ZH: Record<string, string> = {
   Trovoada: "雷暴",
   "Trovoada com granizo": "雷暴伴冰雹",
   "Zoom Earth: radar, vento e temperatura": "Zoom Earth：雷达、风力和气温",
+  "Vento (superfície)": "地面风",
+  "Temperatura (superfície)": "地面温度",
+  "OpenWeatherMap · vento a 10 m com direção — requer chave grátis (Ajustes)":
+    "OpenWeatherMap · 10 米高度风场含方向 — 需要免费密钥（设置）",
+  "OpenWeatherMap · temperatura a 2 m em cores — requer chave grátis (Ajustes)":
+    "OpenWeatherMap · 2 米高度温度着色 — 需要免费密钥（设置）",
+  "OpenWeatherMap — vento e temperatura": "OpenWeatherMap — 风与温度",
+  "Cole aqui sua chave do OpenWeatherMap": "在此粘贴你的 OpenWeatherMap 密钥",
+  'Cadastre grátis em openweathermap.org/api — a chave pode levar até 2 horas para ativar. Liga as camadas "Vento (superfície)" e "Temperatura (superfície)", iguais às do Zoom Earth.':
+    "在 openweathermap.org/api 免费注册 — 密钥最长需要 2 小时激活。可开启与 Zoom Earth 相同的「地面风」和「地面温度」图层。",
+  "Camada requer chave OpenWeatherMap": "该图层需要 OpenWeatherMap 密钥",
+  "Cadastre grátis em Ajustes — Chaves de inteligência.": "在“设置 — 情报密钥”中免费注册。",
+  "CLIMA PONTUAL": "定点天气",
+  Sensação: "体感",
+  Umidade: "湿度",
+  Precipitação: "降水量",
+  Rajada: "阵风",
+  Nuvens: "云量",
+  "Banner do convite": "邀请横幅",
+  "Mensagem pronta com o link — a imagem vai junto na folha nativa e na prévia do WhatsApp e Telegram.":
+    "消息已带链接就绪 — 图片会随系统分享面板发送，并显示在 WhatsApp 和 Telegram 的链接预览中。",
 };

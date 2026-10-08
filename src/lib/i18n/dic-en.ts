@@ -497,4 +497,26 @@ export const DIC_EN: Record<string, string> = {
   Trovoada: "Thunderstorm",
   "Trovoada com granizo": "Thunderstorm with hail",
   "Zoom Earth: radar, vento e temperatura": "Zoom Earth: radar, wind and temperature",
+  "Vento (superfície)": "Surface wind",
+  "Temperatura (superfície)": "Surface temperature",
+  "OpenWeatherMap · vento a 10 m com direção — requer chave grátis (Ajustes)":
+    "OpenWeatherMap · 10 m wind with direction — requires free key (Settings)",
+  "OpenWeatherMap · temperatura a 2 m em cores — requer chave grátis (Ajustes)":
+    "OpenWeatherMap · 2 m temperature in colors — requires free key (Settings)",
+  "OpenWeatherMap — vento e temperatura": "OpenWeatherMap — wind and temperature",
+  "Cole aqui sua chave do OpenWeatherMap": "Paste your OpenWeatherMap key here",
+  'Cadastre grátis em openweathermap.org/api — a chave pode levar até 2 horas para ativar. Liga as camadas "Vento (superfície)" e "Temperatura (superfície)", iguais às do Zoom Earth.':
+    'Sign up for free at openweathermap.org/api — the key may take up to 2 hours to activate. Turns on the "Surface wind" and "Surface temperature" layers, same as Zoom Earth\'s.',
+  "Camada requer chave OpenWeatherMap": "Layer requires an OpenWeatherMap key",
+  "Cadastre grátis em Ajustes — Chaves de inteligência.":
+    "Sign up for free in Settings — Intelligence keys.",
+  "CLIMA PONTUAL": "POINT WEATHER",
+  Sensação: "Feels like",
+  Umidade: "Humidity",
+  Precipitação: "Precipitation",
+  Rajada: "Gusts",
+  Nuvens: "Clouds",
+  "Banner do convite": "Invite banner",
+  "Mensagem pronta com o link — a imagem vai junto na folha nativa e na prévia do WhatsApp e Telegram.":
+    "Message ready with the link — the image goes along in the native sheet and in the WhatsApp and Telegram link preview.",
 };

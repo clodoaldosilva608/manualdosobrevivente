@@ -19,6 +19,14 @@ export const ABERTURA_WEBM_URL = "/abertura.webm";
 /** Poster estático do primeiro frame — pinta antes do vídeo carregar. */
 export const ABERTURA_POSTER_URL = "/abertura-poster.jpg";
 
+/**
+ * Velocidade de reprodução da abertura. O briefing tem ~10 s de vídeo e o
+ * operador precisa conseguir ler os textos e analisar as imagens — tocamos
+ * a 0,6× (≈ 16,7 s reais). Menor que isso arrasta demais; maior esconde
+ * informação. O failsafe do splash usa este valor para calibrar a folga.
+ */
+export const VELOCIDADE_ABERTURA = 0.6;
+
 /** Subconjunto do ambiente de que a decisão precisa (mockável nos testes). */
 export interface AmbienteAbertura {
   sessionStorage?: { getItem(k: string): string | null };

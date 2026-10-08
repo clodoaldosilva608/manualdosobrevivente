@@ -498,4 +498,26 @@ export const DIC_RU: Record<string, string> = {
   Trovoada: "Гроза",
   "Trovoada com granizo": "Гроза с градом",
   "Zoom Earth: radar, vento e temperatura": "Zoom Earth: радар, ветер и температура",
+  "Vento (superfície)": "Ветер (у поверхности)",
+  "Temperatura (superfície)": "Температура (у поверхности)",
+  "OpenWeatherMap · vento a 10 m com direção — requer chave grátis (Ajustes)":
+    "OpenWeatherMap · ветер на 10 м с направлением — нужен бесплатный ключ (Настройки)",
+  "OpenWeatherMap · temperatura a 2 m em cores — requer chave grátis (Ajustes)":
+    "OpenWeatherMap · температура на 2 м в цвете — нужен бесплатный ключ (Настройки)",
+  "OpenWeatherMap — vento e temperatura": "OpenWeatherMap — ветер и температура",
+  "Cole aqui sua chave do OpenWeatherMap": "Вставьте сюда ваш ключ OpenWeatherMap",
+  'Cadastre grátis em openweathermap.org/api — a chave pode levar até 2 horas para ativar. Liga as camadas "Vento (superfície)" e "Temperatura (superfície)", iguais às do Zoom Earth.':
+    "Зарегистрируйтесь бесплатно на openweathermap.org/api — ключ может активироваться до 2 часов. Включает слои «Ветер (у поверхности)» и «Температура (у поверхности)», как в Zoom Earth.",
+  "Camada requer chave OpenWeatherMap": "Слой требует ключ OpenWeatherMap",
+  "Cadastre grátis em Ajustes — Chaves de inteligência.":
+    "Зарегистрируйтесь бесплатно в Настройках — Ключи разведки.",
+  "CLIMA PONTUAL": "ПОГОДА В ТОЧКЕ",
+  Sensação: "Ощущается",
+  Umidade: "Влажность",
+  Precipitação: "Осадки",
+  Rajada: "Порывы",
+  Nuvens: "Облачность",
+  "Banner do convite": "Баннер приглашения",
+  "Mensagem pronta com o link — a imagem vai junto na folha nativa e na prévia do WhatsApp e Telegram.":
+    "Сообщение готово со ссылкой — изображение прилагается в системном меню и в превью ссылки WhatsApp и Telegram.",
 };

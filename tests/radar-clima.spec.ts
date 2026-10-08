@@ -5,6 +5,7 @@ import {
   rotuloQuadro,
   rotuloWMO,
   urlQuadro,
+  urlTileOwm,
   urlZoomEarth,
 } from "../src/lib/radar-clima";
 import type { QuadroRadar } from "../src/lib/radar-clima";
@@ -135,5 +136,24 @@ describe("rotuloWMO", () => {
   it("tem fallback seguro para códigos desconhecidos", () => {
     expect(rotuloWMO(999)).toBe("Tempo indisponível");
     expect(rotuloWMO(NaN)).toBe("Tempo indisponível");
+  });
+});
+
+describe("urlTileOwm (OpenWeatherMap)", () => {
+  it("monta o template wind_new com a chave na URL", () => {
+    expect(urlTileOwm("vento", " abc123 ")).toBe(
+      "https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=abc123",
+    );
+  });
+
+  it("monta o template temp_new para a temperatura", () => {
+    expect(urlTileOwm("temperatura", "k9")).toBe(
+      "https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=k9",
+    );
+  });
+
+  it("devolve vazio sem chave — a camada nem tenta ligar", () => {
+    expect(urlTileOwm("vento", "")).toBe("");
+    expect(urlTileOwm("vento", "   ")).toBe("");
   });
 });

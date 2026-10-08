@@ -132,6 +132,8 @@ import {
 } from "@/components/map/intel-layers";
 import {
   ControladorRadar,
+  ControladorRasterSimples,
+  urlTileOwm,
   urlZoomEarth,
   type EstadoRadar,
   type InfoQuadro,
@@ -487,6 +489,10 @@ export default function MapShell() {
   const [radarQuadro, setRadarQuadro] = useState<InfoQuadro | null>(null);
   const [radarAnimando, setRadarAnimando] = useState(true);
   const radarRef = useRef<ControladorRadar | null>(null);
+  // Vento e temperatura (OpenWeatherMap): camadas raster estáticas com chave
+  // do operador — nascer como o radar e sobrevivem às trocas de camada base.
+  const ventoRef = useRef<ControladorRasterSimples | null>(null);
+  const temperaturaRef = useRef<ControladorRasterSimples | null>(null);
   const [navios, setNavios] = useState<IntelNavio[]>([]);
   const [statusAis, setStatusAis] = useState<StatusAis | "off">("off");
   // Satélites de observação (TLE do servidor + propagação SGP4 no aparelho).
@@ -747,6 +753,14 @@ export default function MapShell() {
           radarRef.current.abaixoDe = ancoraIntel(map);
           radarRef.current.sincronizar();
         }
+        // Vento e temperatura (OpenWeatherMap): mesmo contrato do radar —
+        // reapresentam sob as inteligências quando a base troca.
+        for (const ctl of [ventoRef.current, temperaturaRef.current]) {
+          if (ctl) {
+            ctl.abaixoDe = ancoraIntel(map);
+            ctl.sincronizar();
+          }
+        }
       });
 
       map.on("load", () => {
@@ -824,6 +838,48 @@ export default function MapShell() {
 
   // Descarte do controlador na saída da tela (para timers e camada).
   useEffect(() => () => radarRef.current?.desativar(), []);
+
+  // Vento a 10 m (OpenWeatherMap): raster estático ligado pela camada de
+  // inteligência — exige chave pessoal (Ajustes) porque o serviço é pago.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    if (!ventoRef.current) ventoRef.current = new ControladorRasterSimples(map, "intel-vento");
+    const ctl = ventoRef.current;
+    ctl.abaixoDe = ancoraIntel(map);
+    const chave = prefs.intelKeys.owm.trim();
+    if (intelVis.vento && chave) {
+      ctl.ativar(urlTileOwm("vento", chave), "Clima © OpenWeatherMap", 0.75);
+    } else {
+      ctl.desativar();
+    }
+  }, [intelVis.vento, prefs.intelKeys.owm, ready]);
+
+  // Temperatura a 2 m (OpenWeatherMap): mesmo padrão do vento, cores em vez
+  // de setas — a chave é a mesma cadastrada em Ajustes.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    if (!temperaturaRef.current)
+      temperaturaRef.current = new ControladorRasterSimples(map, "intel-temperatura");
+    const ctl = temperaturaRef.current;
+    ctl.abaixoDe = ancoraIntel(map);
+    const chave = prefs.intelKeys.owm.trim();
+    if (intelVis.temperatura && chave) {
+      ctl.ativar(urlTileOwm("temperatura", chave), "Clima © OpenWeatherMap", 0.65);
+    } else {
+      ctl.desativar();
+    }
+  }, [intelVis.temperatura, prefs.intelKeys.owm, ready]);
+
+  // Descarte das camadas de clima (vento/temperatura) na saída da tela.
+  useEffect(
+    () => () => {
+      ventoRef.current?.desativar();
+      temperaturaRef.current?.desativar();
+    },
+    [],
+  );
 
   // Clima pontual do centro (Open-Meteo): só consulta com o radar ligado,
   // com atraso após o mapa parar de se mover (debounce pelos timers).
@@ -1685,6 +1741,13 @@ export default function MapShell() {
     void callAr({ data: { lat: center[1], lng: center[0] } })
       .then(setAr)
       .catch(() => {});
+    // Clima pontual do centro (Open-Meteo): entra no boletim mesmo sem o
+    // radar ligado — a leitura já vem com cache de 15 min no servidor.
+    if (!clima) {
+      void callClima({ data: { lat: center[1], lng: center[0] } })
+        .then(setClima)
+        .catch(() => {});
+    }
     if (!noticias) {
       buscarNoticiasNavegador()
         .then(setNoticias)
@@ -1714,7 +1777,9 @@ export default function MapShell() {
     callAlertas,
     callIss,
     callIntel,
+    callClima,
     center,
+    clima,
     noticias,
     alertas,
     iss,
@@ -1732,6 +1797,7 @@ export default function MapShell() {
         alertas,
         iss,
         noticias,
+        clima,
       });
       const nome = nomeArquivoSeguro("boletim", { data: Date.now() });
       let estado = await estadoPastaObsidian();
@@ -1768,7 +1834,7 @@ export default function MapShell() {
       if (!/abort/i.test(msg))
         toast.error("Não foi possível salvar no Obsidian", { description: msg });
     }
-  }, [boletimEm, intel, ar, alertas, iss, noticias]);
+  }, [boletimEm, intel, ar, alertas, iss, noticias, clima]);
 
   const runElevation = async () => {
     if (drawCoords.length < 2) return;
@@ -2503,9 +2569,24 @@ export default function MapShell() {
                         checked={intelVis[linha.id]}
                         disabled={desabilitada}
                         aria-label={t("Ativar camada {n}", { n: linha.nome })}
-                        onCheckedChange={(v) =>
-                          updatePrefs({ intelVis: { ...intelVis, [linha.id]: v } })
-                        }
+                        onCheckedChange={(v) => {
+                          // Vento/temperatura consomem a cota da chave pessoal:
+                          // sem chave cadastrada o alternador não liga — em vez
+                          // de falhar em silêncio, aponta o caminho (Ajustes).
+                          if (
+                            (linha.id === "vento" || linha.id === "temperatura") &&
+                            v &&
+                            !prefs.intelKeys.owm.trim()
+                          ) {
+                            toast.info(t("Camada requer chave OpenWeatherMap"), {
+                              description: t(
+                                "Cadastre grátis em Ajustes — Chaves de inteligência.",
+                              ),
+                            });
+                            return;
+                          }
+                          updatePrefs({ intelVis: { ...intelVis, [linha.id]: v } });
+                        }}
                       />
                     </div>
                   );
@@ -2767,6 +2848,31 @@ export default function MapShell() {
                 </ul>
               )}
             </div>
+
+            {/* Clima pontual do centro do mapa (Open-Meteo) — mesma leitura
+                do chip do radar, agora dentro do boletim completo. */}
+            <SecaoBoletim titulo="CLIMA PONTUAL" fonte="Open-Meteo">
+              {clima ? (
+                <div>
+                  <span className="text-tactical-orange">
+                    {formatNumber(clima.temperatura, 1)} °C
+                  </span>{" "}
+                  — {t(clima.rotulo)}
+                  <div className="text-[10px] text-muted-foreground">
+                    {t("Sensação")} {formatNumber(clima.aparente, 1)} °C · {t("Umidade")}{" "}
+                    {formatNumber(clima.umidade, 0)}% · {t("Precipitação")}{" "}
+                    {formatNumber(clima.precipitacao, 1)} mm/h
+                  </div>
+                  <div className="text-[10px] text-muted-foreground">
+                    {t("Vento")} {formatNumber(clima.ventoKmh, 0)} km/h {clima.direcao} ·{" "}
+                    {t("Rajada")} {formatNumber(clima.rajadaKmh, 0)} km/h · {t("Nuvens")}{" "}
+                    {formatNumber(clima.nuvens, 0)}%
+                  </div>
+                </div>
+              ) : (
+                <SemDados />
+              )}
+            </SecaoBoletim>
 
             <SecaoBoletim titulo="CLIMA ESPACIAL" fonte="NOAA SWPC">
               {intel?.climaEspacial ? (

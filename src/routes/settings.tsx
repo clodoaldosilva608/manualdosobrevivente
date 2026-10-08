@@ -603,6 +603,22 @@ function Settings() {
             </p>
           )}
         </div>
+        <div className="space-y-1">
+          <Label htmlFor="chave-owm">{t("OpenWeatherMap — vento e temperatura")}</Label>
+          <Input
+            id="chave-owm"
+            data-test="chave-owm"
+            autoComplete="off"
+            placeholder={t("Cole aqui sua chave do OpenWeatherMap")}
+            value={prefs.intelKeys.owm}
+            onChange={(e) => update({ intelKeys: { ...prefs.intelKeys, owm: e.target.value } })}
+          />
+          <p className="text-[10px] text-muted-foreground">
+            {t(
+              'Cadastre grátis em openweathermap.org/api — a chave pode levar até 2 horas para ativar. Liga as camadas "Vento (superfície)" e "Temperatura (superfície)", iguais às do Zoom Earth.',
+            )}
+          </p>
+        </div>
         <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
           <KeyRound className="h-3.5 w-3.5 shrink-0" />
           {t("Nenhum dado destas chaves sai do seu aparelho além da consulta direta à fonte.")}

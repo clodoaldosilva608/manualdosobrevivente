@@ -99,14 +99,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Mapa tático em tela cheia com MGRS, múltiplas camadas base, ferramentas de medição, waypoints e tiles offline.",
       },
       {
+        // Banner oficial do convite (1200×630) — WhatsApp, Telegram, X e
+        // Facebook mostram esta imagem na prévia do link compartilhado.
         property: "og:image",
-        content:
-          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/c7cdb4b1-efb3-45b4-8b83-bcb5897a78bc",
+        content: "https://manual-do-sobrevivente.vercel.app/banner-convite.png",
+      },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      {
+        property: "og:image:alt",
+        content: "Manual do Sobrevivente — mapa tático, bússola e SOS offline",
       },
       {
         name: "twitter:image",
-        content:
-          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/c7cdb4b1-efb3-45b4-8b83-bcb5897a78bc",
+        content: "https://manual-do-sobrevivente.vercel.app/banner-convite.png",
       },
       { name: "twitter:card", content: "summary_large_image" },
     ],

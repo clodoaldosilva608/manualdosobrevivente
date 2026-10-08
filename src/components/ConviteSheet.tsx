@@ -34,6 +34,8 @@ import { useI18n } from "@/lib/i18n";
 import {
   TITULO_CONVITE,
   URL_APP,
+  URL_BANNER_CONVITE,
+  carregarBannerConvite,
   compartilharConvite,
   contagemConvites,
   conviteCompleto,
@@ -51,12 +53,17 @@ export function ConviteSheet({
   const { t } = useI18n();
   const [manual, setManual] = useState(false);
   const [convites, setConvites] = useState(0);
+  // Banner do aplicativo: carregado quando a folha abre (cache local) e
+  // anexado na folha nativa quando o aparelho aceita arquivos.
+  const [banner, setBanner] = useState<File | null>(null);
   const completo = conviteCompleto();
   const enc = encodeURIComponent(completo);
 
   // Contagem recarregada a cada abertura (inclui envios feitos nesta sessão).
   useEffect(() => {
-    if (open) setConvites(contagemConvites());
+    if (!open) return;
+    setConvites(contagemConvites());
+    void carregarBannerConvite().then(setBanner);
   }, [open]);
 
   /** Executa o compartilhamento, trata o resultado e atualiza o contador. */
@@ -133,7 +140,7 @@ export function ConviteSheet({
       label: t("Compartilhar do aparelho"),
       icon: Share2,
       tone: "text-tactical-orange",
-      run: () => void enviar(compartilharConvite),
+      run: () => void enviar(() => compartilharConvite({ banner })),
     },
     {
       label: t("Copiar convite"),
@@ -164,6 +171,23 @@ export function ConviteSheet({
           <SheetTitle className="mono text-tactical-orange">{t("CONVOQUE O ESQUADRÃO")}</SheetTitle>
           <SheetDescription>{t("Escolha para onde enviar o convite.")}</SheetDescription>
         </SheetHeader>
+
+        {/* Banner do aplicativo: vai anexado na folha nativa e aparece na
+            prévia do link (og:image) no WhatsApp, Telegram e Facebook. */}
+        <div className="mt-3 overflow-hidden rounded-md border border-border bg-background/60">
+          <img
+            src={URL_BANNER_CONVITE}
+            alt={t("Banner do convite")}
+            data-test="convite-banner"
+            className="aspect-[1200/630] w-full object-cover"
+            loading="lazy"
+          />
+          <p className="mono px-3 py-2 text-[10px] leading-relaxed text-muted-foreground">
+            {t(
+              "Mensagem pronta com o link — a imagem vai junto na folha nativa e na prévia do WhatsApp e Telegram.",
+            )}
+          </p>
+        </div>
 
         <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">
           {options.map((o) => (

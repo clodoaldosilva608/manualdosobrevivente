@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { CHAVE_ABERTURA, decidirAbertura, registrarAberturaVista } from "@/lib/abertura";
+import {
+  CHAVE_ABERTURA,
+  VELOCIDADE_ABERTURA,
+  decidirAbertura,
+  registrarAberturaVista,
+} from "@/lib/abertura";
 
 const SACO = new Map<string, string>();
 
@@ -68,5 +73,12 @@ describe("abertura", () => {
         writable: true,
       });
     }
+  });
+});
+
+describe("velocidade da abertura", () => {
+  it("toca em câmera lenta (0,6×) para dar tempo de ler o briefing", () => {
+    expect(VELOCIDADE_ABERTURA).toBe(0.6);
+    expect(VELOCIDADE_ABERTURA).toBeLessThan(1);
   });
 });

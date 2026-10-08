@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   CHAVE_TEXTO_CONVITE,
   URL_APP,
+  carregarBannerConvite,
   compartilharConvite,
   contagemConvites,
   conviteCompleto,
@@ -100,5 +101,67 @@ describe("convite", () => {
     });
     await expect(compartilharConvite()).resolves.toBe("manual");
     expect(contagemConvites()).toBe(0);
+  });
+});
+
+describe("convite com banner", () => {
+  const bannerFalso = new File([new Uint8Array([1, 2, 3])], "banner.png", { type: "image/png" });
+
+  it("anexa o banner na folha nativa quando o aparelho aceita arquivos", async () => {
+    instalarArmazenamento();
+    const share = vi.fn().mockResolvedValue(undefined);
+    const canShare = vi.fn().mockReturnValue(true);
+    instalarNavigator({ share, canShare });
+    await expect(compartilharConvite({ banner: bannerFalso })).resolves.toBe("nativo");
+    expect(canShare).toHaveBeenCalledWith({ files: [bannerFalso] });
+    expect(share).toHaveBeenCalledWith({
+      files: [bannerFalso],
+      title: "Manual do Sobrevivente",
+      text: expect.any(String),
+      url: URL_APP,
+    });
+    expect(contagemConvites()).toBe(1);
+  });
+
+  it("cai para o convite em texto quando o aparelho recusa arquivos", async () => {
+    instalarArmazenamento();
+    const share = vi.fn().mockResolvedValue(undefined);
+    const canShare = vi.fn().mockReturnValue(false);
+    instalarNavigator({ share, canShare });
+    await expect(compartilharConvite({ banner: bannerFalso })).resolves.toBe("nativo");
+    expect(share).toHaveBeenCalledWith({
+      title: "Manual do Sobrevivente",
+      text: expect.any(String),
+      url: URL_APP,
+    });
+  });
+
+  it("erro não-abortado no envio com banner cai para o texto, não para a cópia", async () => {
+    instalarArmazenamento();
+    let chamadas = 0;
+    const share = vi.fn().mockImplementation(() => {
+      chamadas += 1;
+      return chamadas === 1
+        ? Promise.reject(new TypeError("arquivo recusado"))
+        : Promise.resolve(undefined);
+    });
+    instalarNavigator({ share, canShare: () => true });
+    await expect(compartilharConvite({ banner: bannerFalso })).resolves.toBe("nativo");
+    expect(chamadas).toBe(2);
+    expect(contagemConvites()).toBe(1);
+  });
+
+  it("baixa o banner do próprio app como File (e devolve null sem rede)", async () => {
+    const fetchOk = vi.fn().mockResolvedValue({
+      ok: true,
+      blob: () => Promise.resolve(new Blob([new Uint8Array([9])], { type: "image/png" })),
+    });
+    vi.stubGlobal("fetch", fetchOk);
+    const banner = await carregarBannerConvite();
+    expect(fetchOk).toHaveBeenCalledWith("/banner-convite.png", { cache: "force-cache" });
+    expect(banner?.type).toBe("image/png");
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("sem rede")));
+    await expect(carregarBannerConvite()).resolves.toBeNull();
+    vi.unstubAllGlobals();
   });
 });

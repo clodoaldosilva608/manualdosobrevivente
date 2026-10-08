@@ -496,4 +496,25 @@ export const DIC_JA: Record<string, string> = {
   Trovoada: "雷雨",
   "Trovoada com granizo": "雷雨（ひょう付き）",
   "Zoom Earth: radar, vento e temperatura": "Zoom Earth：レーダー・風・気温",
+  "Vento (superfície)": "地上風",
+  "Temperatura (superfície)": "地上気温",
+  "OpenWeatherMap · vento a 10 m com direção — requer chave grátis (Ajustes)":
+    "OpenWeatherMap · 10 m の風と方向 — 無料キーが必要（設定）",
+  "OpenWeatherMap · temperatura a 2 m em cores — requer chave grátis (Ajustes)":
+    "OpenWeatherMap · 2 m の気温を色で表示 — 無料キーが必要（設定）",
+  "OpenWeatherMap — vento e temperatura": "OpenWeatherMap — 風と気温",
+  "Cole aqui sua chave do OpenWeatherMap": "OpenWeatherMap のキーをここに貼り付け",
+  'Cadastre grátis em openweathermap.org/api — a chave pode levar até 2 horas para ativar. Liga as camadas "Vento (superfície)" e "Temperatura (superfície)", iguais às do Zoom Earth.':
+    "openweathermap.org/api で無料登録 — キーの有効化には最大 2 時間かかることがあります。Zoom Earth と同じ「地上風」「地上気温」レイヤーが使えます。",
+  "Camada requer chave OpenWeatherMap": "レイヤーには OpenWeatherMap キーが必要",
+  "Cadastre grátis em Ajustes — Chaves de inteligência.": "設定 → インテリジェンスキーで無料登録。",
+  "CLIMA PONTUAL": "地点の天気",
+  Sensação: "体感",
+  Umidade: "湿度",
+  Precipitação: "降水",
+  Rajada: "突風",
+  Nuvens: "雲量",
+  "Banner do convite": "招待バナー",
+  "Mensagem pronta com o link — a imagem vai junto na folha nativa e na prévia do WhatsApp e Telegram.":
+    "リンク付きのメッセージが準備完了 — 画像はネイティブの共有シートに添付され、WhatsApp や Telegram のリンクプレビューにも表示されます。",
 };

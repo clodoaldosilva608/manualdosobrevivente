@@ -19,9 +19,11 @@ import {
   CHAVE_ABERTURA_URL,
   decidirAbertura,
   registrarAberturaVista,
+  VELOCIDADE_ABERTURA,
 } from "@/lib/abertura";
 
-const DURACAO_SAUDE_MS = 14_000; // vídeo tem 10s; folga para redes lentas
+// Vídeo de 10 s a 0,6× ≈ 17 s reais; folga para redes lentas e arranque frio.
+const DURACAO_SAUDE_MS = 26_000;
 
 export function SplashAbertura() {
   const { t } = useI18n();
@@ -65,6 +67,9 @@ export function SplashAbertura() {
           // React não garante o atributo muted no HTML — a propriedade
           // precisa estar em `true` antes do autoplay (iOS exige).
           if (v) v.muted = true;
+          // Briefing em câmera lenta: 0,6× dá tempo de ler os textos e
+          // analisar as imagens (o botão Pular continua a um toque).
+          if (v) v.playbackRate = VELOCIDADE_ABERTURA;
           videoRef.current = v;
         }}
         poster={ABERTURA_POSTER_URL}

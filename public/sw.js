@@ -10,7 +10,7 @@
  * Bump de versão: altere VERSAO ao mudar a lógica deste arquivo — os caches
  * antigos são apagados na ativação.
  */
-const VERSAO = "v30";
+const VERSAO = "v31";
 const CACHE_SHELL = `shell-${VERSAO}`;
 const CACHE_ASSETS = `assets-${VERSAO}`;
 const CACHE_RUNTIME = `runtime-${VERSAO}`;
@@ -18,6 +18,8 @@ const OFFLINE_URL = "/offline.html";
 const SHELL_URL = "/";
 /** Arquivos da abertura em vídeo — cacheados no shell para tocar offline. */
 const ABERTURA_URLS = ["/abertura.mp4", "/abertura.webm", "/abertura-poster.jpg"];
+/** Banner do convite — pré-cacheado para o operador divulgar até sem rede. */
+const BANNER_CONVITE_URLS = ["/banner-convite.png"];
 const MAX_ASSETS = 120;
 const MAX_RUNTIME = 400;
 
@@ -28,8 +30,9 @@ self.addEventListener("install", (event) => {
     (async () => {
       const cache = await caches.open(CACHE_SHELL);
       await cache.addAll([OFFLINE_URL]);
-      // Abertura: melhor esforço por arquivo — falha de um não quebra a instalação.
-      for (const url of ABERTURA_URLS) {
+      // Abertura + banner do convite: melhor esforço por arquivo — falha de um
+      // não quebra a instalação.
+      for (const url of [...ABERTURA_URLS, ...BANNER_CONVITE_URLS]) {
         try {
           const res = await fetch(url, { cache: "no-store" });
           if (res && res.ok) await cache.put(url, res.clone());
@@ -137,8 +140,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Abertura em vídeo: cache-first no shell (toca offline na próxima vez).
-  if (url.origin === self.location.origin && ABERTURA_URLS.includes(url.pathname)) {
+  // Abertura em vídeo e banner do convite: cache-first no shell (funcionam
+  // offline na próxima vez).
+  if (
+    url.origin === self.location.origin &&
+    (ABERTURA_URLS.includes(url.pathname) || BANNER_CONVITE_URLS.includes(url.pathname))
+  ) {
     event.respondWith(cacheFirst(request, CACHE_SHELL));
     return;
   }

@@ -25,6 +25,7 @@ import { formatInteger, formatNumber } from "@/lib/format";
 import type {
   IntelAlerta,
   IntelAr,
+  IntelClima,
   IntelIss,
   IntelNoticia,
   IntelSnapshot,
@@ -268,6 +269,8 @@ export function notaBoletimMarkdown(dados: {
   alertas: IntelAlerta[] | null;
   iss: IntelIss | null;
   noticias: IntelNoticia[] | null;
+  /** Clima pontual do centro do mapa (Open-Meteo) — opcional. */
+  clima?: IntelClima | null;
 }): string {
   const front = cabecalhoFrontmatter([
     `tipo: boletim`,
@@ -282,6 +285,18 @@ export function notaBoletimMarkdown(dados: {
     `Gerado em ${dataIso(dados.geradoEm)} pelo Manual do Sobrevivente.`,
     "",
   ];
+
+  if (dados.clima) {
+    const cl = dados.clima;
+    c.push(
+      `## Clima pontual (Open-Meteo)`,
+      "",
+      `- Temperatura ${formatNumber(cl.temperatura, 1)} °C (sensação ${formatNumber(cl.aparente, 1)} °C) — ${cl.rotulo}`,
+      `- Umidade ${formatNumber(cl.umidade, 0)}% · Precipitação ${formatNumber(cl.precipitacao, 1)} mm/h · Nuvens ${formatNumber(cl.nuvens, 0)}%`,
+      `- Vento ${formatNumber(cl.ventoKmh, 0)} km/h ${cl.direcao} · rajadas ${formatNumber(cl.rajadaKmh, 0)} km/h`,
+      "",
+    );
+  }
 
   if (dados.intel?.climaEspacial) {
     const ce = dados.intel.climaEspacial;

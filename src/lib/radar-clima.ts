@@ -143,6 +143,30 @@ export function rotuloWMO(codigo: number): string {
 }
 
 // ---------------------------------------------------------------------------
+// Tiles de vento e temperatura (OpenWeatherMap) — mesmas camadas do Zoom Earth
+// ---------------------------------------------------------------------------
+
+/** Camadas de clima do Zoom Earth que o Manual replica com chave própria. */
+export type CamadaClimaOwm = "vento" | "temperatura";
+
+/** Nome da camada de tiles no serviço "Weather Maps 1.0" da OpenWeatherMap. */
+export const TILES_OWM: Record<CamadaClimaOwm, string> = {
+  vento: "wind_new",
+  temperatura: "temp_new",
+};
+
+/**
+ * Template de tile do OpenWeatherMap para a camada pedida. A chave viaja na
+ * URL (exigência do serviço) — fica salva só no aparelho e é usada apenas
+ * para consultar a fonte oficial, igual às chaves FIRMS/AIS.
+ */
+export function urlTileOwm(camada: CamadaClimaOwm, chave: string): string {
+  const k = chave.trim();
+  if (!k) return "";
+  return `https://tile.openweathermap.org/map/${TILES_OWM[camada]}/{z}/{x}/{y}.png?appid=${encodeURIComponent(k)}`;
+}
+
+// ---------------------------------------------------------------------------
 // Controlador do overlay raster no MapLibre
 // ---------------------------------------------------------------------------
 
@@ -333,5 +357,91 @@ export class ControladorRadar {
   private mostrarQuadro(i: number): void {
     this.indice = i;
     this.apresentar();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Camada raster estática (vento/temperatura da OpenWeatherMap)
+// ---------------------------------------------------------------------------
+
+/**
+ * Controlador de uma camada raster simples — sem animação, sem fila de
+ * quadros: uma fonte com template de tiles fixo. Usado pelo vento e pela
+ * temperatura (OpenWeatherMap). Segue o mesmo contrato do ControladorRadar:
+ * `abaixoDe` ancora sob as inteligências e `sincronizar()` reapresenta a
+ * camada depois de trocas de camada base (evento styledata do MapShell).
+ */
+export class ControladorRasterSimples {
+  private map: ML;
+  private id: string;
+  private url = "";
+  private atribuicao = "";
+  private opacidade = 0.7;
+  private ativo = false;
+  /** Camada intel existente abaixo da qual esta entra (definido pelo MapShell). */
+  abaixoDe?: string;
+
+  constructor(map: ML, id: string) {
+    this.map = map;
+    this.id = id;
+  }
+
+  /** Apresenta (ou atualiza) a camada com o template de tiles informado. */
+  ativar(url: string, atribuicao: string, opacidade = 0.7): void {
+    this.ativo = true;
+    this.url = url;
+    this.atribuicao = atribuicao;
+    this.opacidade = opacidade;
+    this.apresentar();
+  }
+
+  /** Desliga e remove fonte + camada do estilo. */
+  desativar(): void {
+    this.ativo = false;
+    this.remover();
+  }
+
+  /**
+   * Reapresenta após troca de estilo/camada base (styledata) — ou garante
+   * que sumiu quando desligada. Sem refetch: o template de tiles fica.
+   */
+  sincronizar(): void {
+    if (this.ativo && this.url) this.apresentar();
+    else this.remover();
+  }
+
+  private apresentar(): void {
+    const map = this.map;
+    const fonte = map.getSource(this.id) as maplibregl.RasterTileSource | undefined;
+    if (fonte && map.getLayer(this.id)) {
+      try {
+        fonte.setTiles([this.url]);
+        return;
+      } catch {
+        this.remover();
+      }
+    }
+    this.remover();
+    map.addSource(this.id, {
+      type: "raster",
+      tiles: [this.url],
+      tileSize: 256,
+      attribution: this.atribuicao,
+    });
+    map.addLayer(
+      {
+        id: this.id,
+        type: "raster",
+        source: this.id,
+        paint: { "raster-opacity": this.opacidade, "raster-fade-duration": 300 },
+      },
+      this.abaixoDe && map.getLayer(this.abaixoDe) ? this.abaixoDe : undefined,
+    );
+  }
+
+  private remover(): void {
+    const map = this.map;
+    if (map.getLayer(this.id)) map.removeLayer(this.id);
+    if (map.getSource(this.id)) map.removeSource(this.id);
   }
 }

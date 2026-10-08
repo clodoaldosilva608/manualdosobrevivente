@@ -72,6 +72,18 @@ export const LINHAS_INTEL: LinhaIntel[] = [
     cor: "#60A5FA",
   },
   {
+    id: "vento",
+    nome: "Vento (superfície)",
+    dica: "OpenWeatherMap · vento a 10 m com direção — requer chave grátis (Ajustes)",
+    cor: "#34D399",
+  },
+  {
+    id: "temperatura",
+    nome: "Temperatura (superfície)",
+    dica: "OpenWeatherMap · temperatura a 2 m em cores — requer chave grátis (Ajustes)",
+    cor: "#F472B6",
+  },
+  {
     id: "navios",
     nome: "Navios ao vivo (AIS)",
     dica: "AISStream.io · transponders ao redor do mapa (chave do servidor ou pessoal em Ajustes)",

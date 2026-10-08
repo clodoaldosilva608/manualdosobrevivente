@@ -499,4 +499,26 @@ export const DIC_ES: Record<string, string> = {
   Trovoada: "Tormenta",
   "Trovoada com granizo": "Tormenta con granizo",
   "Zoom Earth: radar, vento e temperatura": "Zoom Earth: radar, viento y temperatura",
+  "Vento (superfície)": "Viento (superficie)",
+  "Temperatura (superfície)": "Temperatura (superficie)",
+  "OpenWeatherMap · vento a 10 m com direção — requer chave grátis (Ajustes)":
+    "OpenWeatherMap · viento a 10 m con dirección — requiere clave gratuita (Ajustes)",
+  "OpenWeatherMap · temperatura a 2 m em cores — requer chave grátis (Ajustes)":
+    "OpenWeatherMap · temperatura a 2 m en colores — requiere clave gratuita (Ajustes)",
+  "OpenWeatherMap — vento e temperatura": "OpenWeatherMap — viento y temperatura",
+  "Cole aqui sua chave do OpenWeatherMap": "Pega aquí tu clave de OpenWeatherMap",
+  'Cadastre grátis em openweathermap.org/api — a chave pode levar até 2 horas para ativar. Liga as camadas "Vento (superfície)" e "Temperatura (superfície)", iguais às do Zoom Earth.':
+    'Regístrate gratis en openweathermap.org/api — la clave puede tardar hasta 2 horas en activarse. Activa las capas "Viento (superficie)" y "Temperatura (superficie)", iguales a las de Zoom Earth.',
+  "Camada requer chave OpenWeatherMap": "La capa requiere clave de OpenWeatherMap",
+  "Cadastre grátis em Ajustes — Chaves de inteligência.":
+    "Regístrate gratis en Ajustes — Claves de inteligencia.",
+  "CLIMA PONTUAL": "CLIMA PUNTUAL",
+  Sensação: "Sensación",
+  Umidade: "Humedad",
+  Precipitação: "Precipitación",
+  Rajada: "Ráfaga",
+  Nuvens: "Nubes",
+  "Banner do convite": "Banner de la invitación",
+  "Mensagem pronta com o link — a imagem vai junto na folha nativa e na prévia do WhatsApp e Telegram.":
+    "Mensaje listo con el enlace — la imagen va adjunta en la hoja nativa y en la vista previa de WhatsApp y Telegram.",
 };

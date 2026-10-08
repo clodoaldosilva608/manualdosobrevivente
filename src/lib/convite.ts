@@ -13,6 +13,13 @@ import { idiomaAtivo, traduzir, type Idioma } from "@/lib/i18n";
 /** Endereço canônico do aplicativo — é sempre este link que viaja no convite. */
 export const URL_APP = "https://manual-do-sobrevivente.vercel.app";
 
+/**
+ * Banner oficial do convite (public/banner-convite.png, 1200×630).
+ * Vai como anexo na folha nativa de compartilhamento e é a imagem que
+ * WhatsApp/Telegram/Facebook mostram na prévia do link (og:image).
+ */
+export const URL_BANNER_CONVITE = "/banner-convite.png";
+
 /** Título usado na folha nativa e no assunto do e-mail. */
 export const TITULO_CONVITE = "Manual do Sobrevivente";
 
@@ -35,6 +42,34 @@ export function textoConvite(): string {
 /** Mensagem completa pronta para colar: texto + link em linha própria. */
 export function conviteCompleto(): string {
   return `${textoConvite()}\n${URL_APP}`;
+}
+
+/**
+ * Baixa o banner do convite como File para anexar na folha nativa
+ * (Web Share API nível 2). Devolve null sem rede — o convite segue em texto.
+ */
+export async function carregarBannerConvite(): Promise<File | null> {
+  try {
+    const res = await fetch(URL_BANNER_CONVITE, { cache: "force-cache" });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return new File([blob], "manual-do-sobrevivente.png", { type: "image/png" });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * O aparelho aceita compartilhar este arquivo? (Web Share API com arquivos —
+ * comum em celulares; desktops costumam recusar.)
+ */
+export function podeCompartilharArquivos(banner: File | null): boolean {
+  if (!banner || typeof navigator === "undefined" || !navigator.share) return false;
+  try {
+    return !!navigator.canShare?.({ files: [banner] });
+  } catch {
+    return false;
+  }
 }
 
 /** Quantos convites este aparelho já enviou (contador local, gamificação leve). */
@@ -71,13 +106,34 @@ export type ResultadoConvite =
 /**
  * Compartilha o convite pelo melhor canal disponível.
  *
- * 1. Web Share API (`navigator.share`) — folha nativa do aparelho;
+ * 1. Web Share API (`navigator.share`) — folha nativa do aparelho; com o
+ *    banner anexado quando o aparelho aceita arquivos (WhatsApp e cia
+ *    entregam imagem + texto juntos);
  * 2. Área de transferência — cópia imediata para colar na conversa;
  * 3. "manual" — o ConviteSheet deixa o texto selecionável na tela.
  */
-export async function compartilharConvite(): Promise<ResultadoConvite> {
+export async function compartilharConvite(
+  opcoes: { banner?: File | null } = {},
+): Promise<ResultadoConvite> {
   const nav = typeof navigator !== "undefined" ? navigator : undefined;
   if (nav?.share) {
+    // 1a. Folha nativa com o banner do aplicativo anexado.
+    if (podeCompartilharArquivos(opcoes.banner ?? null)) {
+      try {
+        await nav.share({
+          files: [opcoes.banner as File],
+          title: TITULO_CONVITE,
+          text: textoConvite(),
+          url: URL_APP,
+        });
+        registrarConvite();
+        return "nativo";
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return "cancelado";
+        // Alguns alvos recusam arquivos — cai para o convite em texto.
+      }
+    }
+    // 1b. Folha nativa em texto (comportamento original).
     try {
       await nav.share({ title: TITULO_CONVITE, text: textoConvite(), url: URL_APP });
       registrarConvite();

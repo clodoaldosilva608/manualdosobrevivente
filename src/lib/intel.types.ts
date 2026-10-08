@@ -77,6 +77,10 @@ export interface IntelVisibilidade {
   incendios: boolean;
   /** Radar de chuva ao vivo (RainViewer) — precipitação + nowcast. */
   radar: boolean;
+  /** Vento a 10 m em tiles ao vivo (OpenWeatherMap — requer chave do operador). */
+  vento: boolean;
+  /** Temperatura a 2 m em tiles ao vivo (OpenWeatherMap — requer chave do operador). */
+  temperatura: boolean;
   /** Voos ao vivo (ADS-B) — militares globais + civis perto do centro. */
   voos: boolean;
   /** ISS + satélites de observação (TLE/Celestrak propagado no aparelho). */
@@ -104,6 +108,8 @@ export const INTEL_VIS_PADRAO: IntelVisibilidade = {
   noite: false,
   incendios: true,
   radar: false,
+  vento: false,
+  temperatura: false,
   voos: true,
   satelites: true,
   alertas: true,
@@ -121,9 +127,11 @@ export interface IntelChaves {
   firms: string;
   /** AISStream.io (gratuita em aisstream.io). */
   ais: string;
+  /** OpenWeatherMap (gratuita em home.openweathermap.org) — vento e temperatura. */
+  owm: string;
 }
 
-export const INTEL_CHAVES_PADRAO: IntelChaves = { firms: "", ais: "" };
+export const INTEL_CHAVES_PADRAO: IntelChaves = { firms: "", ais: "", owm: "" };
 
 // ---------------------------------------------------------------------------
 // Fase 2 — fontes adicionais (avião, espaço, alertas, notícias, ar, marítimo)

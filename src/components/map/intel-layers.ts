@@ -939,7 +939,9 @@ export function sincronizarCamadasIntel(map: ML, entrada: EntradaSincronizacaoIn
       id: CAMADA_VOO,
       type: "symbol",
       source: "intel-voo",
-      filter: ["!", ["get", "militar"]],
+      // Null-safe: features sem a propriedade caem no lado civil (o "!"
+      // legado sobre ["get"] tratava null como erro e escondia o voo).
+      filter: ["!=", ["get", "militar"], true],
       layout: {
         "icon-image": "intel-ico-voo-civil",
         "icon-size": 0.5,
@@ -956,7 +958,7 @@ export function sincronizarCamadasIntel(map: ML, entrada: EntradaSincronizacaoIn
       id: CAMADA_VOO_MIL,
       type: "symbol",
       source: "intel-voo",
-      filter: ["get", "militar"],
+      filter: ["==", ["get", "militar"], true],
       layout: {
         "icon-image": "intel-ico-voo-mil",
         "icon-size": 0.62,

@@ -123,7 +123,8 @@ describe("Satélite ao vivo (Zoom Earth), radar de chuva e mira central", () => 
     const url = popup.url();
 
     expect(url).toContain("https://zoom.earth/maps/satellite/#view=");
-    expect(url).toContain("z/overlays=radar,fires,crosshair");
+    // Paridade Zoom Earth (Task 21): radar, vento, focos, temperatura e mira.
+    expect(url).toContain("z/overlays=radar,wind,fires,temperatures,crosshair");
     // Coordenadas reais (não zeros) — o link carrega o centro do mapa.
     const view = url.split("#view=")[1]?.split(",") ?? [];
     expect(Math.abs(Number(view[0]))).toBeGreaterThan(0.01);

@@ -261,7 +261,11 @@ function adicionarFontesDesenho(map: maplibregl.Map) {
     id: "draw-line",
     type: "line",
     source: "draw",
-    filter: ["==", "$type", "LineString"],
+    // Filtros em sintaxe de expressão pura: o MapLibre v5 removeu os filtros
+    // legados — e os filtros MISTOS (legado + expressão) são rejeitados na
+    // validação do estilo ("string expected, array found"), o que impedia
+    // adicionar as camadas de rota (e deixava a rota invisível).
+    filter: ["==", ["geometry-type"], "LineString"],
     paint: {
       "line-color": "#FF6B35",
       "line-width": 3,
@@ -272,14 +276,14 @@ function adicionarFontesDesenho(map: maplibregl.Map) {
     id: "draw-fill",
     type: "fill",
     source: "draw",
-    filter: ["==", "$type", "Polygon"],
+    filter: ["==", ["geometry-type"], "Polygon"],
     paint: { "fill-color": "#FF6B35", "fill-opacity": 0.2 },
   });
   map.addLayer({
     id: "draw-points",
     type: "circle",
     source: "draw",
-    filter: ["==", "$type", "Point"],
+    filter: ["==", ["geometry-type"], "Point"],
     paint: {
       "circle-radius": 5,
       "circle-color": "#FF6B35",
@@ -323,14 +327,14 @@ function adicionarFontesDesenho(map: maplibregl.Map) {
     id: "rota-line",
     type: "line",
     source: "rota",
-    filter: ["==", "$type", "LineString"],
+    filter: ["==", ["geometry-type"], "LineString"],
     paint: { "line-color": "#FF6B35", "line-width": 3.5, "line-opacity": 0.95 },
   });
   map.addLayer({
     id: "rota-pontos",
     type: "circle",
     source: "rota",
-    filter: ["all", ["==", "$type", "Point"], ["!=", ["get", "alvo"], true]],
+    filter: ["all", ["==", ["geometry-type"], "Point"], ["!=", ["get", "alvo"], true]],
     paint: {
       "circle-radius": 6,
       "circle-color": "#FF6B35",
@@ -342,7 +346,7 @@ function adicionarFontesDesenho(map: maplibregl.Map) {
     id: "rota-alvo",
     type: "circle",
     source: "rota",
-    filter: ["all", ["==", "$type", "Point"], ["==", ["get", "alvo"], true]],
+    filter: ["all", ["==", ["geometry-type"], "Point"], ["==", ["get", "alvo"], true]],
     paint: {
       "circle-radius": 13,
       "circle-color": "#FF6728",
@@ -787,6 +791,24 @@ export default function MapShell() {
 
       map.on("load", () => {
         registrarPopupsIntel(map);
+      });
+
+      // Perda de contexto WebGL (comum em celular: o globo do Osiris em
+      // iframe + o mapa tático competem pelos poucos contextos GL do
+      // aparelho). Sem preventDefault o mapa morre com o canvas PRETO até
+      // recarregar a página — com ele, o MapLibre recria os recursos GL e
+      // redesenha sozinho quando o contexto volta.
+      map.on("webglcontextlost", (e) => {
+        e.preventDefault();
+      });
+      map.on("webglcontextrestored", () => {
+        // O MapLibre recria fontes/camadas do estilo; os dados dinâmicos
+        // (desenho, rota, intel) são reapresentados pelo styledata abaixo.
+        try {
+          sincronizarDesenho(map);
+        } catch {
+          /* o styledata cobre a reapresentação */
+        }
       });
 
       // Abrir na última posição conhecida (imediato) e depois no GPS atual.

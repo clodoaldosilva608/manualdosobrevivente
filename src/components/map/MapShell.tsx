@@ -799,7 +799,9 @@ export default function MapShell() {
       // recarregar a página — com ele, o MapLibre recria os recursos GL e
       // redesenha sozinho quando o contexto volta.
       map.on("webglcontextlost", (e) => {
-        e.preventDefault();
+        // O tipo do MapLibre v5 não expõe preventDefault nesta assinatura,
+        // mas o evento nativo do WebGL o carrega — sem ele o mapa morre preto.
+        (e as unknown as { preventDefault: () => void }).preventDefault();
       });
       map.on("webglcontextrestored", () => {
         // O MapLibre recria fontes/camadas do estilo; os dados dinâmicos

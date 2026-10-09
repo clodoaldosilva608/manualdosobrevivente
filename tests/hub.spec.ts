@@ -8,7 +8,6 @@ import {
   urlCurso,
   urlLoja,
   urlNewsletter,
-  urlPro,
 } from "@/lib/hub-links";
 import {
   CONTEXTOS,
@@ -21,7 +20,7 @@ import { LISTA_PERFIS, PERFIS, perfilValido } from "@/lib/perfil-wizard";
 import { MODELOS } from "@/lib/mochilas-modelo";
 import { MANUAL } from "@/lib/manual-content";
 
-describe("deep links do hub (contrato v1)", () => {
+describe("deep links do hub (contrato v2)", () => {
   it("todos os deep links apontam para o Centro com UTM completo", () => {
     const urls = [
       urlComeceAqui(),
@@ -30,7 +29,6 @@ describe("deep links do hub (contrato v1)", () => {
       urlCurso("kit-72h"),
       urlComunidade(),
       urlNewsletter(),
-      urlPro(),
     ];
     for (const u of urls) {
       const url = new URL(u);
@@ -43,7 +41,7 @@ describe("deep links do hub (contrato v1)", () => {
 
   it("urlLoja acopla a busca do item em q", () => {
     const url = new URL(urlLoja("kit 72h", "deposito:Teste"));
-    expect(url.pathname).toBe("/loja");
+    expect(url.pathname).toBe("/equipamentos");
     expect(url.searchParams.get("q")).toBe("kit 72h");
     expect(url.searchParams.get("utm_content")).toBe("deposito:Teste");
   });
@@ -63,7 +61,7 @@ describe("depósito de suprimentos", () => {
       expect(item.faixa, item.id).toMatch(/^R\$/);
       for (const p of item.perfis) expect(perfis.has(p), item.id).toBe(true);
       const url = new URL(urlItemNaLoja(item));
-      expect(url.pathname).toBe("/loja");
+      expect(url.pathname).toBe("/equipamentos");
       expect(url.searchParams.get("utm_content")).toBe(`deposito:${item.id}`);
     }
   });

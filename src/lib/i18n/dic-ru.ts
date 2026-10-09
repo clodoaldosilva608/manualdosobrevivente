@@ -844,4 +844,6 @@ export const DIC_RU: Record<string, string> = {
   "Abrir painel do Centro": "Открыть панель Центра",
   Apoie: "Поддержать",
   "Aguardando sessão…": "Ожидание сессии…",
+  "Apoie o Manual": "Поддержать Мануал",
+  "Contribua para manter o app gratuito": "Помогите сохранить приложение бесплатным",
 };

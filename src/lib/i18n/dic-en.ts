@@ -845,4 +845,6 @@ export const DIC_EN: Record<string, string> = {
   "Abrir painel do Centro": "Open the Center panel",
   Apoie: "Support",
   "Aguardando sessão…": "Waiting for session…",
+  "Apoie o Manual": "Support the Manual",
+  "Contribua para manter o app gratuito": "Help keep the app free",
 };

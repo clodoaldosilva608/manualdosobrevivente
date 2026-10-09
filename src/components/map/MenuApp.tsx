@@ -19,7 +19,7 @@ import {
   ChevronDown,
   CloudSun,
   Compass,
-  Crown,
+  HeartHandshake,
   DownloadCloud,
   Eraser,
   Eye,
@@ -134,10 +134,10 @@ const HUB: Array<ItemMenu & { to: string; externo?: boolean }> = [
     icone: NotebookPen,
   },
   {
-    to: "/pro",
-    rotulo: "Manual Pro",
-    dica: "Alertas avançados e sincronização",
-    icone: Crown,
+    to: "/colaboradores",
+    rotulo: "Apoie o Manual",
+    dica: "Contribua para manter o app gratuito",
+    icone: HeartHandshake,
   },
   {
     to: urlLoja(undefined, "menu"),

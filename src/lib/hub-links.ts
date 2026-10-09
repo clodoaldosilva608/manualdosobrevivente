@@ -6,14 +6,16 @@
  * de saída para o Centro, com URLs versionadas (contrato público) e UTM
  * para atribuição de origem (canal P1 da Tabela 3 do relatório).
  *
- * Contrato v1 (mudanças de caminho no Centro exigem versão nova aqui):
- *   /comece-aqui            onboarding do visitante novo
- *   /loja                   vitrine (afiliados hoje, kits na fase 4)
- *   /loja?q=<busca>         busca dentro da vitrine
+ * Contrato v2 (mudanças de caminho no Centro exigem versão nova aqui):
+ *   /                       onboarding do visitante novo (home)
+ *   /equipamentos           vitrine da loja (afiliados hoje, kits na fase 4)
+ *   /equipamentos?q=<busca> busca dentro da vitrine
  *   /cursos                 catálogo de cursos
  *   /cursos/<slug>          página de um curso
  *   /comunidade             Discord/Telegram + roadmap público
- *   /newsletter             captura do boletim semanal
+ *
+ * O Manual não tem plano pago: o suporte é por contribuição voluntária
+ * (/colaboradores), sem passar pelo Centro.
  *
  * O domínio base pode ser trocado por deploy sem código novo:
  * VITE_CENTRO_URL=https://centrodesobrevivencia.lovable.app
@@ -25,7 +27,7 @@ export const CENTRO_URL: string =
   (import.meta.env["VITE_CENTRO_URL"] as string | undefined)?.replace(/\/+$/, "") || CENTRO_PADRAO;
 
 /** Versão do contrato de deep links — qualquer mudança de caminho bumpa. */
-export const VERSAO_DEEP_LINK = "v1";
+export const VERSAO_DEEP_LINK = "v2";
 
 interface OpcoesLink {
   /** Campanha da semana/janela (ex.: "deposito", "pro", "menu"). */
@@ -46,12 +48,12 @@ function montarUrl(caminho: string, opcoes: OpcoesLink): string {
 
 /** Página única de onboarding do Centro ("Comece aqui"). */
 export function urlComeceAqui(conteudo = "app"): string {
-  return montarUrl("/comece-aqui", { campanha: "onboarding", conteudo });
+  return montarUrl("/", { campanha: "onboarding", conteudo });
 }
 
 /** Vitrine do Centro; busca opcional acoplada ao item sugerido. */
 export function urlLoja(busca?: string, conteudo?: string): string {
-  const url = new URL("/loja", `${CENTRO_URL}/`);
+  const url = new URL("/equipamentos", `${CENTRO_URL}/`);
   url.searchParams.set("utm_source", "manual");
   url.searchParams.set("utm_medium", "app");
   url.searchParams.set("utm_campaign", "deposito");
@@ -78,10 +80,5 @@ export function urlComunidade(conteudo = "app"): string {
 
 /** Captura do boletim semanal (newsletter). */
 export function urlNewsletter(conteudo = "app"): string {
-  return montarUrl("/newsletter", { campanha: "newsletter", conteudo });
-}
-
-/** Lista de espera / planos do Manual Pro no Centro. */
-export function urlPro(conteudo = "app"): string {
-  return montarUrl("/pro", { campanha: "manual-pro", conteudo });
+  return montarUrl("/", { campanha: "newsletter", conteudo });
 }

@@ -817,4 +817,6 @@ export const DIC_ZH: Record<string, string> = {
   "Abrir painel do Centro": "打开中心面板",
   Apoie: "支持",
   "Aguardando sessão…": "等待会话…",
+  "Apoie o Manual": "支持手册",
+  "Contribua para manter o app gratuito": "帮助应用保持免费",
 };

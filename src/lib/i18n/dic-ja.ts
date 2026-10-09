@@ -839,4 +839,6 @@ export const DIC_JA: Record<string, string> = {
   "Abrir painel do Centro": "センターのパネルを開く",
   Apoie: "支援",
   "Aguardando sessão…": "セッション待機中…",
+  "Apoie o Manual": "マニュアルを支援",
+  "Contribua para manter o app gratuito": "アプリを無料に保つために寄付",
 };

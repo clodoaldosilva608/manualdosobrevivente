@@ -23,7 +23,6 @@ import { Route as NotasRouteImport } from './routes/notas'
 import { Route as OfflineRouteImport } from './routes/offline'
 import { Route as ParceirosRouteImport } from './routes/parceiros'
 import { Route as PerfilRouteImport } from './routes/perfil'
-import { Route as ProRouteImport } from './routes/pro'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SosRouteImport } from './routes/sos'
 import { Route as TutorialRouteImport } from './routes/tutorial'
@@ -101,11 +100,6 @@ const PerfilRoute = PerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProRoute = ProRouteImport.update({
-  id: '/pro',
-  path: '/pro',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -152,7 +146,6 @@ export interface FileRoutesByFullPath {
   '/offline': typeof OfflineRoute
   '/parceiros': typeof ParceirosRoute
   '/perfil': typeof PerfilRoute
-  '/pro': typeof ProRoute
   '/settings': typeof SettingsRoute
   '/sos': typeof SosRoute
   '/tutorial': typeof TutorialRoute
@@ -174,7 +167,6 @@ export interface FileRoutesByTo {
   '/offline': typeof OfflineRoute
   '/parceiros': typeof ParceirosRoute
   '/perfil': typeof PerfilRoute
-  '/pro': typeof ProRoute
   '/settings': typeof SettingsRoute
   '/sos': typeof SosRoute
   '/tutorial': typeof TutorialRoute
@@ -198,7 +190,6 @@ export interface FileRoutesById {
   '/offline': typeof OfflineRoute
   '/parceiros': typeof ParceirosRoute
   '/perfil': typeof PerfilRoute
-  '/pro': typeof ProRoute
   '/settings': typeof SettingsRoute
   '/sos': typeof SosRoute
   '/tutorial': typeof TutorialRoute
@@ -223,7 +214,6 @@ export interface FileRouteTypes {
     | '/offline'
     | '/parceiros'
     | '/perfil'
-    | '/pro'
     | '/settings'
     | '/sos'
     | '/tutorial'
@@ -245,7 +235,6 @@ export interface FileRouteTypes {
     | '/offline'
     | '/parceiros'
     | '/perfil'
-    | '/pro'
     | '/settings'
     | '/sos'
     | '/tutorial'
@@ -268,7 +257,6 @@ export interface FileRouteTypes {
     | '/offline'
     | '/parceiros'
     | '/perfil'
-    | '/pro'
     | '/settings'
     | '/sos'
     | '/tutorial'
@@ -292,7 +280,6 @@ export interface RootRouteChildren {
   OfflineRoute: typeof OfflineRoute
   ParceirosRoute: typeof ParceirosRoute
   PerfilRoute: typeof PerfilRoute
-  ProRoute: typeof ProRoute
   SettingsRoute: typeof SettingsRoute
   SosRoute: typeof SosRoute
   TutorialRoute: typeof TutorialRoute
@@ -399,13 +386,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/pro': {
-      id: '/pro'
-      path: '/pro'
-      fullPath: '/pro'
-      preLoaderRoute: typeof ProRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -479,7 +459,6 @@ const rootRouteChildren: RootRouteChildren = {
   OfflineRoute: OfflineRoute,
   ParceirosRoute: ParceirosRoute,
   PerfilRoute: PerfilRoute,
-  ProRoute: ProRoute,
   SettingsRoute: SettingsRoute,
   SosRoute: SosRoute,
   TutorialRoute: TutorialRoute,

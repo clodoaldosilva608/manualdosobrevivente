@@ -45,8 +45,9 @@ export interface Preferences {
   /** Wizard de perfil já concluído (não re-oferecer automaticamente). */
   wizardPerfilFeito: boolean;
   /**
-   * Assinatura Manual Pro (protótipo — a cobrança real entra com o
-   * gateway no Centro; aqui é apenas o estado local do benefício).
+   * Legado do protótipo "Manual Pro" — mantido só por compatibilidade com
+   * as preferências já salvas. O projeto é gratuito e se sustenta por
+   * contribuições voluntárias (/colaboradores); nunca por assinatura.
    */
   pro: boolean;
 }

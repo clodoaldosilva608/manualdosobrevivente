@@ -125,6 +125,25 @@ export interface ManualAsset {
   saved_at: number;
 }
 
+/**
+ * Nota de campo — o FlatNotes do Nomad aplicado à prontidão (Fase 2 do
+ * plano do Hub). Local-first: vive no aparelho, entra no backup da pasta
+ * do operador e pode ser amarrada a um waypoint do mapa tático. A
+ * sincronização com a nuvem entra na fase seguinte (manual_field_notes).
+ */
+export interface LocalNota {
+  id: string;
+  user_id: string | null;
+  titulo: string;
+  conteudo: string;
+  /** Etiquetas livres digitadas pelo operador (ex.: ["campo", "agua"]). */
+  etiquetas: string[];
+  /** Waypoint opcional ao qual a nota está amarrada. */
+  waypoint: { id: string; titulo: string; latitude: number; longitude: number } | null;
+  criada_em: string;
+  atualizada_em: string;
+}
+
 interface TacticalDB extends DBSchema {
   waypoints: { key: string; value: LocalWaypoint; indexes: { by_user: string } };
   gear: { key: string; value: LocalGearItem; indexes: { by_user: string } };
@@ -135,6 +154,7 @@ interface TacticalDB extends DBSchema {
   areas: { key: string; value: CachedArea };
   checklist: { key: string; value: ChecklistState };
   manual_assets: { key: string; value: ManualAsset };
+  notas: { key: string; value: LocalNota; indexes: { by_user: string } };
   settings: { key: string; value: unknown };
 }
 
@@ -145,7 +165,7 @@ export function getDB() {
     return Promise.reject(new Error("IndexedDB not available on server"));
   }
   if (!dbPromise) {
-    dbPromise = openDB<TacticalDB>("tactical-gis", 4, {
+    dbPromise = openDB<TacticalDB>("tactical-gis", 5, {
       upgrade(db, oldVersion) {
         if (oldVersion < 1) {
           const wp = db.createObjectStore("waypoints", { keyPath: "id" });
@@ -167,6 +187,10 @@ export function getDB() {
         }
         if (oldVersion < 4 && !db.objectStoreNames.contains("contas")) {
           db.createObjectStore("contas", { keyPath: "id" });
+        }
+        if (oldVersion < 5 && !db.objectStoreNames.contains("notas")) {
+          const nt = db.createObjectStore("notas", { keyPath: "id" });
+          nt.createIndex("by_user", "user_id");
         }
       },
     });
@@ -190,6 +214,24 @@ export async function listManualAssets(): Promise<ManualAsset[]> {
   return db.getAll("manual_assets");
 }
 
+export async function listNotas(): Promise<LocalNota[]> {
+  const db = await getDB();
+  const todas = await db.getAllFromIndex("notas", "by_user");
+  return todas.sort((a, b) => (a.atualizada_em < b.atualizada_em ? 1 : -1));
+}
+
+export async function saveNota(n: LocalNota) {
+  const db = await getDB();
+  await db.put("notas", n);
+  notifyLocalChange();
+}
+
+export async function deleteNota(id: string) {
+  const db = await getDB();
+  await db.delete("notas", id);
+  notifyLocalChange();
+}
+
 export async function saveManualAsset(a: ManualAsset) {
   const db = await getDB();
   await db.put("manual_assets", a);
@@ -207,6 +249,7 @@ export async function clearLocalData() {
     db.clear("gear"),
     db.clear("mochilas"),
     db.clear("checklist"),
+    db.clear("notas"),
   ]);
 }
 

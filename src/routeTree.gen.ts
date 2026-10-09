@@ -12,10 +12,14 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ContaRouteImport } from './routes/conta'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as DepositoRouteImport } from './routes/deposito'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ManualRouteImport } from './routes/manual'
+import { Route as NotasRouteImport } from './routes/notas'
 import { Route as OfflineRouteImport } from './routes/offline'
+import { Route as PerfilRouteImport } from './routes/perfil'
+import { Route as ProRouteImport } from './routes/pro'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SosRouteImport } from './routes/sos'
 import { Route as TutorialRouteImport } from './routes/tutorial'
@@ -38,6 +42,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DepositoRoute = DepositoRouteImport.update({
+  id: '/deposito',
+  path: '/deposito',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InventoryRoute = InventoryRouteImport.update({
   id: '/inventory',
   path: '/inventory',
@@ -53,9 +62,24 @@ const ManualRoute = ManualRouteImport.update({
   path: '/manual',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NotasRoute = NotasRouteImport.update({
+  id: '/notas',
+  path: '/notas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OfflineRoute = OfflineRouteImport.update({
   id: '/offline',
   path: '/offline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProRoute = ProRouteImport.update({
+  id: '/pro',
+  path: '/pro',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -93,10 +117,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/conta': typeof ContaRoute
   '/dashboard': typeof DashboardRoute
+  '/deposito': typeof DepositoRoute
   '/inventory': typeof InventoryRoute
   '/login': typeof LoginRoute
   '/manual': typeof ManualRouteWithChildren
+  '/notas': typeof NotasRoute
   '/offline': typeof OfflineRoute
+  '/perfil': typeof PerfilRoute
+  '/pro': typeof ProRoute
   '/settings': typeof SettingsRoute
   '/sos': typeof SosRoute
   '/tutorial': typeof TutorialRoute
@@ -108,9 +136,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/conta': typeof ContaRoute
   '/dashboard': typeof DashboardRoute
+  '/deposito': typeof DepositoRoute
   '/inventory': typeof InventoryRoute
   '/login': typeof LoginRoute
+  '/notas': typeof NotasRoute
   '/offline': typeof OfflineRoute
+  '/perfil': typeof PerfilRoute
+  '/pro': typeof ProRoute
   '/settings': typeof SettingsRoute
   '/sos': typeof SosRoute
   '/tutorial': typeof TutorialRoute
@@ -123,10 +155,14 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/conta': typeof ContaRoute
   '/dashboard': typeof DashboardRoute
+  '/deposito': typeof DepositoRoute
   '/inventory': typeof InventoryRoute
   '/login': typeof LoginRoute
   '/manual': typeof ManualRouteWithChildren
+  '/notas': typeof NotasRoute
   '/offline': typeof OfflineRoute
+  '/perfil': typeof PerfilRoute
+  '/pro': typeof ProRoute
   '/settings': typeof SettingsRoute
   '/sos': typeof SosRoute
   '/tutorial': typeof TutorialRoute
@@ -140,10 +176,14 @@ export interface FileRouteTypes {
     | '/'
     | '/conta'
     | '/dashboard'
+    | '/deposito'
     | '/inventory'
     | '/login'
     | '/manual'
+    | '/notas'
     | '/offline'
+    | '/perfil'
+    | '/pro'
     | '/settings'
     | '/sos'
     | '/tutorial'
@@ -155,9 +195,13 @@ export interface FileRouteTypes {
     | '/'
     | '/conta'
     | '/dashboard'
+    | '/deposito'
     | '/inventory'
     | '/login'
+    | '/notas'
     | '/offline'
+    | '/perfil'
+    | '/pro'
     | '/settings'
     | '/sos'
     | '/tutorial'
@@ -169,10 +213,14 @@ export interface FileRouteTypes {
     | '/'
     | '/conta'
     | '/dashboard'
+    | '/deposito'
     | '/inventory'
     | '/login'
     | '/manual'
+    | '/notas'
     | '/offline'
+    | '/perfil'
+    | '/pro'
     | '/settings'
     | '/sos'
     | '/tutorial'
@@ -185,10 +233,14 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ContaRoute: typeof ContaRoute
   DashboardRoute: typeof DashboardRoute
+  DepositoRoute: typeof DepositoRoute
   InventoryRoute: typeof InventoryRoute
   LoginRoute: typeof LoginRoute
   ManualRoute: typeof ManualRouteWithChildren
+  NotasRoute: typeof NotasRoute
   OfflineRoute: typeof OfflineRoute
+  PerfilRoute: typeof PerfilRoute
+  ProRoute: typeof ProRoute
   SettingsRoute: typeof SettingsRoute
   SosRoute: typeof SosRoute
   TutorialRoute: typeof TutorialRoute
@@ -218,6 +270,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/deposito': {
+      id: '/deposito'
+      path: '/deposito'
+      fullPath: '/deposito'
+      preLoaderRoute: typeof DepositoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/inventory': {
       id: '/inventory'
       path: '/inventory'
@@ -239,11 +298,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManualRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/notas': {
+      id: '/notas'
+      path: '/notas'
+      fullPath: '/notas'
+      preLoaderRoute: typeof NotasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/offline': {
       id: '/offline'
       path: '/offline'
       fullPath: '/offline'
       preLoaderRoute: typeof OfflineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pro': {
+      id: '/pro'
+      path: '/pro'
+      fullPath: '/pro'
+      preLoaderRoute: typeof ProRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -308,10 +388,14 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ContaRoute: ContaRoute,
   DashboardRoute: DashboardRoute,
+  DepositoRoute: DepositoRoute,
   InventoryRoute: InventoryRoute,
   LoginRoute: LoginRoute,
   ManualRoute: ManualRouteWithChildren,
+  NotasRoute: NotasRoute,
   OfflineRoute: OfflineRoute,
+  PerfilRoute: PerfilRoute,
+  ProRoute: ProRoute,
   SettingsRoute: SettingsRoute,
   SosRoute: SosRoute,
   TutorialRoute: TutorialRoute,

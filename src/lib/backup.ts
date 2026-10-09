@@ -18,12 +18,14 @@ import {
   listMochilas,
   listChecklist,
   listContas,
+  listNotas,
   getSetting,
   setSetting,
   saveWaypoint,
   saveGear,
   saveMochila,
   saveConta,
+  saveNota,
   putChecklistState,
 } from "@/lib/db";
 
@@ -33,7 +35,7 @@ export const BACKUP_ARQUIVO = "backup-manual-do-sobrevivente.json";
 export const BACKUP_ARQUIVO_ANTERIOR = "backup-manual-do-sobrevivente-anterior.json";
 export const LEIA_ME = "LEIA-ME.txt";
 const APP_ID = "manual-do-sobrevivente";
-const VERSAO_BACKUP = 3;
+const VERSAO_BACKUP = 4;
 
 /* Tipos mínimos da File System Access API (nem todos estão no lib.dom). */
 interface OpcoesDirectoryPicker {
@@ -130,17 +132,20 @@ export interface BundleBackup {
   checklist: Array<Record<string, unknown>>;
   /** Contas locais (com hash PBKDF2 — nunca a senha em claro). Desde a versão 3. */
   contas?: Array<Record<string, unknown>>;
+  /** Notas de campo. Desde a versão 4. */
+  notas?: Array<Record<string, unknown>>;
   preferencias: unknown;
   contagens: { waypoints: number; mochila: number; checklist: number };
 }
 
 export async function montarBundle(): Promise<BundleBackup> {
-  const [waypoints, mochila, mochilas, checklist, contas, preferencias] = await Promise.all([
+  const [waypoints, mochila, mochilas, checklist, contas, notas, preferencias] = await Promise.all([
     listWaypoints(),
     listGear(),
     listMochilas(),
     listChecklist(),
     listContas(),
+    listNotas(),
     getSetting("preferences"),
   ]);
   return {
@@ -152,6 +157,7 @@ export async function montarBundle(): Promise<BundleBackup> {
     mochila: mochila as unknown as Array<Record<string, unknown>>,
     checklist: checklist as unknown as Array<Record<string, unknown>>,
     contas: contas as unknown as Array<Record<string, unknown>>,
+    notas: notas as unknown as Array<Record<string, unknown>>,
     preferencias: preferencias ?? null,
     contagens: {
       waypoints: waypoints.length,
@@ -255,6 +261,8 @@ export interface ResultadoRestauracao {
   checklist: number;
   /** Contas locais importadas (0 quando o aparelho já tinha conta). */
   contas: number;
+  /** Notas de campo importadas (0 quando o backup é anterior à v4). */
+  notas: number;
   gerado_em: string | null;
 }
 
@@ -322,6 +330,13 @@ export async function restaurarDaPasta(
       contasRestauradas++;
     }
   }
+  let notasRestauradas = 0;
+  for (const bruto of bundle.notas ?? []) {
+    const n = bruto as unknown as Parameters<typeof saveNota>[0];
+    if (!n?.id || typeof n.titulo !== "string") continue;
+    await saveNota({ ...n, etiquetas: Array.isArray(n.etiquetas) ? n.etiquetas : [] });
+    notasRestauradas++;
+  }
   if (bundle.preferencias && typeof bundle.preferencias === "object") {
     await setSetting("preferences", bundle.preferencias);
   }
@@ -332,6 +347,7 @@ export async function restaurarDaPasta(
     mochila: gear,
     checklist: check,
     contas: contasRestauradas,
+    notas: notasRestauradas,
     gerado_em: bundle.gerado_em ?? null,
   };
 }

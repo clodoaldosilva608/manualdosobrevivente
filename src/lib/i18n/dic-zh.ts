@@ -517,4 +517,141 @@ export const DIC_ZH: Record<string, string> = {
   "Banner do convite": "邀请横幅",
   "Mensagem pronta com o link — a imagem vai junto na folha nativa e na prévia do WhatsApp e Telegram.":
     "消息已带链接就绪 — 图片会随系统分享面板发送，并显示在 WhatsApp 和 Telegram 的链接预览中。",
+  "Wizard de prontidão": "备灾向导",
+  "Perfil de prontidão": "备灾档案",
+  "Responda em que contexto você vive e o aplicativo curadoria o resto: mochila recomendada, tópicos do manual e prioridades do Depósito de Suprimentos. Nada sai do aparelho.":
+    "告诉应用你生活的环境，其余由它来策划：推荐背包、手册主题与补给站优先级。数据不会离开设备。",
+  "Perfil ativo": "当前档案",
+  "A mochila recomendada deste perfil já está no inventário — confira e marque o que já reuniu.":
+    "该档案的推荐背包已在清单中——请核对并勾选已备齐的物品。",
+  "Abrir mochila": "打开背包",
+  "Depósito de suprimentos": "补给站",
+  "Passo 1 de 2 — escolha o contexto": "第 1 步（共 2 步）——选择环境",
+  "Passo 2 de 2 — confirme o plano": "第 2 步（共 2 步）——确认方案",
+  "Mochila recomendada:": "推荐背包：",
+  "Tópicos do manual priorizados": "优先手册主题",
+  "Prioridades no Depósito de Suprimentos": "补给站优先事项",
+  "Aplicando…": "应用中…",
+  "Aplicar perfil": "应用档案",
+  "Perfil aplicado": "档案已应用",
+  "Mochila recomendada garantida no inventário": "推荐背包已加入清单",
+  "Recomendações guardadas no aparelho": "建议已保存在设备上",
+  "Hub de Sobrevivência": "生存中心",
+  "Depósito de Suprimentos": "补给站",
+  "Catálogo curado do que realmente importa em cada contexto — o Manual não vende nada: cada item abre a busca equivalente na loja do Centro de Sobrevivência.":
+    "按环境精选的实用装备目录——手册不卖任何东西：每件物品都会在生存中心商店打开对应搜索。",
+  Todos: "全部",
+  Essencial: "必备",
+  Complemento: "补充",
+  "Seu perfil": "你的档案",
+  "Recomendado para o seu perfil de prontidão": "根据你的备灾档案推荐",
+  "Faixa de preço": "价格区间",
+  "Ver na loja do Centro": "在中心商店查看",
+  "A vitrine completa, kits montados e afiliados ficam no Centro de Sobrevivência.":
+    "完整橱窗、成套工具包与联盟商品均在生存中心。",
+  "Abrir a loja do Centro": "打开中心商店",
+  "Ajustar meu perfil de prontidão": "调整我的备灾档案",
+  "Conferir mochila": "检查背包",
+  Assinatura: "订阅",
+  "O plano recorrente do Manual: o que fica melhor para quem prepara em série, não só consulta. Protótipo público — a cobrança abre pelo Centro com PIX e cartão.":
+    "手册的订阅方案：为认真备灾者而设。公开原型——收费将通过中心以 PIX 与银行卡开启。",
+  "Assinatura ativa neste aparelho (estado local)": "本设备上订阅已激活（本地状态）",
+  Gratuito: "免费",
+  "para sempre": "永久",
+  "Mapa tático completo com radar, ciclones e vento": "完整战术地图，含雷达、气旋与风",
+  "Mochilas, checklists e waypoints ilimitados no aparelho": "设备上不限量的背包、清单与航点",
+  "Manual de sobrevivência e teste de prontidão": "生存手册与备灾测试",
+  "Backup em pasta própria do operador": "备份到操作者自己的文件夹",
+  "Em preparação": "筹备中",
+  mês: "月",
+  "ou R$ 119,90/ano (2 meses de brinde)": "或每年 R$ 119.90（赠 2 个月）",
+  "Alertas meteorológicos avançados": "高级气象警报",
+  "Vigilância contínua com aviso por notificação para ciclone, tempestade severa e enchente na sua região.":
+    "对所在地区的气旋、强风暴与洪水进行持续监测并推送通知。",
+  "Sincronização ilimitada": "不限量同步",
+  "Waypoints, mochilas, notas e prontidão em todos os seus aparelhos — sem limite de volume.":
+    "航点、背包、笔记与备灾数据覆盖你的所有设备——不限容量。",
+  "Packs offline exclusivos": "独家离线内容包",
+  "Bibliotecas de campo em português: primeiros socorros, plantas medicinais, guias por cenário.":
+    "葡萄牙语野外资料库：急救、药用植物、场景指南。",
+  "Relatório personalizado de prontidão": "个性化备灾报告",
+  "Boletim semanal com o estado do seu kit, lacunas encontradas e prioridade de reposição.":
+    "每周简报：装备状态、发现的缺口与补充优先级。",
+  "Entrar na lista de espera": "加入等候名单",
+  "Lista de espera no Centro de Sobrevivência — você recebe o aviso de abertura por e-mail.":
+    "等候名单在生存中心——开通通知将通过电子邮件发送。",
+  "Gratuito continua completo para o uso de campo. Pro sustenta o desenvolvimento e a infraestrutura do hub.":
+    "免费版在野外使用上依旧完整。Pro 版支持中心的开发与基础设施。",
+  "Diário do operador": "操作者日志",
+  "Notas de campo": "野外笔记",
+  "Anotações rápidas salvas no aparelho, incluídas no backup da pasta e amarráveis a waypoints do mapa.":
+    "保存在设备上的快速笔记，纳入文件夹备份，并可绑定到地图航点。",
+  "Nova nota": "新建笔记",
+  "Editar nota": "编辑笔记",
+  "Fechar editor": "关闭编辑器",
+  "Título da nota": "笔记标题",
+  "O que aconteceu, o que você viu, o que precisa fazer…": "发生了什么、看到了什么、还需要做什么……",
+  "Etiquetas separadas por vírgula (água, campo, kit)": "标签用逗号分隔（水、野外、装备）",
+  "Amarrar a um waypoint (opcional)": "绑定到航点（可选）",
+  "Dê um título à nota": "请为笔记加标题",
+  "Nota atualizada": "笔记已更新",
+  "Nota guardada no aparelho": "笔记已保存到设备",
+  "Não foi possível guardar a nota": "无法保存笔记",
+  "Apagar esta nota definitivamente?": "永久删除这条笔记？",
+  "Nota apagada": "笔记已删除",
+  "Não foi possível apagar a nota": "无法删除笔记",
+  Guardar: "保存",
+  "Guardando…": "保存中…",
+  "Nenhuma nota ainda. Registre o que você aprende em cada saída — é assim que a prontidão vira experiência.":
+    "还没有笔记。记录每次外出的心得——备灾就是这样变成经验的。",
+  "Apagar nota": "删除笔记",
+  "As notas entram no backup automático da pasta do operador (Ajustes → Pasta de backup).":
+    "笔记会纳入操作者文件夹的自动备份（设置→备份文件夹）。",
+  "Mochila e manual pelo seu contexto": "按环境定制背包与手册",
+  "O que reunir, por contexto": "按环境整理需备齐之物",
+  "Diário do operador no aparelho": "设备上的操作者日志",
+  "Manual Pro": "Manual Pro",
+  "Alertas avançados e sincronização": "高级警报与同步",
+  "Loja do Centro": "中心商店",
+  "Equipamentos e kits no Centro": "中心的装备与工具包",
+  "Cursos do Centro": "中心课程",
+  "Trilhas de preparação com progresso": "有进度的备灾课程",
+  Comunidade: "社区",
+  "Discord, Telegram e roadmap": "Discord、Telegram 与路线图",
+  Urbano: "城市",
+  Trilha: "徒步",
+  Litoral: "海岸",
+  Rural: "乡村",
+  "Enchente e apagão": "洪水与停电",
+  "Perda de rota e clima": "迷路与恶劣天气",
+  "Ciclone e maré": "气旋与风暴潮",
+  "Isolamento e demora de socorro": "孤立与救援迟缓",
+  "Apagões, enchentes na cidade, alagamento e fechamento de vias — você mora em área construída e precisa se virar com a infraestrutura caída.":
+    "停电、城市洪水、内涝与道路封闭——你住在建成区，必须在基础设施瘫痪时自救。",
+  "Caminhadas, cicloturismo e travessias — dias fora de célula, com mochila nas costas e dependência total do que você carrega.":
+    "徒步、骑行与纵走——多日无信号，全靠自己背上背的装备。",
+  "Ciclones, maré de tempestade, temporais e isolamento de praias e ilhas — a casa fica onde a previsão do tempo manda.":
+    "气旋、风暴潮、强风暴与海滩岛屿的孤立——家要听天气预报的安排。",
+  "Sítio, fazenda ou roça distante do centro — socorro demora, recursos são próprios e o planejamento é de autonomia longa.":
+    "远离城镇的农庄或农场——救援迟缓，资源自理，规划以长期自给为目标。",
+  "O kit 72 h é o padrão da Defesa Civil: três dias autônomo até a ajuda organizada chegar — o cenário real de uma enchente urbana.":
+    "72 小时包是民防标准：自主三天等待有组织的救援——这正是城市洪水的真实场景。",
+  "Leve e completa para o deslocamento: água, proteção, sinalização e primeiros socorros sem pesar o passo.":
+    "轻量又完备：水、防护、信号与急救，不拖累步伐。",
+  "Dois dias autônomo cobre o pico do ciclone e o alagamento de maré — janela típica de reabertura de estradas.":
+    "自主两天可覆盖气旋峰值与潮水内涝——典型的道路重开窗口期。",
+  "Autonomia estendida: no campo o kit não é para chegar em casa, é para operar de onde você está.":
+    "延长自给：在乡下，装备不是用来回家的，而是让你就地维持运作。",
+  Energia: "能源",
+  "Primeiros socorros": "急救",
+  "Abrigos e clima": "庇护与天气",
+  "Tratar, carregar e encontrar água — a prioridade de qualquer kit.":
+    "处理、携带与寻找水源——任何装备包的第一优先。",
+  "Luz e carregamento quando a rede cai — apagões e campo.": "电网瘫痪时的照明与充电——停电与野外。",
+  "Estancar, imobilizar e estabilizar até o socorro chegar.": "止血、固定、稳定，坚持到救援到达。",
+  "Proteção contra chuva, frio e calor extremo.": "抵御暴雨、严寒与酷热。",
+  "Saber o que acontece e pedir socorro sem sinal de operadora.":
+    "在无运营商信号时了解情况并求援。",
+  "Cortar, consertar, abrir e improvisar quando nada mais resolve.":
+    "剪、修、开、就地取材，别无办法时的手段。",
 };

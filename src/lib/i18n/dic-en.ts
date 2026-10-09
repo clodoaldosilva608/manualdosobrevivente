@@ -533,4 +533,148 @@ export const DIC_EN: Record<string, string> = {
   "Banner do convite": "Invite banner",
   "Mensagem pronta com o link — a imagem vai junto na folha nativa e na prévia do WhatsApp e Telegram.":
     "Message ready with the link — the image goes along in the native sheet and in the WhatsApp and Telegram link preview.",
+  "Wizard de prontidão": "Readiness wizard",
+  "Perfil de prontidão": "Readiness profile",
+  "Responda em que contexto você vive e o aplicativo curadoria o resto: mochila recomendada, tópicos do manual e prioridades do Depósito de Suprimentos. Nada sai do aparelho.":
+    "Tell the app the context you live in and it curates the rest: recommended pack, manual topics and Supply Depot priorities. Nothing leaves the device.",
+  "Perfil ativo": "Active profile",
+  "A mochila recomendada deste perfil já está no inventário — confira e marque o que já reuniu.":
+    "This profile's recommended pack is already in the inventory — review it and check what you have gathered.",
+  "Abrir mochila": "Open pack",
+  "Depósito de suprimentos": "Supply depot",
+  "Passo 1 de 2 — escolha o contexto": "Step 1 of 2 — choose the context",
+  "Passo 2 de 2 — confirme o plano": "Step 2 of 2 — confirm the plan",
+  "Mochila recomendada:": "Recommended pack:",
+  "Tópicos do manual priorizados": "Priority manual topics",
+  "Prioridades no Depósito de Suprimentos": "Supply depot priorities",
+  "Aplicando…": "Applying…",
+  "Aplicar perfil": "Apply profile",
+  "Perfil aplicado": "Profile applied",
+  "Mochila recomendada garantida no inventário": "Recommended pack guaranteed in the inventory",
+  "Recomendações guardadas no aparelho": "Recommendations saved on the device",
+  "Hub de Sobrevivência": "Survival hub",
+  "Depósito de Suprimentos": "Supply Depot",
+  "Catálogo curado do que realmente importa em cada contexto — o Manual não vende nada: cada item abre a busca equivalente na loja do Centro de Sobrevivência.":
+    "A curated catalog of what really matters in each context — the Manual sells nothing: each item opens the matching search in the Survival Center store.",
+  Todos: "All",
+  Essencial: "Essential",
+  Complemento: "Complement",
+  "Seu perfil": "Your profile",
+  "Recomendado para o seu perfil de prontidão": "Recommended for your readiness profile",
+  "Faixa de preço": "Price range",
+  "Ver na loja do Centro": "View in the Center store",
+  "A vitrine completa, kits montados e afiliados ficam no Centro de Sobrevivência.":
+    "The full storefront, assembled kits and affiliates live in the Survival Center.",
+  "Abrir a loja do Centro": "Open the Center store",
+  "Ajustar meu perfil de prontidão": "Adjust my readiness profile",
+  "Conferir mochila": "Check pack",
+  Assinatura: "Subscription",
+  "O plano recorrente do Manual: o que fica melhor para quem prepara em série, não só consulta. Protótipo público — a cobrança abre pelo Centro com PIX e cartão.":
+    "The Manual's recurring plan: for those who prepare seriously, not just browse. Public prototype — billing opens through the Center with PIX and card.",
+  "Assinatura ativa neste aparelho (estado local)":
+    "Subscription active on this device (local state)",
+  Gratuito: "Free",
+  "para sempre": "forever",
+  "Mapa tático completo com radar, ciclones e vento":
+    "Full tactical map with radar, cyclones and wind",
+  "Mochilas, checklists e waypoints ilimitados no aparelho":
+    "Unlimited packs, checklists and waypoints on the device",
+  "Manual de sobrevivência e teste de prontidão": "Survival manual and readiness test",
+  "Backup em pasta própria do operador": "Backup to the operator's own folder",
+  "Em preparação": "In preparation",
+  mês: "month",
+  "ou R$ 119,90/ano (2 meses de brinde)": "or R$ 119.90/year (2 months free)",
+  "Alertas meteorológicos avançados": "Advanced weather alerts",
+  "Vigilância contínua com aviso por notificação para ciclone, tempestade severa e enchente na sua região.":
+    "Continuous monitoring with notification alerts for cyclone, severe storm and flood in your region.",
+  "Sincronização ilimitada": "Unlimited sync",
+  "Waypoints, mochilas, notas e prontidão em todos os seus aparelhos — sem limite de volume.":
+    "Waypoints, packs, notes and readiness on all your devices — no volume limit.",
+  "Packs offline exclusivos": "Exclusive offline packs",
+  "Bibliotecas de campo em português: primeiros socorros, plantas medicinais, guias por cenário.":
+    "Field libraries in Portuguese: first aid, medicinal plants, scenario guides.",
+  "Relatório personalizado de prontidão": "Personalized readiness report",
+  "Boletim semanal com o estado do seu kit, lacunas encontradas e prioridade de reposição.":
+    "Weekly bulletin with your kit's state, gaps found and restocking priority.",
+  "Entrar na lista de espera": "Join the waitlist",
+  "Lista de espera no Centro de Sobrevivência — você recebe o aviso de abertura por e-mail.":
+    "Waitlist in the Survival Center — you get the opening notice by e-mail.",
+  "Gratuito continua completo para o uso de campo. Pro sustenta o desenvolvimento e a infraestrutura do hub.":
+    "Free stays complete for field use. Pro sustains the hub's development and infrastructure.",
+  "Diário do operador": "Operator's log",
+  "Notas de campo": "Field notes",
+  "Anotações rápidas salvas no aparelho, incluídas no backup da pasta e amarráveis a waypoints do mapa.":
+    "Quick notes saved on the device, included in the folder backup and linkable to map waypoints.",
+  "Nova nota": "New note",
+  "Editar nota": "Edit note",
+  "Fechar editor": "Close editor",
+  "Título da nota": "Note title",
+  "O que aconteceu, o que você viu, o que precisa fazer…":
+    "What happened, what you saw, what needs doing…",
+  "Etiquetas separadas por vírgula (água, campo, kit)":
+    "Tags separated by comma (water, field, kit)",
+  "Amarrar a um waypoint (opcional)": "Link to a waypoint (optional)",
+  "Dê um título à nota": "Give the note a title",
+  "Nota atualizada": "Note updated",
+  "Nota guardada no aparelho": "Note saved on the device",
+  "Não foi possível guardar a nota": "Could not save the note",
+  "Apagar esta nota definitivamente?": "Delete this note permanently?",
+  "Nota apagada": "Note deleted",
+  "Não foi possível apagar a nota": "Could not delete the note",
+  Guardar: "Save",
+  "Guardando…": "Saving…",
+  "Nenhuma nota ainda. Registre o que você aprende em cada saída — é assim que a prontidão vira experiência.":
+    "No notes yet. Record what you learn on each outing — that's how readiness becomes experience.",
+  "Apagar nota": "Delete note",
+  "As notas entram no backup automático da pasta do operador (Ajustes → Pasta de backup).":
+    "Notes are included in the automatic backup of the operator's folder (Settings → Backup folder).",
+  "Mochila e manual pelo seu contexto": "Pack and manual for your context",
+  "O que reunir, por contexto": "What to gather, by context",
+  "Diário do operador no aparelho": "Operator's log on the device",
+  "Manual Pro": "Manual Pro",
+  "Alertas avançados e sincronização": "Advanced alerts and sync",
+  "Loja do Centro": "Center store",
+  "Equipamentos e kits no Centro": "Gear and kits in the Center",
+  "Cursos do Centro": "Center courses",
+  "Trilhas de preparação com progresso": "Readiness tracks with progress",
+  Comunidade: "Community",
+  "Discord, Telegram e roadmap": "Discord, Telegram and roadmap",
+  Urbano: "Urban",
+  Trilha: "Trail",
+  Litoral: "Coastal",
+  Rural: "Rural",
+  "Enchente e apagão": "Flood and blackout",
+  "Perda de rota e clima": "Lost route and weather",
+  "Ciclone e maré": "Cyclone and storm surge",
+  "Isolamento e demora de socorro": "Isolation and slow rescue",
+  "Apagões, enchentes na cidade, alagamento e fechamento de vias — você mora em área construída e precisa se virar com a infraestrutura caída.":
+    "Blackouts, city floods, waterlogging and road closures — you live in a built area and must cope with failed infrastructure.",
+  "Caminhadas, cicloturismo e travessias — dias fora de célula, com mochila nas costas e dependência total do que você carrega.":
+    "Hiking, bikepacking and traverses — days out of coverage, carrying everything you depend on.",
+  "Ciclones, maré de tempestade, temporais e isolamento de praias e ilhas — a casa fica onde a previsão do tempo manda.":
+    "Cyclones, storm surge, severe storms and cut-off beaches and islands — your home obeys the weather forecast.",
+  "Sítio, fazenda ou roça distante do centro — socorro demora, recursos são próprios e o planejamento é de autonomia longa.":
+    "Farm or countryside far from town — rescue takes long, resources are your own and planning means long autonomy.",
+  "O kit 72 h é o padrão da Defesa Civil: três dias autônomo até a ajuda organizada chegar — o cenário real de uma enchente urbana.":
+    "The 72 h kit is the civil defense standard: three days self-reliant until organized help arrives — the real urban flood scenario.",
+  "Leve e completa para o deslocamento: água, proteção, sinalização e primeiros socorros sem pesar o passo.":
+    "Light and complete for moving: water, shelter, signaling and first aid without weighing your stride.",
+  "Dois dias autônomo cobre o pico do ciclone e o alagamento de maré — janela típica de reabertura de estradas.":
+    "Two days self-reliant covers the cyclone peak and tidal flooding — the typical road-reopening window.",
+  "Autonomia estendida: no campo o kit não é para chegar em casa, é para operar de onde você está.":
+    "Extended autonomy: in the countryside the kit isn't to get home, it's to operate from where you are.",
+  Energia: "Energy",
+  "Primeiros socorros": "First aid",
+  "Abrigos e clima": "Shelter and weather",
+  "Tratar, carregar e encontrar água — a prioridade de qualquer kit.":
+    "Treat, carry and find water — the first priority of any kit.",
+  "Luz e carregamento quando a rede cai — apagões e campo.":
+    "Light and charging when the grid fails — blackouts and the field.",
+  "Estancar, imobilizar e estabilizar até o socorro chegar.":
+    "Stop bleeding, immobilize and stabilize until help arrives.",
+  "Proteção contra chuva, frio e calor extremo.": "Protection against rain, cold and extreme heat.",
+  "Saber o que acontece e pedir socorro sem sinal de operadora.":
+    "Know what's happening and call for help without carrier signal.",
+  "Cortar, consertar, abrir e improvisar quando nada mais resolve.":
+    "Cut, repair, open and improvise when nothing else works.",
 };

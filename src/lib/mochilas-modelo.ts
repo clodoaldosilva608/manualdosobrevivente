@@ -877,6 +877,30 @@ export async function criarTodosModelos(): Promise<number> {
   return criadas;
 }
 
+/**
+ * Cria UM modelo específico se ainda não existir (idempotente) — usado pelo
+ * wizard de perfil, que recomenda a mochila adequada ao contexto de vida do
+ * operador. Devolve o nome da mochila garantida ou nulo quando o id não é
+ * de nenhum modelo conhecido.
+ */
+export async function criarMochilaDoModelo(id: string): Promise<string | null> {
+  const modelo = MODELOS.find((m) => m.id === id);
+  if (!modelo) return null;
+  const agora = new Date().toISOString();
+  const [existentes, itens] = await Promise.all([listMochilas(), listGear()]);
+  const idsMochilas = new Set(existentes.map((m) => m.id));
+  const idsItens = new Set(itens.map((i) => i.id));
+  if (!idsMochilas.has(modelo.id)) {
+    await saveMochila(mochilaDoModelo(modelo, agora));
+  }
+  for (const item of modelo.itens) {
+    if (!idsItens.has(item.id)) {
+      await saveGear(itemParaGear(item, modelo.id, agora));
+    }
+  }
+  return modelo.nome;
+}
+
 /** Recria apenas os modelos que não existem mais (apagados pelo usuário). */
 export async function restaurarModelosApagados(): Promise<number> {
   try {

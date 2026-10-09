@@ -534,4 +534,147 @@ export const DIC_RU: Record<string, string> = {
   "Banner do convite": "Баннер приглашения",
   "Mensagem pronta com o link — a imagem vai junto na folha nativa e na prévia do WhatsApp e Telegram.":
     "Сообщение готово со ссылкой — изображение прилагается в системном меню и в превью ссылки WhatsApp и Telegram.",
+  "Wizard de prontidão": "Мастер готовности",
+  "Perfil de prontidão": "Профиль готовности",
+  "Responda em que contexto você vive e o aplicativo curadoria o resto: mochila recomendada, tópicos do manual e prioridades do Depósito de Suprimentos. Nada sai do aparelho.":
+    "Укажите, в каких условиях вы живёте, — приложение подберёт остальное: рекомендованный рюкзак, темы руководства и приоритеты склада снабжения. Ничего не покидает устройство.",
+  "Perfil ativo": "Активный профиль",
+  "A mochila recomendada deste perfil já está no inventário — confira e marque o que já reuniu.":
+    "Рекомендованный рюкзак этого профиля уже в инвентаре — проверьте и отметьте собранное.",
+  "Abrir mochila": "Открыть рюкзак",
+  "Depósito de suprimentos": "Склад снабжения",
+  "Passo 1 de 2 — escolha o contexto": "Шаг 1 из 2 — выберите условия",
+  "Passo 2 de 2 — confirme o plano": "Шаг 2 из 2 — подтвердите план",
+  "Mochila recomendada:": "Рекомендованный рюкзак:",
+  "Tópicos do manual priorizados": "Приоритетные темы руководства",
+  "Prioridades no Depósito de Suprimentos": "Приоритеты склада снабжения",
+  "Aplicando…": "Применение…",
+  "Aplicar perfil": "Применить профиль",
+  "Perfil aplicado": "Профиль применён",
+  "Mochila recomendada garantida no inventário": "Рекомендованный рюкзак добавлен в инвентарь",
+  "Recomendações guardadas no aparelho": "Рекомендации сохранены на устройстве",
+  "Hub de Sobrevivência": "Хаб выживания",
+  "Depósito de Suprimentos": "Склад снабжения",
+  "Catálogo curado do que realmente importa em cada contexto — o Manual não vende nada: cada item abre a busca equivalente na loja do Centro de Sobrevivência.":
+    "Отобранный каталог того, что действительно важно в каждых условиях, — руководство ничего не продаёт: каждый пункт открывает соответствующий поиск в магазине Центра выживания.",
+  Todos: "Все",
+  Essencial: "Необходимое",
+  Complemento: "Дополнение",
+  "Seu perfil": "Ваш профиль",
+  "Recomendado para o seu perfil de prontidão": "Рекомендовано для вашего профиля готовности",
+  "Faixa de preço": "Диапазон цен",
+  "Ver na loja do Centro": "Смотреть в магазине Центра",
+  "A vitrine completa, kits montados e afiliados ficam no Centro de Sobrevivência.":
+    "Полная витрина, собранные наборы и партнёрские ссылки — в Центре выживания.",
+  "Abrir a loja do Centro": "Открыть магазин Центра",
+  "Ajustar meu perfil de prontidão": "Настроить профиль готовности",
+  "Conferir mochila": "Проверить рюкзак",
+  Assinatura: "Подписка",
+  "O plano recorrente do Manual: o que fica melhor para quem prepara em série, não só consulta. Protótipo público — a cobrança abre pelo Centro com PIX e cartão.":
+    "Регулярный план руководства: для тех, кто готовится всерьёз, а не просто читает. Публичный прототип — оплата откроется через Центр (PIX и карта).",
+  "Assinatura ativa neste aparelho (estado local)":
+    "Подписка активна на этом устройстве (локальное состояние)",
+  Gratuito: "Бесплатно",
+  "para sempre": "навсегда",
+  "Mapa tático completo com radar, ciclones e vento":
+    "Полная тактическая карта с радаром, циклонами и ветром",
+  "Mochilas, checklists e waypoints ilimitados no aparelho":
+    "Неограниченные рюкзаки, списки и точки на устройстве",
+  "Manual de sobrevivência e teste de prontidão": "Руководство по выживанию и тест готовности",
+  "Backup em pasta própria do operador": "Резервная копия в собственной папке оператора",
+  "Em preparação": "В подготовке",
+  mês: "мес.",
+  "ou R$ 119,90/ano (2 meses de brinde)": "или R$ 119,90/год (2 месяца в подарок)",
+  "Alertas meteorológicos avançados": "Расширенные погодные оповещения",
+  "Vigilância contínua com aviso por notificação para ciclone, tempestade severa e enchente na sua região.":
+    "Постоянное наблюдение с уведомлениями о циклонах, сильных штормах и наводнениях в вашем регионе.",
+  "Sincronização ilimitada": "Неограниченная синхронизация",
+  "Waypoints, mochilas, notas e prontidão em todos os seus aparelhos — sem limite de volume.":
+    "Точки, рюкзаки, заметки и готовность на всех ваших устройствах — без ограничения объёма.",
+  "Packs offline exclusivos": "Эксклюзивные офлайн-паки",
+  "Bibliotecas de campo em português: primeiros socorros, plantas medicinais, guias por cenário.":
+    "Полевые библиотеки на португальском: первая помощь, лекарственные растения, сценарные руководства.",
+  "Relatório personalizado de prontidão": "Персональный отчёт о готовности",
+  "Boletim semanal com o estado do seu kit, lacunas encontradas e prioridade de reposição.":
+    "Еженедельный бюллетень: состояние набора, найденные пробелы и приоритет пополнения.",
+  "Entrar na lista de espera": "Встать в лист ожидания",
+  "Lista de espera no Centro de Sobrevivência — você recebe o aviso de abertura por e-mail.":
+    "Лист ожидания в Центре выживания — уведомление об открытии придёт по e-mail.",
+  "Gratuito continua completo para o uso de campo. Pro sustenta o desenvolvimento e a infraestrutura do hub.":
+    "Бесплатная версия остаётся полной для полевого использования. Pro поддерживает разработку и инфраструктуру хаба.",
+  "Diário do operador": "Дневник оператора",
+  "Notas de campo": "Полевые заметки",
+  "Anotações rápidas salvas no aparelho, incluídas no backup da pasta e amarráveis a waypoints do mapa.":
+    "Быстрые заметки на устройстве, включённые в резервную копию папки и привязываемые к точкам карты.",
+  "Nova nota": "Новая заметка",
+  "Editar nota": "Изменить заметку",
+  "Fechar editor": "Закрыть редактор",
+  "Título da nota": "Заголовок заметки",
+  "O que aconteceu, o que você viu, o que precisa fazer…":
+    "Что случилось, что вы видели, что нужно сделать…",
+  "Etiquetas separadas por vírgula (água, campo, kit)": "Теги через запятую (вода, поле, набор)",
+  "Amarrar a um waypoint (opcional)": "Привязать к точке (необязательно)",
+  "Dê um título à nota": "Дайте заметке заголовок",
+  "Nota atualizada": "Заметка обновлена",
+  "Nota guardada no aparelho": "Заметка сохранена на устройстве",
+  "Não foi possível guardar a nota": "Не удалось сохранить заметку",
+  "Apagar esta nota definitivamente?": "Удалить эту заметку навсегда?",
+  "Nota apagada": "Заметка удалена",
+  "Não foi possível apagar a nota": "Не удалось удалить заметку",
+  Guardar: "Сохранить",
+  "Guardando…": "Сохранение…",
+  "Nenhuma nota ainda. Registre o que você aprende em cada saída — é assim que a prontidão vira experiência.":
+    "Заметок пока нет. Записывайте, чему учитесь в каждом выходе, — так готовность становится опытом.",
+  "Apagar nota": "Удалить заметку",
+  "As notas entram no backup automático da pasta do operador (Ajustes → Pasta de backup).":
+    "Заметки входят в автоматическую резервную копию папки оператора (Настройки → Папка резервных копий).",
+  "Mochila e manual pelo seu contexto": "Рюкзак и руководство под ваши условия",
+  "O que reunir, por contexto": "Что собрать, по условиям",
+  "Diário do operador no aparelho": "Дневник оператора на устройстве",
+  "Manual Pro": "Manual Pro",
+  "Alertas avançados e sincronização": "Расширенные оповещения и синхронизация",
+  "Loja do Centro": "Магазин Центра",
+  "Equipamentos e kits no Centro": "Снаряжение и наборы в Центре",
+  "Cursos do Centro": "Курсы Центра",
+  "Trilhas de preparação com progresso": "Треки подготовки с прогрессом",
+  Comunidade: "Сообщество",
+  "Discord, Telegram e roadmap": "Discord, Telegram и дорожная карта",
+  Urbano: "Городской",
+  Trilha: "Поход",
+  Litoral: "Побережье",
+  Rural: "Село",
+  "Enchente e apagão": "Наводнение и блэкаут",
+  "Perda de rota e clima": "Потеря маршрута и погода",
+  "Ciclone e maré": "Циклон и нагон",
+  "Isolamento e demora de socorro": "Изоляция и долгое ожидание помощи",
+  "Apagões, enchentes na cidade, alagamento e fechamento de vias — você mora em área construída e precisa se virar com a infraestrutura caída.":
+    "Блэкауты, городские наводнения, подтопления и закрытие дорог, — вы живёте в застроенной зоне и рассчитываете только на себя при отказе инфраструктуры.",
+  "Caminhadas, cicloturismo e travessias — dias fora de célula, com mochila nas costas e dependência total do que você carrega.":
+    "Походы, велопутешествия и переходы — дни вне покрытия, всё необходимое на своей спине.",
+  "Ciclones, maré de tempestade, temporais e isolamento de praias e ilhas — a casa fica onde a previsão do tempo manda.":
+    "Циклоны, нагон, штормы и отрезанные пляжи и острова, — дом подчиняется прогнозу погоды.",
+  "Sítio, fazenda ou roça distante do centro — socorro demora, recursos são próprios e o planejamento é de autonomia longa.":
+    "Хутор или ферма вдали от города, — помощь идёт долго, ресурсы свои, план — длительная автономия.",
+  "O kit 72 h é o padrão da Defesa Civil: três dias autônomo até a ajuda organizada chegar — o cenário real de uma enchente urbana.":
+    "Набор 72 ч — стандарт гражданской обороны: трое суток автономности до прибытия организованной помощи — реальный сценарий городского наводнения.",
+  "Leve e completa para o deslocamento: água, proteção, sinalização e primeiros socorros sem pesar o passo.":
+    "Лёгкий и полный для движения: вода, укрытие, сигнализация и первая помощь без утяжеления шага.",
+  "Dois dias autônomo cobre o pico do ciclone e o alagamento de maré — janela típica de reabertura de estradas.":
+    "Двое суток автономности покрывают пик циклона и нагон — типичное окно повторного открытия дорог.",
+  "Autonomia estendida: no campo o kit não é para chegar em casa, é para operar de onde você está.":
+    "Расширенная автономия: в поле набор не для дороги домой, а для работы там, где вы находитесь.",
+  Energia: "Энергия",
+  "Primeiros socorros": "Первая помощь",
+  "Abrigos e clima": "Укрытия и погода",
+  "Tratar, carregar e encontrar água — a prioridade de qualquer kit.":
+    "Обрабатывать, носить и находить воду — приоритет номер один любого набора.",
+  "Luz e carregamento quando a rede cai — apagões e campo.":
+    "Свет и зарядка, когда сеть падает, — блэкауты и поле.",
+  "Estancar, imobilizar e estabilizar até o socorro chegar.":
+    "Остановить кровь, обездвижить и стабилизировать до прибытия помощи.",
+  "Proteção contra chuva, frio e calor extremo.": "Защита от дождя, холода и сильной жары.",
+  "Saber o que acontece e pedir socorro sem sinal de operadora.":
+    "Знать, что происходит, и звать на помощь без сигнала оператора.",
+  "Cortar, consertar, abrir e improvisar quando nada mais resolve.":
+    "Резать, чинить, открывать и импровизировать, когда больше ничто не помогает.",
 };

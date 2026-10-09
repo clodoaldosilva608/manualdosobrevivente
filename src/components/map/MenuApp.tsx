@@ -19,6 +19,7 @@ import {
   ChevronDown,
   CloudSun,
   Compass,
+  Crown,
   DownloadCloud,
   Eraser,
   Eye,
@@ -28,6 +29,7 @@ import {
   KeyRound,
   Layers,
   LayoutDashboard,
+  UserCog,
   UserRound,
   Map,
   MapPin,
@@ -35,20 +37,26 @@ import {
   Navigation2,
   Network,
   Newspaper,
+  NotebookPen,
   Radar,
   Route as RouteIcon,
   Ruler,
   Satellite,
   Server,
   Settings,
+  ShoppingCart,
   Siren,
+  Store,
   Sunrise,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { ModoMapa } from "@/components/map/MapModeSwitch";
 import { LINHAS_INTEL } from "@/components/map/intel-camadas-lista";
 import { useI18n } from "@/lib/i18n";
+import { urlCursos, urlComunidade, urlLoja } from "@/lib/hub-links";
+import { registrarEvento } from "@/lib/analytics";
 
 export type AcaoMenuMapa =
   | "goto"
@@ -99,6 +107,59 @@ const ROTAS: Array<ItemMenu & { to: string }> = [
   { to: "/offline", rotulo: "Offline", dica: "Mapas e dados para campo", icone: DownloadCloud },
   { to: "/settings", rotulo: "Ajustes", dica: "Configurações do aplicativo", icone: Settings },
   { to: "/conta", rotulo: "Conta", dica: "Perfil local do operador", icone: UserRound },
+];
+
+/**
+ * Seção do HUB — a ponte entre ferramenta e comércio/conhecimento do
+ * ecossistema (relatório "Hub de Sobrevivência", fases 1 e 2). Itens
+ * `externo` abrem o Centro de Sobrevivência com deep link versionado.
+ */
+const HUB: Array<ItemMenu & { to: string; externo?: boolean }> = [
+  {
+    to: "/perfil",
+    rotulo: "Perfil de prontidão",
+    dica: "Mochila e manual pelo seu contexto",
+    icone: UserCog,
+  },
+  {
+    to: "/deposito",
+    rotulo: "Depósito de suprimentos",
+    dica: "O que reunir, por contexto",
+    icone: ShoppingCart,
+  },
+  {
+    to: "/notas",
+    rotulo: "Notas de campo",
+    dica: "Diário do operador no aparelho",
+    icone: NotebookPen,
+  },
+  {
+    to: "/pro",
+    rotulo: "Manual Pro",
+    dica: "Alertas avançados e sincronização",
+    icone: Crown,
+  },
+  {
+    to: urlLoja(undefined, "menu"),
+    rotulo: "Loja do Centro",
+    dica: "Equipamentos e kits no Centro",
+    icone: Store,
+    externo: true,
+  },
+  {
+    to: urlCursos("menu"),
+    rotulo: "Cursos do Centro",
+    dica: "Trilhas de preparação com progresso",
+    icone: GraduationCap,
+    externo: true,
+  },
+  {
+    to: urlComunidade("menu"),
+    rotulo: "Comunidade",
+    dica: "Discord, Telegram e roadmap",
+    icone: Users,
+    externo: true,
+  },
 ];
 
 /** Ferramentas do HUD tático — exigem o mapa nativo (noturno é global). */
@@ -273,6 +334,53 @@ export function MenuApp({
                       </span>
                     </span>
                   </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          {/* ── Hub: perfis, depósito, notas e ponte com o Centro ── */}
+          <section>
+            <RotuloSecao>{t("Hub de Sobrevivência")}</RotuloSecao>
+            <ul className="space-y-0.5">
+              {HUB.map(({ to, rotulo, dica, icone: Icone, externo }) => (
+                <li key={to}>
+                  {externo ? (
+                    <a
+                      href={to}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => registrarEvento("saida_loja_centro", { origem: "menu", to })}
+                      className="glove-tap flex items-center gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-accent focus-visible:outline focus-visible:outline-1 focus-visible:outline-tactical-orange"
+                    >
+                      <Icone className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="min-w-0">
+                        <span className="block mono text-[13px] leading-tight text-foreground">
+                          {t(rotulo)}
+                        </span>
+                        <span className="block truncate text-[11px] leading-tight text-muted-foreground">
+                          {t(dica)}
+                        </span>
+                      </span>
+                    </a>
+                  ) : (
+                    <Link
+                      to={to}
+                      onClick={() => onOpenChange(false)}
+                      className="glove-tap flex items-center gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-accent focus-visible:outline focus-visible:outline-1 focus-visible:outline-tactical-orange"
+                      data-test={`menu-hub-${to.slice(1)}`}
+                    >
+                      <Icone className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <span className="min-w-0">
+                        <span className="block mono text-[13px] leading-tight text-foreground">
+                          {t(rotulo)}
+                        </span>
+                        <span className="block truncate text-[11px] leading-tight text-muted-foreground">
+                          {t(dica)}
+                        </span>
+                      </span>
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>

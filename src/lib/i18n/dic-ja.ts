@@ -531,4 +531,146 @@ export const DIC_JA: Record<string, string> = {
   "Banner do convite": "招待バナー",
   "Mensagem pronta com o link — a imagem vai junto na folha nativa e na prévia do WhatsApp e Telegram.":
     "リンク付きのメッセージが準備完了 — 画像はネイティブの共有シートに添付され、WhatsApp や Telegram のリンクプレビューにも表示されます。",
+  "Wizard de prontidão": "備蓄ウィザード",
+  "Perfil de prontidão": "備蓄プロファイル",
+  "Responda em que contexto você vive e o aplicativo curadoria o resto: mochila recomendada, tópicos do manual e prioridades do Depósito de Suprimentos. Nada sai do aparelho.":
+    "あなたの生活環境を選ぶと、アプリが残りを整えます：おすすめのバックパック、マニュアルの項目、補給庫の優先順位。データは端末から出ません。",
+  "Perfil ativo": "有効なプロファイル",
+  "A mochila recomendada deste perfil já está no inventário — confira e marque o que já reuniu.":
+    "このプロファイルのおすすめバックパックは棚卸しに入っています——確認して、そろった物に印を付けましょう。",
+  "Abrir mochila": "バックパックを開く",
+  "Depósito de suprimentos": "補給庫",
+  "Passo 1 de 2 — escolha o contexto": "ステップ 1/2 — 環境を選ぶ",
+  "Passo 2 de 2 — confirme o plano": "ステップ 2/2 — 計画を確認",
+  "Mochila recomendada:": "おすすめバックパック：",
+  "Tópicos do manual priorizados": "優先するマニュアル項目",
+  "Prioridades no Depósito de Suprimentos": "補給庫の優先事項",
+  "Aplicando…": "適用中…",
+  "Aplicar perfil": "プロファイルを適用",
+  "Perfil aplicado": "プロファイルを適用しました",
+  "Mochila recomendada garantida no inventário": "おすすめバックパックを棚卸しに確保しました",
+  "Recomendações guardadas no aparelho": "おすすめは端末に保存されました",
+  "Hub de Sobrevivência": "サバイバルハブ",
+  "Depósito de Suprimentos": "補給庫",
+  "Catálogo curado do que realmente importa em cada contexto — o Manual não vende nada: cada item abre a busca equivalente na loja do Centro de Sobrevivência.":
+    "それぞれの環境で本当に大切な物を厳選したカタログです。マニュアルは販売しません：各アイテムはサバイバルセンターの店舗で対応する検索を開きます。",
+  Todos: "すべて",
+  Essencial: "必須",
+  Complemento: "補完",
+  "Seu perfil": "あなたのプロファイル",
+  "Recomendado para o seu perfil de prontidão": "あなたの備蓄プロファイルにおすすめ",
+  "Faixa de preço": "価格帯",
+  "Ver na loja do Centro": "センターの店舗で見る",
+  "A vitrine completa, kits montados e afiliados ficam no Centro de Sobrevivência.":
+    "完全な店舗、組み立て済みキット、アフィリエイトはサバイバルセンターにあります。",
+  "Abrir a loja do Centro": "センターの店舗を開く",
+  "Ajustar meu perfil de prontidão": "備蓄プロファイルを調整",
+  "Conferir mochila": "バックパックを確認",
+  Assinatura: "サブスクリプション",
+  "O plano recorrente do Manual: o que fica melhor para quem prepara em série, não só consulta. Protótipo público — a cobrança abre pelo Centro com PIX e cartão.":
+    "マニュアルの定期プラン：閲覧だけでなく、本気で備える人のためのもの。公開プロトタイプ——課金はセンター経由で PIX とカードに対応して開始します。",
+  "Assinatura ativa neste aparelho (estado local)":
+    "この端末でサブスクリプション有効（ローカル状態）",
+  Gratuito: "無料",
+  "para sempre": "ずっと",
+  "Mapa tático completo com radar, ciclones e vento":
+    "レーダー、サイクロン、風に対応した完全なタクティカルマップ",
+  "Mochilas, checklists e waypoints ilimitados no aparelho":
+    "端末内で無制限のバックパック、チェックリスト、ウェイポイント",
+  "Manual de sobrevivência e teste de prontidão": "サバイバルマニュアルと備蓄テスト",
+  "Backup em pasta própria do operador": "オペレーター自身のフォルダへバックアップ",
+  "Em preparação": "準備中",
+  mês: "月",
+  "ou R$ 119,90/ano (2 meses de brinde)": "または年額 R$119.90（2か月分おまけ）",
+  "Alertas meteorológicos avançados": "高度な気象警報",
+  "Vigilância contínua com aviso por notificação para ciclone, tempestade severa e enchente na sua região.":
+    "地域のサイクロン、激しい嵐、洪水を継続監視し、通知でお知らせします。",
+  "Sincronização ilimitada": "無制限の同期",
+  "Waypoints, mochilas, notas e prontidão em todos os seus aparelhos — sem limite de volume.":
+    "ウェイポイント、バックパック、メモ、備蓄状況をすべての端末で——容量制限なし。",
+  "Packs offline exclusivos": "限定オフラインパック",
+  "Bibliotecas de campo em português: primeiros socorros, plantas medicinais, guias por cenário.":
+    "ポルトガル語のフィールド資料庫：応急手当、薬用植物、シナリオ別ガイド。",
+  "Relatório personalizado de prontidão": "個別の備蓄レポート",
+  "Boletim semanal com o estado do seu kit, lacunas encontradas e prioridade de reposição.":
+    "キットの状態、見つかった不足、補充の優先順位を週次でお届けします。",
+  "Entrar na lista de espera": "ウェイトリストに参加",
+  "Lista de espera no Centro de Sobrevivência — você recebe o aviso de abertura por e-mail.":
+    "サバイバルセンターのウェイトリスト——開始通知をメールでお届けします。",
+  "Gratuito continua completo para o uso de campo. Pro sustenta o desenvolvimento e a infraestrutura do hub.":
+    "無料版は野外利用として完全なままです。Pro 版はハブの開発とインフラを支えます。",
+  "Diário do operador": "オペレーターの日誌",
+  "Notas de campo": "フィールドノート",
+  "Anotações rápidas salvas no aparelho, incluídas no backup da pasta e amarráveis a waypoints do mapa.":
+    "端末に保存される手早いメモ。フォルダのバックアップに含まれ、マップのウェイポイントに紐付けできます。",
+  "Nova nota": "新規メモ",
+  "Editar nota": "メモを編集",
+  "Fechar editor": "エディターを閉じる",
+  "Título da nota": "メモのタイトル",
+  "O que aconteceu, o que você viu, o que precisa fazer…": "何が起きたか、見たこと、やるべきこと…",
+  "Etiquetas separadas por vírgula (água, campo, kit)": "タグはカンマ区切り（水、野外、キット）",
+  "Amarrar a um waypoint (opcional)": "ウェイポイントに紐付け（任意）",
+  "Dê um título à nota": "メモにタイトルを付けてください",
+  "Nota atualizada": "メモを更新しました",
+  "Nota guardada no aparelho": "メモを端末に保存しました",
+  "Não foi possível guardar a nota": "メモを保存できませんでした",
+  "Apagar esta nota definitivamente?": "このメモを完全に削除しますか？",
+  "Nota apagada": "メモを削除しました",
+  "Não foi possível apagar a nota": "メモを削除できませんでした",
+  Guardar: "保存",
+  "Guardando…": "保存中…",
+  "Nenhuma nota ainda. Registre o que você aprende em cada saída — é assim que a prontidão vira experiência.":
+    "まだメモがありません。外出ごとの学びを記録しましょう——備蓄はそうして経験になります。",
+  "Apagar nota": "メモを削除",
+  "As notas entram no backup automático da pasta do operador (Ajustes → Pasta de backup).":
+    "メモはオペレーターのフォルダの自動バックアップに含まれます（設定→バックアップフォルダ）。",
+  "Mochila e manual pelo seu contexto": "環境に合わせたバックパックとマニュアル",
+  "O que reunir, por contexto": "環境ごとにそろえる物",
+  "Diário do operador no aparelho": "端末内のオペレーター日誌",
+  "Manual Pro": "Manual Pro",
+  "Alertas avançados e sincronização": "高度な警報と同期",
+  "Loja do Centro": "センターの店舗",
+  "Equipamentos e kits no Centro": "センターの装備とキット",
+  "Cursos do Centro": "センターの講座",
+  "Trilhas de preparação com progresso": "進捗付きの備蓄講座",
+  Comunidade: "コミュニティ",
+  "Discord, Telegram e roadmap": "Discord、Telegram、ロードマップ",
+  Urbano: "都市",
+  Trilha: "トレイル",
+  Litoral: "沿岸",
+  Rural: "農村",
+  "Enchente e apagão": "洪水と停電",
+  "Perda de rota e clima": "ルート喪失と天候",
+  "Ciclone e maré": "サイクロンと高潮",
+  "Isolamento e demora de socorro": "孤立と救助の遅れ",
+  "Apagões, enchentes na cidade, alagamento e fechamento de vias — você mora em área construída e precisa se virar com a infraestrutura caída.":
+    "停電、都市の洪水、冠水、道路の閉鎖——建物密集地に住み、インフラ停止に自力で対応する必要があります。",
+  "Caminhadas, cicloturismo e travessias — dias fora de célula, com mochila nas costas e dependência total do que você carrega.":
+    "ハイキング、サイクリング、縦走——圏外の日々は、背負った物だけが頼りです。",
+  "Ciclones, maré de tempestade, temporais e isolamento de praias e ilhas — a casa fica onde a previsão do tempo manda.":
+    "サイクロン、高潮、暴風雨、孤立する海岸や島——家は天気予報に支配されます。",
+  "Sítio, fazenda ou roça distante do centro — socorro demora, recursos são próprios e o planejamento é de autonomia longa.":
+    "町から離れた農場や山間部——救助は遅く、資源は自前。長期の自給自足が前提です。",
+  "O kit 72 h é o padrão da Defesa Civil: três dias autônomo até a ajuda organizada chegar — o cenário real de uma enchente urbana.":
+    "72時間キットは民防衛の標準です。組織的な救援が来るまでの3日間の自立——都市洪水の現実的なシナリオです。",
+  "Leve e completa para o deslocamento: água, proteção, sinalização e primeiros socorros sem pesar o passo.":
+    "移動に軽くて十分な内容：水、防護、合図、応急手当。歩調を重くしません。",
+  "Dois dias autônomo cobre o pico do ciclone e o alagamento de maré — janela típica de reabertura de estradas.":
+    "2日間の自立でサイクロンのピークと高潮の冠水をカバー——道路が再開するまでの標準的な期間です。",
+  "Autonomia estendida: no campo o kit não é para chegar em casa, é para operar de onde você está.":
+    "長期自立用：田舎ではキットは家に帰るためではなく、その場で活動し続けるためのものです。",
+  Energia: "エネルギー",
+  "Primeiros socorros": "応急手当",
+  "Abrigos e clima": "シェルターと天候",
+  "Tratar, carregar e encontrar água — a prioridade de qualquer kit.":
+    "水を確保し、運び、浄化する——どんなキットでも最優先です。",
+  "Luz e carregamento quando a rede cai — apagões e campo.":
+    "電網が止まったときの光と充電——停電にも野外にも。",
+  "Estancar, imobilizar e estabilizar até o socorro chegar.":
+    "出血を止め、固定し、救助が来るまで安定させる。",
+  "Proteção contra chuva, frio e calor extremo.": "雨、寒さ、猛暑から身を守る。",
+  "Saber o que acontece e pedir socorro sem sinal de operadora.":
+    "キャリアの電波がなくても状況を知り、助けを呼ぶ。",
+  "Cortar, consertar, abrir e improvisar quando nada mais resolve.":
+    "切って、直して、開けて、他に手段がないとき即席で対応する。",
 };

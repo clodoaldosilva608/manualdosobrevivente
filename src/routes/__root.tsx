@@ -23,7 +23,9 @@ import { iniciarAutoBackup } from "@/lib/auto-backup";
 import { ProvedorIdioma } from "@/lib/i18n";
 import { SCRIPT_PRE_HIDRATACAO, aplicarVisaoNoturna } from "@/lib/visao-noturna";
 import { getSetting } from "@/lib/db";
+import { iniciarAnalytics, registrarPageview } from "@/lib/analytics";
 import type { Preferences } from "@/hooks/usePreferences";
+import { useRouterState } from "@tanstack/react-router";
 
 function NotFoundComponent() {
   return (
@@ -220,11 +222,24 @@ function SincronizadorNoturno() {
   return null;
 }
 
+/**
+ * Manda um pageview a cada troca de rota quando a telemetria estiver ativa
+ * (env de analytics definida). Sem env, é um no-op absoluto.
+ */
+function RastreadorRotas() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  useEffect(() => {
+    registrarPageview(pathname);
+  }, [pathname]);
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useEffect(() => {
     registerServiceWorker();
     iniciarAutoBackup();
+    iniciarAnalytics();
   }, []);
   return (
     <QueryClientProvider client={queryClient}>
@@ -232,6 +247,7 @@ function RootComponent() {
         <SincronizadorNoturno />
         <AuthListener />
         <AvisoNovaVersao />
+        <RastreadorRotas />
         <AutoCloudSync />
         <SplashAbertura />
         <WelcomeOnboarding />

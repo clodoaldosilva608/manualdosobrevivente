@@ -11,6 +11,9 @@ import { TELA_VIS_PADRAO, type TelaVisibilidade } from "@/components/map/tela-el
 
 export type ModoMapa = "tatico" | "osiris";
 
+/** Contexto de vida do operador, escolhido no wizard de prontidão. */
+export type PerfilProntidao = "urbano" | "trilha" | "litoral" | "rural" | "nenhum";
+
 export interface Preferences {
   units: "metric" | "nautical";
   coordFormat: "DD" | "DMS" | "MGRS";
@@ -37,6 +40,15 @@ export interface Preferences {
   noturnoVermelho: number;
   /** Escurecimento adicional da tela (0–0,75). */
   noturnoEscurecer: number;
+  /** Perfil de prontidão do wizard (curadoria de mochila, manual e depósito). */
+  perfil: PerfilProntidao;
+  /** Wizard de perfil já concluído (não re-oferecer automaticamente). */
+  wizardPerfilFeito: boolean;
+  /**
+   * Assinatura Manual Pro (protótipo — a cobrança real entra com o
+   * gateway no Centro; aqui é apenas o estado local do benefício).
+   */
+  pro: boolean;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -54,6 +66,9 @@ export const DEFAULT_PREFERENCES: Preferences = {
   visaoNoturna: false,
   noturnoVermelho: 0.85,
   noturnoEscurecer: 0.2,
+  perfil: "nenhum",
+  wizardPerfilFeito: false,
+  pro: false,
 };
 
 const KEY = "preferences";

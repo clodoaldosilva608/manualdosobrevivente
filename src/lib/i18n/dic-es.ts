@@ -535,4 +535,147 @@ export const DIC_ES: Record<string, string> = {
   "Banner do convite": "Banner de la invitación",
   "Mensagem pronta com o link — a imagem vai junto na folha nativa e na prévia do WhatsApp e Telegram.":
     "Mensaje listo con el enlace — la imagen va adjunta en la hoja nativa y en la vista previa de WhatsApp y Telegram.",
+  "Wizard de prontidão": "Asistente de preparación",
+  "Perfil de prontidão": "Perfil de preparación",
+  "Responda em que contexto você vive e o aplicativo curadoria o resto: mochila recomendada, tópicos do manual e prioridades do Depósito de Suprimentos. Nada sai do aparelho.":
+    "Responde en qué contexto vives y la aplicación curará el resto: mochila recomendada, temas del manual y prioridades del Depósito de Suministros. Nada sale del aparato.",
+  "Perfil ativo": "Perfil activo",
+  "A mochila recomendada deste perfil já está no inventário — confira e marque o que já reuniu.":
+    "La mochila recomendada de este perfil ya está en el inventario: revísala y marca lo que ya reuniste.",
+  "Abrir mochila": "Abrir mochila",
+  "Depósito de suprimentos": "Depósito de suministros",
+  "Passo 1 de 2 — escolha o contexto": "Paso 1 de 2 — elige el contexto",
+  "Passo 2 de 2 — confirme o plano": "Paso 2 de 2 — confirma el plan",
+  "Mochila recomendada:": "Mochila recomendada:",
+  "Tópicos do manual priorizados": "Temas del manual priorizados",
+  "Prioridades no Depósito de Suprimentos": "Prioridades en el Depósito de Suministros",
+  "Aplicando…": "Aplicando…",
+  "Aplicar perfil": "Aplicar perfil",
+  "Perfil aplicado": "Perfil aplicado",
+  "Mochila recomendada garantida no inventário": "Mochila recomendada garantida en el inventario",
+  "Recomendações guardadas no aparelho": "Recomendaciones guardadas en el aparato",
+  "Hub de Sobrevivência": "Hub de Supervivencia",
+  "Depósito de Suprimentos": "Depósito de Suministros",
+  "Catálogo curado do que realmente importa em cada contexto — o Manual não vende nada: cada item abre a busca equivalente na loja do Centro de Sobrevivência.":
+    "Catálogo curado de lo que de verdad importa en cada contexto: el Manual no vende nada, cada ítem abre la búsqueda equivalente en la tienda del Centro de Supervivencia.",
+  Todos: "Todos",
+  Essencial: "Esencial",
+  Complemento: "Complemento",
+  "Seu perfil": "Tu perfil",
+  "Recomendado para o seu perfil de prontidão": "Recomendado para tu perfil de preparación",
+  "Faixa de preço": "Rango de precio",
+  "Ver na loja do Centro": "Ver en la tienda del Centro",
+  "A vitrine completa, kits montados e afiliados ficam no Centro de Sobrevivência.":
+    "La vitrina completa, los kits armados y los afiliados quedan en el Centro de Supervivencia.",
+  "Abrir a loja do Centro": "Abrir la tienda del Centro",
+  "Ajustar meu perfil de prontidão": "Ajustar mi perfil de preparación",
+  "Conferir mochila": "Revisar mochila",
+  Assinatura: "Suscripción",
+  "O plano recorrente do Manual: o que fica melhor para quem prepara em série, não só consulta. Protótipo público — a cobrança abre pelo Centro com PIX e cartão.":
+    "El plan recurrente del Manual: lo que conviene a quien prepara en serio, no solo consulta. Prototipo público: la cobranza abre por el Centro con PIX y tarjeta.",
+  "Assinatura ativa neste aparelho (estado local)":
+    "Suscripción activa en este aparato (estado local)",
+  Gratuito: "Gratis",
+  "para sempre": "para siempre",
+  "Mapa tático completo com radar, ciclones e vento":
+    "Mapa táctico completo con radar, ciclones y viento",
+  "Mochilas, checklists e waypoints ilimitados no aparelho":
+    "Mochilas, listas y waypoints ilimitados en el aparato",
+  "Manual de sobrevivência e teste de prontidão": "Manual de supervivencia y prueba de preparación",
+  "Backup em pasta própria do operador": "Copia de seguridad en carpeta propia del operador",
+  "Em preparação": "En preparación",
+  mês: "mes",
+  "ou R$ 119,90/ano (2 meses de brinde)": "o R$ 119,90/año (2 meses de regalo)",
+  "Alertas meteorológicos avançados": "Alertas meteorológicas avanzadas",
+  "Vigilância contínua com aviso por notificação para ciclone, tempestade severa e enchente na sua região.":
+    "Vigilancia continua con aviso por notificación de ciclón, tormenta severa e inundación en tu región.",
+  "Sincronização ilimitada": "Sincronización ilimitada",
+  "Waypoints, mochilas, notas e prontidão em todos os seus aparelhos — sem limite de volume.":
+    "Waypoints, mochilas, notas y preparación en todos tus aparatos — sin límite de volumen.",
+  "Packs offline exclusivos": "Paquetes sin conexión exclusivos",
+  "Bibliotecas de campo em português: primeiros socorros, plantas medicinais, guias por cenário.":
+    "Bibliotecas de campo en portugués: primeros auxilios, plantas medicinales, guías por escenario.",
+  "Relatório personalizado de prontidão": "Informe personalizado de preparación",
+  "Boletim semanal com o estado do seu kit, lacunas encontradas e prioridade de reposição.":
+    "Boletín semanal con el estado de tu kit, huecos encontrados y prioridad de reposición.",
+  "Entrar na lista de espera": "Entrar en la lista de espera",
+  "Lista de espera no Centro de Sobrevivência — você recebe o aviso de abertura por e-mail.":
+    "Lista de espera en el Centro de Supervivencia: recibes el aviso de apertura por correo.",
+  "Gratuito continua completo para o uso de campo. Pro sustenta o desenvolvimento e a infraestrutura do hub.":
+    "Gratis sigue completo para el uso de campo. Pro sostiene el desarrollo y la infraestructura del hub.",
+  "Diário do operador": "Diario del operador",
+  "Notas de campo": "Notas de campo",
+  "Anotações rápidas salvas no aparelho, incluídas no backup da pasta e amarráveis a waypoints do mapa.":
+    "Notas rápidas guardadas en el aparato, incluidas en la copia de seguridad de la carpeta y vinculables a waypoints del mapa.",
+  "Nova nota": "Nota nueva",
+  "Editar nota": "Editar nota",
+  "Fechar editor": "Cerrar editor",
+  "Título da nota": "Título de la nota",
+  "O que aconteceu, o que você viu, o que precisa fazer…": "Qué pasó, qué viste, qué falta hacer…",
+  "Etiquetas separadas por vírgula (água, campo, kit)":
+    "Etiquetas separadas por coma (agua, campo, kit)",
+  "Amarrar a um waypoint (opcional)": "Vincular a un waypoint (opcional)",
+  "Dê um título à nota": "Pon un título a la nota",
+  "Nota atualizada": "Nota actualizada",
+  "Nota guardada no aparelho": "Nota guardada en el aparato",
+  "Não foi possível guardar a nota": "No se pudo guardar la nota",
+  "Apagar esta nota definitivamente?": "¿Apagar esta nota definitivamente?",
+  "Nota apagada": "Nota apagada",
+  "Não foi possível apagar a nota": "No se pudo apagar la nota",
+  Guardar: "Guardar",
+  "Guardando…": "Guardando…",
+  "Nenhuma nota ainda. Registre o que você aprende em cada saída — é assim que a prontidão vira experiência.":
+    "Ninguna nota todavía. Registra lo que aprendes en cada salida: así la preparación se vuelve experiencia.",
+  "Apagar nota": "Apagar nota",
+  "As notas entram no backup automático da pasta do operador (Ajustes → Pasta de backup).":
+    "Las notas entran en la copia de seguridad automática de la carpeta del operador (Ajustes → Carpeta de backup).",
+  "Mochila e manual pelo seu contexto": "Mochila y manual según tu contexto",
+  "O que reunir, por contexto": "Qué reunir, por contexto",
+  "Diário do operador no aparelho": "Diario del operador en el aparato",
+  "Manual Pro": "Manual Pro",
+  "Alertas avançados e sincronização": "Alertas avanzadas y sincronización",
+  "Loja do Centro": "Tienda del Centro",
+  "Equipamentos e kits no Centro": "Equipos y kits en el Centro",
+  "Cursos do Centro": "Cursos del Centro",
+  "Trilhas de preparação com progresso": "Rutas de preparación con progreso",
+  Comunidade: "Comunidad",
+  "Discord, Telegram e roadmap": "Discord, Telegram y hoja de ruta",
+  Urbano: "Urbano",
+  Trilha: "Senderismo",
+  Litoral: "Costa",
+  Rural: "Rural",
+  "Enchente e apagão": "Inundación y apagón",
+  "Perda de rota e clima": "Pérdida de ruta y clima",
+  "Ciclone e maré": "Ciclón y marea",
+  "Isolamento e demora de socorro": "Aislamiento y demora del auxilio",
+  "Apagões, enchentes na cidade, alagamento e fechamento de vias — você mora em área construída e precisa se virar com a infraestrutura caída.":
+    "Apagones, inundaciones urbanas, alagamiento y cierre de vías: vives en zona construida y necesitas arreglárselas con la infraestructura caída.",
+  "Caminhadas, cicloturismo e travessias — dias fora de célula, com mochila nas costas e dependência total do que você carrega.":
+    "Caminatas, cicloturismo y travesías: días fuera de cobertura, con mochila y dependencia total de lo que llevas.",
+  "Ciclones, maré de tempestade, temporais e isolamento de praias e ilhas — a casa fica onde a previsão do tempo manda.":
+    "Ciclones, marejada, temporales y aislamiento de playas e islas: la casa queda donde manda el pronóstico.",
+  "Sítio, fazenda ou roça distante do centro — socorro demora, recursos são próprios e o planejamento é de autonomia longa.":
+    "Quinta, hacienda o campo lejos del centro: el auxilio tarda, los recursos son propios y el plan es de autonomía larga.",
+  "O kit 72 h é o padrão da Defesa Civil: três dias autônomo até a ajuda organizada chegar — o cenário real de uma enchente urbana.":
+    "El kit 72 h es el estándar de la Defensa Civil: tres días autónomo hasta que llegue la ayuda organizada, el escenario real de una inundación urbana.",
+  "Leve e completa para o deslocamento: água, proteção, sinalização e primeiros socorros sem pesar o passo.":
+    "Ligera y completa para el desplazamiento: agua, protección, señalización y primeros auxilios sin pesar el paso.",
+  "Dois dias autônomo cobre o pico do ciclone e o alagamento de maré — janela típica de reabertura de estradas.":
+    "Dos días autónomo cubren el pico del ciclón y la marejada — ventana típica de reapertura de carreteras.",
+  "Autonomia estendida: no campo o kit não é para chegar em casa, é para operar de onde você está.":
+    "Autonomía extendida: en el campo el kit no es para llegar a casa, es para operar desde donde estás.",
+  Energia: "Energía",
+  "Primeiros socorros": "Primeros auxilios",
+  "Abrigos e clima": "Abrigos y clima",
+  "Tratar, carregar e encontrar água — a prioridade de qualquer kit.":
+    "Tratar, cargar y encontrar agua: la prioridad de cualquier kit.",
+  "Luz e carregamento quando a rede cai — apagões e campo.":
+    "Luz y carga cuando la red cae: apagones y campo.",
+  "Estancar, imobilizar e estabilizar até o socorro chegar.":
+    "Estancar, inmovilizar y estabilizar hasta que llegue el auxilio.",
+  "Proteção contra chuva, frio e calor extremo.": "Protección contra lluvia, frío y calor extremo.",
+  "Saber o que acontece e pedir socorro sem sinal de operadora.":
+    "Saber qué pasa y pedir auxilio sin señal de operadora.",
+  "Cortar, consertar, abrir e improvisar quando nada mais resolve.":
+    "Cortar, reparar, abrir e improvisar cuando nada más resuelve.",
 };

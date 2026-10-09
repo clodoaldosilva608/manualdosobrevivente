@@ -51,6 +51,10 @@ describe("SSR em pt-BR", () => {
     "/inventory",
     "/dashboard",
     "/offline",
+    "/perfil",
+    "/deposito",
+    "/pro",
+    "/notas",
   ]) {
     it(`${path} declara lang="pt-BR"`, async () => {
       const html = await get(path);

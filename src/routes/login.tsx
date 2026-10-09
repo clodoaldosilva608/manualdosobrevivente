@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,6 +73,30 @@ function Login() {
     }
   };
 
+  // Cap. 2 do Kit: o botão Google só existe quando o provedor está ativo no
+  // painel. Enquanto o titular não habilita (external.google=false), o botão
+  // some em vez de levar o operador a um erro 400 de redirect.
+  const [googleAtivo, setGoogleAtivo] = useState<boolean | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    (async () => {
+      try {
+        const url = import.meta.env["VITE_SUPABASE_URL"] as string | undefined;
+        const chave = import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] as string | undefined;
+        if (!url || !chave) return; // sem env não há como consultar: mantém botão
+        const r = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: chave } });
+        if (!r.ok) return;
+        const s = (await r.json()) as { external?: { google?: boolean } };
+        if (vivo) setGoogleAtivo(!!s?.external?.google);
+      } catch {
+        /* consulta é best-effort — falha mantém o comportamento atual */
+      }
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, []);
+
   return (
     <div className="flex min-h-full items-center justify-center p-4 tactical-grid">
       <div className="w-full max-w-sm rounded-md border border-border bg-card p-6">
@@ -112,17 +136,26 @@ function Login() {
             {mode === "signin" ? "Entrar" : "Criar conta"}
           </Button>
         </form>
-        <div className="relative my-4">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-border" />
-          </div>
-          <span className="relative bg-card px-2 text-xs text-muted-foreground mx-auto block w-fit mono">
-            OU
-          </span>
-        </div>
-        <Button onClick={google} disabled={busy} variant="secondary" className="w-full glove-tap">
-          Continuar com Google
-        </Button>
+        {googleAtivo !== false && (
+          <>
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <span className="relative bg-card px-2 text-xs text-muted-foreground mx-auto block w-fit mono">
+                OU
+              </span>
+            </div>
+            <Button
+              onClick={google}
+              disabled={busy}
+              variant="secondary"
+              className="w-full glove-tap"
+            >
+              Continuar com Google
+            </Button>
+          </>
+        )}
         <button
           onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
           className="w-full mt-4 text-sm text-muted-foreground hover:text-foreground"

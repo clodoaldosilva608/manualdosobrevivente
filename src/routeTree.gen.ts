@@ -10,6 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as ApoiarRouteImport } from './routes/apoiar'
+import { Route as ColaboradoresRouteImport } from './routes/colaboradores'
 import { Route as ContaRouteImport } from './routes/conta'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DepositoRouteImport } from './routes/deposito'
@@ -18,6 +21,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ManualRouteImport } from './routes/manual'
 import { Route as NotasRouteImport } from './routes/notas'
 import { Route as OfflineRouteImport } from './routes/offline'
+import { Route as ParceirosRouteImport } from './routes/parceiros'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as ProRouteImport } from './routes/pro'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -30,6 +34,21 @@ import { Route as ApiPublicReportsWeeklyRouteImport } from './routes/api/public/
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApoiarRoute = ApoiarRouteImport.update({
+  id: '/apoiar',
+  path: '/apoiar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ColaboradoresRoute = ColaboradoresRouteImport.update({
+  id: '/colaboradores',
+  path: '/colaboradores',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContaRoute = ContaRouteImport.update({
@@ -70,6 +89,11 @@ const NotasRoute = NotasRouteImport.update({
 const OfflineRoute = OfflineRouteImport.update({
   id: '/offline',
   path: '/offline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParceirosRoute = ParceirosRouteImport.update({
+  id: '/parceiros',
+  path: '/parceiros',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PerfilRoute = PerfilRouteImport.update({
@@ -115,6 +139,9 @@ const ApiPublicReportsWeeklyRoute = ApiPublicReportsWeeklyRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/apoiar': typeof ApoiarRoute
+  '/colaboradores': typeof ColaboradoresRoute
   '/conta': typeof ContaRoute
   '/dashboard': typeof DashboardRoute
   '/deposito': typeof DepositoRoute
@@ -123,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/manual': typeof ManualRouteWithChildren
   '/notas': typeof NotasRoute
   '/offline': typeof OfflineRoute
+  '/parceiros': typeof ParceirosRoute
   '/perfil': typeof PerfilRoute
   '/pro': typeof ProRoute
   '/settings': typeof SettingsRoute
@@ -134,6 +162,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/apoiar': typeof ApoiarRoute
+  '/colaboradores': typeof ColaboradoresRoute
   '/conta': typeof ContaRoute
   '/dashboard': typeof DashboardRoute
   '/deposito': typeof DepositoRoute
@@ -141,6 +172,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/notas': typeof NotasRoute
   '/offline': typeof OfflineRoute
+  '/parceiros': typeof ParceirosRoute
   '/perfil': typeof PerfilRoute
   '/pro': typeof ProRoute
   '/settings': typeof SettingsRoute
@@ -153,6 +185,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/apoiar': typeof ApoiarRoute
+  '/colaboradores': typeof ColaboradoresRoute
   '/conta': typeof ContaRoute
   '/dashboard': typeof DashboardRoute
   '/deposito': typeof DepositoRoute
@@ -161,6 +196,7 @@ export interface FileRoutesById {
   '/manual': typeof ManualRouteWithChildren
   '/notas': typeof NotasRoute
   '/offline': typeof OfflineRoute
+  '/parceiros': typeof ParceirosRoute
   '/perfil': typeof PerfilRoute
   '/pro': typeof ProRoute
   '/settings': typeof SettingsRoute
@@ -174,6 +210,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
+    | '/apoiar'
+    | '/colaboradores'
     | '/conta'
     | '/dashboard'
     | '/deposito'
@@ -182,6 +221,7 @@ export interface FileRouteTypes {
     | '/manual'
     | '/notas'
     | '/offline'
+    | '/parceiros'
     | '/perfil'
     | '/pro'
     | '/settings'
@@ -193,6 +233,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
+    | '/apoiar'
+    | '/colaboradores'
     | '/conta'
     | '/dashboard'
     | '/deposito'
@@ -200,6 +243,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/notas'
     | '/offline'
+    | '/parceiros'
     | '/perfil'
     | '/pro'
     | '/settings'
@@ -211,6 +255,9 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
+    | '/apoiar'
+    | '/colaboradores'
     | '/conta'
     | '/dashboard'
     | '/deposito'
@@ -219,6 +266,7 @@ export interface FileRouteTypes {
     | '/manual'
     | '/notas'
     | '/offline'
+    | '/parceiros'
     | '/perfil'
     | '/pro'
     | '/settings'
@@ -231,6 +279,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  ApoiarRoute: typeof ApoiarRoute
+  ColaboradoresRoute: typeof ColaboradoresRoute
   ContaRoute: typeof ContaRoute
   DashboardRoute: typeof DashboardRoute
   DepositoRoute: typeof DepositoRoute
@@ -239,6 +290,7 @@ export interface RootRouteChildren {
   ManualRoute: typeof ManualRouteWithChildren
   NotasRoute: typeof NotasRoute
   OfflineRoute: typeof OfflineRoute
+  ParceirosRoute: typeof ParceirosRoute
   PerfilRoute: typeof PerfilRoute
   ProRoute: typeof ProRoute
   SettingsRoute: typeof SettingsRoute
@@ -254,6 +306,27 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/apoiar': {
+      id: '/apoiar'
+      path: '/apoiar'
+      fullPath: '/apoiar'
+      preLoaderRoute: typeof ApoiarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/colaboradores': {
+      id: '/colaboradores'
+      path: '/colaboradores'
+      fullPath: '/colaboradores'
+      preLoaderRoute: typeof ColaboradoresRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/conta': {
@@ -310,6 +383,13 @@ declare module '@tanstack/react-router' {
       path: '/offline'
       fullPath: '/offline'
       preLoaderRoute: typeof OfflineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parceiros': {
+      id: '/parceiros'
+      path: '/parceiros'
+      fullPath: '/parceiros'
+      preLoaderRoute: typeof ParceirosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/perfil': {
@@ -386,6 +466,9 @@ const ManualRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
+  ApoiarRoute: ApoiarRoute,
+  ColaboradoresRoute: ColaboradoresRoute,
   ContaRoute: ContaRoute,
   DashboardRoute: DashboardRoute,
   DepositoRoute: DepositoRoute,
@@ -394,6 +477,7 @@ const rootRouteChildren: RootRouteChildren = {
   ManualRoute: ManualRouteWithChildren,
   NotasRoute: NotasRoute,
   OfflineRoute: OfflineRoute,
+  ParceirosRoute: ParceirosRoute,
   PerfilRoute: PerfilRoute,
   ProRoute: ProRoute,
   SettingsRoute: SettingsRoute,

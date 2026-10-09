@@ -14,6 +14,7 @@ export function definirLocale(locale: string) {
   if (!locale || locale === LOCALE) return;
   LOCALE = locale;
   cache.clear();
+  cacheMoeda.clear();
 }
 
 const cache = new Map<string, Intl.NumberFormat>();
@@ -29,6 +30,24 @@ function nf(min: number, max: number): Intl.NumberFormat {
     cache.set(key, f);
   }
   return f;
+}
+
+const cacheMoeda = new Map<string, Intl.NumberFormat>();
+
+/** Valor monetário em reais, no padrão do idioma ativo (R$ 1.234,56). */
+export function formatMoeda(valor: number): string {
+  if (!Number.isFinite(valor)) return "—";
+  let f = cacheMoeda.get(LOCALE);
+  if (!f) {
+    f = new Intl.NumberFormat(LOCALE, {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    cacheMoeda.set(LOCALE, f);
+  }
+  return f.format(valor);
 }
 
 /** Número genérico com casas decimais fixas. */

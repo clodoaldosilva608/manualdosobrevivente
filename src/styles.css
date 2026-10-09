@@ -412,3 +412,9 @@ html.modo-noturno .compass-card {
 .redline-pausado .redline-track {
   animation-play-state: paused;
 }
+
+/* Redline da página de colaboradores — mesma linguagem do boletim,
+   com pausa ao passar o cursor para leitura tranquila. */
+.redline-pausa-hover:hover .redline-track {
+  animation-play-state: paused;
+}

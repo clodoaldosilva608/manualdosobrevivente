@@ -7,6 +7,7 @@ import {
   Settings,
   UserRound,
   DownloadCloud,
+  HeartHandshake,
   LayoutDashboard,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
@@ -17,6 +18,7 @@ const items = [
   { to: "/inventory", label: "Mochila", icon: Backpack },
   { to: "/sos", label: "SOS", icon: Siren },
   { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
+  { to: "/colaboradores", label: "Apoie", icon: HeartHandshake },
   { to: "/offline", label: "Offline", icon: DownloadCloud },
   { to: "/settings", label: "Ajustes", icon: Settings },
 ] as const;
@@ -26,7 +28,7 @@ export function AppNav() {
   const { t } = useI18n();
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 hud-panel border-t pb-[env(safe-area-inset-bottom)] md:top-0 md:bottom-auto md:pb-0 md:pt-[env(safe-area-inset-top)] md:border-t-0 md:border-b">
-      <ul className="grid grid-cols-7 items-stretch md:flex md:justify-start md:gap-1 md:px-3">
+      <ul className="grid grid-cols-8 items-stretch md:flex md:justify-start md:gap-1 md:px-3">
         <li className="hidden md:flex items-center pr-3 mr-2 border-r border-border">
           <span className="mono text-tactical-orange text-sm font-bold tracking-wider">
             TACTICAL/GIS

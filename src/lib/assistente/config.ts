@@ -33,6 +33,11 @@ export interface ConfigIA {
   prompts: PromptCustom[];
   /** Skills customizadas: título + instrução somada ao conhecimento. */
   skills: PromptCustom[];
+  /**
+   * Personagem que encarna a IA (slug de manual_personagens — Ajustes ›
+   * Assistente IA › Personagem da IA). Vazio = IA padrão do app.
+   */
+  personagemSlug: string;
   provider: ProvedorIA;
   /** Chave API do provedor (só sai do aparelho na chamada ao provedor). */
   chave: string;
@@ -53,6 +58,7 @@ export const CONFIG_PADRAO_IA: ConfigIA = {
     "Você é uma assistente de sobrevivência dentro do app Manual do Sobrevivente. Responda em português, de forma prática e direta, priorizando segurança. Quando a pergunta envolver o app, explique onde tocar passo a passo.",
   prompts: [],
   skills: [],
+  personagemSlug: "",
   provider: "local",
   chave: "",
   modelo: "",

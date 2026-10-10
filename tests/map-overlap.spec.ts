@@ -67,9 +67,31 @@ describe("HUD do mapa em celular (390×844)", () => {
   it("abre o modal de boas-vindas no primeiro acesso", async () => {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
     const page = await context.newPage();
+    // O onboarding abre APÓS autenticação (decisão do portão — Task 26):
+    // sessão falsa (estruturalmente válida) injetada antes do app subir.
+    await page.addInitScript(() => {
+      localStorage.setItem(
+        "sb-mbterwktxczsyevcudoz-auth-token",
+        JSON.stringify({
+          access_token: "sessao-de-teste",
+          refresh_token: "refresh-de-teste",
+          token_type: "bearer",
+          expires_in: 3600,
+          expires_at: Math.floor(Date.now() / 1000) + 3600,
+          user: {
+            id: "usuario-de-teste",
+            aud: "authenticated",
+            email: "teste@local",
+            app_metadata: { provider: "email", providers: ["email"] },
+            user_metadata: { nome: "Operador de Teste" },
+            created_at: new Date().toISOString(),
+          },
+        }),
+      );
+    });
     await page.goto(`${BASE}/settings`, { waitUntil: "domcontentloaded" });
     const modal = page.getByText("BEM-VINDO, OPERADOR");
-    await modal.waitFor({ state: "visible", timeout: 8_000 });
+    await modal.waitFor({ state: "visible", timeout: 15_000 });
     await page.getByRole("button", { name: "Pular configuração" }).click();
     await modal.waitFor({ state: "hidden" });
     await context.close();

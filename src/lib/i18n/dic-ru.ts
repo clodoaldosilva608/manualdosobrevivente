@@ -1105,4 +1105,25 @@ export const DIC_RU: Record<string, string> = {
   "{n} à sua disposição": "{n} к вашим услугам",
   "Áudio gravado": "Аудио записано",
   "—": "—",
+  "Personagem da IA": "Персонаж ИИ",
+  "Qual um dos personagens do Manual pode encarnar o assistente: o escolhido vira a miniatura flutuante (toque nela para abrir o chat) e dá o tom, a especialidade e a frase-símbolo das respostas.":
+    "Любой персонаж Мануала может воплотить ассистента: выбранный становится плавающей миниатюрой (нажмите её, чтобы открыть чат) и задаёт тон, специализацию и фразу-символ ответов.",
+  Padrão: "По умолчанию",
+  "IA padrão do app": "ИИ приложения по умолчанию",
+  Perfil: "Профиль",
+  "A IA assumiu a identidade de {nome} — o campo “Nome da sua IA” abaixo continua valendo se quiser chamá-la por outro apelido.":
+    "ИИ принял личность «{nome}» — поле «Имя вашего ИИ» ниже по-прежнему действует, если хотите другое прозвище.",
+  "Sou {nome}, seu assistente no Manual do Sobrevivente.":
+    "Я {nome}, ваш ассистент в Manual do Sobrevivente.",
+  "Personagens ativos aparecem na escolha de avatar ao criar conta, em Conta › Perfil na nuvem e na escolha da PERSONA do assistente IA (Ajustes › Assistente IA): o escolhido encarna a IA com nome, perfil e frase. Você pode enviar uma imagem ou colar uma URL.":
+    "Активные персонажи появляются при выборе аватара при регистрации, в Аккаунт › Облачный профиль и при выборе ПЕРСОНЫ ИИ-ассистента (Настройки › ИИ-ассистент): выбранный воплощает ИИ с именем, профилем и фразой. Можно загрузить изображение или вставить URL.",
+  "Identificador (slug)": "Идентификатор (slug)",
+  "Usado pela IA para lembrar a persona escolhida — minúsculas e hífens.":
+    "Используется ИИ для запоминания выбранной персоны — строчные буквы и дефисы.",
+  "Perfil (especialidades)": "Профиль (специализации)",
+  "Frase-símbolo (lema)": "Фраза-символ (девиз)",
+  "Ex.: Rastreamento, observação, orientação e fauna":
+    "Напр.: Слежение, наблюдение, ориентирование и фауна",
+  "Ex.: Preparação é transformar conhecimento em segurança.":
+    "Напр.: Подготовка — это превращение знаний в безопасность.",
 };

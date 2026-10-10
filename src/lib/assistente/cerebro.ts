@@ -17,6 +17,7 @@ import { executarHabilidade } from "@/lib/assistente/habilidades";
 import { configTemChave, type ConfigIA } from "@/lib/assistente/config";
 import { buscarBaseLocal, normalizar, type EntradaLocal } from "@/lib/assistente/conhecimento";
 import { buscarNaMemoria, contarUso, registrarPar, topoMemoria } from "@/lib/assistente/memoria";
+import { vinhetaPersona } from "@/lib/assistente/persona";
 import {
   chamarProvedor,
   ErroProvedor,
@@ -25,6 +26,7 @@ import {
 } from "@/lib/assistente/provedor";
 import { geoBuscar } from "@/lib/assistente/geocode.functions";
 import type { EntradaConhecimento } from "@/lib/ia-conhecimento";
+import type { Personagem as PersonagemPersona } from "@/lib/personagens";
 
 export interface ContextoPergunta {
   /** Centro atual do mapa (para previsão do tempo). */
@@ -189,6 +191,8 @@ export async function responder(params: {
   historico: MensagemChat[];
   global: EntradaConhecimento[];
   deps: DependenciasCerebro;
+  /** Personagem que encarna a IA (opcional — afeta identidade e tom). */
+  persona?: PersonagemPersona | null;
 }): Promise<RespostaIA> {
   const { pergunta, config, contexto, global, deps } = params;
   const intent = detectarIntent(pergunta);
@@ -409,6 +413,7 @@ export async function responder(params: {
         pergunta,
         anexos: [],
         global,
+        persona: params.persona ?? null,
       });
       const { texto, comando } = extrairComando(bruta);
       let extra = "";
@@ -436,10 +441,11 @@ export async function responder(params: {
     "Sobre sobrevivência eu respondo sem internet: água, fogo, abrigo, socorros, orientação, mochila 72h…",
     "Para respostas abertas (qualquer assunto), cadastre uma chave API em Ajustes › Assistente IA — as instruções com link direto estão lá.",
   ];
+  const cairCativo =
+    "Essa eu não sei responder com o que tenho aqui dentro — mas estou aprendendo: quando você me ensinar (ou usar mais), eu melhoro.\n\n" +
+    dicas[Math.floor(Math.random() * dicas.length)];
   return {
-    texto:
-      "Essa eu não sei responder com o que tenho aqui dentro — mas estou aprendendo: quando você me ensinar (ou usar mais), eu melhoro.\n\n" +
-      dicas[Math.floor(Math.random() * dicas.length)],
+    texto: params.persona ? `${cairCativo}\n\n${vinhetaPersona(params.persona)}` : cairCativo,
     origem: "sem-resposta",
   };
 }

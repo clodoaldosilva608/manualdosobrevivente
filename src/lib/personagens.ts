@@ -11,6 +11,11 @@
  *   • A escolha vira avatar_url no espelho manual_perfil_usuarios (RLS:
  *     dono edita o próprio perfil).
  *
+ * PERSONA DA IA: além de avatar, qualquer personagem pode encarnar o
+ * assistente IA (Ajustes › Assistente IA › Personagem da IA). O slug
+ * identifica a escolha de forma estável; descricao/perfil/frase alimentam
+ * o comportamento da IA (src/lib/assistente/persona.ts).
+ *
  * Imagens dos personagens também vivem no bucket "avatares", na pasta
  * avatares/personagens/ — só o admin pode gravar lá.
  */
@@ -24,6 +29,12 @@ export interface Personagem {
   id: string;
   nome: string;
   descricao: string | null;
+  /** Identificador estável da persona da IA (ex.: "prepper-urbano"). */
+  slug: string | null;
+  /** Linha de perfil/especialidades (alimenta a persona da IA). */
+  perfil: string | null;
+  /** Frase-símbolo que a IA assina (lema do personagem). */
+  frase: string | null;
   url_imagem: string | null;
   ativo: boolean;
   ordem: number;
@@ -67,6 +78,9 @@ export async function salvarPersonagem(
     ...resto,
     nome: personagem.nome.trim(),
     descricao: personagem.descricao?.trim() || null,
+    slug: personagem.slug?.trim() || null,
+    perfil: personagem.perfil?.trim() || null,
+    frase: personagem.frase?.trim() || null,
     url_imagem: personagem.url_imagem?.trim() || null,
   };
   if (id) {

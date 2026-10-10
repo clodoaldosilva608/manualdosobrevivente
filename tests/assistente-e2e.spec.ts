@@ -132,6 +132,48 @@ describe("Pop-ups de crescimento no dashboard do mapa", () => {
   });
 });
 
+describe("Persona da IA (personagens)", () => {
+  it(
+    "personagem escolhido vira a miniatura do orbe e o nome do chat",
+    { timeout: 120_000 },
+    async () => {
+      const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+      const page = await context.newPage();
+      await page.addInitScript(() => {
+        localStorage.setItem(
+          "manual:ia-config",
+          JSON.stringify({ personagemSlug: "prepper-urbano", nomeIA: "Prepper Urbano" }),
+        );
+      });
+      await page.goto(BASE, { waitUntil: "domcontentloaded" });
+      await page.waitForSelector(".maplibregl-canvas", { timeout: 30_000 });
+      const pular = page.getByRole("button", { name: "Pular configuração" });
+      const apareceu = await pular
+        .waitFor({ state: "visible", timeout: 6_000 })
+        .then(() => true)
+        .catch(() => false);
+      if (apareceu) {
+        await pular.click();
+        await pular.waitFor({ state: "hidden" });
+      }
+      // o catálogo vem do banco (personagens ativos) — a miniatura do orbe
+      // passa a ser a foto do personagem; toque abre o chat com o nome dele.
+      const orbe = page.locator('[data-test="assistente-orbe"]');
+      await orbe.waitFor({ state: "visible", timeout: 20_000 });
+      const miniatura = page.locator('[data-test="assistente-orbe-persona"]');
+      await miniatura.waitFor({ state: "visible", timeout: 20_000 });
+      await orbe.click();
+      const painel = page.locator('[data-test="assistente-painel"]');
+      await painel.waitFor({ state: "visible", timeout: 10_000 });
+      await painel
+        .getByText("Prepper Urbano")
+        .first()
+        .waitFor({ state: "visible", timeout: 10_000 });
+      await page.context().close();
+    },
+  );
+});
+
 describe("Mural dos apoiadores", () => {
   it("/colaboradores lista o mural em ordem não alfabética", { timeout: 90_000 }, async () => {
     const context = await browser.newContext();

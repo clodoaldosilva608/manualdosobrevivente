@@ -1104,4 +1104,25 @@ export const DIC_EN: Record<string, string> = {
   "{n} à sua disposição": "{n} at your service",
   "Áudio gravado": "Audio recorded",
   "—": "—",
+  "Personagem da IA": "AI character",
+  "Qual um dos personagens do Manual pode encarnar o assistente: o escolhido vira a miniatura flutuante (toque nela para abrir o chat) e dá o tom, a especialidade e a frase-símbolo das respostas.":
+    "Any of the Manual characters can become the assistant: the chosen one becomes the floating thumbnail (tap it to open the chat) and sets the tone, the specialty and the signature phrase of the answers.",
+  Padrão: "Default",
+  "IA padrão do app": "App default AI",
+  Perfil: "Profile",
+  "A IA assumiu a identidade de {nome} — o campo “Nome da sua IA” abaixo continua valendo se quiser chamá-la por outro apelido.":
+    "The AI has taken on the identity of {nome} — the “Name of your AI” field below still applies if you prefer another nickname.",
+  "Sou {nome}, seu assistente no Manual do Sobrevivente.":
+    "I'm {nome}, your assistant in the Manual do Sobrevivente.",
+  "Personagens ativos aparecem na escolha de avatar ao criar conta, em Conta › Perfil na nuvem e na escolha da PERSONA do assistente IA (Ajustes › Assistente IA): o escolhido encarna a IA com nome, perfil e frase. Você pode enviar uma imagem ou colar uma URL.":
+    "Active characters appear in the avatar choice at sign-up, in Account › Cloud profile and in the AI assistant PERSONA choice (Settings › AI assistant): the chosen one embodies the AI with name, profile and phrase. You can upload an image or paste a URL.",
+  "Identificador (slug)": "Identifier (slug)",
+  "Usado pela IA para lembrar a persona escolhida — minúsculas e hífens.":
+    "Used by the AI to remember the chosen persona — lowercase and hyphens.",
+  "Perfil (especialidades)": "Profile (specialties)",
+  "Frase-símbolo (lema)": "Signature phrase (motto)",
+  "Ex.: Rastreamento, observação, orientação e fauna":
+    "Ex.: Tracking, observation, orientation and wildlife",
+  "Ex.: Preparação é transformar conhecimento em segurança.":
+    "Ex.: Preparation is turning knowledge into safety.",
 };

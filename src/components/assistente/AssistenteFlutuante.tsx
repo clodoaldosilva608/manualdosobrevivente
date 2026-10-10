@@ -35,6 +35,13 @@ import {
 } from "@/lib/assistente/config";
 import { registrarPar, type ParMemoria } from "@/lib/assistente/memoria";
 import { responder, type RespostaIA } from "@/lib/assistente/cerebro";
+import {
+  apresentacaoPersona,
+  carregarPersonas,
+  nomeIAEfetivo,
+  personaAtiva,
+} from "@/lib/assistente/persona";
+import type { Personagem } from "@/lib/personagens";
 import type { AnexoMensagem, MensagemChat } from "@/lib/assistente/provedor";
 import { listarConhecimentoPublico, type EntradaConhecimento } from "@/lib/ia-conhecimento";
 import { fetchWeather } from "@/lib/weather.functions";
@@ -105,6 +112,7 @@ export default function AssistenteFlutuante() {
   const [gravando, setGravando] = useState(false);
   const [falando, setFalando] = useState(false);
   const [global, setGlobal] = useState<EntradaConhecimento[]>([]);
+  const [personas, setPersonas] = useState<Personagem[]>([]);
   const fimRef = useRef<HTMLDivElement>(null);
   const arquivoRef = useRef<HTMLInputElement>(null);
   const gravadorRef = useRef<MediaRecorder | null>(null);
@@ -117,9 +125,11 @@ export default function AssistenteFlutuante() {
     setMensagens(carregarChat());
   }, []);
 
-  // Conhecimento global curado pelo admin (cache offline de 6 h).
+  // Conhecimento global curado pelo admin (cache offline de 6 h) e o
+  // catálogo de personagens (qual um deles pode encarnar a IA).
   useEffect(() => {
     void listarConhecimentoPublico().then(setGlobal);
+    void carregarPersonas().then(setPersonas);
   }, []);
 
   useEffect(() => {
@@ -128,6 +138,8 @@ export default function AssistenteFlutuante() {
 
   const provedorNuvem = configTemChave(config);
   const status = provedorNuvem ? config.provider : "local";
+  const persona = useMemo(() => personaAtiva(config, personas), [config, personas]);
+  const nomeIA = nomeIAEfetivo(config, persona);
 
   /** Fala um texto com a voz do aparelho (pt-BR preferida). */
   const falar = useCallback(
@@ -184,6 +196,7 @@ export default function AssistenteFlutuante() {
         const resposta = await responder({
           pergunta: perguntaLimpa || t("Descreva o anexo que enviei"),
           config,
+          persona,
           contexto: {
             centro: (() => {
               try {
@@ -243,7 +256,7 @@ export default function AssistenteFlutuante() {
         setPensando(false);
       }
     },
-    [pensando, config, mensagens, global, falar, t],
+    [pensando, config, mensagens, global, falar, t, persona],
   );
 
   /* ---------------- Anexos (imagem, vídeo) ---------------- */
@@ -368,7 +381,16 @@ export default function AssistenteFlutuante() {
               strokeDasharray="3 4"
             />
           </svg>
-          <Bot className="text-tactical-orange h-6 w-6" />
+          {persona?.url_imagem ? (
+            <img
+              src={persona.url_imagem}
+              alt={persona.nome}
+              data-test="assistente-orbe-persona"
+              className="h-11 w-11 rounded-full bg-card object-cover object-top"
+            />
+          ) : (
+            <Bot className="text-tactical-orange h-6 w-6" />
+          )}
           <span className="mono absolute -bottom-1 rounded-full bg-background px-1 text-[8px] uppercase tracking-wider text-muted-foreground">
             {status === "local"
               ? "IA local"
@@ -389,15 +411,24 @@ export default function AssistenteFlutuante() {
         >
           {/* Cabeçalho */}
           <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-            <span className="bg-tactical-orange/15 text-tactical-orange flex h-8 w-8 items-center justify-center rounded-full">
-              <Bot className="h-4.5 w-4.5" />
-            </span>
+            {persona?.url_imagem ? (
+              <img
+                src={persona.url_imagem}
+                alt={persona.nome}
+                className="h-8 w-8 shrink-0 rounded-full bg-card object-cover object-top"
+              />
+            ) : (
+              <span className="bg-tactical-orange/15 text-tactical-orange flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+                <Bot className="h-4.5 w-4.5" />
+              </span>
+            )}
             <div className="min-w-0 flex-1">
-              <p className="mono truncate text-sm font-bold">{config.nomeIA}</p>
+              <p className="mono truncate text-sm font-bold">{nomeIA}</p>
               <p className="text-muted-foreground truncate text-[10px] uppercase tracking-wider">
-                {provedorNuvem
-                  ? t("Conectada · memória local ativa")
-                  : t("IA local · sem chave, funciona offline")}
+                {persona?.perfil?.trim() ||
+                  (provedorNuvem
+                    ? t("Conectada · memória local ativa")
+                    : t("IA local · sem chave, funciona offline"))}
               </p>
             </div>
             <button
@@ -447,8 +478,13 @@ export default function AssistenteFlutuante() {
             {mensagens.length === 0 && (
               <div className="text-muted-foreground space-y-2 text-xs leading-relaxed">
                 <p className="text-tactical-orange mono text-[11px] font-bold uppercase tracking-widest">
-                  {t("{n} à sua disposição", { n: config.nomeIA })}
+                  {t("{n} à sua disposição", { n: nomeIA })}
                 </p>
+                {persona && (
+                  <p className="whitespace-pre-wrap text-foreground/90">
+                    {apresentacaoPersona(persona)}
+                  </p>
+                )}
                 <p>
                   {t(
                     "Peça ações do app, sobrevivência, clima e notícias — eu executo e respondo, e aprendo com cada conversa.",

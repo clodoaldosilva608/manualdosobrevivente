@@ -1109,4 +1109,25 @@ export const DIC_ES: Record<string, string> = {
   "{n} à sua disposição": "{n} a tu servicio",
   "Áudio gravado": "Audio grabado",
   "—": "—",
+  "Personagem da IA": "Personaje de la IA",
+  "Qual um dos personagens do Manual pode encarnar o assistente: o escolhido vira a miniatura flutuante (toque nela para abrir o chat) e dá o tom, a especialidade e a frase-símbolo das respostas.":
+    "Cualquiera de los personajes del Manual puede encarnar al asistente: el elegido se convierte en la miniatura flotante (tóquela para abrir el chat) y da el tono, la especialidad y la frase-símbolo de las respuestas.",
+  Padrão: "Predeterminado",
+  "IA padrão do app": "IA predeterminada del app",
+  Perfil: "Perfil",
+  "A IA assumiu a identidade de {nome} — o campo “Nome da sua IA” abaixo continua valendo se quiser chamá-la por outro apelido.":
+    "La IA asumió la identidad de {nome} — el campo “Nombre de su IA” abajo sigue valiendo si prefiere otro apodo.",
+  "Sou {nome}, seu assistente no Manual do Sobrevivente.":
+    "Soy {nome}, su asistente en el Manual do Sobrevivente.",
+  "Personagens ativos aparecem na escolha de avatar ao criar conta, em Conta › Perfil na nuvem e na escolha da PERSONA do assistente IA (Ajustes › Assistente IA): o escolhido encarna a IA com nome, perfil e frase. Você pode enviar uma imagem ou colar uma URL.":
+    "Los personajes activos aparecen en la elección de avatar al crear cuenta, en Cuenta › Perfil en la nube y en la elección de la PERSONA del asistente IA (Ajustes › Asistente IA): el elegido encarna a la IA con nombre, perfil y frase. Puede enviar una imagen o pegar una URL.",
+  "Identificador (slug)": "Identificador (slug)",
+  "Usado pela IA para lembrar a persona escolhida — minúsculas e hífens.":
+    "Usado por la IA para recordar la persona elegida — minúsculas y guiones.",
+  "Perfil (especialidades)": "Perfil (especialidades)",
+  "Frase-símbolo (lema)": "Frase-símbolo (lema)",
+  "Ex.: Rastreamento, observação, orientação e fauna":
+    "Ej.: Rastreo, observación, orientación y fauna",
+  "Ex.: Preparação é transformar conhecimento em segurança.":
+    "Ej.: La preparación es convertir conocimiento en seguridad.",
 };

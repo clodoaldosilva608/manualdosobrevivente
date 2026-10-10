@@ -14,8 +14,17 @@ import {
 } from "@/lib/assistente/memoria";
 import { buscarBaseLocal, BASE_LOCAL } from "@/lib/assistente/conhecimento";
 import { proximoPopup, CONFIG_PADRAO } from "@/lib/popups";
-import { configTemChave, modeloPadrao, CONFIG_PADRAO_IA } from "@/lib/assistente/config";
-import { extrairComando } from "@/lib/assistente/provedor";
+import {
+  configTemChave,
+  modeloPadrao,
+  lerConfigIA,
+  salvarConfigIA,
+  CONFIG_PADRAO_IA,
+} from "@/lib/assistente/config";
+import { extrairComando, montarSistema } from "@/lib/assistente/provedor";
+import { responder } from "@/lib/assistente/cerebro";
+import { personaAtiva, nomeIAEfetivo, blocoPersona } from "@/lib/assistente/persona";
+import type { Personagem } from "@/lib/personagens";
 
 /* O ambiente é node: o localStorage é simulado em memória (padrão convite.spec). */
 const LS_ORIGINAL = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
@@ -251,6 +260,89 @@ describe("comando do provedor", () => {
     const { texto, comando } = extrairComando("Resposta normal sem comando.");
     expect(texto).toBe("Resposta normal sem comando.");
     expect(comando).toBeUndefined();
+  });
+});
+
+describe("persona da IA (personagens)", () => {
+  const persona: Personagem = {
+    id: "p1",
+    nome: "Prepper Urbano",
+    descricao: "Especialista em preparação para emergências no ambiente urbano.",
+    slug: "prepper-urbano",
+    perfil: "Preparação urbana, organização e resposta a emergências.",
+    frase: "Preparação é transformar conhecimento em segurança.",
+    url_imagem: "https://exemplo.com/prepper.png",
+    ativo: true,
+    ordem: 1,
+    created_at: "",
+  };
+  const inativo: Personagem = { ...persona, id: "p2", slug: "militar-de-campo", ativo: false };
+  const lista = [persona, inativo];
+
+  it("personaAtiva resolve pelo slug e ignora inativos", () => {
+    expect(personaAtiva({ ...CONFIG_PADRAO_IA, personagemSlug: "prepper-urbano" }, lista)?.id).toBe(
+      "p1",
+    );
+    expect(personaAtiva({ ...CONFIG_PADRAO_IA, personagemSlug: "militar-de-campo" }, lista)).toBe(
+      null,
+    );
+    expect(personaAtiva(CONFIG_PADRAO_IA, lista)).toBe(null);
+    expect(personaAtiva({ ...CONFIG_PADRAO_IA, personagemSlug: "fantasma" }, lista)).toBe(null);
+  });
+
+  it("nomeIAEfetivo: personagem assume o nome, apelido do operador vence", () => {
+    expect(nomeIAEfetivo({ ...CONFIG_PADRAO_IA, personagemSlug: "prepper-urbano" }, persona)).toBe(
+      "Prepper Urbano",
+    );
+    expect(
+      nomeIAEfetivo(
+        { ...CONFIG_PADRAO_IA, personagemSlug: "prepper-urbano", nomeIA: "Ágil" },
+        persona,
+      ),
+    ).toBe("Ágil");
+    expect(nomeIAEfetivo(CONFIG_PADRAO_IA, null)).toBe("Sertão");
+  });
+
+  it("blocoPersona carrega nome, especialidade e frase-símbolo", () => {
+    const bloco = blocoPersona(persona).join("\n");
+    expect(bloco).toContain("Prepper Urbano");
+    expect(bloco).toContain("Preparação urbana");
+    expect(bloco).toContain("Preparação é transformar conhecimento em segurança.");
+  });
+
+  it("montarSistema incorpora a persona e mantém apelido do operador", () => {
+    const comPersona = montarSistema(
+      { ...CONFIG_PADRAO_IA, personagemSlug: "prepper-urbano" },
+      [],
+      [],
+      persona,
+    );
+    expect(comPersona).toContain("Prepper Urbano");
+    expect(comPersona).not.toContain('Seu nome é "Sertão"');
+
+    const renomeada = montarSistema({ ...CONFIG_PADRAO_IA, nomeIA: "Ágil" }, [], [], persona);
+    expect(renomeada).toContain('apelido "Ágil"');
+
+    const semPersona = montarSistema(CONFIG_PADRAO_IA, [], [], null);
+    expect(semPersona).toContain('Seu nome é "Sertão"');
+  });
+
+  it("config persiste personagemSlug", () => {
+    salvarConfigIA({ ...CONFIG_PADRAO_IA, personagemSlug: "campista-explorador" });
+    expect(lerConfigIA().personagemSlug).toBe("campista-explorador");
+  });
+
+  it("resposta local sem saber o assunto assina com a persona", async () => {
+    const resposta = await responder({
+      pergunta: "qual a cor do cavalo branco de Napoleão?",
+      config: CONFIG_PADRAO_IA,
+      historico: [],
+      global: [],
+      persona,
+      deps: { buscarNoticias: async () => [], buscarClima: async () => null },
+    });
+    expect(resposta.origem).toBe("sem-resposta");
+    expect(resposta.texto).toContain("Preparação é transformar conhecimento em segurança.");
   });
 });
 

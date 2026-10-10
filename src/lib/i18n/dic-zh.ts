@@ -1066,4 +1066,23 @@ export const DIC_ZH: Record<string, string> = {
   "{n} à sua disposição": "{n}为您服务",
   "Áudio gravado": "音频已录制",
   "—": "—",
+  "Personagem da IA": "AI 角色",
+  "Qual um dos personagens do Manual pode encarnar o assistente: o escolhido vira a miniatura flutuante (toque nela para abrir o chat) e dá o tom, a especialidade e a frase-símbolo das respostas.":
+    "手册中的任意角色都可以成为助手：被选择的角色会变成悬浮缩略图（点击即可打开聊天），并决定回答的语气、专长和标志语。",
+  Padrão: "默认",
+  "IA padrão do app": "应用默认 AI",
+  Perfil: "简介",
+  "A IA assumiu a identidade de {nome} — o campo “Nome da sua IA” abaixo continua valendo se quiser chamá-la por outro apelido.":
+    "AI 已采用“{nome}”的身份 — 如果想要其他昵称，下方的“您的 AI 名称”仍然有效。",
+  "Sou {nome}, seu assistente no Manual do Sobrevivente.":
+    "我是 {nome}，Manual do Sobrevivente 为您准备的助手。",
+  "Personagens ativos aparecem na escolha de avatar ao criar conta, em Conta › Perfil na nuvem e na escolha da PERSONA do assistente IA (Ajustes › Assistente IA): o escolhido encarna a IA com nome, perfil e frase. Você pode enviar uma imagem ou colar uma URL.":
+    "启用中的角色会出现在注册时的头像选择、账户 › 云端个人资料以及 AI 助手人格选择（设置 › AI 助手）中：被选中的角色以名字、简介和标志语化身 AI。可上传图片或粘贴 URL。",
+  "Identificador (slug)": "标识符 (slug)",
+  "Usado pela IA para lembrar a persona escolhida — minúsculas e hífens.":
+    "AI 用它记住所选人格 — 小写字母和连字符。",
+  "Perfil (especialidades)": "简介（专长）",
+  "Frase-símbolo (lema)": "标志语（格言）",
+  "Ex.: Rastreamento, observação, orientação e fauna": "例：追踪、观察、定向与野生动物",
+  "Ex.: Preparação é transformar conhecimento em segurança.": "例：准备就是把知识变成安全。",
 };

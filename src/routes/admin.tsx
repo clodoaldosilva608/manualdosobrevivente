@@ -1024,6 +1024,9 @@ const PERSONAGEM_VAZIO: Personagem = {
   id: "",
   nome: "",
   descricao: null,
+  slug: null,
+  perfil: null,
+  frase: null,
   url_imagem: null,
   ativo: true,
   ordem: 0,
@@ -1072,7 +1075,7 @@ function SecaoPersonagens() {
       <div className="flex flex-wrap items-center gap-2">
         <p className="text-sm text-muted-foreground">
           {t(
-            "Personagens ativos aparecem na escolha de avatar ao criar conta e em Conta › Perfil na nuvem. Você pode enviar uma imagem ou colar uma URL.",
+            "Personagens ativos aparecem na escolha de avatar ao criar conta, em Conta › Perfil na nuvem e na escolha da PERSONA do assistente IA (Ajustes › Assistente IA): o escolhido encarna a IA com nome, perfil e frase. Você pode enviar uma imagem ou colar uma URL.",
           )}
         </p>
         <Button
@@ -1173,6 +1176,9 @@ function FormularioPersonagem({
   const { t } = useI18n();
   const [nome, setNome] = useState(personagem.nome);
   const [descricao, setDescricao] = useState(personagem.descricao ?? "");
+  const [slug, setSlug] = useState(personagem.slug ?? "");
+  const [perfil, setPerfil] = useState(personagem.perfil ?? "");
+  const [frase, setFrase] = useState(personagem.frase ?? "");
   const [urlImagem, setUrlImagem] = useState(personagem.url_imagem ?? "");
   const [ordem, setOrdem] = useState(String(personagem.ordem));
   const [ativo, setAtivo] = useState(personagem.ativo);
@@ -1191,6 +1197,9 @@ function FormularioPersonagem({
         ...personagem,
         nome,
         descricao,
+        slug,
+        perfil,
+        frase,
         url_imagem: urlImagem,
         ordem: Number(ordem) || 0,
         ativo,
@@ -1245,6 +1254,36 @@ function FormularioPersonagem({
             value={descricao}
             onChange={(e) => setDescricao(e.target.value)}
             placeholder={t("Ex.: Guia da floresta")}
+          />
+        </div>
+        <div className="space-y-1 sm:col-span-2">
+          <Label htmlFor="personagem-slug">{t("Identificador (slug)")}</Label>
+          <Input
+            id="personagem-slug"
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+            placeholder="prepper-urbano"
+          />
+          <p className="text-muted-foreground text-[10px]">
+            {t("Usado pela IA para lembrar a persona escolhida — minúsculas e hífens.")}
+          </p>
+        </div>
+        <div className="space-y-1 sm:col-span-2">
+          <Label htmlFor="personagem-perfil">{t("Perfil (especialidades)")}</Label>
+          <Input
+            id="personagem-perfil"
+            value={perfil}
+            onChange={(e) => setPerfil(e.target.value)}
+            placeholder={t("Ex.: Rastreamento, observação, orientação e fauna")}
+          />
+        </div>
+        <div className="space-y-1 sm:col-span-2">
+          <Label htmlFor="personagem-frase">{t("Frase-símbolo (lema)")}</Label>
+          <Input
+            id="personagem-frase"
+            value={frase}
+            onChange={(e) => setFrase(e.target.value)}
+            placeholder={t("Ex.: Preparação é transformar conhecimento em segurança.")}
           />
         </div>
         <div className="space-y-1 sm:col-span-2">

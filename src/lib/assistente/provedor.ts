@@ -10,6 +10,8 @@
  * data URL; áudio/vídeo como input_audio (suportado pelo Gemini).
  */
 import { configTemChave, modeloPadrao, urlProvedor, type ConfigIA } from "@/lib/assistente/config";
+import { blocoPersona } from "@/lib/assistente/persona";
+import type { Personagem as PersonagemPersona } from "@/lib/personagens";
 import type { EntradaConhecimento } from "@/lib/ia-conhecimento";
 import { topoMemoria, type ParMemoria } from "@/lib/assistente/memoria";
 
@@ -25,14 +27,24 @@ export interface MensagemChat {
   texto: string;
 }
 
-/** Prompt de sistema montado a partir da configuração + memória + base. */
+/** Prompt de sistema montado a partir da persona + configuração + memória + base. */
 export function montarSistema(
   config: ConfigIA,
   global: EntradaConhecimento[],
   memTop: ParMemoria[],
+  persona?: PersonagemPersona | null,
 ): string {
   const linhas: string[] = [];
-  linhas.push(`Seu nome é "${config.nomeIA}".`);
+  if (persona) {
+    // A persona assume a identidade — nome e comportamento vêm do personagem;
+    // prompts/skills do operador continuam por cima (personalização vence).
+    for (const l of blocoPersona(persona)) linhas.push(l);
+    const custom = config.nomeIA.trim();
+    if (custom && custom !== "Sertão" && custom !== persona.nome)
+      linhas.push(`O operador te chama pelo apelido "${custom}" — atenda por ele.`);
+  } else {
+    linhas.push(`Seu nome é "${config.nomeIA}".`);
+  }
   linhas.push(
     config.nomeUsuario.trim()
       ? `O operador se chama ${config.nomeUsuario.trim()} — chame-o pelo nome.`
@@ -92,6 +104,8 @@ export async function chamarProvedor(params: {
   anexos: AnexoMensagem[];
   global: EntradaConhecimento[];
   contexto?: ContextoApp;
+  /** Personagem que encarna a IA (opcional). */
+  persona?: PersonagemPersona | null;
 }): Promise<string> {
   const { config } = params;
   if (!configTemChave(config)) {
@@ -124,7 +138,10 @@ export async function chamarProvedor(params: {
   }
 
   const mensagens: unknown[] = [
-    { role: "system", content: montarSistema(config, params.global, topoMemoria()) },
+    {
+      role: "system",
+      content: montarSistema(config, params.global, topoMemoria(), params.persona ?? null),
+    },
   ];
   if (params.contexto?.bloco) mensagens.push({ role: "system", content: params.contexto.bloco });
   for (const m of params.historico.slice(-8)) {

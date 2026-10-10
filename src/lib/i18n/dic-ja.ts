@@ -1099,4 +1099,24 @@ export const DIC_JA: Record<string, string> = {
   "{n} à sua disposição": "{n}がお供します",
   "Áudio gravado": "音声を録音しました",
   "—": "—",
+  "Personagem da IA": "AIキャラクター",
+  "Qual um dos personagens do Manual pode encarnar o assistente: o escolhido vira a miniatura flutuante (toque nela para abrir o chat) e dá o tom, a especialidade e a frase-símbolo das respostas.":
+    "マニュアルのどのキャラクターでもアシスタントになれます：選んだキャラクターがフローティングサムネイル（タップでチャットを開く）になり、回答の口調・得意分野・象徴フレーズを決めます。",
+  Padrão: "デフォルト",
+  "IA padrão do app": "アプリのデフォルトAI",
+  Perfil: "プロフィール",
+  "A IA assumiu a identidade de {nome} — o campo “Nome da sua IA” abaixo continua valendo se quiser chamá-la por outro apelido.":
+    "AIは「{nome}」の人格を引き受けました — 別のニックネームをご希望の場合は、下の「あなたのAIの名前」欄が引き続き有効です。",
+  "Sou {nome}, seu assistente no Manual do Sobrevivente.":
+    "私は {nome}、Manual do Sobrevivente のアシスタントです。",
+  "Personagens ativos aparecem na escolha de avatar ao criar conta, em Conta › Perfil na nuvem e na escolha da PERSONA do assistente IA (Ajustes › Assistente IA): o escolhido encarna a IA com nome, perfil e frase. Você pode enviar uma imagem ou colar uma URL.":
+    "有効なキャラクターは、登録時のアバター選択、アカウント › クラウドプロフィール、AIアシスタントのペルソナ選択（設定 › AIアシスタント）に表示されます：選ばれたキャラクターが名前・プロフィール・フレーズ付きでAIになります。画像をアップロードするかURLを貼り付けてください。",
+  "Identificador (slug)": "識別子（スラッグ）",
+  "Usado pela IA para lembrar a persona escolhida — minúsculas e hífens.":
+    "AIが選択されたペルソナを記憶するために使います — 小文字とハイフン。",
+  "Perfil (especialidades)": "プロフィール（得意分野）",
+  "Frase-símbolo (lema)": "象徴フレーズ（モットー）",
+  "Ex.: Rastreamento, observação, orientação e fauna": "例：追跡、観察、方位、野生動物",
+  "Ex.: Preparação é transformar conhecimento em segurança.":
+    "例：準備とは知識を安全に変えることです。",
 };

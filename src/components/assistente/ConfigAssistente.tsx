@@ -11,7 +11,7 @@
  *  · limpar a memória quando quiser — os dados são só do aparelho.
  */
 import { useEffect, useState } from "react";
-import { Bot, Brain, ExternalLink, KeyRound, Plus, Sparkles, Trash2 } from "lucide-react";
+import { Bot, Brain, ExternalLink, KeyRound, Plus, Sparkles, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,9 @@ import {
   type ProvedorIA,
 } from "@/lib/assistente/config";
 import { instrucoesProvedor } from "@/lib/assistente/config";
+import { carregarPersonas, personaAtiva } from "@/lib/assistente/persona";
 import { limparMemoria, lerMemoria } from "@/lib/assistente/memoria";
+import type { Personagem } from "@/lib/personagens";
 
 const PROVEDORES: Array<{ id: ProvedorIA; rotulo: string; dica: string }> = [
   { id: "local", rotulo: "IA local", dica: "Sem chave — sobrevivência, app, clima e notícias" },
@@ -43,11 +45,15 @@ export function ConfigAssistente() {
   const [memoria, setMemoria] = useState(0);
   const [novaPrompt, setNovaPrompt] = useState("");
   const [novaSkill, setNovaSkill] = useState("");
+  const [personas, setPersonas] = useState<Personagem[]>([]);
 
   useEffect(() => {
     setConfig(lerConfigIA());
     setMemoria(lerMemoria().length);
+    void carregarPersonas().then(setPersonas);
   }, []);
+
+  const persona = personaAtiva(config, personas);
 
   const atualizar = (mudancas: Partial<typeof config>) => {
     const nova = { ...config, ...mudancas };
@@ -57,6 +63,100 @@ export function ConfigAssistente() {
 
   return (
     <div className="space-y-4" data-test="assistente-config">
+      {/* Personagem da IA */}
+      <section
+        className="space-y-3 rounded-md border border-border bg-card p-4"
+        data-test="ia-personagem"
+      >
+        <header className="flex items-center gap-2">
+          <Users className="text-tactical-orange h-4 w-4" />
+          <h2 className="mono text-[11px] font-bold uppercase tracking-widest text-tactical-orange">
+            {t("Personagem da IA")}
+          </h2>
+          {persona && (
+            <span
+              className="mono ml-auto rounded bg-tactical-orange/15 px-2 py-0.5 text-[10px] font-bold uppercase text-tactical-orange"
+              data-test="ia-personagem-ativa"
+            >
+              {persona.nome}
+            </span>
+          )}
+        </header>
+        <p className="text-muted-foreground text-xs leading-relaxed">
+          {t(
+            "Qual um dos personagens do Manual pode encarnar o assistente: o escolhido vira a miniatura flutuante (toque nela para abrir o chat) e dá o tom, a especialidade e a frase-símbolo das respostas.",
+          )}
+        </p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <button
+            type="button"
+            onClick={() => atualizar({ personagemSlug: "" })}
+            data-test="ia-personagem-padrao"
+            className={`flex flex-col items-center gap-1.5 rounded-md border p-2.5 text-center ${
+              !persona
+                ? "border-tactical-orange bg-tactical-orange/10"
+                : "border-border hover:border-foreground/40"
+            }`}
+          >
+            <span className="bg-tactical-orange/15 text-tactical-orange flex h-12 w-12 items-center justify-center rounded-full">
+              <Bot className="h-5 w-5" />
+            </span>
+            <span className="text-xs font-bold">{t("Padrão")}</span>
+            <span className="text-muted-foreground text-[10px] leading-tight">
+              {t("IA padrão do app")}
+            </span>
+          </button>
+          {personas.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => atualizar({ personagemSlug: p.slug ?? "", nomeIA: p.nome })}
+              data-test={`ia-personagem-${p.slug}`}
+              className={`flex flex-col items-center gap-1.5 rounded-md border p-2.5 text-center ${
+                persona?.id === p.id
+                  ? "border-tactical-orange bg-tactical-orange/10"
+                  : "border-border hover:border-foreground/40"
+              }`}
+            >
+              {p.url_imagem ? (
+                <img
+                  src={p.url_imagem}
+                  alt={p.nome}
+                  className="h-12 w-12 rounded-full bg-card object-cover object-top"
+                />
+              ) : (
+                <span className="mono flex h-12 w-12 items-center justify-center rounded-full border border-border text-xs">
+                  {p.nome.slice(0, 2).toUpperCase()}
+                </span>
+              )}
+              <span className="text-xs leading-tight font-bold">{p.nome}</span>
+              {p.frase && (
+                <span className="text-muted-foreground line-clamp-2 text-[10px] leading-tight italic">
+                  “{p.frase}”
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+        {persona && (
+          <div className="text-muted-foreground space-y-1 rounded-md border border-border bg-background/40 p-3 text-xs leading-relaxed">
+            {persona.descricao && <p>{persona.descricao}</p>}
+            {persona.perfil && (
+              <p>
+                <span className="font-bold">{t("Perfil")}:</span> {persona.perfil}
+              </p>
+            )}
+            {persona.frase && <p className="italic">“{persona.frase}”</p>}
+            <p className="text-[11px]">
+              {t(
+                "A IA assumiu a identidade de {nome} — o campo “Nome da sua IA” abaixo continua valendo se quiser chamá-la por outro apelido.",
+                { nome: persona.nome },
+              )}
+            </p>
+          </div>
+        )}
+      </section>
+
       {/* Identidade */}
       <section className="space-y-3 rounded-md border border-border bg-card p-4">
         <header className="flex items-center gap-2">

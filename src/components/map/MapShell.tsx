@@ -86,7 +86,29 @@ import {
   type RotaSalva,
   type StatusNavegacao,
 } from "@/lib/rota";
-import { BannerNavegacao, PainelRota } from "@/components/map/GuiaRota";
+import {
+  BannerNavegacao,
+  PainelRota,
+  BannerNavegacaoRuas,
+  PainelRotaRuas,
+} from "@/components/map/GuiaRota";
+import {
+  avancarNavegacaoRuas,
+  carregarEstadoRuas,
+  distanciaFalavel,
+  manobrasFC,
+  rotaRuasFC,
+  resumoRotaRuas,
+  salvarEstadoRuas,
+  textoManobra,
+  type AnunciosRuas,
+  type PerfilRotaRuas,
+  type RotaRuas,
+  type StatusRuas,
+} from "@/lib/rota-ruas";
+import { tracarRotaRuas as tracarRotaRuasServidor } from "@/lib/rota-ruas.functions";
+import { falarTexto, pararVoz, vozNavegacaoAtiva, definirVozNavegacao } from "@/lib/voz";
+import { geoBuscar } from "@/lib/assistente/geocode.functions";
 import CompassRose from "@/components/map/CompassRose";
 import RedlineBoletim from "@/components/map/RedlineBoletim";
 import MapaControles, { MapaControlesComSensor } from "@/components/map/mapa-controles";
@@ -164,7 +186,7 @@ import {
   type TelaVisibilidade,
 } from "@/components/map/tela-elementos";
 import { Switch } from "@/components/ui/switch";
-import { useI18n, tGlobal } from "@/lib/i18n";
+import { useI18n, tGlobal, localeAtivo } from "@/lib/i18n";
 
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 
@@ -441,6 +463,104 @@ function adicionarFontesDesenho(map: maplibregl.Map) {
     source: "trilha",
     paint: { "line-color": "#38BDF8", "line-width": 3, "line-opacity": 0.85 },
   });
+  // Navegação de ruas: traçado completo (casco escuro + linha âmbar), setas
+  // de direção ao longo do caminho e círculos nas manobras. Símbolos só com
+  // ícone (sem texto) — dispensam glyphs do estilo.
+  map.addSource("rota-ruas", { type: "geojson", data: emptyFC() });
+  map.addLayer({
+    id: "rota-ruas-casco",
+    type: "line",
+    source: "rota-ruas",
+    filter: ["==", ["geometry-type"], "LineString"],
+    paint: { "line-color": "#121212", "line-width": 9, "line-opacity": 0.85 },
+  });
+  map.addLayer({
+    id: "rota-ruas-linha",
+    type: "line",
+    source: "rota-ruas",
+    filter: ["==", ["geometry-type"], "LineString"],
+    paint: { "line-color": "#FFC24D", "line-width": 5.5, "line-opacity": 0.95 },
+  });
+  map.addLayer({
+    id: "rota-ruas-setas",
+    type: "symbol",
+    source: "rota-ruas",
+    filter: ["==", ["geometry-type"], "LineString"],
+    layout: {
+      "symbol-placement": "line",
+      "symbol-spacing": 130,
+      "icon-image": "seta-rota-direcao",
+      "icon-rotation-alignment": "map",
+      "icon-allow-overlap": true,
+      "icon-ignore-placement": true,
+      "icon-size": 0.5,
+    },
+  });
+  map.addSource("rota-ruas-manobras", { type: "geojson", data: emptyFC() });
+  map.addLayer({
+    id: "rota-ruas-manobra-circulo",
+    type: "circle",
+    source: "rota-ruas-manobras",
+    paint: {
+      "circle-radius": 8,
+      "circle-color": ["coalesce", ["get", "cor"], "#FFC24D"],
+      "circle-stroke-color": "#121212",
+      "circle-stroke-width": 2,
+    },
+  });
+  map.addLayer({
+    id: "rota-ruas-manobra-seta",
+    type: "symbol",
+    source: "rota-ruas-manobras",
+    filter: ["has", "angulo"],
+    layout: {
+      "icon-image": "seta-rota-manobra",
+      "icon-rotate": ["get", "angulo"],
+      "icon-allow-overlap": true,
+      "icon-ignore-placement": true,
+      "icon-size": 0.42,
+    },
+  });
+  registrarIconeSeta(map, "seta-rota-direcao", "#1A1A1A");
+  registrarIconeSeta(map, "seta-rota-manobra", "#FFFFFF", "#121212");
+}
+
+/** Desenha uma seta (triângulo) em canvas e registra como ícone do mapa. */
+function registrarIconeSeta(map: maplibregl.Map, id: string, cor: string, contorno?: string) {
+  if (map.hasImage(id)) return;
+  const tam = 64;
+  const canvas = document.createElement("canvas");
+  canvas.width = tam;
+  canvas.height = tam;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  const desenha = () => {
+    ctx.beginPath();
+    ctx.moveTo(tam / 2, 6);
+    ctx.lineTo(tam - 8, tam - 12);
+    ctx.lineTo(tam / 2, tam - 26);
+    ctx.lineTo(8, tam - 12);
+    ctx.closePath();
+    ctx.fillStyle = cor;
+    ctx.fill();
+    if (contorno) {
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = contorno;
+      ctx.stroke();
+    }
+  };
+  desenha();
+  const imagem = ctx.getImageData(0, 0, tam, tam);
+  if (imagem.data.some((v) => v !== 0)) map.addImage(id, imagem);
+  // Se o estilo recarregar (styledata), o ícone volta com a fonte —
+  // registrarIconeSeta é idempotente (hasImage) e reexecutado no evento.
+  map.once("styledata", () => {
+    if (!map.hasImage(id)) {
+      desenha();
+      const deNovo = ctx.getImageData(0, 0, tam, tam);
+      if (deNovo.data.some((v) => v !== 0)) map.addImage(id, deNovo);
+    }
+  });
 }
 
 export default function MapShell() {
@@ -472,6 +592,22 @@ export default function MapShell() {
   const [trilha, setTrilha] = useState<Array<[number, number]>>([]);
   const [gravando, setGravando] = useState(false);
   const [velMS, setVelMS] = useState<number | null>(null);
+  // ---- Navegação de ruas: traçado completo + setas + voz (estilo GPS) ----
+  const [rotaRuas, setRotaRuas] = useState<RotaRuas | null>(null);
+  const [indiceRuas, setIndiceRuas] = useState(1);
+  const [ruasStatus, setRuasStatus] = useState<StatusRuas | null>(null);
+  const [navegandoRuas, setNavegandoRuas] = useState(false);
+  const [vozRuas, setVozRuas] = useState(true);
+  const [tracandoRuas, setTracandoRuas] = useState(false);
+  const ruasRef = useRef({
+    navegando: false,
+    rota: null as RotaRuas | null,
+    indice: 1,
+    anunciados: {} as AnunciosRuas,
+    foraSeguidos: 0,
+    recalculando: false,
+  });
+  const recalcularRuasRef = useRef<(() => Promise<void>) | null>(null);
   // Espelhos para o handler do watchPosition (nasce uma vez, sem recriar o
   // watch a cada mudança de estado) e para a leitura direta do sensor.
   const navRef = useRef({
@@ -709,15 +845,34 @@ export default function MapShell() {
     rota: null as RotaSalva | null,
     indiceRota: 0,
     trilha: [] as Array<[number, number]>,
+    rotaRuas: null as RotaRuas | null,
   });
   useEffect(() => {
-    desenhoRef.current = { coords: drawCoords, tool, waypoints, rota, indiceRota, trilha };
-  }, [drawCoords, tool, waypoints, rota, indiceRota, trilha]);
+    desenhoRef.current = {
+      coords: drawCoords,
+      tool,
+      waypoints,
+      rota,
+      indiceRota,
+      trilha,
+      rotaRuas,
+    };
+  }, [drawCoords, tool, waypoints, rota, indiceRota, trilha, rotaRuas]);
 
   // Espelho do estado de navegação para o handler do GPS (closure imutável).
   useEffect(() => {
     navRef.current = { navegando, gravando, rota, indice: indiceRota };
   }, [navegando, gravando, rota, indiceRota]);
+
+  // Espelho da navegação de ruas (o handler do GPS lê daqui).
+  useEffect(() => {
+    ruasRef.current = {
+      ...ruasRef.current,
+      navegando: navegandoRuas,
+      rota: rotaRuas,
+      indice: indiceRuas,
+    };
+  }, [navegandoRuas, rotaRuas, indiceRuas]);
 
   // Rumo do operador pelo sensor do aparelho — lido fora do React pelo
   // handler do GPS para a correção de rumo do guia.
@@ -739,6 +894,13 @@ export default function MapShell() {
           setRota(nav.rota);
           setIndiceRota(Math.min(nav.indice, nav.rota.pontos.length - 1));
           setNavegando(true);
+        }
+        const ruas = await carregarEstadoRuas();
+        if (ruas?.rota?.manobras?.length) {
+          setRotaRuas(ruas.rota);
+          setIndiceRuas(Math.min(Math.max(1, ruas.indice), ruas.rota.manobras.length - 1));
+          setNavegandoRuas(true);
+          setVozRuas(vozNavegacaoAtiva());
         }
         const t = await carregarTrilha();
         if (t?.pontos?.length) {
@@ -778,6 +940,11 @@ export default function MapShell() {
     rt?.setData(rotaFC(d.rota, d.indiceRota));
     const tr = map.getSource("trilha") as maplibregl.GeoJSONSource | undefined;
     tr?.setData(trilhaFC(d.trilha));
+    // Navegação de ruas: traçado + manobras (o styledata recria as fontes).
+    const rr = map.getSource("rota-ruas") as maplibregl.GeoJSONSource | undefined;
+    rr?.setData(rotaRuasFC(d.rotaRuas));
+    const rm = map.getSource("rota-ruas-manobras") as maplibregl.GeoJSONSource | undefined;
+    rm?.setData(manobrasFC(d.rotaRuas));
     const vis = telaVisRef.current;
     // Tela limpa: waypoints (conteúdo de interface) saem junto com o HUD.
     const aplicar = (id: string, ativo: boolean) => {
@@ -797,7 +964,7 @@ export default function MapShell() {
     const map = mapRef.current;
     if (!map || !ready) return;
     sincronizarDesenho(map);
-  }, [rota, trilha, indiceRota, ready, sincronizarDesenho]);
+  }, [rota, trilha, indiceRota, rotaRuas, ready, sincronizarDesenho]);
 
   // Init map (client only)
   useEffect(() => {
@@ -1255,6 +1422,44 @@ export default function MapShell() {
                 description: "Todos os waypoints foram alcançados.",
               });
             }
+          }
+        }
+
+        // ---- Navegação de ruas: virada a virada com voz (estilo GPS) ----
+        const r = ruasRef.current;
+        if (r.navegando && r.rota) {
+          const res = avancarNavegacaoRuas({
+            pos: p,
+            rota: r.rota,
+            indice: r.indice,
+            anunciados: r.anunciados,
+            t: tGlobal,
+            locale: localeAtivo(),
+          });
+          r.indice = res.indice;
+          r.anunciados = res.anunciados;
+          setIndiceRuas(res.indice);
+          setRuasStatus(res.status);
+          if (res.fala && vozNavegacaoAtiva()) falarTexto(res.fala);
+          if (res.status.chegou) {
+            r.navegando = false;
+            setNavegandoRuas(false);
+            setRuasStatus(null);
+            void salvarEstadoRuas(null);
+            toast.success(t("Chegada! Rota de ruas concluída."), {
+              description: t("Você chegou ao destino"),
+            });
+          } else if (res.status.foraDaRota) {
+            r.foraSeguidos += 1;
+            if (r.foraSeguidos >= 3 && !r.recalculando) {
+              r.recalculando = true;
+              r.foraSeguidos = 0;
+              void recalcularRuasRef.current?.().finally(() => {
+                r.recalculando = false;
+              });
+            }
+          } else {
+            r.foraSeguidos = 0;
           }
         }
       },
@@ -1855,6 +2060,155 @@ export default function MapShell() {
     toast.message("Navegação encerrada");
   };
 
+  // ---- Navegação de ruas (traçado + setas + voz, estilo GPS de carro) ----
+  const ajustarZoomRotaRuas = (rotaNova: RotaRuas) => {
+    const map = mapRef.current;
+    if (!map || rotaNova.geometria.length < 2) return;
+    let minLng = Infinity;
+    let minLat = Infinity;
+    let maxLng = -Infinity;
+    let maxLat = -Infinity;
+    for (const [lng, lat] of rotaNova.geometria) {
+      if (lng < minLng) minLng = lng;
+      if (lat < minLat) minLat = lat;
+      if (lng > maxLng) maxLng = lng;
+      if (lat > maxLat) maxLat = lat;
+    }
+    try {
+      map.fitBounds(
+        [
+          [minLng, minLat],
+          [maxLng, maxLat],
+        ],
+        { padding: 90, duration: 800, maxZoom: 16 },
+      );
+    } catch {
+      /* limites inválidos — segue sem zoom */
+    }
+  };
+
+  /** Ativa a navegação de ruas (substitui a de waypoints). */
+  const iniciarRuas = (rotaNova: RotaRuas, anunciar = true) => {
+    setNavegando(false);
+    setNavStatus(null);
+    void salvarNavegacao(null);
+    setRotaRuas(rotaNova);
+    setIndiceRuas(1);
+    setRuasStatus(null);
+    setNavegandoRuas(true);
+    ruasRef.current = {
+      ...ruasRef.current,
+      navegando: true,
+      rota: rotaNova,
+      indice: 1,
+      anunciados: {},
+      foraSeguidos: 0,
+      recalculando: false,
+    };
+    void salvarEstadoRuas({ rota: rotaNova, indice: 1 });
+    setOpenSheet(null);
+    ajustarZoomRotaRuas(rotaNova);
+    if (anunciar) {
+      const resumo = resumoRotaRuas(rotaNova, localeAtivo());
+      const mensagem = t("Rota para {nome}: {resumo}", { nome: rotaNova.destinoNome, resumo });
+      toast.success(t("Navegação de ruas iniciada"), { description: mensagem });
+      if (vozNavegacaoAtiva()) falarTexto(mensagem);
+    }
+  };
+
+  const pararNavegacaoRuas = () => {
+    setNavegandoRuas(false);
+    setRuasStatus(null);
+    setRotaRuas(null);
+    ruasRef.current = {
+      ...ruasRef.current,
+      navegando: false,
+      rota: null,
+      indice: 1,
+      anunciados: {},
+      foraSeguidos: 0,
+    };
+    void salvarEstadoRuas(null);
+    pararVoz();
+    toast.message(t("Navegação de ruas encerrada"));
+  };
+
+  const alternarVozRuas = () => {
+    const proxima = !vozRuas;
+    setVozRuas(proxima);
+    definirVozNavegacao(proxima);
+    if (proxima) falarTexto(t("Voz da navegação ligada"));
+  };
+
+  /** Recalcula a rota de ruas a partir da posição atual (saiu do traçado). */
+  const recalcularRuas = async (): Promise<void> => {
+    const atual = ruasRef.current.rota;
+    if (!atual) return;
+    const origem = userPos ?? { lat: center[1], lng: center[0] };
+    try {
+      const rotaNova = await tracarRotaRuasServidor({
+        data: {
+          origemLat: origem.lat,
+          origemLng: origem.lng,
+          destinoLat: atual.destinoLat,
+          destinoLng: atual.destinoLng,
+          nomeDestino: atual.destinoNome,
+          perfil: atual.perfil,
+        },
+      });
+      if (rotaNova) {
+        ruasRef.current.rota = rotaNova;
+        ruasRef.current.indice = 1;
+        ruasRef.current.anunciados = {};
+        ruasRef.current.foraSeguidos = 0;
+        setRotaRuas(rotaNova);
+        setIndiceRuas(1);
+        void salvarEstadoRuas({ rota: rotaNova, indice: 1 });
+        toast.success(t("Rota recalculada"));
+      }
+    } catch {
+      /* sem internet — o aviso de fora da rota continua */
+    }
+  };
+  useEffect(() => {
+    recalcularRuasRef.current = recalcularRuas;
+  });
+
+  /** Traça a rota de ruas até o destino digitado (geocode + OSRM). */
+  const tracarRotaPara = async (busca: string, perfil: PerfilRotaRuas = "carro"): Promise<void> => {
+    const termo = busca.trim();
+    if (termo.length < 2) {
+      toast.error(t("Digite o destino (endereço ou lugar)"));
+      return;
+    }
+    const origem = userPos ?? { lat: center[1], lng: center[0] };
+    setTracandoRuas(true);
+    try {
+      const lugar = await geoBuscar({ data: { busca: termo } });
+      if (!lugar) {
+        toast.error(t("Lugar não reconhecido — tente outro endereço"));
+        return;
+      }
+      const rotaNova = await tracarRotaRuasServidor({
+        data: {
+          origemLat: origem.lat,
+          origemLng: origem.lng,
+          destinoLat: lugar.lat,
+          destinoLng: lugar.lng,
+          nomeDestino: lugar.nome,
+          perfil,
+        },
+      });
+      if (!rotaNova) {
+        toast.error(t("Sem internet: não deu para traçar a rota de ruas agora"));
+        return;
+      }
+      iniciarRuas(rotaNova);
+    } finally {
+      setTracandoRuas(false);
+    }
+  };
+
   const alternarGravacaoTrilha = () => {
     if (!gravando) {
       const semente: Array<[number, number]> = userPos ? [[userPos.lng, userPos.lat]] : [];
@@ -2088,19 +2442,54 @@ export default function MapShell() {
     armarMarcador: () => setTool("marker"),
     posicaoAtual: userPos,
     iniciarRota: (ponto: { lat: number; lng: number }, nome: string) => {
-      const nova: RotaSalva = {
-        id: crypto.randomUUID(),
-        nome: nome || t("Rota do assistente"),
-        pontos: [{ lat: ponto.lat, lng: ponto.lng, nome: nome || t("Destino") }],
-        criada_em: new Date().toISOString(),
-      };
-      setRota(nova);
-      setIndiceRota(0);
-      setNavegando(true);
-      setNavStatus(null);
-      void salvarNavegacao({ rota: nova, indice: 0 });
-      setOpenSheet(null);
-      flyTo(ponto.lng, ponto.lat, 14);
+      updatePrefs({ mapMode: "tatico" });
+      void (async () => {
+        // Rota de ruas (com voz e setas) quando há internet; sem rede,
+        // cai para o modo waypoints (linha reta), que funciona offline.
+        const centroMapa = mapRef.current?.getCenter();
+        const origem =
+          handlersIARef.current.posicaoAtual ??
+          (centroMapa
+            ? { lat: centroMapa.lat, lng: centroMapa.lng }
+            : { lat: center[1], lng: center[0] });
+        let rotaNova: RotaRuas | null = null;
+        try {
+          rotaNova = await tracarRotaRuasServidor({
+            data: {
+              origemLat: origem.lat,
+              origemLng: origem.lng,
+              destinoLat: ponto.lat,
+              destinoLng: ponto.lng,
+              nomeDestino: nome || t("Destino"),
+              perfil: "carro",
+            },
+          });
+        } catch {
+          rotaNova = null;
+        }
+        if (rotaNova) {
+          iniciarRuas(rotaNova);
+          return;
+        }
+        const nova: RotaSalva = {
+          id: crypto.randomUUID(),
+          nome: nome || t("Rota do assistente"),
+          pontos: [{ lat: ponto.lat, lng: ponto.lng, nome: nome || t("Destino") }],
+          criada_em: new Date().toISOString(),
+        };
+        setRota(nova);
+        setIndiceRota(0);
+        setNavegando(true);
+        setNavStatus(null);
+        void salvarNavegacao({ rota: nova, indice: 0 });
+        setOpenSheet(null);
+        flyTo(ponto.lng, ponto.lat, 14);
+        toast.warning(
+          t("Sem internet: rota por waypoints (linha reta) até {nome}", {
+            nome: nome || t("Destino"),
+          }),
+        );
+      })();
     },
   });
   useEffect(() => {
@@ -2471,6 +2860,18 @@ export default function MapShell() {
                   onParar={pararNavegacao}
                 />
               )}
+              {navegandoRuas && rotaRuas && (
+                <BannerNavegacaoRuas
+                  rota={rotaRuas}
+                  status={ruasStatus}
+                  voz={vozRuas}
+                  onAlternarVoz={alternarVozRuas}
+                  onCentralizar={() =>
+                    flyTo(userPos?.lng ?? center[0], userPos?.lat ?? center[1], 17)
+                  }
+                  onParar={pararNavegacaoRuas}
+                />
+              )}
             </div>
           )}
 
@@ -2514,7 +2915,21 @@ export default function MapShell() {
           )}
           {/* Banner de navegação desktop: centro superior, entre os painéis
               da esquerda e o alternador/hambúrguer da direita. */}
-          {navegando && rota && !telaLimpa && (
+          {navegandoRuas && rotaRuas && !telaLimpa && (
+            <div className="absolute left-1/2 top-4 z-10 hidden w-[min(460px,42vw)] -translate-x-1/2 md:block">
+              <BannerNavegacaoRuas
+                rota={rotaRuas}
+                status={ruasStatus}
+                voz={vozRuas}
+                onAlternarVoz={alternarVozRuas}
+                onCentralizar={() =>
+                  flyTo(userPos?.lng ?? center[0], userPos?.lat ?? center[1], 17)
+                }
+                onParar={pararNavegacaoRuas}
+              />
+            </div>
+          )}
+          {navegando && rota && !telaLimpa && !navegandoRuas && (
             <div className="absolute left-1/2 top-4 z-10 hidden w-[min(440px,40vw)] -translate-x-1/2 md:block">
               <BannerNavegacao
                 alvoNome={rota.pontos[Math.min(indiceRota, rota.pontos.length - 1)].nome}
@@ -3036,6 +3451,20 @@ export default function MapShell() {
           <SheetHeader>
             <SheetTitle className="mono text-tactical-orange">GUIA DE ROTA</SheetTitle>
           </SheetHeader>
+          <div className="mt-4" data-test="painel-rota-ruas-montado">
+            <PainelRotaRuas
+              rota={rotaRuas}
+              navegando={navegandoRuas}
+              voz={vozRuas}
+              ocupado={tracandoRuas}
+              onTracar={tracarRotaPara}
+              onIniciar={() => {
+                if (rotaRuas) iniciarRuas(rotaRuas);
+              }}
+              onParar={pararNavegacaoRuas}
+              onAlternarVoz={alternarVozRuas}
+            />
+          </div>
           <div className="mt-4" data-test="painel-rota">
             <PainelRota
               rota={rota}

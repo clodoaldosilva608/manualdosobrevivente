@@ -10,7 +10,7 @@
  * Bump de versão: altere VERSAO ao mudar a lógica deste arquivo — os caches
  * antigos são apagados na ativação.
  */
-const VERSAO = "v35";
+const VERSAO = "v36";
 const CACHE_SHELL = `shell-${VERSAO}`;
 const CACHE_ASSETS = `assets-${VERSAO}`;
 const CACHE_RUNTIME = `runtime-${VERSAO}`;
@@ -27,10 +27,56 @@ const HOSTS_DE_TILES = [
   "tile.opentopomap.org",
   "openstreetmap.org",
   "server.arcgisonline.com",
+  // Radar de chuva (RainViewer) — muitos quadros por animação: com cache,
+  // o último ciclo fica disponível offline e a rede sofre menos.
+  "rainviewer.com",
   // Imagem GeoColor do GOES-Leste (nuvens ao vivo): URL estável "default" —
   // o último quadro visto fica disponível offline.
   "gibs.earthdata.nasa.gov",
 ];
+
+/**
+ * Fila de concorrência dos tiles: os provedores (Esri, OpenTopoMap) recusam
+ * RAJADAS de requisições e respondem com um placeholder de erro (imagem
+ * cinza "Zoom Level Not Supported" com HTTP 200), que fica pintado no mapa.
+ * Um semáforo no Service Worker mantém o fluxo de rede abaixo do limite —
+ * acertos de cache não entram na fila (são instantâneos).
+ */
+const MAX_TILES_SIMULTANEOS = 8;
+const filaTiles = { ativos: 0, esperando: [] };
+
+function pegarVagaTile() {
+  if (filaTiles.ativos < MAX_TILES_SIMULTANEOS) {
+    filaTiles.ativos++;
+    return Promise.resolve();
+  }
+  return new Promise((liberar) => filaTiles.esperando.push(liberar));
+}
+
+function devolverVagaTile() {
+  filaTiles.ativos--;
+  const proximo = filaTiles.esperando.shift();
+  if (proximo) proximo();
+}
+
+async function cacheFirstComFila(request, nomeCache, limite) {
+  const cache = await caches.open(nomeCache);
+  const emCache = await cache.match(request, { ignoreVary: true });
+  if (emCache) return emCache;
+  await pegarVagaTile();
+  try {
+    const res = await fetch(request);
+    if (res && (res.ok || res.type === "opaque")) {
+      await cache.put(request, res.clone());
+      if (limite) await limitarCache(nomeCache, limite);
+    }
+    return res;
+  } catch {
+    return new Response("", { status: 504, statusText: "Sem conexão" });
+  } finally {
+    devolverVagaTile();
+  }
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -157,9 +203,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Tiles de mapa: cache-first com limite (complementa o armazenamento offline do app).
+  // Tiles de mapa: cache-first com limite (complementa o armazenamento
+  // offline do app) e fila de concorrência contra placeholders de erro.
   if (ehTile(url)) {
-    event.respondWith(cacheFirst(request, CACHE_RUNTIME, MAX_RUNTIME));
+    event.respondWith(cacheFirstComFila(request, CACHE_RUNTIME, MAX_RUNTIME));
     return;
   }
 

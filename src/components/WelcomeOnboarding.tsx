@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { FolderPlus, ShieldCheck, MapPinned, Backpack, BookOpen, Siren } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { getSetting, setSetting } from "@/lib/db";
 import { escolherPastaBackup, seletorPastaSuportado } from "@/lib/backup";
 import { usePwaInstall } from "@/lib/pwa";
@@ -31,6 +32,11 @@ export function WelcomeOnboarding() {
       try {
         const feito = await getSetting<boolean>(CHAVE_ONBOARDING);
         if (!alive || feito) return;
+        // O onboarding só abre DEPOIS da autenticação: com o portão de login
+        // na frente, o modal Radix por baixo trunca o foco e o aria do portão
+        // (aria-hidden nos irmãos) — o operador não conseguiria digitar.
+        const { data } = await supabase.auth.getSession();
+        if (!alive || !data.session) return;
         // Pequena pausa para o mapa/tela inicial assentarem antes do modal.
         window.setTimeout(() => {
           if (alive) setAberto(true);

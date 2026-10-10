@@ -345,6 +345,10 @@ export class ControladorRadar {
         type: "raster",
         tiles: [url],
         tileSize: 256,
+        // A RainViewer passou a recusar zooms altos (responde com um tile de
+        // erro "Zoom Level Not Supported" — HTTP 200, com texto). O maxzoom
+        // faz o MapLibre servir os próprios tiles de z7 ampliados (overzoom).
+        maxzoom: 7,
         attribution: "Radar © RainViewer",
       });
       map.addLayer(
@@ -371,6 +375,8 @@ export class ControladorRadar {
       type: "raster",
       tiles: [url],
       tileSize: 256,
+      // Mesmo teto da fonte principal (ver nota do overzoom acima).
+      maxzoom: 7,
       attribution: "Radar © RainViewer",
     });
     map.addLayer(

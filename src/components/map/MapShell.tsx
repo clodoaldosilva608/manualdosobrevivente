@@ -145,6 +145,9 @@ import {
 } from "@/lib/radar-clima";
 import { ControladorCiclones, type EstadoCiclones } from "@/lib/ciclones";
 import { ControladorTemperatura, ControladorVento, type EstadoClima } from "@/lib/clima-openmeteo";
+import { geoReverso } from "@/lib/geo-reverso.functions";
+import { registrarHabilidade } from "@/lib/assistente/habilidades";
+import PopupsCrescimento from "@/components/map/PopupsCrescimento";
 import { CAMERAS } from "@/lib/intel-cameras";
 import { CABOS } from "@/lib/intel-cables";
 import { tleServidor } from "@/lib/satelite.functions";
@@ -179,14 +182,13 @@ const BASE_LAYERS: Record<
   },
   topo: {
     label: "Topográfico",
-    // Esri World Topographic Map — a OpenTopoMap passou a recusar rajadas de
-    // tiles (resposta 200 com a imagem "Zoom Level Not Supported"), quebrando
-    // o mapa base em zoom urbano. Esri é keyless e usa a mesma infra dos
-    // estilos satélite/escuro.
-    tiles:
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
-    attribution: "Esri, HERE, Garmin, FAO, NOAA, USGS, © OpenStreetMap",
-    maxzoom: 19,
+    // OpenTopoMap de volta — é a base COLORIDA e detalhada (relevo sombreado,
+    // curvas de nível, florestas, trilhas). A recusa de rajadas de tiles que
+    // motivou a troca por Esri foi resolvida na causa raiz pela fila de
+    // concorrência do Service Worker (máx. 8 tiles simultâneos).
+    tiles: "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
+    attribution: "© OpenTopoMap (CC-BY-SA), © OpenStreetMap",
+    maxzoom: 17,
   },
   streets: {
     label: "Ruas",
@@ -222,6 +224,13 @@ const styleFor = (layer: BaseLayerId): maplibregl.StyleSpecification => {
           ],
         }
       : null;
+  // DETALHAMENTO PROGRESSIVO — duas fontes complementares:
+  // · "hd" (Esri World Imagery): sobre a base esquemática, o satélite entra
+  //   em cross-fade a partir do zoom 15 e domina a partir do 17,5 — quanto
+  //   mais zoom, mais detalhe real da área (prédios, árvores, trilhas).
+  // · "relevo" (Esri World Hillshade): sombreamento transparente que dá
+  //   profundidade ao Ruas e ao Tático Escuro (o Topográfico já traz o seu).
+  const querRelevo = layer === "streets" || layer === "dark";
   return {
     version: 8,
     sources: {
@@ -232,6 +241,26 @@ const styleFor = (layer: BaseLayerId): maplibregl.StyleSpecification => {
         maxzoom: l.maxzoom ?? 19,
         attribution: l.attribution,
       },
+      hd: {
+        type: "raster",
+        tiles: [BASE_LAYERS.satellite.tiles],
+        tileSize: 256,
+        maxzoom: BASE_LAYERS.satellite.maxzoom ?? 19,
+        attribution: BASE_LAYERS.satellite.attribution,
+      },
+      ...(querRelevo
+        ? {
+            relevo: {
+              type: "raster" as const,
+              tiles: [
+                "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
+              ],
+              tileSize: 256,
+              maxzoom: 16,
+              attribution: "Esri, USGS",
+            },
+          }
+        : {}),
       ...(referencia
         ? {
             ref: {
@@ -246,10 +275,50 @@ const styleFor = (layer: BaseLayerId): maplibregl.StyleSpecification => {
     },
     layers: [
       { id: "base", type: "raster", source: "base" },
+      ...(querRelevo
+        ? [
+            {
+              id: "relevo",
+              type: "raster" as const,
+              source: "relevo",
+              paint: { "raster-opacity": 0.55 },
+            },
+          ]
+        : []),
+      // Camada HD entra invisível — a opacidade é conduzida pelo zoom
+      // (efeito de detalhamento progressivo; ver efeito "detalheHd").
+      {
+        id: "base-hd",
+        type: "raster",
+        source: "hd",
+        paint: { "raster-opacity": 0, "raster-fade-duration": 300 },
+      },
       ...(referencia ? [{ id: "ref", type: "raster" as const, source: "ref" }] : []),
     ],
   };
 };
+
+/**
+ * Opacidade da camada HD em função do zoom — curva progressiva: 0 até o
+ * zoom 15, rampa até 0,92 no 17,5+. É o que faz o mapa ganhar detalhe
+ * de verdade (imagem de satélite sob os rótulos) conforme o operador dá
+ * zoom, sem trocar de camada base nem perder o contexto colorido.
+ */
+function opacidadeHdPorZoom(zoom: number): number {
+  if (zoom <= 15) return 0;
+  if (zoom >= 17.5) return 0.92;
+  return ((zoom - 15) / 2.5) * 0.92;
+}
+
+/** Conduz a opacidade da camada HD de acordo com o zoom atual (idempotente). */
+function atualizarDetalheHd(map: maplibregl.Map) {
+  try {
+    if (!map.getLayer("base-hd")) return;
+    map.setPaintProperty("base-hd", "raster-opacity", opacidadeHdPorZoom(map.getZoom()));
+  } catch {
+    /* estilo interim — o próximo evento refaz */
+  }
+}
 
 /** Vista "mundo inteiro" aplicada ao mapa ao entrar no modo Osiris. */
 const VISAO_GLOBAL = {
@@ -778,6 +847,10 @@ export default function MapShell() {
         // pode liberar o app antes do load e o styledata já ter criado tudo)
         adicionarFontesDesenho(map);
         sincronizarDesenho(map);
+        // Detalhamento progressivo: aplica a opacidade HD do zoom inicial e
+        // passa a conduzi-la a cada mudança de zoom (pinça, botões, flyTo).
+        atualizarDetalheHd(map);
+        map.on("zoom", () => atualizarDetalheHd(map));
         try {
           map.setProjection({ type: projecaoRef.current });
         } catch {
@@ -807,6 +880,9 @@ export default function MapShell() {
         if (cancelled) return;
         try {
           sincronizarDesenho(map);
+          // A troca de estilo recria a camada HD com opacidade 0 — reaplica
+          // a opacidade correspondente ao zoom atual (detalhamento progressivo).
+          atualizarDetalheHd(map);
           // A projeção vive no estilo: reapresenta após troca de camada base.
           try {
             map.setProjection({ type: projecaoRef.current });
@@ -1991,6 +2067,114 @@ export default function MapShell() {
     }
   }, [boletimEm, intel, ar, alertas, iss, noticias, clima]);
 
+  // ---- Habilidades do Assistente IA -------------------------------
+  // O assistente executa ações reais no mapa: as habilidades são registradas
+  // no barramento singleton (fora do React) com os handlers de AGORA lidos
+  // por ref — registra-se uma única vez, sobrevive a remontagens.
+  const handlersIARef = useRef({
+    flyTo,
+    updatePrefs,
+    intelVis,
+    setBaseLayer,
+    baseLayer,
+    modoMapa,
+    alternarTelaLimpa,
+    telaLimpa,
+    abrirBoletim: () => {
+      setOpenSheet("boletim");
+      carregarBoletim();
+    },
+    abrirMedir: () => setOpenSheet("measure"),
+    armarMarcador: () => setTool("marker"),
+    posicaoAtual: userPos,
+    iniciarRota: (ponto: { lat: number; lng: number }, nome: string) => {
+      const nova: RotaSalva = {
+        id: crypto.randomUUID(),
+        nome: nome || t("Rota do assistente"),
+        pontos: [{ lat: ponto.lat, lng: ponto.lng, nome: nome || t("Destino") }],
+        criada_em: new Date().toISOString(),
+      };
+      setRota(nova);
+      setIndiceRota(0);
+      setNavegando(true);
+      setNavStatus(null);
+      void salvarNavegacao({ rota: nova, indice: 0 });
+      setOpenSheet(null);
+      flyTo(ponto.lng, ponto.lat, 14);
+    },
+  });
+  useEffect(() => {
+    handlersIARef.current = {
+      ...handlersIARef.current,
+      flyTo,
+      updatePrefs,
+      intelVis,
+      baseLayer,
+      modoMapa,
+      telaLimpa,
+      posicaoAtual: userPos,
+    };
+  });
+
+  useEffect(() => {
+    const cancelamentos = [
+      registrarHabilidade("centralizar", (args) => {
+        if (args.ponto) {
+          handlersIARef.current.updatePrefs({ mapMode: "tatico" });
+          handlersIARef.current.flyTo(args.ponto.lng, args.ponto.lat, 14);
+        }
+      }),
+      registrarHabilidade("rota", (args) => {
+        if (args.ponto) {
+          handlersIARef.current.updatePrefs({ mapMode: "tatico" });
+          handlersIARef.current.iniciarRota(args.ponto, args.nomeDestino ?? "");
+        }
+      }),
+      registrarHabilidade("camada", (args) => {
+        if (!args.camada) return;
+        const atual = handlersIARef.current.intelVis;
+        const id = args.camada as keyof typeof atual;
+        if (!(id in atual)) return;
+        handlersIARef.current.updatePrefs({
+          intelVis: { ...atual, [id]: args.ligar ?? !atual[id] },
+        });
+      }),
+      registrarHabilidade("base", (args) => {
+        if (!args.base) return;
+        const id = args.base as BaseLayerId;
+        if (!BASE_LAYERS[id]) return;
+        handlersIARef.current.updatePrefs({ mapMode: "tatico" });
+        handlersIARef.current.setBaseLayer(id);
+      }),
+      registrarHabilidade("limpar", () => {
+        if (!handlersIARef.current.telaLimpa) handlersIARef.current.alternarTelaLimpa();
+      }),
+      registrarHabilidade("boletim", () => {
+        handlersIARef.current.updatePrefs({ mapMode: "tatico" });
+        handlersIARef.current.abrirBoletim();
+      }),
+      registrarHabilidade("medir", () => {
+        handlersIARef.current.updatePrefs({ mapMode: "tatico" });
+        handlersIARef.current.abrirMedir();
+      }),
+      registrarHabilidade("marcador", () => {
+        handlersIARef.current.updatePrefs({ mapMode: "tatico" });
+        handlersIARef.current.armarMarcador();
+        toast.message(t("Toque no mapa para marcar um waypoint"));
+      }),
+      registrarHabilidade("posicao", () => {
+        const pos = handlersIARef.current.posicaoAtual;
+        if (pos) handlersIARef.current.flyTo(pos.lng, pos.lat, 15);
+        else
+          toast.error(t("Sem localização disponível"), {
+            description: t("Ative o GPS ou arraste o mapa até você."),
+          });
+      }),
+    ];
+    return () => cancelamentos.forEach((cancelar) => cancelar());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const runElevation = async () => {
     if (drawCoords.length < 2) return;
     const sampled = samplePath(drawCoords, 50, 120);
@@ -2217,6 +2401,10 @@ export default function MapShell() {
               <BotaoTelaLimpa limpa onAlternar={alternarTelaLimpa} />
             </div>
           )}
+
+          {/* Pop-ups de crescimento (redes/apoiar/compartilhar) — um por vez,
+              canto inferior esquerdo, nada em tela limpa. */}
+          {!telaLimpa && <PopupsCrescimento ativo={modoMapa === "tatico"} />}
 
           {/* HUD superior mobile: fluxo vertical — filhos nunca se sobrepõem */}
           {!telaLimpa && (
@@ -3928,6 +4116,8 @@ function LeituraMedicao({
 /**
  * Popup de coordenadas do clique — paridade Zoom Earth: clicar num trecho
  * vazio do mapa revela DD · DMS · MGRS do ponto, com cópia a um toque.
+ * INFORMAÇÃO DETALHADA: a linha LOCAL consulta a geocodificação reversa
+ * (servidor, com cache) e preenche rua/bairro/cidade quando chega.
  */
 async function abrirPopupCoordenadas(map: maplibregl.Map, lngLat: { lng: number; lat: number }) {
   const ml = await import("maplibre-gl");
@@ -3942,6 +4132,7 @@ async function abrirPopupCoordenadas(map: maplibregl.Map, lngLat: { lng: number;
       <div class="flex items-center justify-between gap-2"><span class="text-muted-foreground">DD</span><span class="truncate">${dd}</span><button data-copiar="${dd}" class="text-muted-foreground hover:text-foreground" aria-label="${tGlobal("Copiar")}">⧉</button></div>
       <div class="flex items-center justify-between gap-2"><span class="text-muted-foreground">DMS</span><span class="truncate">${dms}</span><button data-copiar="${dms}" class="text-muted-foreground hover:text-foreground" aria-label="${tGlobal("Copiar")}">⧉</button></div>
       <div class="flex items-center justify-between gap-2"><span class="text-muted-foreground">MGRS</span><span class="truncate">${mgrs}</span><button data-copiar="${mgrs}" class="text-muted-foreground hover:text-foreground" aria-label="${tGlobal("Copiar")}">⧉</button></div>
+      <div data-local-linha class="hidden items-center justify-between gap-2"><span class="text-muted-foreground">LOCAL</span><span data-local-valor class="truncate text-right">…</span></div>
     </div>`;
   el.querySelectorAll<HTMLButtonElement>("button[data-copiar]").forEach((b) => {
     b.addEventListener("click", (ev) => {
@@ -3950,10 +4141,33 @@ async function abrirPopupCoordenadas(map: maplibregl.Map, lngLat: { lng: number;
       toast.success(tGlobal("Copiado"), { description: b.dataset.copiar });
     });
   });
-  new ml.Popup({ closeButton: true, maxWidth: "240px", offset: 8 })
+  const popup = new ml.Popup({ closeButton: true, maxWidth: "260px", offset: 8 })
     .setLngLat(lngLat)
     .setDOMContent(el)
     .addTo(map);
+  // Local do clique (reversa no servidor, com cache): entra sem travar o
+  // popup — a linha nasce oculta e só aparece se houver resposta.
+  void (async () => {
+    try {
+      const local = await geoReverso({ data: { lng: lngLat.lng, lat: lngLat.lat } });
+      const linha = el.querySelector("[data-local-linha]");
+      if (!linha || popupFechado(popup)) return;
+      if (local?.nome) {
+        linha.classList.remove("hidden");
+        linha.classList.add("flex");
+        const valor = el.querySelector("[data-local-valor]");
+        if (valor)
+          valor.textContent = local.contexto ? `${local.nome} — ${local.contexto}` : local.nome;
+      }
+    } catch {
+      /* sem rede/serviço — o popup segue só com coordenadas */
+    }
+  })();
+}
+
+/** Popup ainda existe no mapa? (o operador pode fechá-lo antes da resposta) */
+function popupFechado(popup: { getElement(): Element | null }): boolean {
+  return !popup.getElement()?.isConnected;
 }
 
 function copy(t: string) {

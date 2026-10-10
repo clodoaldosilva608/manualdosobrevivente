@@ -16,12 +16,15 @@ import {
 } from "@/components/ui/dialog";
 import {
   ArrowUpRight,
+  Bot,
   CheckCircle2,
   ExternalLink,
   Handshake,
   HeartHandshake,
   LayoutDashboard,
   Loader2,
+  Medal,
+  Megaphone,
   Pencil,
   RefreshCw,
   Search,
@@ -65,6 +68,21 @@ import {
 } from "@/lib/admin";
 import { lerConfigPix, assinarNovasContribuicoes } from "@/lib/colaboracao";
 import { montarPixCopiaECola } from "@/lib/pix.brcode";
+import {
+  atualizarApoiador,
+  criarApoiador,
+  excluirApoiador,
+  listarApoiadoresAdmin,
+  type Apoiador,
+} from "@/lib/apoiadores";
+import {
+  atualizarConhecimento,
+  criarConhecimento,
+  excluirConhecimento,
+  listarConhecimentoAdmin,
+  type EntradaConhecimento,
+} from "@/lib/ia-conhecimento";
+import { lerConfigPopups, type ConfigPopups } from "@/lib/popups";
 
 /** Painel administrativo do Centro (outra aplicação do ecossistema). */
 const CENTRO_ADMIN_URL = "https://centrodesobrevivencia.vercel.app/admin";
@@ -79,14 +97,24 @@ export const Route = createFileRoute("/admin")({
   component: Admin,
 });
 
-type Secao = "visao" | "colaboracoes" | "usuarios" | "parceiros" | "personagens" | "config";
+type Secao =
+  | "visao"
+  | "colaboracoes"
+  | "usuarios"
+  | "parceiros"
+  | "personagens"
+  | "apoiadores"
+  | "ia"
+  | "config";
 
 const SECOES: { id: Secao; rotulo: string; icone: typeof LayoutDashboard }[] = [
   { id: "visao", rotulo: "Visão geral", icone: LayoutDashboard },
   { id: "colaboracoes", rotulo: "Colaborações", icone: HeartHandshake },
   { id: "usuarios", rotulo: "Usuários", icone: Users },
+  { id: "apoiadores", rotulo: "Apoiadores", icone: Medal },
   { id: "parceiros", rotulo: "Parceiros", icone: Handshake },
   { id: "personagens", rotulo: "Personagens", icone: VenetianMask },
+  { id: "ia", rotulo: "IA · Conhecimento", icone: Bot },
   { id: "config", rotulo: "Configurações", icone: Settings },
 ];
 
@@ -225,6 +253,8 @@ function Admin() {
       {secao === "usuarios" && <SecaoUsuarios />}
       {secao === "parceiros" && <SecaoParceiros />}
       {secao === "personagens" && <SecaoPersonagens />}
+      {secao === "apoiadores" && <SecaoApoiadores />}
+      {secao === "ia" && <SecaoIA />}
       {secao === "config" && <SecaoConfig />}
     </div>
   );
@@ -258,6 +288,8 @@ function SecaoVisao({ estatisticas }: { estatisticas: Estatisticas | null }) {
           valor={`${estatisticas.parceirosAtivos}/${estatisticas.parceirosTotal}`}
         />
         <CartaoKpi rotulo={t("Personagens")} valor={String(estatisticas.personagens)} />
+        <CartaoKpi rotulo={t("Apoiadores")} valor={String(estatisticas.apoiadores)} />
+        <CartaoKpi rotulo={t("Conhecimento IA")} valor={String(estatisticas.iaConhecimento)} />
         <CartaoKpi
           rotulo={t("Contas bloqueadas")}
           valor={String(estatisticas.bloqueados)}
@@ -1286,6 +1318,514 @@ function FormularioPersonagem({
 }
 
 /* ------------------------------------------------------------------ */
+/* Apoiadores — mural da comunidade (78 nomes semeados, ordem livre)  */
+/* ------------------------------------------------------------------ */
+
+const APOIADOR_VAZIO: Apoiador = {
+  id: "",
+  nome: "",
+  cidade: null,
+  nivel: "apoiador",
+  ativo: true,
+  ordem: 0,
+  created_at: "",
+};
+
+function SecaoApoiadores() {
+  const { t } = useI18n();
+  const [itens, setItens] = useState<Apoiador[] | null>(null);
+  const [editando, setEditando] = useState<Apoiador | null>(null);
+  const [busca, setBusca] = useState("");
+
+  const recarregar = useCallback(async () => {
+    try {
+      setItens(await listarApoiadoresAdmin());
+    } catch {
+      setItens([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    void recarregar();
+  }, [recarregar]);
+
+  const alternarAtivo = async (apoiador: Apoiador) => {
+    try {
+      await atualizarApoiador(apoiador.id, { ativo: !apoiador.ativo });
+      await recarregar();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Falha na operação"));
+    }
+  };
+
+  const excluir = async (apoiador: Apoiador) => {
+    if (!window.confirm(t("Remover {nome} do mural?", { nome: apoiador.nome }))) return;
+    try {
+      await excluirApoiador(apoiador.id);
+      toast.success(t("Apoiador removido"));
+      await recarregar();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Falha na operação"));
+    }
+  };
+
+  const visiveis = (itens ?? []).filter((a) =>
+    busca.trim() ? a.nome.toLowerCase().includes(busca.trim().toLowerCase()) : true,
+  );
+
+  return (
+    <div className="space-y-3" data-test="admin-apoiadores">
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="text-sm text-muted-foreground">
+          {t(
+            "Mural público em /colaboradores. A ordem é a da coluna Ordem — nunca alfabética. A semente já vem com 78 apoiadores.",
+          )}
+        </p>
+        <Button
+          className="glove-tap bg-tactical-orange text-background hover:bg-tactical-orange/90 ml-auto"
+          size="sm"
+          onClick={() => setEditando({ ...APOIADOR_VAZIO })}
+          data-test="admin-apoiador-novo"
+        >
+          {t("Novo apoiador")}
+        </Button>
+      </div>
+      <div className="relative w-full sm:w-64">
+        <Search className="text-muted-foreground absolute left-2 top-2.5 h-4 w-4" />
+        <Input
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder={t("Buscar por nome…")}
+          className="pl-8"
+        />
+      </div>
+
+      {itens === null ? (
+        <p className="mono rounded-md border border-border bg-card p-5 text-sm text-muted-foreground">
+          {t("Carregando apoiadores…")}
+        </p>
+      ) : (
+        <div className="space-y-1.5">
+          {visiveis.map((apoiador) => (
+            <div
+              key={apoiador.id}
+              className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-card px-3 py-2"
+              data-test="admin-apoiador"
+            >
+              <span className="mono w-8 shrink-0 text-[10px] text-muted-foreground">
+                #{apoiador.ordem}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-sm font-bold">{apoiador.nome}</span>
+              <span className="text-muted-foreground truncate text-[11px]">
+                {apoiador.cidade ?? "—"}
+              </span>
+              <span
+                className={`mono rounded px-1.5 text-[10px] font-bold ${
+                  apoiador.ativo
+                    ? "bg-emerald-500/15 text-emerald-400"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {apoiador.ativo ? t("Ativo") : t("Inativo")}
+              </span>
+              <Switch
+                checked={apoiador.ativo}
+                onCheckedChange={() => void alternarAtivo(apoiador)}
+                aria-label={t("Ativo")}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="glove-tap"
+                onClick={() => setEditando(apoiador)}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="glove-tap text-destructive hover:text-destructive"
+                onClick={() => void excluir(apoiador)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={editando !== null} onOpenChange={(aberto) => !aberto && setEditando(null)}>
+        <DialogContent>
+          {editando && (
+            <FormularioApoiador
+              apoiador={editando}
+              onSalvo={async () => {
+                setEditando(null);
+                await recarregar();
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function FormularioApoiador({
+  apoiador,
+  onSalvo,
+}: {
+  apoiador: Apoiador;
+  onSalvo: () => Promise<void>;
+}) {
+  const { t } = useI18n();
+  const [nome, setNome] = useState(apoiador.nome);
+  const [cidade, setCidade] = useState(apoiador.cidade ?? "");
+  const [ordem, setOrdem] = useState(String(apoiador.ordem));
+  const [ativo, setAtivo] = useState(apoiador.ativo);
+  const [ocupado, setOcupado] = useState(false);
+
+  const salvar = async () => {
+    if (!nome.trim()) {
+      toast.error(t("Informe o nome do apoiador"));
+      return;
+    }
+    setOcupado(true);
+    try {
+      if (apoiador.id) {
+        await atualizarApoiador(apoiador.id, {
+          nome: nome.trim(),
+          cidade: cidade.trim() || null,
+          ordem: Number(ordem) || 0,
+          ativo,
+        });
+      } else {
+        await criarApoiador({
+          nome: nome.trim(),
+          cidade: cidade.trim() || null,
+          ordem: Number(ordem) || 0,
+          ativo,
+        });
+      }
+      toast.success(t("Apoiador salvo"));
+      await onSalvo();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Falha na operação"));
+    } finally {
+      setOcupado(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <DialogHeader>
+        <DialogTitle className="mono">
+          {apoiador.id ? t("Editar apoiador") : t("Novo apoiador")}
+        </DialogTitle>
+      </DialogHeader>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1">
+          <Label htmlFor="apoiador-nome">{t("Nome")}</Label>
+          <Input
+            id="apoiador-nome"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            placeholder={t("ex.: Maria do Socorro")}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="apoiador-cidade">{t("Cidade (opcional)")}</Label>
+          <Input
+            id="apoiador-cidade"
+            value={cidade}
+            onChange={(e) => setCidade(e.target.value)}
+            placeholder={t("ex.: Recife")}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="apoiador-ordem">{t("Ordem no mural")}</Label>
+          <Input
+            id="apoiador-ordem"
+            inputMode="numeric"
+            value={ordem}
+            onChange={(e) => setOrdem(e.target.value)}
+          />
+        </div>
+        <div className="flex items-end gap-2 pb-1">
+          <Switch checked={ativo} onCheckedChange={setAtivo} id="apoiador-ativo" />
+          <Label htmlFor="apoiador-ativo">{t("Ativo (visível no mural)")}</Label>
+        </div>
+      </div>
+      <DialogFooter>
+        <Button
+          onClick={() => void salvar()}
+          disabled={ocupado}
+          className="w-full bg-tactical-orange text-background hover:bg-tactical-orange/90"
+        >
+          {ocupado ? t("Salvando…") : t("Salvar apoiador")}
+        </Button>
+      </DialogFooter>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* IA · Conhecimento — base global curada pelo admin                  */
+/* ------------------------------------------------------------------ */
+
+function SecaoIA() {
+  const { t } = useI18n();
+  const [itens, setItens] = useState<EntradaConhecimento[] | null>(null);
+  const [editando, setEditando] = useState<EntradaConhecimento | null>(null);
+
+  const recarregar = useCallback(async () => {
+    try {
+      setItens(await listarConhecimentoAdmin());
+    } catch {
+      setItens([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    void recarregar();
+  }, [recarregar]);
+
+  const alternarAtivo = async (item: EntradaConhecimento) => {
+    try {
+      await atualizarConhecimento(item.id, { ativo: !item.ativo });
+      await recarregar();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Falha na operação"));
+    }
+  };
+
+  const excluir = async (item: EntradaConhecimento) => {
+    if (!window.confirm(t("Excluir este conhecimento da IA?"))) return;
+    try {
+      await excluirConhecimento(item.id);
+      toast.success(t("Conhecimento excluído"));
+      await recarregar();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Falha na operação"));
+    }
+  };
+
+  return (
+    <div className="space-y-3" data-test="admin-ia">
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="text-sm text-muted-foreground">
+          {t(
+            "Conhecimento que TODOS os assistentes IA dos operadores usam antes de responder. Escreva perguntas prováveis, palavras-chave separadas por vírgula e a resposta prática. Mudanças valem para todos em poucos minutos.",
+          )}
+        </p>
+        <Button
+          className="glove-tap bg-tactical-orange text-background hover:bg-tactical-orange/90 ml-auto"
+          size="sm"
+          onClick={() =>
+            setEditando({
+              id: "",
+              pergunta: "",
+              palavras_chave: "",
+              resposta: "",
+              ativo: true,
+              ordem: (itens?.length ?? 0) + 1,
+              created_at: "",
+            })
+          }
+          data-test="admin-ia-novo"
+        >
+          {t("Novo conhecimento")}
+        </Button>
+      </div>
+
+      {itens === null ? (
+        <p className="mono rounded-md border border-border bg-card p-5 text-sm text-muted-foreground">
+          {t("Carregando conhecimento…")}
+        </p>
+      ) : itens.length === 0 ? (
+        <p className="rounded-md border border-dashed border-border bg-card p-5 text-center text-sm text-muted-foreground">
+          {t("Nenhum conhecimento cadastrado — a IA usa apenas a base local do aparelho.")}
+        </p>
+      ) : (
+        <div className="space-y-1.5">
+          {itens.map((item) => (
+            <div
+              key={item.id}
+              className="rounded-md border border-border bg-card px-3 py-2"
+              data-test="admin-ia-item"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="mono text-[10px] text-muted-foreground">#{item.ordem}</span>
+                <p className="min-w-0 flex-1 truncate text-sm font-bold">{item.pergunta}</p>
+                <span
+                  className={`mono rounded px-1.5 text-[10px] font-bold ${
+                    item.ativo
+                      ? "bg-emerald-500/15 text-emerald-400"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {item.ativo ? t("Ativo") : t("Inativo")}
+                </span>
+                <Switch
+                  checked={item.ativo}
+                  onCheckedChange={() => void alternarAtivo(item)}
+                  aria-label={t("Ativo")}
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="glove-tap"
+                  onClick={() => setEditando(item)}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="glove-tap text-destructive hover:text-destructive"
+                  onClick={() => void excluir(item)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+              <p className="text-muted-foreground mt-1 line-clamp-2 text-[11px] leading-snug">
+                {item.resposta}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={editando !== null} onOpenChange={(aberto) => !aberto && setEditando(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          {editando && (
+            <FormularioIA
+              item={editando}
+              onSalvo={async () => {
+                setEditando(null);
+                await recarregar();
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function FormularioIA({
+  item,
+  onSalvo,
+}: {
+  item: EntradaConhecimento;
+  onSalvo: () => Promise<void>;
+}) {
+  const { t } = useI18n();
+  const [pergunta, setPergunta] = useState(item.pergunta);
+  const [palavras, setPalavras] = useState(item.palavras_chave);
+  const [resposta, setResposta] = useState(item.resposta);
+  const [ordem, setOrdem] = useState(String(item.ordem));
+  const [ativo, setAtivo] = useState(item.ativo);
+  const [ocupado, setOcupado] = useState(false);
+
+  const salvar = async () => {
+    if (pergunta.trim().length < 4 || resposta.trim().length < 10) {
+      toast.error(t("Preencha a pergunta e a resposta (mínimo 10 caracteres)"));
+      return;
+    }
+    setOcupado(true);
+    try {
+      if (item.id) {
+        await atualizarConhecimento(item.id, {
+          pergunta: pergunta.trim(),
+          palavras_chave: palavras.trim(),
+          resposta: resposta.trim(),
+          ordem: Number(ordem) || 0,
+          ativo,
+        });
+      } else {
+        await criarConhecimento({
+          pergunta: pergunta.trim(),
+          palavras_chave: palavras.trim(),
+          resposta: resposta.trim(),
+          ordem: Number(ordem) || 0,
+          ativo,
+        });
+      }
+      toast.success(t("Conhecimento salvo"));
+      await onSalvo();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Falha na operação"));
+    } finally {
+      setOcupado(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <DialogHeader>
+        <DialogTitle className="mono">
+          {item.id ? t("Editar conhecimento") : t("Novo conhecimento")}
+        </DialogTitle>
+      </DialogHeader>
+      <div className="space-y-1">
+        <Label htmlFor="ia-pergunta">{t("Pergunta provável")}</Label>
+        <Input
+          id="ia-pergunta"
+          value={pergunta}
+          onChange={(e) => setPergunta(e.target.value)}
+          placeholder={t("ex.: Como purificar água de rio?")}
+        />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="ia-palavras">{t("Palavras-chave (separadas por vírgula)")}</Label>
+        <Input
+          id="ia-palavras"
+          value={palavras}
+          onChange={(e) => setPalavras(e.target.value)}
+          placeholder="agua,purificar,fervura,cloro"
+        />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="ia-resposta">{t("Resposta")}</Label>
+        <textarea
+          id="ia-resposta"
+          value={resposta}
+          onChange={(e) => setResposta(e.target.value)}
+          rows={5}
+          className="bg-input text-foreground w-full rounded-md border border-border px-3 py-2 text-sm"
+          placeholder={t("Resposta prática e direta — é isso que os operadores vão ler.")}
+        />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1">
+          <Label htmlFor="ia-ordem">{t("Ordem")}</Label>
+          <Input
+            id="ia-ordem"
+            inputMode="numeric"
+            value={ordem}
+            onChange={(e) => setOrdem(e.target.value)}
+          />
+        </div>
+        <div className="flex items-end gap-2 pb-1">
+          <Switch checked={ativo} onCheckedChange={setAtivo} id="ia-ativo" />
+          <Label htmlFor="ia-ativo">{t("Ativo (entregue aos apps)")}</Label>
+        </div>
+      </div>
+      <DialogFooter>
+        <Button
+          onClick={() => void salvar()}
+          disabled={ocupado}
+          className="w-full bg-tactical-orange text-background hover:bg-tactical-orange/90"
+        >
+          {ocupado ? t("Salvando…") : t("Salvar conhecimento")}
+        </Button>
+      </DialogFooter>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Configurações — PIX                                                */
 /* ------------------------------------------------------------------ */
 
@@ -1369,6 +1909,7 @@ function SecaoConfig() {
 
   return (
     <div className="space-y-4" data-test="admin-config">
+      <BlocoPopups />
       <p className="text-sm text-muted-foreground">
         {t(
           "Estes dados geram o QR Code e o código copia e cola da página de apoio. Use a chave aleatória, celular, e-mail ou CNPJ do seu banco.",
@@ -1457,4 +1998,144 @@ function SecaoConfig() {
       </div>
     </div>
   );
+}
+
+/* ------------------------------------------------------------------ */
+/* Pop-ups de crescimento — redes sociais, apoiar e compartilhar      */
+/* ------------------------------------------------------------------ */
+
+function BlocoPopups() {
+  const { t } = useI18n();
+  const [config, setConfig] = useState<ConfigPopups | null>(null);
+  const [instagram, setInstagram] = useState("");
+  const [youtube, setYoutube] = useState("");
+  const [telegram, setTelegram] = useState("");
+  const [intervalo, setIntervalo] = useState("8");
+  const [primeiro, setPrimeiro] = useState("2");
+  const [ativo, setAtivo] = useState(true);
+  const [ocupado, setOcupado] = useState(false);
+
+  useEffect(() => {
+    void lerConfigPopups().then((cfg) => {
+      setConfig(cfg);
+      setInstagram(cfg.instagram_url);
+      setYoutube(cfg.youtube_url);
+      setTelegram(cfg.telegram_url);
+      setIntervalo(String(cfg.intervalo_minutos));
+      setPrimeiro(String(cfg.primeiro_minutos));
+      setAtivo(cfg.ativo);
+    });
+  }, []);
+
+  const salvar = async () => {
+    setOcupado(true);
+    try {
+      const resposta = await supabaseAdminUpsert("popups", {
+        ativo,
+        instagram_url: instagram.trim(),
+        youtube_url: youtube.trim(),
+        telegram_url: telegram.trim(),
+        intervalo_minutos: Math.max(1, Number(intervalo) || 8),
+        primeiro_minutos: Math.max(1, Number(primeiro) || 2),
+      });
+      if (resposta.error) throw resposta.error;
+      toast.success(t("Pop-ups salvos — valem a partir do próximo carregamento do mapa"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Falha na operação"));
+    } finally {
+      setOcupado(false);
+    }
+  };
+
+  return (
+    <section
+      className="space-y-3 rounded-md border border-border bg-card p-4"
+      data-test="admin-popups"
+    >
+      <header className="flex items-center gap-2">
+        <Megaphone className="text-tactical-orange h-4 w-4" />
+        <h2 className="mono text-[11px] font-bold uppercase tracking-widest text-tactical-orange">
+          {t("Pop-ups no mapa (crescimento)")}
+        </h2>
+      </header>
+      <p className="text-muted-foreground text-xs leading-relaxed">
+        {t(
+          "Três cartões aparecem no dashboard do mapa, um por vez: seguir nas redes, apoiar e compartilhar. Cole os links das suas redes — o cartão de redes só aparece quando existe pelo menos um link.",
+        )}
+      </p>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="space-y-1">
+          <Label htmlFor="popup-instagram">Instagram</Label>
+          <Input
+            id="popup-instagram"
+            value={instagram}
+            onChange={(e) => setInstagram(e.target.value)}
+            placeholder="https://instagram.com/…"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="popup-youtube">YouTube</Label>
+          <Input
+            id="popup-youtube"
+            value={youtube}
+            onChange={(e) => setYoutube(e.target.value)}
+            placeholder="https://youtube.com/@…"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="popup-telegram">Telegram</Label>
+          <Input
+            id="popup-telegram"
+            value={telegram}
+            onChange={(e) => setTelegram(e.target.value)}
+            placeholder="https://t.me/…"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="popup-primeiro">{t("Primeiro cartão (min)")}</Label>
+          <Input
+            id="popup-primeiro"
+            inputMode="numeric"
+            value={primeiro}
+            onChange={(e) => setPrimeiro(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="popup-intervalo">{t("Intervalo entre cartões (min)")}</Label>
+          <Input
+            id="popup-intervalo"
+            inputMode="numeric"
+            value={intervalo}
+            onChange={(e) => setIntervalo(e.target.value)}
+          />
+        </div>
+        <div className="flex items-end gap-2 pb-1">
+          <Switch checked={ativo} onCheckedChange={setAtivo} id="popup-ativo" />
+          <Label htmlFor="popup-ativo">{t("Pop-ups ativos")}</Label>
+        </div>
+      </div>
+      <Button
+        onClick={() => void salvar()}
+        disabled={ocupado || config === null}
+        className="glove-tap bg-tactical-orange text-background hover:bg-tactical-orange/90"
+        data-test="admin-popups-salvar"
+      >
+        {ocupado ? t("Salvando…") : t("Salvar pop-ups")}
+      </Button>
+    </section>
+  );
+}
+
+/** Upsert da chave de configuração (admin escreve via RLS). */
+function supabaseAdminUpsert(
+  chave: string,
+  valor: Record<string, unknown>,
+): Promise<{ error: { message: string } | null }> {
+  return (async () => {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { error } = await supabase
+      .from("manual_configuracoes")
+      .upsert({ chave, valor, updated_at: new Date().toISOString() }, { onConflict: "chave" });
+    return { error: error ? { message: error.message } : null };
+  })();
 }

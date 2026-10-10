@@ -23,23 +23,34 @@ export interface Estatisticas {
   parceirosTotal: number;
   personagens: number;
   bloqueados: number;
+  apoiadores: number;
+  iaConhecimento: number;
 }
 
 export async function lerEstatisticas(): Promise<Estatisticas> {
-  const [usuarios, contribuicoes, parceiros, personagens, bloqueados] = await Promise.all([
-    supabase.from("manual_perfil_usuarios").select("id", { count: "exact", head: true }),
-    supabase
-      .from("manual_contribuicoes")
-      .select("status, valor, created_at")
-      .order("created_at", { ascending: false })
-      .limit(500),
-    supabase.from("manual_parceiros").select("ativo", { count: "exact" }),
-    supabase.from("manual_personagens").select("ativo", { count: "exact" }),
-    supabase
-      .from("manual_perfil_usuarios")
-      .select("id", { count: "exact", head: true })
-      .eq("bloqueado", true),
-  ]);
+  const [usuarios, contribuicoes, parceiros, personagens, bloqueados, apoiadores, iaConhecimento] =
+    await Promise.all([
+      supabase.from("manual_perfil_usuarios").select("id", { count: "exact", head: true }),
+      supabase
+        .from("manual_contribuicoes")
+        .select("status, valor, created_at")
+        .order("created_at", { ascending: false })
+        .limit(500),
+      supabase.from("manual_parceiros").select("ativo", { count: "exact" }),
+      supabase.from("manual_personagens").select("ativo", { count: "exact" }),
+      supabase
+        .from("manual_perfil_usuarios")
+        .select("id", { count: "exact", head: true })
+        .eq("bloqueado", true),
+      supabase
+        .from("manual_apoiadores")
+        .select("id", { count: "exact", head: true })
+        .eq("ativo", true),
+      supabase
+        .from("manual_ia_conhecimento")
+        .select("id", { count: "exact", head: true })
+        .eq("ativo", true),
+    ]);
 
   const linhas = (contribuicoes.data ?? []) as { status: string; valor: number }[];
   const aprovadas = linhas.filter((l) => l.status === "aprovada");
@@ -52,6 +63,8 @@ export async function lerEstatisticas(): Promise<Estatisticas> {
     parceirosTotal: parceiros.count ?? 0,
     personagens: personagens.count ?? 0,
     bloqueados: bloqueados.count ?? 0,
+    apoiadores: apoiadores.count ?? 0,
+    iaConhecimento: iaConhecimento.count ?? 0,
   };
 }
 

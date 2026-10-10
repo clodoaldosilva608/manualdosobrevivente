@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { HeartHandshake, Landmark, ShieldCheck, Users } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { formatMoeda, formatDateTime } from "@/lib/format";
+import { listarApoiadores, type Apoiador } from "@/lib/apoiadores";
 import {
   listarParceirosPublicos,
   listarRedline,
@@ -41,18 +42,21 @@ function Colaboradores() {
   const [redline, setRedline] = useState<ContribuicaoRedline[] | null>(null);
   const [parceiros, setParceiros] = useState<Parceiro[]>([]);
   const [perfil, setPerfil] = useState<PerfilManual | null>(null);
+  const [apoiadores, setApoiadores] = useState<Apoiador[]>([]);
 
   useEffect(() => {
     void (async () => {
       try {
-        const [linha, marcas, sessao] = await Promise.all([
+        const [linha, marcas, sessao, mural] = await Promise.all([
           listarRedline(),
           listarParceirosPublicos().catch(() => [] as Parceiro[]),
           perfilAtual().catch(() => null),
+          listarApoiadores().catch(() => [] as Apoiador[]),
         ]);
         setRedline(linha);
         setParceiros(marcas);
         setPerfil(sessao);
+        setApoiadores(mural);
       } catch {
         setRedline([]);
       }
@@ -165,6 +169,39 @@ function Colaboradores() {
             ? t("Sessão ativa — você será levado à página de apoio")
             : t("Você precisará entrar na sua conta para colaborar")}
         </p>
+      </div>
+
+      {/* Mural dos apoiadores — ordem do mural, NUNCA alfabética */}
+      <div
+        className="space-y-3 rounded-md border border-border bg-card p-4"
+        data-test="colaboradores-apoiadores"
+      >
+        <div className="flex flex-wrap items-baseline gap-2">
+          <p className="mono text-tactical-orange text-[11px] font-bold uppercase tracking-widest">
+            {t("Mural dos apoiadores")}
+          </p>
+          <span className="mono text-[10px] text-muted-foreground">
+            {t("{n} apoiadores", { n: apoiadores.length })} · {t("ordem de chegada")}
+          </span>
+        </div>
+        {apoiadores.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            {t("O mural está sendo montado — volte em instantes.")}
+          </p>
+        ) : (
+          <div className="flex flex-wrap gap-1.5">
+            {apoiadores.map((apoiador) => (
+              <span
+                key={apoiador.id}
+                title={apoiador.cidade ?? undefined}
+                className="rounded-full border border-border bg-background px-2.5 py-1 text-[11px]"
+              >
+                <span className="text-tactical-orange mr-1">◆</span>
+                {apoiador.nome}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {parceiros.length > 0 && (

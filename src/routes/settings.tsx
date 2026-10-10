@@ -43,6 +43,7 @@ import { getReportSettings, saveReportSettings, sendReportNow } from "@/lib/repo
 import { chavesServidor, type ChavesServidor } from "@/lib/intel.functions";
 import { BackupFolderCard } from "@/components/BackupFolderCard";
 import { ObsidianCard } from "@/components/ObsidianCard";
+import { ConfigAssistente } from "@/components/assistente/ConfigAssistente";
 import { BotaoConvidar } from "@/components/ConviteSheet";
 import { usePwaInstall } from "@/lib/pwa";
 import { contaAtiva, type ContaLocal } from "@/lib/conta";
@@ -624,6 +625,11 @@ function Settings() {
           {t("Nenhum dado destas chaves sai do seu aparelho além da consulta direta à fonte.")}
         </div>
       </Section>
+
+      {/* ASSISTENTE IA — identidade, chave API com passo a passo e memória */}
+      <div id="assistente-ia">
+        <ConfigAssistente />
+      </div>
 
       <Section title={t("Dados no aparelho")}>
         <div className="grid grid-cols-2 gap-3">

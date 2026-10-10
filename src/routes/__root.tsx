@@ -19,6 +19,7 @@ import { AutoCloudSync } from "@/components/AutoCloudSync";
 import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
 import { SplashAbertura } from "@/components/SplashAbertura";
 import { PortaoAuth } from "@/components/PortaoAuth";
+import AssistenteFlutuante from "@/components/assistente/AssistenteFlutuante";
 import { registerServiceWorker, useNovaVersao } from "@/lib/pwa";
 import { iniciarAutoBackup } from "@/lib/auto-backup";
 import { ProvedorIdioma } from "@/lib/i18n";
@@ -259,6 +260,9 @@ function RootComponent() {
           </main>
           <AppNav />
         </div>
+        {/* Assistente IA em toda a plataforma: orbe funcional + chat com
+            ações do app. Some sozinho no modo mapa limpo. */}
+        <AssistenteFlutuante />
         <Toaster theme="dark" position="top-center" richColors />
       </ProvedorIdioma>
     </QueryClientProvider>

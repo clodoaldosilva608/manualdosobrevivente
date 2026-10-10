@@ -920,4 +920,193 @@ export const DIC_ES: Record<string, string> = {
   Personalizar: "Personalizar",
   Fechar: "Cerrar",
   "Conta criada": "Cuenta creada",
+  "(anexo enviado)": "(adjunto enviado)",
+  "A IA local já responde sem chave. Com uma chave API, ela passa a responder QUALQUER assunto — e continua usando a memória local quando a internet cai. A chave fica somente neste aparelho.":
+    "La IA local ya responde sin clave. Con una clave API responde CUALQUIER tema — y sigue usando la memoria local cuando cae internet. La clave queda solo en este aparato.",
+  "A camada gratuita do Gemini cobre uso pessoal com folga":
+    "El nivel gratuito de Gemini cubre el uso personal de sobra",
+  "A chave não funcionou": "La clave no funcionó",
+  "A transcrição de áudio precisa de uma chave API (Google AI Studio) — vou guardar como nota de voz.":
+    "La transcripción de audio necesita una clave API (Google AI Studio) — la guardo como nota de voz.",
+  "Abra aistudio.google.com/app/apikey e entre com sua conta Google":
+    "Abre aistudio.google.com/app/apikey y entra con tu cuenta de Google",
+  "Abra huggingface.co/settings/tokens e entre com sua conta":
+    "Abre huggingface.co/settings/tokens y entra en tu cuenta",
+  "Abrir a página de criar a chave": "Abrir la página de crear la clave",
+  "Abrir assistente IA": "Abrir asistente IA",
+  "Anexar imagem, áudio ou vídeo": "Adjuntar imagen, audio o vídeo",
+  "Apagar toda a memória da IA neste aparelho?":
+    "¿Borrar toda la memoria de la IA en este aparato?",
+  "Apoiador removido": "Apoyador eliminado",
+  "Apoiador salvo": "Apoyador guardado",
+  Apoiadores: "Apoyadores",
+  "App gratuito de sobrevivência: mapa tático, manual offline e assistente IA — salve este link.":
+    "App gratuita de supervivencia: mapa táctico, manual sin conexión y asistente IA — guarda este enlace.",
+  "Aprender com o uso": "Aprender con el uso",
+  "Assistente IA": "Asistente IA",
+  "Ative o GPS ou arraste o mapa até você.": "Activa el GPS o arrastra el mapa hacia ti.",
+  "Ative o radar de chuva": "Activa el radar de lluvia",
+  "Ativo (entregue aos apps)": "Activo (entregado a las apps)",
+  "Ativo (visível no mural)": "Activo (visible en el mural)",
+  "Base URL do serviço": "URL base del servicio",
+  "Cada resposta vira memória — a IA melhora com você":
+    "Cada respuesta se vuelve memoria — la IA mejora contigo",
+  "Carregando apoiadores…": "Cargando apoyadores…",
+  "Carregando conhecimento…": "Cargando conocimiento…",
+  Centro: "Centro",
+  "Chave API": "Clave API",
+  "Chave API (opcional)": "Clave API (opcional)",
+  "Chave testada — a IA está conectada à nuvem": "Clave probada — la IA está conectada a la nube",
+  "Cidade (opcional)": "Ciudad (opcional)",
+  "Clique em “Create API key” e escolha um projeto (ou crie um novo)":
+    "Pulsa “Create API key” y elige un proyecto (o crea uno nuevo)",
+  "Clique em “Create new token”, tipo “Read”, com um nome qualquer":
+    "Pulsa “Create new token”, tipo “Read”, con cualquier nombre",
+  "Cole a Base URL do serviço compatível com OpenAI (terminando em /v1)":
+    "Pega la URL base del servicio compatible con OpenAI (que termine en /v1)",
+  "Cole a chave API fornecida pelo serviço": "Pega la clave API que da el servicio",
+  "Cole a chave primeiro": "Pega la clave primero",
+  "Como conseguir a chave — passo a passo": "Cómo conseguir la clave — paso a paso",
+  "Como devo te chamar?": "¿Cómo debo llamarte?",
+  "Como purificar água?": "¿Cómo purificar agua?",
+  "Como usar a minha nota de voz?": "¿Cómo usar mi nota de voz?",
+  "Conectada · memória local ativa": "Conectada · memoria local activa",
+  "Configurar assistente": "Configurar asistente",
+  "Conhecimento IA": "Conocimiento IA",
+  "Conhecimento excluído": "Conocimiento eliminado",
+  "Conhecimento que TODOS os assistentes IA dos operadores usam antes de responder. Escreva perguntas prováveis, palavras-chave separadas por vírgula e a resposta prática. Mudanças valem para todos em poucos minutos.":
+    "Conocimiento que TODOS los asistentes IA de los operadores usan antes de responder. Escribe preguntas probables, palabras clave separadas por comas y la respuesta práctica. Los cambios valen para todos en pocos minutos.",
+  "Conhecimento salvo": "Conocimiento guardado",
+  "Contexto de comportamento": "Contexto de comportamiento",
+  Copiado: "Copiado",
+  Copiar: "Copiar",
+  "Copie a chave (começa com AIza…) e cole no campo abaixo":
+    "Copia la clave (empieza con AIza…) y pégala abajo",
+  "Copie o token (começa com hf_…) e cole no campo abaixo":
+    "Copia el token (empieza con hf_…) y pégalo abajo",
+  "Descreva o anexo que enviei": "Describe el adjunto que envié",
+  Descrição: "Descripción",
+  Destino: "Destino",
+  Editar: "Editar",
+  "Editar apoiador": "Editar apoyador",
+  "Editar conhecimento": "Editar conocimiento",
+  "Editar perfil": "Editar perfil",
+  "Esta é a sua IA: dê o nome que quiser, diga quem você é para ela sempre te chamar pelo nome e ensine como ela deve se comportar. Ela aprende com cada conversa (memória local) e executa ações do app: rotas, camadas, boletim, clima e notícias.":
+    "Esta es tu IA: ponle el nombre que quieras, dile quién eres para que siempre te llame por tu nombre y enséñale cómo debe comportarse. Aprende con cada conversa (memoria local) y ejecuta acciones de la app: rutas, capas, boletín, clima y noticias.",
+  "Este aparelho não suporta resposta falada": "Este aparato no admite respuesta hablada",
+  "Excluir este conhecimento da IA?": "¿Eliminar este conocimiento de la IA?",
+  "Feito — este cartão não aparece mais": "Hecho — esta tarjeta no aparece más",
+  "Formato não suportado — use imagem, áudio ou vídeo":
+    "Formato no admitido — usa imagen, audio o vídeo",
+  "Gravar áudio": "Grabar audio",
+  "IA local": "IA local",
+  "IA local · sem chave, funciona offline": "IA local · sin clave, funciona sin conexión",
+  "Imagem, áudio e vídeo entram aqui · a chave API fica só no seu aparelho":
+    "Imagen, audio y vídeo entran aquí · la clave API queda solo en tu aparato",
+  "Informe o modelo exato (ex.: gpt-4o-mini, llama-3.1-8b, deepseek-chat…)":
+    "Indica el modelo exacto (ej.: gpt-4o-mini, llama-3.1-8b, deepseek-chat…)",
+  "Informe o nome do apoiador": "Indica el nombre del apoyador",
+  "Intervalo entre cartões (min)": "Intervalo entre tarjetas (min)",
+  "Limpar memória": "Borrar memoria",
+  "Link copiado — cole para quem você quiser salvar":
+    "Enlace copiado — pégalo para quien quieras salvar",
+  "Manual do Sobrevivente": "Manual del Superviviente",
+  "Memória apagada": "Memoria borrada",
+  "Memória da IA": "Memoria de la IA",
+  "Minimizar assistente": "Minimizar asistente",
+  "Modelos abertos (Llama, Qwen…) respondem pela rota de inference":
+    "Modelos abiertos (Llama, Qwen…) responden por la ruta de inference",
+  "Mural dos apoiadores": "Mural de apoyadores",
+  "Mural público em /colaboradores. A ordem é a da coluna Ordem — nunca alfabética. A semente já vem com 78 apoiadores.":
+    "Mural público en /colaboradores. El orden es el de la columna Orden — nunca alfabético. La semilla ya viene con 78 apoyadores.",
+  "Nenhum conhecimento cadastrado — a IA usa apenas a base local do aparelho.":
+    "Ningún conocimiento registrado — la IA usa solo la base local del aparato.",
+  "Nome da sua IA": "Nombre de tu IA",
+  "Nota de voz": "Nota de voz",
+  "Novo apoiador": "Nuevo apoyador",
+  "Novo conhecimento": "Nuevo conocimiento",
+  "Não consegui ler o arquivo": "No pude leer el archivo",
+  "Não mostrar novamente": "No mostrar de nuevo",
+  "O mural está sendo montado — volte em instantes.":
+    "El mural se está montando — vuelve en un momento.",
+  "O operador gravou um áudio de {n} segundos nesta conversa.":
+    "El operador grabó un audio de {n} segundos en esta conversa.",
+  Ordem: "Orden",
+  "Ordem no mural": "Orden en el mural",
+  Ouvir: "Escuchar",
+  "Palavras-chave (separadas por vírgula)": "Palabras clave (separadas por comas)",
+  "Papel do operador": "Rol del operador",
+  "Parceiro excluído": "Socio eliminado",
+  "Pensando…": "Pensando…",
+  "Pergunta provável": "Pregunta probable",
+  "Pergunte ou peça uma ação…": "Pregunta o pide una acción…",
+  "Personagem salvo": "Personaje guardado",
+  "Peça ações do app, sobrevivência, clima e notícias — eu executo e respondo, e aprendo com cada conversa.":
+    "Pide acciones de la app, supervivencia, clima y noticias — yo ejecuto y respondo, y aprendo con cada conversa.",
+  "Pop-ups ativos": "Pop-ups activos",
+  "Pop-ups no mapa (crescimento)": "Pop-ups en el mapa (crecimiento)",
+  "Pop-ups salvos — valem a partir do próximo carregamento do mapa":
+    "Pop-ups guardados — valen desde la próxima carga del mapa",
+  "Preencha a pergunta e a resposta (mínimo 10 caracteres)":
+    "Rellena la pregunta y la respuesta (mínimo 10 caracteres)",
+  "Previsão para hoje": "Pronóstico para hoy",
+  "Primeiro cartão (min)": "Primera tarjeta (min)",
+  "Prompt ensinado": "Prompt enseñado",
+  "Prompts do operador": "Prompts del operador",
+  "Quais as principais notícias?": "¿Cuáles son las principales noticias?",
+  "Remover anexo": "Quitar adjunto",
+  "Remover prompt": "Quitar prompt",
+  "Remover skill": "Quitar skill",
+  "Remover {nome} do mural?": "¿Quitar a {nome} del mural?",
+  "Responda apenas: chave funcionando": "Responde solo: clave funcionando",
+  "Responder em áudio": "Responder en audio",
+  Resposta: "Respuesta",
+  "Resposta falada": "Respuesta hablada",
+  "Resposta prática e direta — é isso que os operadores vão ler.":
+    "Respuesta práctica y directa — es lo que leerán los operadores.",
+  "Rota do assistente": "Ruta del asistente",
+  "Salvar apoiador": "Guardar apoyador",
+  "Salvar conhecimento": "Guardar conocimiento",
+  "Salvar pop-ups": "Guardar pop-ups",
+  "Satélite, radar, vento, temperatura, ciclones e nuvens ao vivo no próprio mapa — o botão abre o Zoom Earth no ponto atual. Radar por RainViewer, ciclones por NOAA NHC/JTWC, nuvens por NASA GIBS e clima por Open-Meteo, sem chave de API.":
+    "Satélite, radar, viento, temperatura, ciclones y nubes en vivo en el propio mapa — el botón abre Zoom Earth en el punto actual. Radar por RainViewer, ciclones por NOAA NHC/JTWC, nubes por NASA GIBS y clima por Open-Meteo, sin clave API.",
+  "Sem permissão de microfone": "Sin permiso de micrófono",
+  "Skill adicionada": "Skill añadida",
+  "Skills (especialidades)": "Skills (especialidades)",
+  "Testando a chave…": "Probando la clave…",
+  "Testar chave": "Probar clave",
+  "Tive um problema para responder. Tente de novo.":
+    "Tuve un problema para responder. Inténtalo de nuevo.",
+  "Trace uma rota até o centro de Recife": "Traza una ruta hasta el centro de Recife",
+  "Três cartões aparecem no dashboard do mapa, um por vez: seguir nas redes, apoiar e compartilhar. Cole os links das suas redes — o cartão de redes só aparece quando existe pelo menos um link.":
+    "Tres tarjetas aparecen en el panel del mapa, una por vez: seguir en redes, apoyar y compartir. Pega los enlaces de tus redes — la tarjeta de redes solo aparece cuando existe al menos un enlace.",
+  "Tudo que você pergunta e eu respondo vira memória neste aparelho: quanto mais usamos, mais inteligente fico — inclusive sem internet.":
+    "Todo lo que preguntas y respondo se vuelve memoria en este aparato: cuanto más lo usamos, más inteligente me vuelvo — incluso sin internet.",
+  "Uso noturno": "Uso nocturno",
+  Vento: "Viento",
+  "Voz do aparelho (funciona offline)": "Voz del aparato (funciona sin conexión)",
+  "Vídeo muito grande para anexar (máx. 12 MB)":
+    "Vídeo demasiado grande para adjuntar (máx. 12 MB)",
+  "aprovada em": "aprobada el",
+  "base local": "base local",
+  "conhecimento oficial": "conocimiento oficial",
+  "ex.: Clodoaldo": "ej.: Clodoaldo",
+  "ex.: Como purificar água de rio?": "ej.: ¿Cómo purificar agua de río?",
+  "ex.: Maria do Socorro": "ej.: María del Socorro",
+  "ex.: Recife": "ej.: Recife",
+  "ex.: fale curto e direto, use tom de operador tático, sempre priorize segurança…":
+    "ej.: habla corto y directo, usa tono de operador táctico, prioriza siempre la seguridad…",
+  "ex.: se eu perguntar de plantas, cite só as do nordeste":
+    "ej.: si pregunto por plantas, cita solo las del nordeste",
+  "ex.: sou veterano do Exército — me ajude com plano de defesa civil":
+    "ej.: soy veterano del Ejército — ayúdame con un plan de defensa civil",
+  "executado no app": "ejecutado en la app",
+  memória: "memoria",
+  "nuvem conectada": "nube conectada",
+  "ordem de chegada": "orden de llegada",
+  "pares aprendidos": "pares aprendidos",
+  "{n} apoiadores": "{n} apoyadores",
+  "{n} à sua disposição": "{n} a tu servicio",
+  "Áudio gravado": "Audio grabado",
+  "—": "—",
 };

@@ -18,6 +18,7 @@ import { AppNav } from "@/components/AppNav";
 import { AutoCloudSync } from "@/components/AutoCloudSync";
 import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
 import { SplashAbertura } from "@/components/SplashAbertura";
+import { PortaoAuth } from "@/components/PortaoAuth";
 import { registerServiceWorker, useNovaVersao } from "@/lib/pwa";
 import { iniciarAutoBackup } from "@/lib/auto-backup";
 import { ProvedorIdioma } from "@/lib/i18n";
@@ -250,6 +251,7 @@ function RootComponent() {
         <RastreadorRotas />
         <AutoCloudSync />
         <SplashAbertura />
+        <PortaoAuth />
         <WelcomeOnboarding />
         <div className="flex min-h-screen flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0 md:pt-14">
           <main className="flex-1 relative">

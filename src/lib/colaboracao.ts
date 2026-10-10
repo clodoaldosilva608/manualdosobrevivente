@@ -26,6 +26,8 @@ export interface PerfilManual {
   nome_exibicao: string | null;
   avatar_url: string | null;
   papel: string;
+  /** Espelho do banimento de conta (lista rápida no painel admin). */
+  bloqueado?: boolean | null;
   created_at: string;
 }
 

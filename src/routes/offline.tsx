@@ -40,7 +40,9 @@ const SOURCES = [
   {
     id: "topo",
     label: "Topográfico",
-    url: "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
+    // Esri World Topographic — a OpenTopoMap passou a recusar rajadas de
+    // tiles ("Zoom Level Not Supported"); o download offline seria inútil.
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
   },
   {
     id: "satellite",

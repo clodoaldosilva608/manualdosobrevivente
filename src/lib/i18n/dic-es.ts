@@ -848,4 +848,76 @@ export const DIC_ES: Record<string, string> = {
   "Aguardando sessão…": "Aguardando sesión…",
   "Apoie o Manual": "Apoya el Manual",
   "Contribua para manter o app gratuito": "Contribuye para mantener la app gratuita",
+  "Acesso do operador — identifique-se para entrar no mapa":
+    "Acceso del operador — identifíquese para entrar en el mapa",
+  "Sua conta sincroniza mochila, notas e rotas entre aparelhos.":
+    "Su cuenta sincroniza mochila, notas y rutas entre aparatos.",
+  "Confira seu e-mail": "Revise su correo electrónico",
+  "Enviamos um link de confirmação para o seu e-mail. Abra-o para ativar a conta e voltar ao aplicativo.":
+    "Enviamos un enlace de confirmación a su correo. Ábralo para activar la cuenta y volver a la aplicación.",
+  "Reenviar e-mail": "Reenviar correo",
+  "Reenviando…": "Reenviando…",
+  "Já confirmei": "Ya confirmé",
+  "Ainda não confirmado": "Aún no confirmado",
+  "Abra o link que enviamos ao seu e-mail e tente novamente.":
+    "Abra el enlace que enviamos a su correo e inténtelo de nuevo.",
+  "Entre na sua conta para escolher um personagem e personalizar o perfil.":
+    "Entre en su cuenta para elegir un personaje y personalizar el perfil.",
+  "Escolha seu personagem": "Elija su personaje",
+  "Esse avatar representa você no Manual. Escolha um personagem do elenco ou use a sua própria foto.":
+    "Este avatar lo representa en el Manual. Elija un personaje del elenco o use su propia foto.",
+  "Avatar atual": "Avatar actual",
+  "Usar minha foto": "Usar mi foto",
+  "Personagens disponíveis": "Personajes disponibles",
+  "Avatar atualizado": "Avatar actualizado",
+  "Falha ao salvar o avatar": "Fallo al guardar el avatar",
+  "Falha ao enviar a foto": "Fallo al enviar la foto",
+  "O elenco de personagens está sendo montado — por enquanto, use a sua própria foto.":
+    "El elenco de personajes se está montando — por ahora, use su propia foto.",
+  "Agora não": "Ahora no",
+  "Modo mapa limpo": "Modo mapa limpio",
+  "Só o mapa à vista — toque no botão de olho para trazer tudo de volta.":
+    "Solo el mapa a la vista — toque el botón del ojo para traer todo de vuelta.",
+  "Todos os elementos voltaram ao mapa.": "Todos los elementos volvieron al mapa.",
+  "Toque nos pontos do mapa para ver as informações":
+    "Toque los puntos del mapa para ver la información",
+  "Terremotos, alertas, focos de calor, ciclones, voos e mais — escolha camadas em Camadas.":
+    "Terremotos, alertas, focos de calor, ciclones, vuelos y más — elija capas en Capas.",
+  "Restaurar elementos da tela": "Restaurar elementos de la pantalla",
+  "Limpar a tela (só o mapa)": "Limpiar la pantalla (solo el mapa)",
+  "Recolher painel": "Contraer panel",
+  COORDENADA: "COORDENADA",
+  Personagens: "Personajes",
+  "Contas bloqueadas": "Cuentas bloqueadas",
+  Bloqueado: "Bloqueado",
+  "Bloquear conta no painel": "Bloquear cuenta en el panel",
+  "Perfil bloqueado": "Perfil bloqueado",
+  "Perfil desbloqueado": "Perfil desbloqueado",
+  "Personagens ativos aparecem na escolha de avatar ao criar conta e em Conta › Perfil na nuvem. Você pode enviar uma imagem ou colar uma URL.":
+    "Los personajes activos aparecen en la elección de avatar al crear cuenta y en Cuenta › Perfil en la nube. Puede enviar una imagen o pegar una URL.",
+  "Novo personagem": "Nuevo personaje",
+  "Carregando personagens…": "Cargando personajes…",
+  "Nenhum personagem cadastrado ainda — o elenco começa aqui.":
+    "Ningún personaje registrado aún — el elenco empieza aquí.",
+  "sem descrição": "sin descripción",
+  "Excluir o personagem {nome}?": "¿Eliminar el personaje {nome}?",
+  "Personagem excluído": "Personaje eliminado",
+  "Editar personagem": "Editar personaje",
+  "Ex.: Guia da floresta": "Ej.: Guía del bosque",
+  "Imagem (URL ou upload)": "Imagen (URL o envío)",
+  Enviar: "Enviar",
+  "Imagem enviada": "Imagen enviada",
+  "Falha ao enviar a imagem": "Fallo al enviar la imagen",
+  "Ativo (aparece no cadastro)": "Activo (aparece en el registro)",
+  "Prévia do personagem": "Vista previa del personaje",
+  "sem imagem": "sin imagen",
+  "Prévia do avatar": "Vista previa del avatar",
+  "Salvar personagem": "Guardar personaje",
+  "Informe o nome do personagem": "Informe el nombre del personaje",
+  "Perfil na nuvem": "Perfil en la nube",
+  "Personagem e foto que representam você entre os aparelhos.":
+    "Personaje y foto que lo representan entre los aparatos.",
+  Personalizar: "Personalizar",
+  Fechar: "Cerrar",
+  "Conta criada": "Cuenta creada",
 };

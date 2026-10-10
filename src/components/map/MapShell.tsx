@@ -27,6 +27,10 @@ import {
   ExternalLink,
   Pause,
   Play,
+  Eye,
+  EyeOff,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -128,6 +132,7 @@ import type {
 import {
   sincronizarCamadasIntel,
   registrarPopupsIntel,
+  CAMADAS_COM_POPUP,
   ancoraIntel,
 } from "@/components/map/intel-layers";
 import {
@@ -174,9 +179,14 @@ const BASE_LAYERS: Record<
   },
   topo: {
     label: "Topográfico",
-    tiles: "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
-    attribution: "© OpenTopoMap (CC-BY-SA), © OpenStreetMap",
-    maxzoom: 17,
+    // Esri World Topographic Map — a OpenTopoMap passou a recusar rajadas de
+    // tiles (resposta 200 com a imagem "Zoom Level Not Supported"), quebrando
+    // o mapa base em zoom urbano. Esri é keyless e usa a mesma infra dos
+    // estilos satélite/escuro.
+    tiles:
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Esri, HERE, Garmin, FAO, NOAA, USGS, © OpenStreetMap",
+    maxzoom: 19,
   },
   streets: {
     label: "Ruas",
@@ -463,6 +473,57 @@ export default function MapShell() {
   const modoMapa = prefs.mapMode;
   const intelVis = prefs.intelVis;
   const telaVis = prefs.telaVis;
+  // Tela limpa: só o mapa à vista — um toque no botão traz tudo de volta.
+  const telaLimpa = prefs.telaLimpa;
+  const telaLimpaRef = useRef(false);
+  useEffect(() => {
+    telaLimpaRef.current = telaLimpa;
+  }, [telaLimpa]);
+  /** Alterna o modo mapa limpo (oculta/restaura todos os elementos da tela). */
+  const alternarTelaLimpa = useCallback(() => {
+    const proximo = !telaLimpa;
+    updatePrefs({ telaLimpa: proximo });
+    if (proximo) {
+      setOpenSheet(null);
+      setNewMarker(null);
+      setTool("none");
+      // Sem toast na ativação: a tela limpa É o feedback — e um toast sobre o
+      // topo cobriria o próprio botão de restaurar (bloqueando-o por 4 s).
+    } else {
+      toast.success(t("Elementos da tela restaurados"), {
+        description: t("Todos os elementos voltaram ao mapa."),
+      });
+    }
+  }, [telaLimpa, updatePrefs, t]);
+  // Painéis de coordenadas/posição dobráveis — no celular nascem fechados
+  // para o mapa dominar a tela (o operador abre com um toque no cabeçalho).
+  const [painelAberto, setPainelAberto] = useState({ centro: true, posicao: true });
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setPainelAberto({ centro: false, posicao: false });
+    }
+  }, []);
+  // Dica única de interação estilo Zoom Earth (o mapa tem camadas clicáveis).
+  // Entra com atraso de 10 s: no arranque o operador está tocando no HUD —
+  // um toast sobre o topo da tela bloquearia esses primeiros cliques.
+  useEffect(() => {
+    if (!ready) return;
+    const id = window.setTimeout(() => {
+      try {
+        if (localStorage.getItem("tgis:dica-intel")) return;
+        localStorage.setItem("tgis:dica-intel", "1");
+        toast(t("Toque nos pontos do mapa para ver as informações"), {
+          description: t(
+            "Terremotos, alertas, focos de calor, ciclones, voos e mais — escolha camadas em Camadas.",
+          ),
+          duration: 9000,
+        });
+      } catch {
+        /* localStorage indisponível */
+      }
+    }, 10_000);
+    return () => window.clearTimeout(id);
+  }, [ready, t]);
   // Norte de referência da bússola (verdadeiro/magnético) — a mesma
   // configuração de Ajustes, compartilhada entre miniatura e bússola completa.
   const bussolaMagnetica = prefs.northRef === "magnetic";
@@ -649,13 +710,14 @@ export default function MapShell() {
     const tr = map.getSource("trilha") as maplibregl.GeoJSONSource | undefined;
     tr?.setData(trilhaFC(d.trilha));
     const vis = telaVisRef.current;
+    // Tela limpa: waypoints (conteúdo de interface) saem junto com o HUD.
     const aplicar = (id: string, ativo: boolean) => {
       if (map.getLayer(id)) {
         map.setLayoutProperty(id, "visibility", ativo ? "visible" : "none");
       }
     };
-    aplicar("wp-circles", vis.waypoints);
-    aplicar("wp-labels", vis.waypoints);
+    aplicar("wp-circles", vis.waypoints && !telaLimpaRef.current);
+    aplicar("wp-labels", vis.waypoints && !telaLimpaRef.current);
     aplicar("user-position-accuracy", vis.pontoPosicao);
     aplicar("user-position-dot", vis.pontoPosicao);
   }, []);
@@ -1506,12 +1568,13 @@ export default function MapShell() {
   }, [drawCoords, tool, ready]);
 
   // Liga/desliga a visibilidade dos waypoints e do ponto de posição (seção
-  // "Elementos da tela") sem mexer nos dados guardados.
+  // "Elementos da tela") sem mexer nos dados guardados. O modo tela limpa
+  // também participa: ocultar/restaurar o HUD move os waypoints junto.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
     sincronizarDesenho(map);
-  }, [ready, telaVis.waypoints, telaVis.pontoPosicao, sincronizarDesenho]);
+  }, [ready, telaVis.waypoints, telaVis.pontoPosicao, telaLimpa, sincronizarDesenho]);
 
   // Controles nativos (zoom, GPS e escala) conforme o toggle "Controles do mapa".
   useEffect(() => {
@@ -1548,6 +1611,14 @@ export default function MapShell() {
           category: "custom",
           color: "#FF6B35",
         });
+      } else if (tool === "none") {
+        // Paridade Zoom Earth: clicar num trecho vazio do mapa mostra as
+        // coordenadas do ponto (clicar em camadas de intel é tratado pelo
+        // registrarPopupsIntel — aqui só entra quem não acertou nada).
+        const feicoes = map.queryRenderedFeatures(e.point, {
+          layers: [...CAMADAS_COM_POPUP],
+        });
+        if (feicoes.length === 0) abrirPopupCoordenadas(map, e.lngLat);
       }
     };
     map.on("click", onClick);
@@ -2139,91 +2210,123 @@ export default function MapShell() {
 
       {modoMapa === "tatico" && (
         <>
-          {/* HUD superior mobile: fluxo vertical — filhos nunca se sobrepõem */}
-          <div className="absolute left-2 right-20 top-[max(0.5rem,env(safe-area-inset-top))] z-10 flex flex-col gap-2 md:hidden">
-            <div className="flex items-start gap-2">
-              {botaoMenu}
-              <div data-test="modo-mapa-mobile">
-                <MapModeSwitch modo={modoMapa} onTrocar={(m) => updatePrefs({ mapMode: m })} />
-              </div>
+          {/* Botão tela limpa (modo mapa limpo) — permanece visível mesmo
+              com todos os elementos ocultos: um toque traz tudo de volta. */}
+          {telaLimpa && (
+            <div className="absolute right-2 top-[max(0.5rem,env(safe-area-inset-top))] z-30 md:right-4 md:top-4">
+              <BotaoTelaLimpa limpa onAlternar={alternarTelaLimpa} />
             </div>
-            {telaVis.coordenadas && (
-              <PainelCentro center={center} decl={decl} onCopy={(t) => copy(t)} />
-            )}
-            {telaVis.posicao && (
-              <PainelPosicao
-                userPos={userPos}
-                onCentrar={() => {
-                  if (!userPos) return toast.error(t("Sem localização disponível"));
-                  flyTo(userPos.lng, userPos.lat, 15);
-                }}
-                onUltimoLocal={() => {
-                  try {
-                    const raw = localStorage.getItem("tgis:last-position");
-                    if (!raw) return toast.error(t("Nenhum local salvo"));
-                    const p = JSON.parse(raw) as { lng: number; lat: number };
-                    flyTo(p.lng, p.lat);
-                  } catch {
-                    toast.error(t("Nenhum local salvo"));
-                  }
-                }}
-              />
-            )}
-            {chipRadar}
-            {(tool === "measure-line" || tool === "measure-area") && (
-              <LeituraMedicao tool={tool} lineLen={lineLen} areaFmt={areaFmt} onClear={clearDraw} />
-            )}
-            {navegando && rota && (
-              <BannerNavegacao
-                alvoNome={rota.pontos[Math.min(indiceRota, rota.pontos.length - 1)].nome}
-                progressoAtual={Math.min(indiceRota, rota.pontos.length - 1)}
-                progressoTotal={rota.pontos.length}
-                status={navStatus}
-                velocidadeMS={velMS}
-                onCentralizar={() => {
-                  const alvo = rota.pontos[Math.min(indiceRota, rota.pontos.length - 1)];
-                  flyTo(alvo.lng, alvo.lat, 16);
-                }}
-                onParar={pararNavegacao}
-              />
-            )}
-          </div>
+          )}
 
-          {/* HUD superior desktop: posições absolutas clássicas */}
-          <div className="absolute left-4 top-4 z-10 hidden w-[360px] md:block">
-            {telaVis.coordenadas && (
-              <PainelCentro center={center} decl={decl} onCopy={(t) => copy(t)} />
-            )}
-          </div>
-          <div
-            className={`absolute left-4 z-10 hidden w-[360px] md:block ${
-              telaVis.coordenadas ? "top-[150px]" : "top-4"
-            }`}
-          >
-            {telaVis.posicao && (
-              <PainelPosicao
-                userPos={userPos}
-                onCentrar={() => {
-                  if (!userPos) return toast.error(t("Sem localização disponível"));
-                  flyTo(userPos.lng, userPos.lat, 15);
-                }}
-                onUltimoLocal={() => {
-                  try {
-                    const raw = localStorage.getItem("tgis:last-position");
-                    if (!raw) return toast.error(t("Nenhum local salvo"));
-                    const p = JSON.parse(raw) as { lng: number; lat: number };
-                    flyTo(p.lng, p.lat);
-                  } catch {
-                    toast.error(t("Nenhum local salvo"));
-                  }
-                }}
-              />
-            )}
-            {chipRadar && <div className="mt-2">{chipRadar}</div>}
-          </div>
+          {/* HUD superior mobile: fluxo vertical — filhos nunca se sobrepõem */}
+          {!telaLimpa && (
+            <div className="absolute left-2 right-20 top-[max(0.5rem,env(safe-area-inset-top))] z-10 flex flex-col gap-2 md:hidden">
+              <div className="flex items-start gap-2">
+                {botaoMenu}
+                <div data-test="modo-mapa-mobile">
+                  <MapModeSwitch modo={modoMapa} onTrocar={(m) => updatePrefs({ mapMode: m })} />
+                </div>
+                <div className="ml-auto">
+                  <BotaoTelaLimpa limpa={false} onAlternar={alternarTelaLimpa} />
+                </div>
+              </div>
+              {telaVis.coordenadas && (
+                <PainelCentro
+                  center={center}
+                  decl={decl}
+                  aberto={painelAberto.centro}
+                  onAlternar={() => setPainelAberto((p) => ({ ...p, centro: !p.centro }))}
+                  onCopy={(t) => copy(t)}
+                />
+              )}
+              {telaVis.posicao && (
+                <PainelPosicao
+                  userPos={userPos}
+                  aberto={painelAberto.posicao}
+                  onAlternar={() => setPainelAberto((p) => ({ ...p, posicao: !p.posicao }))}
+                  onCentrar={() => {
+                    if (!userPos) return toast.error(t("Sem localização disponível"));
+                    flyTo(userPos.lng, userPos.lat, 15);
+                  }}
+                  onUltimoLocal={() => {
+                    try {
+                      const raw = localStorage.getItem("tgis:last-position");
+                      if (!raw) return toast.error(t("Nenhum local salvo"));
+                      const p = JSON.parse(raw) as { lng: number; lat: number };
+                      flyTo(p.lng, p.lat);
+                    } catch {
+                      toast.error(t("Nenhum local salvo"));
+                    }
+                  }}
+                />
+              )}
+              {chipRadar}
+              {(tool === "measure-line" || tool === "measure-area") && (
+                <LeituraMedicao
+                  tool={tool}
+                  lineLen={lineLen}
+                  areaFmt={areaFmt}
+                  onClear={clearDraw}
+                />
+              )}
+              {navegando && rota && (
+                <BannerNavegacao
+                  alvoNome={rota.pontos[Math.min(indiceRota, rota.pontos.length - 1)].nome}
+                  progressoAtual={Math.min(indiceRota, rota.pontos.length - 1)}
+                  progressoTotal={rota.pontos.length}
+                  status={navStatus}
+                  velocidadeMS={velMS}
+                  onCentralizar={() => {
+                    const alvo = rota.pontos[Math.min(indiceRota, rota.pontos.length - 1)];
+                    flyTo(alvo.lng, alvo.lat, 16);
+                  }}
+                  onParar={pararNavegacao}
+                />
+              )}
+            </div>
+          )}
+
+          {/* HUD superior desktop: UMA única coluna à esquerda — os painéis
+              empilham por fluxo (sem offsets fixos, sem sobreposição) e os
+              painéis dobráveis liberam o mapa quando fechados. */}
+          {!telaLimpa && (
+            <div className="absolute left-4 top-4 z-10 hidden w-[320px] flex-col gap-2 md:flex">
+              {telaVis.coordenadas && (
+                <PainelCentro
+                  center={center}
+                  decl={decl}
+                  aberto={painelAberto.centro}
+                  onAlternar={() => setPainelAberto((p) => ({ ...p, centro: !p.centro }))}
+                  onCopy={(t) => copy(t)}
+                />
+              )}
+              {telaVis.posicao && (
+                <PainelPosicao
+                  userPos={userPos}
+                  aberto={painelAberto.posicao}
+                  onAlternar={() => setPainelAberto((p) => ({ ...p, posicao: !p.posicao }))}
+                  onCentrar={() => {
+                    if (!userPos) return toast.error(t("Sem localização disponível"));
+                    flyTo(userPos.lng, userPos.lat, 15);
+                  }}
+                  onUltimoLocal={() => {
+                    try {
+                      const raw = localStorage.getItem("tgis:last-position");
+                      if (!raw) return toast.error(t("Nenhum local salvo"));
+                      const p = JSON.parse(raw) as { lng: number; lat: number };
+                      flyTo(p.lng, p.lat);
+                    } catch {
+                      toast.error(t("Nenhum local salvo"));
+                    }
+                  }}
+                />
+              )}
+              {chipRadar}
+            </div>
+          )}
           {/* Banner de navegação desktop: centro superior, entre os painéis
               da esquerda e o alternador/hambúrguer da direita. */}
-          {navegando && rota && (
+          {navegando && rota && !telaLimpa && (
             <div className="absolute left-1/2 top-4 z-10 hidden w-[min(440px,40vw)] -translate-x-1/2 md:block">
               <BannerNavegacao
                 alvoNome={rota.pontos[Math.min(indiceRota, rota.pontos.length - 1)].nome}
@@ -2239,7 +2342,7 @@ export default function MapShell() {
               />
             </div>
           )}
-          {(tool === "measure-line" || tool === "measure-area") && (
+          {(tool === "measure-line" || tool === "measure-area") && !telaLimpa && (
             <div className="absolute left-1/2 top-32 z-10 hidden -translate-x-1/2 md:block">
               <LeituraMedicao tool={tool} lineLen={lineLen} areaFmt={areaFmt} onClear={clearDraw} />
             </div>
@@ -2247,7 +2350,7 @@ export default function MapShell() {
 
           {/* Mira central (crosshair): fixa no centro do mapa, não interativa —
               igual à do Zoom Earth, para leitura de coordenadas do PainelCentro. */}
-          {modoMapa === "tatico" && telaVis.mira && ready && (
+          {modoMapa === "tatico" && telaVis.mira && ready && !telaLimpa && (
             <div
               data-test="mira-central"
               className="pointer-events-none absolute left-1/2 top-1/2 z-[5] -translate-x-1/2 -translate-y-1/2"
@@ -2270,76 +2373,82 @@ export default function MapShell() {
             </div>
           )}
 
-          {/* Alternador de modo + hambúrguer (desktop, canto superior direito) */}
-          <div
-            className="absolute right-4 top-4 z-10 hidden items-start gap-2 md:flex"
-            data-test="modo-mapa-desktop"
-          >
-            {botaoMenu}
-            <MapModeSwitch modo={modoMapa} onTrocar={(m) => updatePrefs({ mapMode: m })} />
-          </div>
+          {/* Alternador de modo + hambúrguer + tela limpa (desktop, canto superior direito) */}
+          {!telaLimpa && (
+            <div
+              className="absolute right-4 top-4 z-10 hidden items-start gap-2 md:flex"
+              data-test="modo-mapa-desktop"
+            >
+              <BotaoTelaLimpa limpa={false} onAlternar={alternarTelaLimpa} />
+              {botaoMenu}
+              <MapModeSwitch modo={modoMapa} onTrocar={(m) => updatePrefs({ mapMode: m })} />
+            </div>
+          )}
 
-          {/* Right-side action rail — em 2 colunas no desktop para nunca
-              alcançar os cantos inferiores (bússola, gráfico, atribuição). */}
-          <div
-            className={`absolute right-2 top-[calc(0.5rem+env(safe-area-inset-top))] z-10 max-h-[calc(100dvh-17rem)] flex-col gap-1 overflow-y-auto md:top-[13.75rem] md:grid md:gap-2 md:max-h-[calc(100dvh-19.75rem)] md:grid-cols-2 ${
-              telaVis.ferramentas ? "flex" : "hidden"
-            }`}
-          >
-            <RailBtn
-              icon={Radar}
-              label="Osiris"
-              onClick={() => {
-                setHubSecao(undefined);
-                setOpenSheet("hub");
-                carregarBoletim();
-              }}
-            />
-            <RailBtn
-              icon={Newspaper}
-              label="Boletim"
-              active={radarEm > 0}
-              badge={radarEm}
-              onClick={() => {
-                setOpenSheet("boletim");
-                carregarBoletim();
-              }}
-            />
-            <RailBtn icon={Layers} label="Camadas" onClick={() => setOpenSheet("layers")} />
-            <RailBtn icon={Navigation2} label="Ir para" onClick={() => setOpenSheet("goto")} />
-            <RailBtn icon={Ruler} label="Medir" onClick={() => setOpenSheet("measure")} />
-            <RailBtn
-              icon={MapPin}
-              label="Marcador"
-              active={tool === "marker"}
-              onClick={() => {
-                setTool(tool === "marker" ? "none" : "marker");
-                toast.message(
-                  tool === "marker"
-                    ? t("Ferramenta de marcador desativada")
-                    : t("Toque no mapa para marcar um waypoint"),
-                );
-              }}
-            />
-            <RailBtn
-              icon={Compass}
-              label="Bússola"
-              active={compassMode !== "mini"}
-              onClick={() => setCompassMode(compassMode === "mini" ? "panel" : "mini")}
-            />
-            <RailBtn
-              icon={Globe}
-              label="Globo"
-              active={projecao === "globe"}
-              onClick={alternarProjecao}
-            />
-            <RailBtn icon={Eraser} label="Limpar" onClick={limparTela} />
-          </div>
+          {/* Right-side action rail — 2 colunas no desktop (mantém os alvos
+              de toque de 56px da glove-tap sem alcançar os cantos inferiores;
+              o max-h corrigido agora de verdade é a salvaguarda). */}
+          {!telaLimpa && (
+            <div
+              className={`absolute right-2 top-[calc(0.5rem+env(safe-area-inset-top))] z-10 max-h-[calc(100dvh_-_17rem)] flex-col gap-1 overflow-y-auto md:top-[13.75rem] md:grid md:gap-2 md:max-h-[calc(100dvh_-_19.75rem)] md:grid-cols-2 ${
+                telaVis.ferramentas ? "flex" : "hidden"
+              }`}
+            >
+              <RailBtn
+                icon={Radar}
+                label="Osiris"
+                onClick={() => {
+                  setHubSecao(undefined);
+                  setOpenSheet("hub");
+                  carregarBoletim();
+                }}
+              />
+              <RailBtn
+                icon={Newspaper}
+                label="Boletim"
+                active={radarEm > 0}
+                badge={radarEm}
+                onClick={() => {
+                  setOpenSheet("boletim");
+                  carregarBoletim();
+                }}
+              />
+              <RailBtn icon={Layers} label="Camadas" onClick={() => setOpenSheet("layers")} />
+              <RailBtn icon={Navigation2} label="Ir para" onClick={() => setOpenSheet("goto")} />
+              <RailBtn icon={Ruler} label="Medir" onClick={() => setOpenSheet("measure")} />
+              <RailBtn
+                icon={MapPin}
+                label="Marcador"
+                active={tool === "marker"}
+                onClick={() => {
+                  setTool(tool === "marker" ? "none" : "marker");
+                  toast.message(
+                    tool === "marker"
+                      ? t("Ferramenta de marcador desativada")
+                      : t("Toque no mapa para marcar um waypoint"),
+                  );
+                }}
+              />
+              <RailBtn
+                icon={Compass}
+                label="Bússola"
+                active={compassMode !== "mini"}
+                onClick={() => setCompassMode(compassMode === "mini" ? "panel" : "mini")}
+              />
+              <RailBtn
+                icon={Globe}
+                label="Globo"
+                active={projecao === "globe"}
+                onClick={alternarProjecao}
+              />
+              <RailBtn icon={Eraser} label="Limpar" onClick={limparTela} />
+            </div>
+          )}
 
           {/* Elevation chart — no desktop centrado embaixo, longe do rail
               (direita) e da bússola (esquerda). Sobe quando a redline está
               ativa para não cobrir o letreiro. */}
-          {elevationData.length > 1 && (
+          {elevationData.length > 1 && !telaLimpa && (
             <div
               className={`absolute left-2 right-2 z-10 hud-panel rounded-md p-3 md:left-1/2 md:right-auto md:w-[420px] md:-translate-x-1/2 ${
                 telaVis.redline
@@ -2391,7 +2500,7 @@ export default function MapShell() {
 
           {/* New marker dialog — centrado embaixo no desktop (mesma faixa do
               gráfico de elevação, que fica oculto enquanto o diálogo abre). */}
-          {newMarker && (
+          {newMarker && !telaLimpa && (
             <div
               className={`absolute left-2 right-2 z-20 hud-panel rounded-md p-4 space-y-3 md:left-1/2 md:right-auto md:w-96 md:-translate-x-1/2 ${
                 telaVis.redline
@@ -3313,7 +3422,7 @@ export default function MapShell() {
       {/* Bússola flutuante sobre o mapa (só no modo tático, se visível).
           No desktop fica no canto INFERIOR ESQUERDO, acima da escala — o
           canto direito pertence ao rail de ações e nunca é coberto. */}
-      {modoMapa === "tatico" && telaVis.bussola && (
+      {modoMapa === "tatico" && telaVis.bussola && !telaLimpa && (
         <div
           className={
             compassMode === "full"
@@ -3323,7 +3432,7 @@ export default function MapShell() {
                   // colunas — o painel fica 148px afastado da borda, entre
                   // ele e o centro, sempre acima da atribuição).
                   compassMode === "panel"
-                    ? "right-[5.5rem] top-[20.5rem] bottom-8 md:right-[10.5rem] md:top-auto md:bottom-14"
+                    ? "right-[5.5rem] top-[20.5rem] bottom-8 md:right-[13.5rem] md:top-auto md:bottom-14"
                     : "right-2 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:left-4 md:right-auto md:bottom-11"
                 } ${elevationData.length > 1 || newMarker ? "hidden md:block" : "block"}`
           }
@@ -3474,34 +3583,37 @@ export default function MapShell() {
 
       {/* Posição travada: chip flutuante para ver e destravar quando a seção
           MAPA do cartão não está à vista (miniatura, Osiris ou bússola oculta) */}
-      {posicaoTravada && (compassMode === "mini" || modoMapa !== "tatico" || !telaVis.bussola) && (
-        <div
-          data-test="mapa-travado"
-          className={`absolute left-2 z-20 md:bottom-12 md:left-1/2 md:-translate-x-1/2 ${
-            telaVis.redline && modoMapa === "tatico"
-              ? "bottom-[calc(6.25rem+env(safe-area-inset-bottom))]"
-              : "bottom-[calc(4.75rem+env(safe-area-inset-bottom))]"
-          }`}
-        >
-          <button
-            type="button"
-            onClick={destravarPosicao}
-            title={t("Destravar a posição do mapa")}
-            aria-label={t("Destravar a posição do mapa")}
-            className="hud-panel mono flex items-center gap-1.5 rounded-full px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-tactical-green shadow-lg"
+      {posicaoTravada &&
+        !telaLimpa &&
+        (compassMode === "mini" || modoMapa !== "tatico" || !telaVis.bussola) && (
+          <div
+            data-test="mapa-travado"
+            className={`absolute left-2 z-20 md:bottom-12 md:left-1/2 md:-translate-x-1/2 ${
+              telaVis.redline && modoMapa === "tatico"
+                ? "bottom-[calc(6.25rem+env(safe-area-inset-bottom))]"
+                : "bottom-[calc(4.75rem+env(safe-area-inset-bottom))]"
+            }`}
           >
-            <Lock className="h-3 w-3 shrink-0" />
-            <span>
-              {formatDecimalDegrees(posicaoTravada.lat)}, {formatDecimalDegrees(posicaoTravada.lng)}
-            </span>
-            <X className="h-3 w-3 shrink-0" />
-          </button>
-        </div>
-      )}
+            <button
+              type="button"
+              onClick={destravarPosicao}
+              title={t("Destravar a posição do mapa")}
+              aria-label={t("Destravar a posição do mapa")}
+              className="hud-panel mono flex items-center gap-1.5 rounded-full px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-tactical-green shadow-lg"
+            >
+              <Lock className="h-3 w-3 shrink-0" />
+              <span>
+                {formatDecimalDegrees(posicaoTravada.lat)},{" "}
+                {formatDecimalDegrees(posicaoTravada.lng)}
+              </span>
+              <X className="h-3 w-3 shrink-0" />
+            </button>
+          </div>
+        )}
 
       {/* Redline do boletim: letreiro fixo na barra inferior com TODAS as
           informações do Boletim de Inteligência e da bússola em rotação. */}
-      {modoMapa === "tatico" && telaVis.redline && (
+      {modoMapa === "tatico" && telaVis.redline && !telaLimpa && (
         <RedlineBoletim
           heading={heading}
           declination={decl}
@@ -3556,11 +3668,11 @@ function RailBtn({
     <button
       onClick={onClick}
       title={t(label)}
-      className={`glove-tap hud-panel relative rounded-md flex flex-col items-center justify-center gap-0.5 px-2 py-0.5 md:py-1 mono text-[10px] ${
+      className={`glove-tap hud-panel relative rounded-md flex flex-col items-center justify-center gap-0.5 px-2 py-0.5 md:py-1 md:flex-row md:gap-1.5 md:px-2.5 mono text-[10px] ${
         active ? "text-tactical-orange border-tactical-orange" : "text-foreground"
       }`}
     >
-      <Icon className="h-4 w-4 md:h-5 md:w-5" />
+      <Icon className="h-4 w-4 md:h-[18px] md:w-[18px]" />
       <span className="uppercase tracking-wider">{t(label)}</span>
       {badge != null && badge > 0 && (
         <span
@@ -3574,21 +3686,85 @@ function RailBtn({
   );
 }
 
+/**
+ * Botão do MODO MAPA LIMPO — oculta todos os elementos da tela (HUD, rail,
+ * bússola, redline, painéis) deixando só o mapa à vista, como no Zoom Earth
+ * em tela cheia; um segundo toque restaura tudo exatamente como estava.
+ */
+function BotaoTelaLimpa({ limpa, onAlternar }: { limpa: boolean; onAlternar: () => void }) {
+  const { t } = useI18n();
+  return (
+    <button
+      type="button"
+      title={limpa ? t("Restaurar elementos da tela") : t("Limpar a tela (só o mapa)")}
+      aria-label={limpa ? t("Restaurar elementos da tela") : t("Limpar a tela (só o mapa)")}
+      data-test={limpa ? "btn-tela-restaurar" : "btn-tela-limpa"}
+      onClick={onAlternar}
+      className={`glove-tap hud-panel flex h-[30px] w-[36px] items-center justify-center rounded-md ${
+        limpa ? "text-tactical-orange ring-1 ring-tactical-orange/60" : "text-foreground"
+      }`}
+    >
+      {limpa ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+    </button>
+  );
+}
+
 /** Painel de coordenadas do centro do mapa (compartilhado entre mobile e desktop). */
 function PainelCentro({
   center,
   decl,
+  aberto,
+  onAlternar,
   onCopy,
 }: {
   center: [number, number];
   decl: number;
+  /** Dobrado: mostra só o cabeçalho com o MGRS do momento. */
+  aberto: boolean;
+  onAlternar: () => void;
   onCopy: (t: string) => void;
 }) {
   const { t: trad } = useI18n();
+  if (!aberto) {
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onAlternar}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onAlternar();
+          }
+        }}
+        data-test="painel-centro"
+        aria-expanded={false}
+        className="glove-tap hud-panel flex cursor-pointer items-center justify-between gap-2 rounded-md px-3 py-1.5 mono text-xs"
+      >
+        <span className="font-bold tracking-wider text-tactical-orange">{trad("CENTRO")}</span>
+        <span className="truncate text-[11px] text-foreground">
+          {formatMGRS(center[0], center[1])}
+        </span>
+        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      </div>
+    );
+  }
   return (
-    <div className="hud-panel rounded-md p-2 mono text-xs" data-test="painel-centro">
+    <div
+      className="hud-panel rounded-md p-2 mono text-xs"
+      data-test="painel-centro"
+      aria-expanded={true}
+    >
       <div className="flex items-center justify-between text-tactical-orange">
-        <span className="font-bold tracking-wider">{trad("CENTRO")}</span>
+        <button
+          type="button"
+          onClick={onAlternar}
+          title={trad("Recolher painel")}
+          className="glove-tap flex items-center gap-1.5 font-bold tracking-wider"
+        >
+          <ChevronUp className="h-3.5 w-3.5" />
+          {trad("CENTRO")}
+        </button>
         <span>Δ {formatSignedDegrees(decl)}</span>
       </div>
       <div className="grid grid-cols-[60px_1fr] gap-x-2 mt-1 text-foreground">
@@ -3623,18 +3799,61 @@ type MapShellUserPos = { lng: number; lat: number; alt: number | null; acc: numb
 /** Painel da posição atual do usuário (compartilhado entre mobile e desktop). */
 function PainelPosicao({
   userPos,
+  aberto,
+  onAlternar,
   onCentrar,
   onUltimoLocal,
 }: {
   userPos: MapShellUserPos;
+  /** Dobrado: mostra só o cabeçalho com o estado do GPS. */
+  aberto: boolean;
+  onAlternar: () => void;
   onCentrar: () => void;
   onUltimoLocal: () => void;
 }) {
   const { t } = useI18n();
+  if (!aberto) {
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onAlternar}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onAlternar();
+          }
+        }}
+        data-test="painel-posicao"
+        aria-expanded={false}
+        className="glove-tap hud-panel flex cursor-pointer items-center justify-between gap-2 rounded-md px-3 py-1.5 mono text-xs"
+      >
+        <span className="font-bold tracking-wider text-sky-400">{t("MINHA POSIÇÃO")}</span>
+        <span className="truncate text-[11px] text-foreground">
+          {userPos
+            ? `${formatDecimalDegrees(userPos.lat)}, ${formatDecimalDegrees(userPos.lng)}`
+            : t("aguardando sinal")}
+        </span>
+        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+      </div>
+    );
+  }
   return (
-    <div className="hud-panel rounded-md p-2 mono text-xs" data-test="painel-posicao">
+    <div
+      className="hud-panel rounded-md p-2 mono text-xs"
+      data-test="painel-posicao"
+      aria-expanded={true}
+    >
       <div className="flex items-center justify-between text-sky-400">
-        <span className="font-bold tracking-wider">{t("MINHA POSIÇÃO")}</span>
+        <button
+          type="button"
+          onClick={onAlternar}
+          title={t("Recolher painel")}
+          className="glove-tap flex items-center gap-1.5 font-bold tracking-wider"
+        >
+          <ChevronUp className="h-3.5 w-3.5" />
+          {t("MINHA POSIÇÃO")}
+        </button>
         <span>{userPos ? `± ${formatElevation(userPos.acc)}` : t("aguardando sinal")}</span>
       </div>
       <div className="mt-1 grid grid-cols-3 gap-2 text-foreground">
@@ -3648,14 +3867,14 @@ function PainelPosicao({
       <div className="mt-2 flex gap-2">
         <button
           type="button"
-          className="glove-tap flex-1 rounded border border-sky-400/60 text-sky-400 py-1 uppercase tracking-wider"
+          className="glove-tap flex-1 rounded border border-sky-400/60 py-1 uppercase tracking-wider text-sky-400"
           onClick={onCentrar}
         >
           {t("Centrar em mim")}
         </button>
         <button
           type="button"
-          className="glove-tap flex-1 rounded border border-border text-muted-foreground py-1 uppercase tracking-wider"
+          className="glove-tap flex-1 rounded border border-border py-1 uppercase tracking-wider text-muted-foreground"
           onClick={onUltimoLocal}
         >
           {t("Último local")}
@@ -3704,6 +3923,37 @@ function LeituraMedicao({
       </button>
     </div>
   );
+}
+
+/**
+ * Popup de coordenadas do clique — paridade Zoom Earth: clicar num trecho
+ * vazio do mapa revela DD · DMS · MGRS do ponto, com cópia a um toque.
+ */
+async function abrirPopupCoordenadas(map: maplibregl.Map, lngLat: { lng: number; lat: number }) {
+  const ml = await import("maplibre-gl");
+  const dd = formatDD(lngLat.lng, lngLat.lat);
+  const dms = formatDMS(lngLat.lng, lngLat.lat);
+  const mgrs = formatMGRS(lngLat.lng, lngLat.lat);
+  const el = document.createElement("div");
+  el.className = "intel-popup";
+  el.innerHTML = `
+    <div class="font-bold text-tactical-orange mono">${tGlobal("COORDENADA")}</div>
+    <div class="mt-1 space-y-0.5 mono text-[11px]">
+      <div class="flex items-center justify-between gap-2"><span class="text-muted-foreground">DD</span><span class="truncate">${dd}</span><button data-copiar="${dd}" class="text-muted-foreground hover:text-foreground" aria-label="${tGlobal("Copiar")}">⧉</button></div>
+      <div class="flex items-center justify-between gap-2"><span class="text-muted-foreground">DMS</span><span class="truncate">${dms}</span><button data-copiar="${dms}" class="text-muted-foreground hover:text-foreground" aria-label="${tGlobal("Copiar")}">⧉</button></div>
+      <div class="flex items-center justify-between gap-2"><span class="text-muted-foreground">MGRS</span><span class="truncate">${mgrs}</span><button data-copiar="${mgrs}" class="text-muted-foreground hover:text-foreground" aria-label="${tGlobal("Copiar")}">⧉</button></div>
+    </div>`;
+  el.querySelectorAll<HTMLButtonElement>("button[data-copiar]").forEach((b) => {
+    b.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      void navigator.clipboard?.writeText(b.dataset.copiar ?? "");
+      toast.success(tGlobal("Copiado"), { description: b.dataset.copiar });
+    });
+  });
+  new ml.Popup({ closeButton: true, maxWidth: "240px", offset: 8 })
+    .setLngLat(lngLat)
+    .setDOMContent(el)
+    .addTo(map);
 }
 
 function copy(t: string) {

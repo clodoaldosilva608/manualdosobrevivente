@@ -116,7 +116,7 @@ const CAMADAS_EM_ORDEM = [
 ];
 
 /** Camadas clicáveis com popup (exclui apenas rótulos). */
-const CAMADAS_COM_POPUP = CAMADAS_EM_ORDEM.filter(
+export const CAMADAS_COM_POPUP = CAMADAS_EM_ORDEM.filter(
   (id) => !id.endsWith("-label") && id !== CAMADA_ISS_PEGADA && id !== CAMADA_ESTREITO_ANEL,
 );
 

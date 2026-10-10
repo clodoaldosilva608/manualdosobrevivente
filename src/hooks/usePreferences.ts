@@ -50,6 +50,10 @@ export interface Preferences {
    * contribuições voluntárias (/colaboradores); nunca por assinatura.
    */
   pro: boolean;
+  /** Tela limpa: só o mapa à vista — um toque traz todos os elementos de volta. */
+  telaLimpa: boolean;
+  /** Versão das preferências (migrações aplicadas a quem já usava o app). */
+  versaoPrefs: number;
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -70,9 +74,33 @@ export const DEFAULT_PREFERENCES: Preferences = {
   perfil: "nenhum",
   wizardPerfilFeito: false,
   pro: false,
+  telaLimpa: false,
+  versaoPrefs: 2,
 };
 
+/** Versão atual das migrações de preferências (ver aplicarMigracoes). */
+const VERSAO_PREFS = 2;
+
 const KEY = "preferences";
+
+/**
+ * Migrações de preferências: ajustes que precisam alcançar também quem já
+ * usava o aplicativo (os defaults só valem para instalação nova).
+ *
+ * v2 — paridade Zoom Earth: radar de chuva e ciclones ligados por padrão
+ *      (eram opt-in; quem abria o mapa não via nenhum elemento de clima).
+ */
+function aplicarMigracoes(
+  salvas: Partial<Preferences> | null | undefined,
+): Partial<Preferences> | null {
+  if (!salvas) return salvas ?? null;
+  const versao = typeof salvas.versaoPrefs === "number" ? salvas.versaoPrefs : 1;
+  const migrado: Partial<Preferences> = { ...salvas, versaoPrefs: VERSAO_PREFS };
+  if (versao < 2 && salvas.intelVis) {
+    migrado.intelVis = { ...salvas.intelVis, radar: true, ciclones: true };
+  }
+  return migrado;
+}
 
 export function usePreferences() {
   const [prefs, setPrefs] = useState<Preferences>(DEFAULT_PREFERENCES);
@@ -83,13 +111,14 @@ export function usePreferences() {
     getSetting<Partial<Preferences>>(KEY)
       .then((v) => {
         if (!alive) return;
+        const salvas = aplicarMigracoes(v);
         setPrefs({
           ...DEFAULT_PREFERENCES,
-          ...(v ?? {}),
-          intelVis: { ...INTEL_VIS_PADRAO, ...(v?.intelVis ?? {}) },
-          intelKeys: { ...INTEL_CHAVES_PADRAO, ...(v?.intelKeys ?? {}) },
-          osirisVis: { ...VIS_OSIRIS_PADRAO, ...(v?.osirisVis ?? {}) },
-          telaVis: { ...TELA_VIS_PADRAO, ...(v?.telaVis ?? {}) },
+          ...(salvas ?? {}),
+          intelVis: { ...INTEL_VIS_PADRAO, ...(salvas?.intelVis ?? {}) },
+          intelKeys: { ...INTEL_CHAVES_PADRAO, ...(salvas?.intelKeys ?? {}) },
+          osirisVis: { ...VIS_OSIRIS_PADRAO, ...(salvas?.osirisVis ?? {}) },
+          telaVis: { ...TELA_VIS_PADRAO, ...(salvas?.telaVis ?? {}) },
         });
         setLoaded(true);
       })
@@ -97,6 +126,31 @@ export function usePreferences() {
     return () => {
       alive = false;
     };
+  }, []);
+
+  // Outras instâncias do hook (ex.: AppNav reagindo ao "tela limpa" alternado
+  // no MapShell) acompanham as mudanças pelo barramento de dados locais.
+  useEffect(() => {
+    const recarregar = async () => {
+      try {
+        const v = await getSetting<Partial<Preferences>>(KEY);
+        setPrefs((atual) => {
+          const proximo: Preferences = {
+            ...DEFAULT_PREFERENCES,
+            ...(v ?? {}),
+            intelVis: { ...INTEL_VIS_PADRAO, ...(v?.intelVis ?? {}) },
+            intelKeys: { ...INTEL_CHAVES_PADRAO, ...(v?.intelKeys ?? {}) },
+            osirisVis: { ...VIS_OSIRIS_PADRAO, ...(v?.osirisVis ?? {}) },
+            telaVis: { ...TELA_VIS_PADRAO, ...(v?.telaVis ?? {}) },
+          };
+          return JSON.stringify(proximo) === JSON.stringify(atual) ? atual : proximo;
+        });
+      } catch {
+        /* armazenamento indisponível */
+      }
+    };
+    window.addEventListener("tactical-gis:local-data-changed", recarregar);
+    return () => window.removeEventListener("tactical-gis:local-data-changed", recarregar);
   }, []);
 
   const update = useCallback(async (patch: Partial<Preferences>) => {

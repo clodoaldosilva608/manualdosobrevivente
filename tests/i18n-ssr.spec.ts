@@ -53,7 +53,7 @@ describe("SSR em pt-BR", () => {
     "/offline",
     "/perfil",
     "/deposito",
-    "/pro",
+    // "/pro" — rota removida com o fim do Manual Pro (o app é 100% gratuito)
     "/notas",
   ]) {
     it(`${path} declara lang="pt-BR"`, async () => {

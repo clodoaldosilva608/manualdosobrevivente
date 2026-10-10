@@ -846,4 +846,76 @@ export const DIC_RU: Record<string, string> = {
   "Aguardando sessão…": "Ожидание сессии…",
   "Apoie o Manual": "Поддержать Мануал",
   "Contribua para manter o app gratuito": "Помогите сохранить приложение бесплатным",
+  "Acesso do operador — identifique-se para entrar no mapa":
+    "Доступ оператора — войдите, чтобы открыть карту",
+  "Sua conta sincroniza mochila, notas e rotas entre aparelhos.":
+    "Ваш аккаунт синхронизирует рюкзак, заметки и маршруты между устройствами.",
+  "Confira seu e-mail": "Проверьте свою электронную почту",
+  "Enviamos um link de confirmação para o seu e-mail. Abra-o para ativar a conta e voltar ao aplicativo.":
+    "Мы отправили ссылку для подтверждения на вашу почту. Откройте её, чтобы активировать аккаунт и вернуться в приложение.",
+  "Reenviar e-mail": "Отправить письмо снова",
+  "Reenviando…": "Отправка…",
+  "Já confirmei": "Я подтвердил",
+  "Ainda não confirmado": "Ещё не подтверждено",
+  "Abra o link que enviamos ao seu e-mail e tente novamente.":
+    "Откройте ссылку, которую мы отправили на вашу почту, и попробуйте снова.",
+  "Entre na sua conta para escolher um personagem e personalizar o perfil.":
+    "Войдите в свой аккаунт, чтобы выбрать персонажа и настроить профиль.",
+  "Escolha seu personagem": "Выберите своего персонажа",
+  "Esse avatar representa você no Manual. Escolha um personagem do elenco ou use a sua própria foto.":
+    "Этот аватар представляет вас в Мануале. Выберите персонажа из состава или используйте своё фото.",
+  "Avatar atual": "Текущий аватар",
+  "Usar minha foto": "Использовать своё фото",
+  "Personagens disponíveis": "Доступные персонажи",
+  "Avatar atualizado": "Аватар обновлён",
+  "Falha ao salvar o avatar": "Не удалось сохранить аватар",
+  "Falha ao enviar a foto": "Не удалось загрузить фото",
+  "O elenco de personagens está sendo montado — por enquanto, use a sua própria foto.":
+    "Состав персонажей формируется — пока используйте своё фото.",
+  "Agora não": "Не сейчас",
+  "Modo mapa limpo": "Режим чистой карты",
+  "Só o mapa à vista — toque no botão de olho para trazer tudo de volta.":
+    "На экране только карта — нажмите кнопку с глазом, чтобы вернуть всё обратно.",
+  "Todos os elementos voltaram ao mapa.": "Все элементы вернулись на карту.",
+  "Toque nos pontos do mapa para ver as informações":
+    "Коснитесь точек на карте, чтобы увидеть информацию",
+  "Terremotos, alertas, focos de calor, ciclones, voos e mais — escolha camadas em Camadas.":
+    "Землетрясения, оповещения, очаги тепла, циклоны, рейсы и другое — выбирайте слои в «Слои».",
+  "Restaurar elementos da tela": "Восстановить элементы экрана",
+  "Limpar a tela (só o mapa)": "Очистить экран (только карта)",
+  "Recolher painel": "Свернуть панель",
+  COORDENADA: "КООРДИНАТА",
+  Personagens: "Персонажи",
+  "Contas bloqueadas": "Заблокированные аккаунты",
+  Bloqueado: "Заблокирован",
+  "Bloquear conta no painel": "Заблокировать аккаунт в панели",
+  "Perfil bloqueado": "Профиль заблокирован",
+  "Perfil desbloqueado": "Профиль разблокирован",
+  "Personagens ativos aparecem na escolha de avatar ao criar conta e em Conta › Perfil na nuvem. Você pode enviar uma imagem ou colar uma URL.":
+    "Активные персонажи появляются при выборе аватара при регистрации и в «Аккаунт › Облачный профиль». Можно загрузить изображение или вставить URL.",
+  "Novo personagem": "Новый персонаж",
+  "Carregando personagens…": "Загрузка персонажей…",
+  "Nenhum personagem cadastrado ainda — o elenco começa aqui.":
+    "Персонажей пока нет — состав начинается здесь.",
+  "sem descrição": "без описания",
+  "Excluir o personagem {nome}?": "Удалить персонажа {nome}?",
+  "Personagem excluído": "Персонаж удалён",
+  "Editar personagem": "Редактировать персонажа",
+  "Ex.: Guia da floresta": "Напр.: Лесной проводник",
+  "Imagem (URL ou upload)": "Изображение (URL или загрузка)",
+  Enviar: "Загрузить",
+  "Imagem enviada": "Изображение загружено",
+  "Falha ao enviar a imagem": "Не удалось загрузить изображение",
+  "Ativo (aparece no cadastro)": "Активен (виден при регистрации)",
+  "Prévia do personagem": "Предпросмотр персонажа",
+  "sem imagem": "без изображения",
+  "Prévia do avatar": "Предпросмотр аватара",
+  "Salvar personagem": "Сохранить персонажа",
+  "Informe o nome do personagem": "Укажите имя персонажа",
+  "Perfil na nuvem": "Облачный профиль",
+  "Personagem e foto que representam você entre os aparelhos.":
+    "Персонаж и фото, представляющие вас на всех устройствах.",
+  Personalizar: "Настроить",
+  Fechar: "Закрыть",
+  "Conta criada": "Аккаунт создан",
 };

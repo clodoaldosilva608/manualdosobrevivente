@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { usePreferences } from "@/hooks/usePreferences";
 
 const items = [
   { to: "/", label: "Mapa", icon: Map },
@@ -26,6 +27,10 @@ const items = [
 export function AppNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { t } = useI18n();
+  const { prefs } = usePreferences();
+  // Modo mapa limpo: sobre o mapa, a navegação some também — só o mapa à
+  // vista. Fora do mapa (ou com elementos restaurados), a barra volta.
+  if (prefs.telaLimpa && path === "/") return null;
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 hud-panel border-t pb-[env(safe-area-inset-bottom)] md:top-0 md:bottom-auto md:pb-0 md:pt-[env(safe-area-inset-top)] md:border-t-0 md:border-b">
       <ul className="grid grid-cols-8 items-stretch md:flex md:justify-start md:gap-1 md:px-3">

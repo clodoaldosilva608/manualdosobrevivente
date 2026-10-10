@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,9 @@ import {
   Settings,
   ShieldAlert,
   Trash2,
+  Upload,
   Users,
+  VenetianMask,
   XCircle,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
@@ -40,6 +42,13 @@ import {
   type Parceiro,
   type PerfilManual,
 } from "@/lib/colaboracao";
+import {
+  enviarImagemPersonagem,
+  excluirPersonagem,
+  listarPersonagensAdmin,
+  salvarPersonagem,
+  type Personagem,
+} from "@/lib/personagens";
 import {
   apagarPerfilAdmin,
   atualizarPerfilAdmin,
@@ -58,7 +67,7 @@ import { lerConfigPix, assinarNovasContribuicoes } from "@/lib/colaboracao";
 import { montarPixCopiaECola } from "@/lib/pix.brcode";
 
 /** Painel administrativo do Centro (outra aplicação do ecossistema). */
-const CENTRO_ADMIN_URL = "https://centrodesobrevivencia.lovable.app/admin";
+const CENTRO_ADMIN_URL = "https://centrodesobrevivencia.vercel.app/admin";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -70,13 +79,14 @@ export const Route = createFileRoute("/admin")({
   component: Admin,
 });
 
-type Secao = "visao" | "colaboracoes" | "usuarios" | "parceiros" | "config";
+type Secao = "visao" | "colaboracoes" | "usuarios" | "parceiros" | "personagens" | "config";
 
 const SECOES: { id: Secao; rotulo: string; icone: typeof LayoutDashboard }[] = [
   { id: "visao", rotulo: "Visão geral", icone: LayoutDashboard },
   { id: "colaboracoes", rotulo: "Colaborações", icone: HeartHandshake },
   { id: "usuarios", rotulo: "Usuários", icone: Users },
   { id: "parceiros", rotulo: "Parceiros", icone: Handshake },
+  { id: "personagens", rotulo: "Personagens", icone: VenetianMask },
   { id: "config", rotulo: "Configurações", icone: Settings },
 ];
 
@@ -214,6 +224,7 @@ function Admin() {
       {secao === "colaboracoes" && <SecaoColaboracoes />}
       {secao === "usuarios" && <SecaoUsuarios />}
       {secao === "parceiros" && <SecaoParceiros />}
+      {secao === "personagens" && <SecaoPersonagens />}
       {secao === "config" && <SecaoConfig />}
     </div>
   );
@@ -234,7 +245,7 @@ function SecaoVisao({ estatisticas }: { estatisticas: Estatisticas | null }) {
   }
   return (
     <div className="space-y-4" data-test="admin-visao">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
         <CartaoKpi rotulo={t("Usuários")} valor={String(estatisticas.usuarios)} />
         <CartaoKpi
           rotulo={t("Pendentes")}
@@ -245,6 +256,12 @@ function SecaoVisao({ estatisticas }: { estatisticas: Estatisticas | null }) {
         <CartaoKpi
           rotulo={t("Parceiros ativos")}
           valor={`${estatisticas.parceirosAtivos}/${estatisticas.parceirosTotal}`}
+        />
+        <CartaoKpi rotulo={t("Personagens")} valor={String(estatisticas.personagens)} />
+        <CartaoKpi
+          rotulo={t("Contas bloqueadas")}
+          valor={String(estatisticas.bloqueados)}
+          destaque={estatisticas.bloqueados > 0}
         />
       </div>
       <div className="rounded-md border border-border bg-card p-4">
@@ -500,6 +517,18 @@ function SecaoUsuarios() {
     }
   };
 
+  /** Bloqueia/desbloqueia o perfil no espelho (marcador administrativo). */
+  const trocarBloqueio = async (perfil: PerfilManual, bloqueado: boolean) => {
+    try {
+      await atualizarPerfilAdmin(perfil.id, { bloqueado });
+      toast.success(bloqueado ? t("Perfil bloqueado") : t("Perfil desbloqueado"));
+      await recarregar();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Falha na operação"));
+      await recarregar();
+    }
+  };
+
   const apagar = async (perfil: PerfilManual) => {
     if (
       !window.confirm(
@@ -546,17 +575,43 @@ function SecaoUsuarios() {
             className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-card p-3"
             data-test="admin-usuario"
           >
+            {perfil.avatar_url ? (
+              <img
+                src={perfil.avatar_url}
+                alt={perfil.nome_exibicao ?? perfil.email}
+                className="h-10 w-10 shrink-0 rounded-full border border-border object-cover"
+              />
+            ) : (
+              <div className="mono flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-background text-xs">
+                {(perfil.nome_exibicao ?? perfil.email).slice(0, 2).toUpperCase()}
+              </div>
+            )}
             <div className="min-w-0 flex-1">
               <p className="mono truncate font-bold">
                 {perfil.nome_exibicao ?? perfil.email}
                 {perfil.papel === "admin" && (
                   <Badge className="mono ml-2 text-[10px] uppercase">{t("Admin")}</Badge>
                 )}
+                {perfil.bloqueado && (
+                  <Badge variant="destructive" className="mono ml-2 text-[10px] uppercase">
+                    {t("Bloqueado")}
+                  </Badge>
+                )}
               </p>
               <p className="mono truncate text-[11px] text-muted-foreground">
                 {perfil.email} · {t("conta desde")}{" "}
                 {formatDateTime(new Date(perfil.created_at).getTime())}
               </p>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="mono text-[10px] uppercase text-muted-foreground">
+                {perfil.bloqueado ? t("Bloqueado") : t("Ativo")}
+              </span>
+              <Switch
+                checked={!!perfil.bloqueado}
+                onCheckedChange={(v) => void trocarBloqueio(perfil, v)}
+                aria-label={t("Bloquear conta no painel")}
+              />
             </div>
             <select
               value={perfil.papel}
@@ -923,6 +978,307 @@ function FormularioParceiro({
           className="w-full bg-tactical-orange text-background hover:bg-tactical-orange/90"
         >
           {ocupado ? t("Salvando…") : t("Salvar parceiro")}
+        </Button>
+      </DialogFooter>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Personagens — elenco de avatares escolhíveis no cadastro           */
+/* ------------------------------------------------------------------ */
+
+const PERSONAGEM_VAZIO: Personagem = {
+  id: "",
+  nome: "",
+  descricao: null,
+  url_imagem: null,
+  ativo: true,
+  ordem: 0,
+  created_at: "",
+};
+
+function SecaoPersonagens() {
+  const { t } = useI18n();
+  const [itens, setItens] = useState<Personagem[] | null>(null);
+  const [editando, setEditando] = useState<Personagem | null>(null);
+
+  const recarregar = useCallback(async () => {
+    try {
+      setItens(await listarPersonagensAdmin());
+    } catch {
+      setItens([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    void recarregar();
+  }, [recarregar]);
+
+  const alternarAtivo = async (personagem: Personagem) => {
+    try {
+      await salvarPersonagem({ ...personagem, ativo: !personagem.ativo });
+      await recarregar();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Falha na operação"));
+    }
+  };
+
+  const excluir = async (personagem: Personagem) => {
+    if (!window.confirm(t("Excluir o personagem {nome}?", { nome: personagem.nome }))) return;
+    try {
+      await excluirPersonagem(personagem.id);
+      toast.success(t("Personagem excluído"));
+      await recarregar();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Falha na operação"));
+    }
+  };
+
+  return (
+    <div className="space-y-3" data-test="admin-personagens">
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="text-sm text-muted-foreground">
+          {t(
+            "Personagens ativos aparecem na escolha de avatar ao criar conta e em Conta › Perfil na nuvem. Você pode enviar uma imagem ou colar uma URL.",
+          )}
+        </p>
+        <Button
+          className="glove-tap bg-tactical-orange text-background hover:bg-tactical-orange/90 ml-auto"
+          size="sm"
+          onClick={() => setEditando({ ...PERSONAGEM_VAZIO })}
+          data-test="admin-personagem-novo"
+        >
+          {t("Novo personagem")}
+        </Button>
+      </div>
+
+      {itens === null ? (
+        <p className="mono rounded-md border border-border bg-card p-5 text-sm text-muted-foreground">
+          {t("Carregando personagens…")}
+        </p>
+      ) : itens.length === 0 ? (
+        <p className="rounded-md border border-dashed border-border bg-card p-5 text-center text-sm text-muted-foreground">
+          {t("Nenhum personagem cadastrado ainda — o elenco começa aqui.")}
+        </p>
+      ) : (
+        itens.map((personagem) => (
+          <div
+            key={personagem.id}
+            className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-card p-3"
+            data-test="admin-personagem"
+          >
+            {personagem.url_imagem ? (
+              <img
+                src={personagem.url_imagem}
+                alt={personagem.nome}
+                className="h-12 w-12 shrink-0 rounded-full border border-border object-cover"
+              />
+            ) : (
+              <div className="mono flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-border bg-background text-xs">
+                {personagem.nome.slice(0, 2).toUpperCase()}
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="mono truncate font-bold">{personagem.nome}</p>
+              <p className="mono truncate text-[11px] text-muted-foreground">
+                {personagem.descricao ?? t("sem descrição")} · {t("ordem")} {personagem.ordem}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="mono text-[10px] uppercase text-muted-foreground">
+                {personagem.ativo ? t("Ativo") : t("Inativo")}
+              </span>
+              <Switch
+                checked={personagem.ativo}
+                onCheckedChange={() => void alternarAtivo(personagem)}
+              />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="glove-tap"
+              onClick={() => setEditando(personagem)}
+            >
+              <Pencil className="h-4 w-4" /> {t("Editar")}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="glove-tap text-destructive hover:text-destructive"
+              onClick={() => void excluir(personagem)}
+            >
+              <Trash2 className="h-4 w-4" /> {t("Excluir")}
+            </Button>
+          </div>
+        ))
+      )}
+
+      <Dialog open={editando !== null} onOpenChange={(aberto) => !aberto && setEditando(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          {editando && (
+            <FormularioPersonagem
+              personagem={editando}
+              onSalvo={async () => {
+                setEditando(null);
+                await recarregar();
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function FormularioPersonagem({
+  personagem,
+  onSalvo,
+}: {
+  personagem: Personagem;
+  onSalvo: () => Promise<void>;
+}) {
+  const { t } = useI18n();
+  const [nome, setNome] = useState(personagem.nome);
+  const [descricao, setDescricao] = useState(personagem.descricao ?? "");
+  const [urlImagem, setUrlImagem] = useState(personagem.url_imagem ?? "");
+  const [ordem, setOrdem] = useState(String(personagem.ordem));
+  const [ativo, setAtivo] = useState(personagem.ativo);
+  const [ocupado, setOcupado] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const arquivoRef = useRef<HTMLInputElement>(null);
+
+  const salvar = async () => {
+    if (!nome.trim()) {
+      toast.error(t("Informe o nome do personagem"));
+      return;
+    }
+    setOcupado(true);
+    try {
+      await salvarPersonagem({
+        ...personagem,
+        nome,
+        descricao,
+        url_imagem: urlImagem,
+        ordem: Number(ordem) || 0,
+        ativo,
+      });
+      toast.success(t("Personagem salvo"));
+      await onSalvo();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Falha na operação"));
+    } finally {
+      setOcupado(false);
+    }
+  };
+
+  const enviarImagem = async (arquivo: File) => {
+    setEnviando(true);
+    try {
+      const url = await enviarImagemPersonagem(arquivo);
+      setUrlImagem(url);
+      toast.success(t("Imagem enviada"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Falha ao enviar a imagem"));
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <DialogHeader>
+        <DialogTitle className="mono">
+          {personagem.id ? t("Editar personagem") : t("Novo personagem")}
+        </DialogTitle>
+      </DialogHeader>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1">
+          <Label htmlFor="personagem-nome">{t("Nome")}</Label>
+          <Input id="personagem-nome" value={nome} onChange={(e) => setNome(e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="personagem-ordem">{t("Ordem de exibição")}</Label>
+          <Input
+            id="personagem-ordem"
+            inputMode="numeric"
+            value={ordem}
+            onChange={(e) => setOrdem(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1 sm:col-span-2">
+          <Label htmlFor="personagem-descricao">{t("Descrição (opcional)")}</Label>
+          <Input
+            id="personagem-descricao"
+            value={descricao}
+            onChange={(e) => setDescricao(e.target.value)}
+            placeholder={t("Ex.: Guia da floresta")}
+          />
+        </div>
+        <div className="space-y-1 sm:col-span-2">
+          <Label htmlFor="personagem-url">{t("Imagem (URL ou upload)")}</Label>
+          <div className="flex gap-2">
+            <Input
+              id="personagem-url"
+              value={urlImagem}
+              onChange={(e) => setUrlImagem(e.target.value)}
+              placeholder="https://…"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="glove-tap shrink-0"
+              disabled={enviando}
+              onClick={() => arquivoRef.current?.click()}
+            >
+              {enviando ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Upload className="h-4 w-4" />
+              )}
+              {t("Enviar")}
+            </Button>
+            <input
+              ref={arquivoRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const arquivo = e.target.files?.[0];
+                if (arquivo) void enviarImagem(arquivo);
+                e.target.value = "";
+              }}
+            />
+          </div>
+        </div>
+        <div className="flex items-end gap-2 pb-1 sm:col-span-2">
+          <Switch checked={ativo} onCheckedChange={setAtivo} id="personagem-ativo" />
+          <Label htmlFor="personagem-ativo">{t("Ativo (aparece no cadastro)")}</Label>
+        </div>
+      </div>
+      <div className="flex items-center gap-3 rounded-md border border-border bg-background p-3">
+        {urlImagem ? (
+          <img
+            src={urlImagem}
+            alt={t("Prévia do personagem")}
+            className="h-14 w-14 rounded-full border border-border object-cover"
+          />
+        ) : (
+          <div className="mono flex h-14 w-14 items-center justify-center rounded-full border border-dashed border-border text-[10px] text-muted-foreground">
+            {t("sem imagem")}
+          </div>
+        )}
+        <span className="mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          {t("Prévia do avatar")}
+        </span>
+      </div>
+      <DialogFooter>
+        <Button
+          onClick={() => void salvar()}
+          disabled={ocupado}
+          className="w-full bg-tactical-orange text-background hover:bg-tactical-orange/90"
+        >
+          {ocupado ? t("Salvando…") : t("Salvar personagem")}
         </Button>
       </DialogFooter>
     </div>

@@ -26,6 +26,8 @@ import {
   type ContaLocal,
 } from "@/lib/conta";
 import { formatDateTime } from "@/lib/format";
+import { EscolherAvatar } from "@/components/EscolherAvatar";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/conta")({
   head: () => ({
@@ -560,6 +562,45 @@ function Perfil({
           </Button>
         </div>
       )}
+
+      <PerfilNuvem />
+    </div>
+  );
+}
+
+/**
+ * Perfil na nuvem (Supabase): avatar com personagens do elenco ou foto
+ * própria — a mesma escolha oferecida no cadastro. Sem sessão, mostra o
+ * convite para entrar.
+ */
+function PerfilNuvem() {
+  const { t } = useI18n();
+  const [expandido, setExpandido] = useState(false);
+  return (
+    <div
+      className="space-y-3 rounded-md border border-border bg-card p-4"
+      data-test="conta-perfil-nuvem"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="mono flex items-center gap-2 text-sm font-bold text-tactical-orange">
+            <CloudUpload className="h-4 w-4" /> {t("Perfil na nuvem")}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {t("Personagem e foto que representam você entre os aparelhos.")}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="glove-tap shrink-0"
+          onClick={() => setExpandido((v) => !v)}
+          data-test="conta-avatar-abrir"
+        >
+          {expandido ? t("Fechar") : t("Personalizar")}
+        </Button>
+      </div>
+      {expandido && <EscolherAvatar compacto permitirPular={false} onConcluir={() => undefined} />}
     </div>
   );
 }

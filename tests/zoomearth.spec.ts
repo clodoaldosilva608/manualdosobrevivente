@@ -56,8 +56,13 @@ describe("Satélite ao vivo (Zoom Earth), radar de chuva e mira central", () => 
     const alternadores = page.getByRole("switch", { name: /^Ativar camada / });
     expect(await alternadores.count()).toBe(19);
 
-    // Liga o radar: chip HUD nasce (mobile no fluxo superior, desktop oculto).
-    await page.getByRole("switch", { name: "Ativar camada Radar de chuva" }).click();
+    // Liga o radar (já nasce ligado por padrão — paridade Zoom Earth): o
+    // clique só acontece se a camada estiver desligada, para não inverter o
+    // estado. Chip HUD nasce (mobile no fluxo superior, desktop oculto).
+    const switchRadar = page.getByRole("switch", { name: "Ativar camada Radar de chuva" });
+    if ((await switchRadar.getAttribute("aria-checked")) !== "true") {
+      await switchRadar.click();
+    }
     await page.keyboard.press("Escape");
     await esperarContagem(page, "chip-radar", 2, 15_000);
 
@@ -76,9 +81,13 @@ describe("Satélite ao vivo (Zoom Earth), radar de chuva e mira central", () => 
     await page.waitForSelector(".maplibregl-canvas", { timeout: 30_000 });
     await esperarContagem(page, "chip-radar", 2, 20_000);
 
-    // Desliga pela folha para não sujar o estado do operador.
+    // Desliga pela folha para não sujar o estado do operador (só se estiver
+    // ligada — a câmera volta ao padrão do app).
     await page.locator('button[title="Camadas"]').click();
-    await page.getByRole("switch", { name: "Ativar camada Radar de chuva" }).click();
+    const switchRadarFinal = page.getByRole("switch", { name: "Ativar camada Radar de chuva" });
+    if ((await switchRadarFinal.getAttribute("aria-checked")) === "true") {
+      await switchRadarFinal.click();
+    }
     await page.keyboard.press("Escape");
     await esperarContagem(page, "chip-radar", 0);
 

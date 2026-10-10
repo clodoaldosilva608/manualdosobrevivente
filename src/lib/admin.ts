@@ -21,10 +21,12 @@ export interface Estatisticas {
   totalAprovado: number;
   parceirosAtivos: number;
   parceirosTotal: number;
+  personagens: number;
+  bloqueados: number;
 }
 
 export async function lerEstatisticas(): Promise<Estatisticas> {
-  const [usuarios, contribuicoes, parceiros] = await Promise.all([
+  const [usuarios, contribuicoes, parceiros, personagens, bloqueados] = await Promise.all([
     supabase.from("manual_perfil_usuarios").select("id", { count: "exact", head: true }),
     supabase
       .from("manual_contribuicoes")
@@ -32,6 +34,11 @@ export async function lerEstatisticas(): Promise<Estatisticas> {
       .order("created_at", { ascending: false })
       .limit(500),
     supabase.from("manual_parceiros").select("ativo", { count: "exact" }),
+    supabase.from("manual_personagens").select("ativo", { count: "exact" }),
+    supabase
+      .from("manual_perfil_usuarios")
+      .select("id", { count: "exact", head: true })
+      .eq("bloqueado", true),
   ]);
 
   const linhas = (contribuicoes.data ?? []) as { status: string; valor: number }[];
@@ -43,6 +50,8 @@ export async function lerEstatisticas(): Promise<Estatisticas> {
     totalAprovado: aprovadas.reduce((t, l) => t + Number(l.valor ?? 0), 0),
     parceirosAtivos: (parceiros.data ?? []).filter((p) => p.ativo).length,
     parceirosTotal: parceiros.count ?? 0,
+    personagens: personagens.count ?? 0,
+    bloqueados: bloqueados.count ?? 0,
   };
 }
 
@@ -104,7 +113,7 @@ export async function listarPerfisAdmin(busca = "") {
 
 export async function atualizarPerfilAdmin(
   id: string,
-  mudancas: Partial<Pick<PerfilManual, "papel" | "nome_exibicao" | "avatar_url">>,
+  mudancas: Partial<Pick<PerfilManual, "papel" | "nome_exibicao" | "avatar_url" | "bloqueado">>,
 ) {
   const { error } = await supabase.from("manual_perfil_usuarios").update(mudancas).eq("id", id);
   if (error) throw error;

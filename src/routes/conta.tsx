@@ -110,6 +110,8 @@ function Conta() {
         />
       )}
 
+      <PerfilNuvem />
+
       <div className="rounded-md border border-border bg-card p-4 space-y-2">
         <div className="mono flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-tactical-orange">
           <CloudUpload className="h-3.5 w-3.5" /> Sobre a sincronização futura
@@ -562,8 +564,6 @@ function Perfil({
           </Button>
         </div>
       )}
-
-      <PerfilNuvem />
     </div>
   );
 }

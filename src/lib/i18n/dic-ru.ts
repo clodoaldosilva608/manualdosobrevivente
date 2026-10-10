@@ -1184,4 +1184,49 @@ export const DIC_RU: Record<string, string> = {
   Parar: "Остановить",
   "Centralizar no mapa": "Центрировать на карте",
   "Parar navegação": "Остановить навигацию",
+  "Estilo de campo": "Полевой стиль",
+  "Responda sempre como um instrutor de campo: passos numerados e curtos, linguagem simples, e termine cada resposta com uma dica de segurança prática.":
+    "Отвечайте всегда как полевой инструктор: короткие нумерованные шаги, простой язык и в конце каждого ответа практический совет по безопасности.",
+  "Kit 72 horas": "Комплект на 72 часа",
+  "Quando eu pedir ajuda com mochila ou kit de emergência, monte a lista de 72 horas: 3 litros de água por pessoa por dia, alimentos não perecíveis, documentos protegidos, rádio, lanterna, pilhas, primeiros socorros, ferramenta multiuso, agasalho e higiene — adaptada ao meu perfil.":
+    "Когда я прошу помочь с рюкзаком или аварийным комплектом, составляйте список на 72 часа: 3 литра воды на человека в день, нескоропортящаяся еда, защищённые документы, рация, фонарь, батарейки, первая помощь, мультитул, тёплая одежда и гигиена — с учётом моего профиля.",
+  padrão: "по умолчанию",
+  "Instrução que a IA vai seguir": "Инструкция, которой ИИ будет следовать",
+  "Prompt atualizado": "Промпт обновлён",
+  "Skill atualizada": "Навык обновлён",
+  "Autenticação (Google e e-mail)": "Аутентификация (Google и эл. почта)",
+  "Reconsultar estado": "Проверить состояние снова",
+  "Consultando o painel…": "Проверяем панель…",
+  "Não consegui consultar o estado da autenticação agora — tente novamente.":
+    "Не удалось проверить состояние аутентификации — попробуйте снова.",
+  "E-mail e senha: ativo — o cadastro autentica na hora (a conta nasce confirmada pelo servidor, sem depender de e-mail).":
+    "Эл. почта и пароль: активно — регистрация аутентифицируется сразу (аккаунт подтверждается сервером, без письма).",
+  "Confirmação de e-mail: desligada no painel — cadastro autentica na hora.":
+    "Подтверждение почты: выключено в панели — регистрация аутентифицируется сразу.",
+  "Confirmação de e-mail: ligada no painel — o app contorna criando a conta já confirmada; ninguém fica preso em “confira seu e-mail”.":
+    "Подтверждение почты: включено в панели — приложение обходит это, создавая уже подтверждённый аккаунт; никто не застревает на «проверьте почту».",
+  "Login com Google: ATIVO — o botão “Continuar com Google” aparece no login sozinho.":
+    "Вход через Google: АКТИВЕН — кнопка «Продолжить с Google» появляется на входе сама.",
+  "Login com Google: ainda não ativado no painel — siga o passo a passo abaixo.":
+    "Вход через Google: ещё не включён в панели — следуйте шагам ниже.",
+  "Para ativar o Google (5 minutos):": "Чтобы включить Google (5 минут):",
+  "Em console.cloud.google.com → APIs e serviços → Credenciais → Criar credencial → ID do cliente OAuth → Aplicativo da Web.":
+    "В console.cloud.google.com → API и сервисы → Учётные данные → Создать учётные данные → ID клиента OAuth → Веб-приложение.",
+  "Em “URI de redirecionamento autorizado”, cole exatamente:":
+    "В «Разрешённый URI перенаправления» вставьте точно:",
+  "Copie o ID do cliente e o client secret gerados.":
+    "Скопируйте созданные ID клиента и client secret.",
+  "No painel do Supabase → Authentication → Sign In / Providers → Google: cole as duas credenciais e salve.":
+    "В панели Supabase → Authentication → Sign In / Providers → Google: вставьте оба значения и сохраните.",
+  "Ainda no painel → Authentication → URL Configuration: Site URL https://manualdosobrevivente.vercel.app e Redirect URLs incluindo este endereço.":
+    "Там же в панели → Authentication → URL Configuration: Site URL https://manualdosobrevivente.vercel.app и Redirect URLs с этим адресом.",
+  "Volte aqui e toque em reconsultar — o botão do Google aparece no login sozinho.":
+    "Вернитесь сюда и нажмите «Проверить снова» — кнопка Google появится на входе сама.",
+  "Abrir provedores no painel do Supabase": "Открыть провайдеров в панели Supabase",
+  "Sobre o SMTP:": "О SMTP:",
+  "O app funciona sem SMTP (o cadastro não depende de e-mail). Se quiser enviar e-mails próprios no futuro — recuperação de senha, avisos — configure Project Settings → Authentication → SMTP com um provedor gratuito (Resend, Brevo, SES).":
+    "Приложение работает без SMTP (регистрация не зависит от почты). Если позже захотите отправлять свои письма — восстановление пароля, уведомления — настройте Project Settings → Authentication → SMTP с бесплатным провайдером (Resend, Brevo, SES).",
+  "Este e-mail já tem conta — entre com a sua senha.":
+    "На эту почту уже есть аккаунт — войдите с паролем.",
+  "umidade {v}%": "влажность {v}%",
 };

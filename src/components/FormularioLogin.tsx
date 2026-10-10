@@ -4,9 +4,10 @@
  *
  * Regras profissionais embutidas:
  *  • Cadastro pede o nome (vira nome de exibição no espelho do banco);
- *  • Se a confirmação de e-mail estiver ativa no projeto, o cadastro NÃO
- *    autentica na hora: o pai decide o próximo passo via `aoCadastrou(false)`
- *    (tela "confira seu e-mail");
+ *  • O cadastro passa PELO SERVIDOR (conta.functions): a conta nasce com o
+ *    e-mail confirmado e o operador entra na hora — sem depender de SMTP
+ *    nem de "Confirm email" no painel. Se o servidor não puder criar
+ *    (service role ausente), cai no fluxo nativo do Supabase;
  *  • Login por senha autentica imediatamente (`aoEntrar`);
  *  • Botão Google só aparece quando o provedor está ativo no painel
  *    (mesma sonda do comportamento anterior).
@@ -50,22 +51,45 @@ export function FormularioLogin({
         toast.success(t("Autenticado"));
         aoEntrar?.();
       } else {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password: senha,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`,
-            data: nome.trim() ? { nome: nome.trim() } : undefined,
-          },
-        });
-        if (error) throw error;
-        if (data.session) {
-          toast.success(t("Conta criada"));
-          aoCadastrou?.(true, email);
-        } else {
-          toast.success(t("Confira seu e-mail para confirmar a conta"));
-          aoCadastrou?.(false, email);
+        // 1) Servidor cria a conta JÁ CONFIRMADA (sem SMTP, entra na hora).
+        let servidorFalhou = false;
+        try {
+          const { criarConta } = await import("@/lib/conta.functions");
+          await criarConta({ data: { email, senha, nome: nome.trim() || undefined } });
+        } catch (erroServidor) {
+          const msg = erroServidor instanceof Error ? erroServidor.message : "";
+          if (/já tem conta/i.test(msg)) {
+            toast.error(t(msg));
+            setOcupado(false);
+            return;
+          }
+          // Servidor sem service role (dev/edge): cai no fluxo nativo abaixo.
+          servidorFalhou = true;
         }
+        if (servidorFalhou) {
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password: senha,
+            options: {
+              emailRedirectTo: `${window.location.origin}/`,
+              data: nome.trim() ? { nome: nome.trim() } : undefined,
+            },
+          });
+          if (error) throw error;
+          if (data.session) {
+            toast.success(t("Conta criada"));
+            aoCadastrou?.(true, email);
+          } else {
+            toast.success(t("Confira seu e-mail para confirmar a conta"));
+            aoCadastrou?.(false, email);
+          }
+          return;
+        }
+        // 2) Conta confirmada no servidor — entrar direto com a senha.
+        const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+        if (error) throw error;
+        toast.success(t("Conta criada"));
+        aoCadastrou?.(true, email);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("Falha na autenticação"));

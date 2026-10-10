@@ -166,7 +166,12 @@ import {
   type InfoQuadro,
 } from "@/lib/radar-clima";
 import { ControladorCiclones, type EstadoCiclones } from "@/lib/ciclones";
-import { ControladorTemperatura, ControladorVento, type EstadoClima } from "@/lib/clima-openmeteo";
+import {
+  ControladorTemperatura,
+  ControladorTempestades,
+  ControladorVento,
+  type EstadoClima,
+} from "@/lib/clima-openmeteo";
 import { geoReverso } from "@/lib/geo-reverso.functions";
 import { registrarHabilidade } from "@/lib/assistente/habilidades";
 import PopupsCrescimento from "@/components/map/PopupsCrescimento";
@@ -642,6 +647,10 @@ export default function MapShell() {
     setCompassModeState(m);
     try {
       localStorage.setItem("tgis:compass-mode", m);
+      // Aviso no MESMO separador para quem observa (orbe do assistente empilha
+      // acima da mini bússola e precisa reagir na hora; storage event não
+      // dispara na própria aba).
+      window.dispatchEvent(new CustomEvent("tgis:compass-mode", { detail: m }));
     } catch {
       /* armazenamento indisponível */
     }
@@ -772,6 +781,7 @@ export default function MapShell() {
   const [tempEstado, setTempEstado] = useState<EstadoClima>("off");
   const ventoRef = useRef<ControladorVento | null>(null);
   const temperaturaRef = useRef<ControladorTemperatura | null>(null);
+  const tempestadeRef = useRef<ControladorTempestades | null>(null);
   const [navios, setNavios] = useState<IntelNavio[]>([]);
   const [statusAis, setStatusAis] = useState<StatusAis | "off">("off");
   // Satélites de observação (TLE do servidor + propagação SGP4 no aparelho).
@@ -1085,6 +1095,10 @@ export default function MapShell() {
             temperaturaRef.current.abaixoDe = ancoraIntel(map);
             temperaturaRef.current.sincronizar();
           }
+          if (tempestadeRef.current) {
+            tempestadeRef.current.abaixoDe = ancoraIntel(map);
+            tempestadeRef.current.sincronizar();
+          }
           // Ciclones vivem no topo: recarregam direto (fontes recriadas).
           ciclonesRef.current?.sincronizar();
           // Vento em canvas não depende do estilo — nada a reapresentar.
@@ -1265,9 +1279,22 @@ export default function MapShell() {
     () => () => {
       ventoRef.current?.desativar();
       temperaturaRef.current?.desativar();
+      tempestadeRef.current?.desativar();
     },
     [],
   );
+
+  // Tempestades (Open-Meteo, sem chave): CAPE da área visível — círculos
+  // roxos/vermelhos onde a atmosfera tem energia para convecção severa.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    if (!tempestadeRef.current) tempestadeRef.current = new ControladorTempestades(map);
+    const ctl = tempestadeRef.current;
+    ctl.abaixoDe = ancoraIntel(map);
+    if (intelVis.tempestades) ctl.ativar();
+    else ctl.desativar();
+  }, [intelVis.tempestades, ready]);
 
   // Clima pontual do centro (Open-Meteo): só consulta com o radar ligado,
   // com atraso após o mapa parar de se mover (debounce pelos timers).
@@ -2314,7 +2341,10 @@ export default function MapShell() {
           data-test="chip-clima"
         >
           {formatNumber(clima.temperatura, 1)}°C · {formatNumber(clima.ventoKmh, 0)} km/h{" "}
-          {clima.direcao} · {t(clima.rotulo)}
+          {clima.direcao} · {t(clima.rotulo)} ·{" "}
+          <span data-test="chip-clima-umidade">
+            {t("umidade {v}%", { v: String(formatNumber(clima.umidade, 0)) })}
+          </span>
         </div>
       )}
     </div>

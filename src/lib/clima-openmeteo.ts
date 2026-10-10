@@ -623,3 +623,272 @@ export class ControladorTemperatura {
     }
   }
 }
+
+// ---------------------------------------------------------------------------
+// Tempestades — energia convectiva (CAPE) da mesma grade Open-Meteo
+// ---------------------------------------------------------------------------
+
+const FONTE_TEMPESTADE = "intel-tempestade";
+const CAMADA_TEMPESTADE_CIRCULO = "intel-tempestade-circle";
+const CAMADA_TEMPESTADE_ROTULO = "intel-tempestade-rotulo";
+const NX_TOR = 8;
+const NY_TOR = 5;
+
+export interface LeituraTempestade {
+  lng: number;
+  lat: number;
+  /** CAPE em J/kg — energia disponível para convecção (tempestades). */
+  cape: number;
+  /** Código WMO atual (95–99 = trovoada). */
+  codigo: number;
+  /** Precipitação na última hora em mm. */
+  precipitacao: number;
+}
+
+/** URL da grade de tempestades (uma consulta para todos os pontos). */
+export function urlGradeTempestades(pontos: Array<[number, number]>): string {
+  const lats = pontos.map((p) => p[1].toFixed(3)).join(",");
+  const lngs = pontos.map((p) => p[0].toFixed(3)).join(",");
+  return `${URL_BASE}?latitude=${lats}&longitude=${lngs}&current=cape,weather_code,precipitation`;
+}
+
+interface RespostaTempestade {
+  latitude?: number;
+  longitude?: number;
+  current?: {
+    cape?: number;
+    weather_code?: number;
+    precipitation?: number;
+  };
+}
+
+/**
+ * Interpreta a resposta da grade de tempestades — mesma convenção da
+ * `interpretarGrade` (casa pelas coordenadas de resposta).
+ */
+export function interpretarTempestades(
+  dados: unknown,
+  pontos: Array<[number, number]>,
+): LeituraTempestade[] {
+  const lista: RespostaTempestade[] = Array.isArray(dados)
+    ? (dados as RespostaTempestade[])
+    : dados && typeof dados === "object"
+      ? [dados as RespostaTempestade]
+      : [];
+  const leituras: LeituraTempestade[] = [];
+  for (let i = 0; i < lista.length; i++) {
+    const r = lista[i];
+    const c = r?.current;
+    if (!c) continue;
+    const cape = typeof c.cape === "number" ? c.cape : NaN;
+    if (!Number.isFinite(cape)) continue;
+    leituras.push({
+      lng: typeof r.longitude === "number" ? r.longitude : (pontos[i]?.[0] ?? 0),
+      lat: typeof r.latitude === "number" ? r.latitude : (pontos[i]?.[1] ?? 0),
+      cape,
+      codigo: typeof c.weather_code === "number" ? c.weather_code : 0,
+      precipitacao: typeof c.precipitation === "number" ? c.precipitation : 0,
+    });
+  }
+  return leituras;
+}
+
+/** Classificação visual do CAPE (J/kg) — escala padrão de tempo severo. */
+export function classificarCape(cape: number): { cor: string; nivel: string } {
+  if (!Number.isFinite(cape)) return { cor: "#64748B", nivel: "baixa" };
+  if (cape >= 4000) return { cor: "#DC2626", nivel: "extrema" };
+  if (cape >= 2500) return { cor: "#EF4444", nivel: "forte" };
+  if (cape >= 1000) return { cor: "#A78BFA", nivel: "moderada" };
+  return { cor: "#64748B", nivel: "baixa" };
+}
+
+/** Rótulo curto do ponto: "2300 J/kg". */
+export function rotuloCape(cape: number): string {
+  if (!Number.isFinite(cape)) return "—";
+  return `${Math.round(cape)} J/kg`;
+}
+
+/** FeatureCollection só com pontos convectivos (CAPE ≥ 600 J/kg). */
+export function fcTempestades(leituras: LeituraTempestade[]): GeoJSON.FeatureCollection {
+  return {
+    type: "FeatureCollection",
+    features: leituras
+      .filter((l) => l.cape >= 600)
+      .map((l) => ({
+        type: "Feature" as const,
+        geometry: { type: "Point" as const, coordinates: [l.lng, l.lat] },
+        properties: {
+          cape: Math.round(l.cape),
+          rotulo: rotuloCape(l.cape),
+          cor: classificarCape(l.cape).cor,
+          trovoada: l.codigo >= 95,
+          precipitacao: Math.round(l.precipitacao * 10) / 10,
+        },
+      })),
+  };
+}
+
+export class ControladorTempestades {
+  private map: ML;
+  private ativo = false;
+  private destruido = false;
+  private timerRefresco: number | null = null;
+  private timerDebounce: number | null = null;
+  private ultimo: LeituraTempestade[] | null = null;
+  private coletando = false;
+  private aoMove = () => {
+    if (!this.ativo || this.destruido) return;
+    if (this.timerDebounce !== null) window.clearTimeout(this.timerDebounce);
+    this.timerDebounce = window.setTimeout(() => void this.coletar(), 2000);
+  };
+  abaixoDe?: string;
+  aoEstado?: (estado: EstadoClima) => void;
+
+  constructor(map: ML) {
+    this.map = map;
+    map.once("remove", () => {
+      this.destruido = true;
+      this.ativo = false;
+      if (this.timerRefresco !== null) window.clearInterval(this.timerRefresco);
+      this.timerRefresco = null;
+      if (this.timerDebounce !== null) window.clearTimeout(this.timerDebounce);
+      this.timerDebounce = null;
+    });
+  }
+
+  ativar(): void {
+    if (this.destruido) return;
+    this.ativo = true;
+    if (this.ultimo) {
+      this.aplicar(this.ultimo);
+      return;
+    }
+    void this.coletar();
+    this.timerRefresco = window.setInterval(() => void this.coletar(), INTERVALO_REFRESCO_MS);
+    this.map.on("moveend", this.aoMove);
+  }
+
+  desativar(): void {
+    this.ativo = false;
+    this.ultimo = null;
+    if (this.timerRefresco !== null) window.clearInterval(this.timerRefresco);
+    this.timerRefresco = null;
+    if (this.timerDebounce !== null) window.clearTimeout(this.timerDebounce);
+    this.timerDebounce = null;
+    this.map.off("moveend", this.aoMove);
+    this.remover();
+    this.aoEstado?.("off");
+  }
+
+  /** Reapresenta após troca de estilo/camada base (styledata) — sem refetch. */
+  sincronizar(): void {
+    if (this.destruido) return;
+    if (this.ativo && this.ultimo) {
+      this.aplicar(this.ultimo);
+    } else if (!this.ativo) {
+      this.remover();
+    }
+  }
+
+  private async coletar(): Promise<void> {
+    if (!this.ativo || this.destruido || this.coletando) return;
+    this.coletando = true;
+    this.aoEstado?.("carregando");
+    try {
+      const b = this.map.getBounds();
+      const margemLng = (b.getEast() - b.getWest()) * 0.25;
+      const margemLat = (b.getNorth() - b.getSouth()) * 0.25;
+      const r: Retangulo = {
+        o: b.getWest() - margemLng,
+        l: b.getEast() + margemLng,
+        s: Math.max(-85, b.getSouth() - margemLat),
+        n: Math.min(85, b.getNorth() + margemLat),
+      };
+      const pontos = amostrarGrade(r, NX_TOR, NY_TOR);
+      const res = await fetch(urlGradeTempestades(pontos));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const leituras = interpretarTempestades(await res.json(), pontos);
+      if (!this.ativo || this.destruido) return;
+      this.ultimo = leituras;
+      this.aplicar(leituras);
+      this.aoEstado?.("ativo");
+    } catch {
+      if (this.ativo && !this.destruido) this.aoEstado?.("erro");
+    } finally {
+      this.coletando = false;
+    }
+  }
+
+  private aplicar(leituras: LeituraTempestade[]): void {
+    if (this.destruido) return;
+    try {
+      const map = this.map;
+      if (map.getSource(FONTE_TEMPESTADE)) {
+        (map.getSource(FONTE_TEMPESTADE) as maplibregl.GeoJSONSource).setData(
+          fcTempestades(leituras) as never,
+        );
+        return;
+      }
+      map.addSource(FONTE_TEMPESTADE, { type: "geojson", data: fcTempestades(leituras) as never });
+      map.addLayer(
+        {
+          id: CAMADA_TEMPESTADE_CIRCULO,
+          type: "circle",
+          source: FONTE_TEMPESTADE,
+          paint: {
+            "circle-radius": [
+              "interpolate",
+              ["linear"],
+              ["zoom"],
+              2,
+              ["interpolate", ["linear"], ["get", "cape"], 600, 5, 2500, 9, 4000, 13],
+              8,
+              ["interpolate", ["linear"], ["get", "cape"], 600, 10, 2500, 18, 4000, 26],
+            ],
+            "circle-color": ["get", "cor"],
+            "circle-opacity": 0.45,
+            "circle-stroke-color": ["case", ["get", "trovoada"], "#FDE047", ["get", "cor"]],
+            "circle-stroke-width": ["case", ["get", "trovoada"], 2, 1],
+            "circle-stroke-opacity": 0.9,
+          },
+        },
+        this.abaixoDe && map.getLayer(this.abaixoDe) ? this.abaixoDe : undefined,
+      );
+      map.addLayer(
+        {
+          id: CAMADA_TEMPESTADE_ROTULO,
+          type: "symbol",
+          source: FONTE_TEMPESTADE,
+          minzoom: 4,
+          layout: {
+            "text-field": ["get", "rotulo"],
+            "text-size": 10,
+            "text-font": FONTS_TEXTO,
+            "text-offset": [0, 1.1],
+            "text-anchor": "top",
+          },
+          paint: {
+            "text-color": "#C4B5FD",
+            "text-halo-color": "#0B0B0B",
+            "text-halo-width": 1,
+          },
+        },
+        this.abaixoDe && map.getLayer(this.abaixoDe) ? this.abaixoDe : undefined,
+      );
+    } catch {
+      /* estilo em troca — o styledata reapresenta */
+    }
+  }
+
+  private remover(): void {
+    if (this.destruido) return;
+    try {
+      const map = this.map;
+      if (map.getLayer(CAMADA_TEMPESTADE_ROTULO)) map.removeLayer(CAMADA_TEMPESTADE_ROTULO);
+      if (map.getLayer(CAMADA_TEMPESTADE_CIRCULO)) map.removeLayer(CAMADA_TEMPESTADE_CIRCULO);
+      if (map.getSource(FONTE_TEMPESTADE)) map.removeSource(FONTE_TEMPESTADE);
+    } catch {
+      /* estilo em troca */
+    }
+  }
+}

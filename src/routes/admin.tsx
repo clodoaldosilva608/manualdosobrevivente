@@ -21,6 +21,7 @@ import {
   ExternalLink,
   Handshake,
   HeartHandshake,
+  KeyRound,
   LayoutDashboard,
   Loader2,
   Medal,
@@ -1865,6 +1866,180 @@ function FormularioIA({
 }
 
 /* ------------------------------------------------------------------ */
+/* Configurações — Autenticação (Google / SMTP)                        */
+/* ------------------------------------------------------------------ */
+
+interface EstadoAuth {
+  google: boolean;
+  /** true = "Confirm email" DESLIGADO (cadastro autentica na hora). */
+  autoconfirm: boolean;
+}
+
+/** Estado do provedor Google de um projeto Supabase (para o passo a passo). */
+export async function sondarAuthGoogle(url: string, chave: string): Promise<EstadoAuth | null> {
+  try {
+    const r = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: chave } });
+    if (!r.ok) return null;
+    const s = (await r.json()) as { external?: { google?: boolean }; mailer_autoconfirm?: boolean };
+    return { google: !!s?.external?.google, autoconfirm: !!s?.mailer_autoconfirm };
+  } catch {
+    return null;
+  }
+}
+
+function BlocoAutenticacao() {
+  const { t } = useI18n();
+  const [estado, setEstado] = useState<EstadoAuth | null>(null);
+  const [sondando, setSondando] = useState(true);
+
+  const sondar = useCallback(() => {
+    setSondando(true);
+    const url = import.meta.env["VITE_SUPABASE_URL"] as string | undefined;
+    const chave = import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"] as string | undefined;
+    const promessa = url && chave ? sondarAuthGoogle(url, chave) : Promise.resolve(null);
+    void promessa.then((e) => {
+      setEstado(e);
+      setSondando(false);
+    });
+  }, []);
+
+  useEffect(() => sondar(), [sondar]);
+
+  const Linha = ({ ok, texto }: { ok: boolean; texto: string }) => (
+    <div className="flex items-start gap-2 text-xs leading-relaxed">
+      {ok ? (
+        <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
+      ) : (
+        <XCircle className="text-muted-foreground mt-0.5 h-3.5 w-3.5 shrink-0" />
+      )}
+      <span>{texto}</span>
+    </div>
+  );
+
+  return (
+    <section
+      className="space-y-3 rounded-md border border-border bg-card p-4"
+      data-test="admin-autenticacao"
+    >
+      <header className="flex items-center gap-2">
+        <KeyRound className="text-tactical-orange h-4 w-4" />
+        <h2 className="mono text-[11px] font-bold uppercase tracking-widest text-tactical-orange">
+          {t("Autenticação (Google e e-mail)")}
+        </h2>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="ml-auto h-7 px-2"
+          onClick={sondar}
+          aria-label={t("Reconsultar estado")}
+        >
+          {sondando ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <RefreshCw className="h-3.5 w-3.5" />
+          )}
+        </Button>
+      </header>
+
+      {sondando ? (
+        <p className="text-muted-foreground flex items-center gap-2 text-xs">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t("Consultando o painel…")}
+        </p>
+      ) : !estado ? (
+        <p className="text-muted-foreground text-xs">
+          {t("Não consegui consultar o estado da autenticação agora — tente novamente.")}
+        </p>
+      ) : (
+        <>
+          <div className="space-y-1.5">
+            <Linha
+              ok
+              texto={t(
+                "E-mail e senha: ativo — o cadastro autentica na hora (a conta nasce confirmada pelo servidor, sem depender de e-mail).",
+              )}
+            />
+            <Linha
+              ok={estado.autoconfirm}
+              texto={
+                estado.autoconfirm
+                  ? t("Confirmação de e-mail: desligada no painel — cadastro autentica na hora.")
+                  : t(
+                      "Confirmação de e-mail: ligada no painel — o app contorna criando a conta já confirmada; ninguém fica preso em “confira seu e-mail”.",
+                    )
+              }
+            />
+            <Linha
+              ok={estado.google}
+              texto={
+                estado.google
+                  ? t(
+                      "Login com Google: ATIVO — o botão “Continuar com Google” aparece no login sozinho.",
+                    )
+                  : t(
+                      "Login com Google: ainda não ativado no painel — siga o passo a passo abaixo.",
+                    )
+              }
+            />
+          </div>
+
+          {!estado.google && (
+            <div className="text-muted-foreground space-y-1 rounded-md border border-border bg-background/40 p-3 text-xs leading-relaxed">
+              <p className="text-foreground font-bold">{t("Para ativar o Google (5 minutos):")}</p>
+              <ol className="list-decimal space-y-1 pl-4">
+                <li>
+                  {t(
+                    "Em console.cloud.google.com → APIs e serviços → Credenciais → Criar credencial → ID do cliente OAuth → Aplicativo da Web.",
+                  )}
+                </li>
+                <li>
+                  {t("Em “URI de redirecionamento autorizado”, cole exatamente:")}{" "}
+                  <code className="bg-tactical-orange/15 text-tactical-orange rounded px-1 py-0.5">
+                    https://mbterwktxczsyevcudoz.supabase.co/auth/v1/callback
+                  </code>
+                </li>
+                <li>{t("Copie o ID do cliente e o client secret gerados.")}</li>
+                <li>
+                  {t(
+                    "No painel do Supabase → Authentication → Sign In / Providers → Google: cole as duas credenciais e salve.",
+                  )}
+                </li>
+                <li>
+                  {t(
+                    "Ainda no painel → Authentication → URL Configuration: Site URL https://manualdosobrevivente.vercel.app e Redirect URLs incluindo este endereço.",
+                  )}
+                </li>
+                <li>
+                  {t(
+                    "Volte aqui e toque em reconsultar — o botão do Google aparece no login sozinho.",
+                  )}
+                </li>
+              </ol>
+              <a
+                href="https://supabase.com/dashboard/project/mbterwktxczsyevcudoz/auth/providers"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-tactical-orange inline-flex items-center gap-1 underline decoration-dotted"
+              >
+                {t("Abrir provedores no painel do Supabase")}
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          )}
+
+          <div className="text-muted-foreground rounded-md border border-border bg-background/40 p-3 text-xs leading-relaxed">
+            <p className="text-foreground font-bold">{t("Sobre o SMTP:")}</p>
+            <p className="mt-1">
+              {t(
+                "O app funciona sem SMTP (o cadastro não depende de e-mail). Se quiser enviar e-mails próprios no futuro — recuperação de senha, avisos — configure Project Settings → Authentication → SMTP com um provedor gratuito (Resend, Brevo, SES).",
+              )}
+            </p>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
 /* Configurações — PIX                                                */
 /* ------------------------------------------------------------------ */
 
@@ -1948,6 +2123,7 @@ function SecaoConfig() {
 
   return (
     <div className="space-y-4" data-test="admin-config">
+      <BlocoAutenticacao />
       <BlocoPopups />
       <p className="text-sm text-muted-foreground">
         {t(

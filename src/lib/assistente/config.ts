@@ -49,6 +49,36 @@ export interface ConfigIA {
   aprender: boolean;
   /** Responder em áudio por padrão (TTS do aparelho). */
   falarRespostas: boolean;
+  /**
+   * Semente dos exemplos já aplicada (prompt e skill pré-preenchidos).
+   * Garante que REMOVER o exemplo o mantenha removido — sem reaparecer.
+   */
+  sementesAplicadas: boolean;
+}
+
+/** Prompt pré-preenchido — exemplo vivo que o operador edita ou remove. */
+export const PROMPT_PADRAO_ID = "prompt-padrao";
+export const SKILL_PADRAO_ID = "skill-padrao";
+
+/** Textos da semente (passam pelo dicionário ativo na hora da sementeira). */
+export function sementePrompt(): PromptCustom {
+  return {
+    id: PROMPT_PADRAO_ID,
+    titulo: tGlobal("Estilo de campo"),
+    texto: tGlobal(
+      "Responda sempre como um instrutor de campo: passos numerados e curtos, linguagem simples, e termine cada resposta com uma dica de segurança prática.",
+    ),
+  };
+}
+
+export function sementeSkill(): PromptCustom {
+  return {
+    id: SKILL_PADRAO_ID,
+    titulo: tGlobal("Kit 72 horas"),
+    texto: tGlobal(
+      "Quando eu pedir ajuda com mochila ou kit de emergência, monte a lista de 72 horas: 3 litros de água por pessoa por dia, alimentos não perecíveis, documentos protegidos, rádio, lanterna, pilhas, primeiros socorros, ferramenta multiuso, agasalho e higiene — adaptada ao meu perfil.",
+    ),
+  };
 }
 
 export const CONFIG_PADRAO_IA: ConfigIA = {
@@ -65,6 +95,7 @@ export const CONFIG_PADRAO_IA: ConfigIA = {
   baseUrl: "",
   aprender: true,
   falarRespostas: false,
+  sementesAplicadas: false,
 };
 
 const CHAVE_CONFIG = "manual:ia-config";
@@ -72,10 +103,39 @@ const CHAVE_CONFIG = "manual:ia-config";
 export function lerConfigIA(): ConfigIA {
   try {
     const bruto = localStorage.getItem(CHAVE_CONFIG);
-    if (!bruto) return { ...CONFIG_PADRAO_IA };
-    return { ...CONFIG_PADRAO_IA, ...(JSON.parse(bruto) as Partial<ConfigIA>) };
+    if (!bruto) {
+      // Primeira leitura de um aparelho novo: nasce com os exemplos.
+      const inicial: ConfigIA = {
+        ...CONFIG_PADRAO_IA,
+        prompts: [sementePrompt()],
+        skills: [sementeSkill()],
+        sementesAplicadas: true,
+      };
+      salvarConfigIA(inicial);
+      return inicial;
+    }
+    const salva = JSON.parse(bruto) as Partial<ConfigIA> | null;
+    const config: ConfigIA = { ...CONFIG_PADRAO_IA, ...(salva ?? {}) };
+    if (!config.sementesAplicadas) {
+      // Configuração antiga (ou limpa pelo operador): semeia UMA vez —
+      // apagar depois fica apagado porque a sementeira é marcada aqui.
+      if (!config.prompts.some((p) => p.id === PROMPT_PADRAO_ID)) {
+        config.prompts = [...config.prompts, sementePrompt()];
+      }
+      if (!config.skills.some((s) => s.id === SKILL_PADRAO_ID)) {
+        config.skills = [...config.skills, sementeSkill()];
+      }
+      config.sementesAplicadas = true;
+      salvarConfigIA(config);
+    }
+    return config;
   } catch {
-    return { ...CONFIG_PADRAO_IA };
+    return {
+      ...CONFIG_PADRAO_IA,
+      prompts: [sementePrompt()],
+      skills: [sementeSkill()],
+      sementesAplicadas: true,
+    };
   }
 }
 

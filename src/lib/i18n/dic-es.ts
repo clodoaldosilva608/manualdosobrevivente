@@ -1188,4 +1188,49 @@ export const DIC_ES: Record<string, string> = {
   Parar: "Detener",
   "Centralizar no mapa": "Centrar en el mapa",
   "Parar navegação": "Detener navegación",
+  "Estilo de campo": "Estilo de campo",
+  "Responda sempre como um instrutor de campo: passos numerados e curtos, linguagem simples, e termine cada resposta com uma dica de segurança prática.":
+    "Responda siempre como un instructor de campo: pasos numerados y cortos, lenguaje sencillo, y termine cada respuesta con una dica de seguridad práctica.",
+  "Kit 72 horas": "Kit de 72 horas",
+  "Quando eu pedir ajuda com mochila ou kit de emergência, monte a lista de 72 horas: 3 litros de água por pessoa por dia, alimentos não perecíveis, documentos protegidos, rádio, lanterna, pilhas, primeiros socorros, ferramenta multiuso, agasalho e higiene — adaptada ao meu perfil.":
+    "Cuando pida ayuda con mochila o kit de emergencia, arme la lista de 72 horas: 3 litros de agua por persona al día, alimentos no perecederos, documentos protegidos, radio, linterna, pilas, primeros auxilios, herramienta multiuso, abrigo e higiene — adaptada a mi perfil.",
+  padrão: "predeterminado",
+  "Instrução que a IA vai seguir": "Instrucción que la IA seguirá",
+  "Prompt atualizado": "Prompt actualizado",
+  "Skill atualizada": "Habilidad actualizada",
+  "Autenticação (Google e e-mail)": "Autenticación (Google y correo)",
+  "Reconsultar estado": "Volver a consultar el estado",
+  "Consultando o painel…": "Consultando el panel…",
+  "Não consegui consultar o estado da autenticação agora — tente novamente.":
+    "No pude consultar el estado de autenticación ahora — inténtelo de nuevo.",
+  "E-mail e senha: ativo — o cadastro autentica na hora (a conta nasce confirmada pelo servidor, sem depender de e-mail).":
+    "Correo y contraseña: activo — el registro autentica al instante (la cuenta nace confirmada por el servidor, sin depender de correo).",
+  "Confirmação de e-mail: desligada no painel — cadastro autentica na hora.":
+    "Confirmación de correo: desactivada en el panel — el registro autentica al instante.",
+  "Confirmação de e-mail: ligada no painel — o app contorna criando a conta já confirmada; ninguém fica preso em “confira seu e-mail”.":
+    "Confirmación de correo: activada en el panel — la app lo evita creando la cuenta ya confirmada; nadie queda atrapado en «revisa tu correo».",
+  "Login com Google: ATIVO — o botão “Continuar com Google” aparece no login sozinho.":
+    "Acceso con Google: ACTIVO — el botón «Continuar con Google» aparece solo en el login.",
+  "Login com Google: ainda não ativado no painel — siga o passo a passo abaixo.":
+    "Acceso con Google: aún no activado en el panel — siga los pasos de abajo.",
+  "Para ativar o Google (5 minutos):": "Para activar Google (5 minutos):",
+  "Em console.cloud.google.com → APIs e serviços → Credenciais → Criar credencial → ID do cliente OAuth → Aplicativo da Web.":
+    "En console.cloud.google.com → APIs y servicios → Credenciales → Crear credencial → ID de cliente OAuth → Aplicación web.",
+  "Em “URI de redirecionamento autorizado”, cole exatamente:":
+    "En «URI de redirección autorizada», pegue exactamente:",
+  "Copie o ID do cliente e o client secret gerados.":
+    "Copie el ID de cliente y el client secret generados.",
+  "No painel do Supabase → Authentication → Sign In / Providers → Google: cole as duas credenciais e salve.":
+    "En el panel de Supabase → Authentication → Sign In / Providers → Google: pegue las dos credenciales y guarde.",
+  "Ainda no painel → Authentication → URL Configuration: Site URL https://manualdosobrevivente.vercel.app e Redirect URLs incluindo este endereço.":
+    "Aún en el panel → Authentication → URL Configuration: Site URL https://manualdosobrevivente.vercel.app y Redirect URLs incluyendo esta dirección.",
+  "Volte aqui e toque em reconsultar — o botão do Google aparece no login sozinho.":
+    "Vuelva aquí y toque volver a consultar — el botón de Google aparece solo en el login.",
+  "Abrir provedores no painel do Supabase": "Abrir proveedores en el panel de Supabase",
+  "Sobre o SMTP:": "Sobre el SMTP:",
+  "O app funciona sem SMTP (o cadastro não depende de e-mail). Se quiser enviar e-mails próprios no futuro — recuperação de senha, avisos — configure Project Settings → Authentication → SMTP com um provedor gratuito (Resend, Brevo, SES).":
+    "La app funciona sin SMTP (el registro no depende de correo). Si quiere enviar correos propios en el futuro — recuperación de contraseña, avisos — configure Project Settings → Authentication → SMTP con un proveedor gratuito (Resend, Brevo, SES).",
+  "Este e-mail já tem conta — entre com a sua senha.":
+    "Este correo ya tiene cuenta — entre con su contraseña.",
+  "umidade {v}%": "humedad {v}%",
 };

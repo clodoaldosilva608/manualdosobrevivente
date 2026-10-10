@@ -1177,4 +1177,49 @@ export const DIC_JA: Record<string, string> = {
   Parar: "停止",
   "Centralizar no mapa": "地図の中央に表示",
   "Parar navegação": "ナビを停止",
+  "Estilo de campo": "フィールド流",
+  "Responda sempre como um instrutor de campo: passos numerados e curtos, linguagem simples, e termine cada resposta com uma dica de segurança prática.":
+    "いつも野外教官のように答えてください：短い番号付きの手順、平易な言葉、そして回答の最後に実用的な安全のヒントを添えて。",
+  "Kit 72 horas": "72時間キット",
+  "Quando eu pedir ajuda com mochila ou kit de emergência, monte a lista de 72 horas: 3 litros de água por pessoa por dia, alimentos não perecíveis, documentos protegidos, rádio, lanterna, pilhas, primeiros socorros, ferramenta multiuso, agasalho e higiene — adaptada ao meu perfil.":
+    "バックパックや非常キットの助けを求めたら、72時間リストを組み立ててください：1人1日3リットルの水、賞味期限の長い食料、保護した書類、ラジオ、懐中電灯、電池、救急用品、マルチツール、防寒着、衛生用品 — 私のプロフィールに合わせて調整。",
+  padrão: "デフォルト",
+  "Instrução que a IA vai seguir": "AI が従う指示",
+  "Prompt atualizado": "プロンプトを更新しました",
+  "Skill atualizada": "スキルを更新しました",
+  "Autenticação (Google e e-mail)": "認証（Google とメール）",
+  "Reconsultar estado": "状態を再確認",
+  "Consultando o painel…": "ダッシュボードを確認中…",
+  "Não consegui consultar o estado da autenticação agora — tente novamente.":
+    "認証の状態を確認できませんでした — もう一度お試しください。",
+  "E-mail e senha: ativo — o cadastro autentica na hora (a conta nasce confirmada pelo servidor, sem depender de e-mail).":
+    "メールとパスワード：有効 — 登録すると即座にログインできます（サーバーが確認済みで作成、メール不要）。",
+  "Confirmação de e-mail: desligada no painel — cadastro autentica na hora.":
+    "メール確認：パネルでオフ — 登録すると即ログインできます。",
+  "Confirmação de e-mail: ligada no painel — o app contorna criando a conta já confirmada; ninguém fica preso em “confira seu e-mail”.":
+    "メール確認：パネルでオン — アプリは確認済みアカウントを作成して回避します。「メールを確認」で止まりません。",
+  "Login com Google: ATIVO — o botão “Continuar com Google” aparece no login sozinho.":
+    "Google ログイン：有効 — 「Google で続行」ボタンがログインに自動で表示されます。",
+  "Login com Google: ainda não ativado no painel — siga o passo a passo abaixo.":
+    "Google ログイン：パネルでまだ有効になっていません — 以下の手順に従ってください。",
+  "Para ativar o Google (5 minutos):": "Google を有効にする（5分）：",
+  "Em console.cloud.google.com → APIs e serviços → Credenciais → Criar credencial → ID do cliente OAuth → Aplicativo da Web.":
+    "console.cloud.google.com → API とサービス → 認証情報 → 認証情報を作成 → OAuth クライアント ID → ウェブ アプリケーション。",
+  "Em “URI de redirecionamento autorizado”, cole exatamente:":
+    "「承認済みのリダイレクト URI」に次を正確に貼り付け：",
+  "Copie o ID do cliente e o client secret gerados.":
+    "生成されたクライアント ID とクライアント シークレットをコピーします。",
+  "No painel do Supabase → Authentication → Sign In / Providers → Google: cole as duas credenciais e salve.":
+    "Supabase ダッシュボード → Authentication → Sign In / Providers → Google：2つの認証情報を貼り付けて保存。",
+  "Ainda no painel → Authentication → URL Configuration: Site URL https://manualdosobrevivente.vercel.app e Redirect URLs incluindo este endereço.":
+    "同じパネルの Authentication → URL Configuration：Site URL は https://manualdosobrevivente.vercel.app、Redirect URLs にこのアドレスを含めます。",
+  "Volte aqui e toque em reconsultar — o botão do Google aparece no login sozinho.":
+    "ここに戻って再確認をタップ — Google ボタンがログインに自動で表示されます。",
+  "Abrir provedores no painel do Supabase": "Supabase ダッシュボードでプロバイダを開く",
+  "Sobre o SMTP:": "SMTP について：",
+  "O app funciona sem SMTP (o cadastro não depende de e-mail). Se quiser enviar e-mails próprios no futuro — recuperação de senha, avisos — configure Project Settings → Authentication → SMTP com um provedor gratuito (Resend, Brevo, SES).":
+    "アプリは SMTP なしで動作します（登録にメールは不要）。将来、独自のメール（パスワード復旧や通知）を送りたい場合は、Project Settings → Authentication → SMTP で無料プロバイダ（Resend、Brevo、SES）を設定してください。",
+  "Este e-mail já tem conta — entre com a sua senha.":
+    "このメールはすでに登録済みです — パスワードでログインしてください。",
+  "umidade {v}%": "湿度 {v}%",
 };

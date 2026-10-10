@@ -85,6 +85,8 @@ export interface IntelVisibilidade {
   vento: boolean;
   /** Temperatura a 2 m em cores (Open-Meteo — keyless). */
   temperatura: boolean;
+  /** Tempestades — energia convectiva CAPE na área visível (Open-Meteo — keyless). */
+  tempestades: boolean;
   /** Voos ao vivo (ADS-B) — militares globais + civis perto do centro. */
   voos: boolean;
   /** ISS + satélites de observação (TLE/Celestrak propagado no aparelho). */
@@ -116,6 +118,7 @@ export const INTEL_VIS_PADRAO: IntelVisibilidade = {
   nuvens: false,
   vento: false,
   temperatura: false,
+  tempestades: false,
   voos: true,
   satelites: true,
   alertas: true,

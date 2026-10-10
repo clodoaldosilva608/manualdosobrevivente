@@ -1142,4 +1142,47 @@ export const DIC_ZH: Record<string, string> = {
   Parar: "停止",
   "Centralizar no mapa": "在地图上居中",
   "Parar navegação": "停止导航",
+  "Estilo de campo": "野外风格",
+  "Responda sempre como um instrutor de campo: passos numerados e curtos, linguagem simples, e termine cada resposta com uma dica de segurança prática.":
+    "始终像野外教官一样回答：简短的编号步骤、通俗易懂的语言，并在每次回答结尾附上一条实用安全提示。",
+  "Kit 72 horas": "72小时应急包",
+  "Quando eu pedir ajuda com mochila ou kit de emergência, monte a lista de 72 horas: 3 litros de água por pessoa por dia, alimentos não perecíveis, documentos protegidos, rádio, lanterna, pilhas, primeiros socorros, ferramenta multiuso, agasalho e higiene — adaptada ao meu perfil.":
+    "当我请求背包或应急包帮助时，按 72 小时清单配置：每人每天 3 升水、不易腐食品、受保护证件、收音机、手电、电池、急救用品、多功能工具、保暖衣物和卫生用品 — 并按我的情况调整。",
+  padrão: "默认",
+  "Instrução que a IA vai seguir": "AI 将遵循的指令",
+  "Prompt atualizado": "提示词已更新",
+  "Skill atualizada": "技能已更新",
+  "Autenticação (Google e e-mail)": "身份验证（Google 和电子邮件）",
+  "Reconsultar estado": "重新检查状态",
+  "Consultando o painel…": "正在查询控制台…",
+  "Não consegui consultar o estado da autenticação agora — tente novamente.":
+    "暂时无法查询身份验证状态 — 请重试。",
+  "E-mail e senha: ativo — o cadastro autentica na hora (a conta nasce confirmada pelo servidor, sem depender de e-mail).":
+    "邮箱和密码：已启用 — 注册即刻登录（账号由服务器直接确认，无需邮件）。",
+  "Confirmação de e-mail: desligada no painel — cadastro autentica na hora.":
+    "邮箱确认：控制台中已关闭 — 注册即刻登录。",
+  "Confirmação de e-mail: ligada no painel — o app contorna criando a conta já confirmada; ninguém fica preso em “confira seu e-mail”.":
+    "邮箱确认：控制台中已开启 — 应用通过直接创建已确认账号绕过它，没人会卡在“请查收邮件”。",
+  "Login com Google: ATIVO — o botão “Continuar com Google” aparece no login sozinho.":
+    "Google 登录：已启用 — “使用 Google 继续”按钮会自动出现在登录页。",
+  "Login com Google: ainda não ativado no painel — siga o passo a passo abaixo.":
+    "Google 登录：控制台中尚未启用 — 请按以下步骤操作。",
+  "Para ativar o Google (5 minutos):": "启用 Google（5 分钟）：",
+  "Em console.cloud.google.com → APIs e serviços → Credenciais → Criar credencial → ID do cliente OAuth → Aplicativo da Web.":
+    "在 console.cloud.google.com → API 和服务 → 凭据 → 创建凭据 → OAuth 客户端 ID → Web 应用。",
+  "Em “URI de redirecionamento autorizado”, cole exatamente:":
+    "在“已获授权的重定向 URI”中精确粘贴：",
+  "Copie o ID do cliente e o client secret gerados.": "复制生成的客户端 ID 和客户端密钥。",
+  "No painel do Supabase → Authentication → Sign In / Providers → Google: cole as duas credenciais e salve.":
+    "在 Supabase 控制台 → Authentication → Sign In / Providers → Google：粘贴两项凭据并保存。",
+  "Ainda no painel → Authentication → URL Configuration: Site URL https://manualdosobrevivente.vercel.app e Redirect URLs incluindo este endereço.":
+    "仍在控制台 → Authentication → URL Configuration：Site URL 填 https://manualdosobrevivente.vercel.app，Redirect URLs 包含此地址。",
+  "Volte aqui e toque em reconsultar — o botão do Google aparece no login sozinho.":
+    "回到这里点击重新检查 — Google 按钮会自动出现在登录页。",
+  "Abrir provedores no painel do Supabase": "在 Supabase 控制台打开登录方式",
+  "Sobre o SMTP:": "关于 SMTP：",
+  "O app funciona sem SMTP (o cadastro não depende de e-mail). Se quiser enviar e-mails próprios no futuro — recuperação de senha, avisos — configure Project Settings → Authentication → SMTP com um provedor gratuito (Resend, Brevo, SES).":
+    "应用无需 SMTP 即可运行（注册不依赖邮件）。将来若想发送自己的邮件（找回密码、通知），请在 Project Settings → Authentication → SMTP 配置免费服务商（Resend、Brevo、SES）。",
+  "Este e-mail já tem conta — entre com a sua senha.": "此邮箱已有账号 — 请使用密码登录。",
+  "umidade {v}%": "湿度 {v}%",
 };

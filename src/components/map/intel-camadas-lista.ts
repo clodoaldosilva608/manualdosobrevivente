@@ -96,6 +96,12 @@ export const LINHAS_INTEL: LinhaIntel[] = [
     cor: "#F472B6",
   },
   {
+    id: "tempestades",
+    nome: "Tempestades (CAPE)",
+    dica: "Open-Meteo · energia convectiva na área visível — sem chave",
+    cor: "#A78BFA",
+  },
+  {
     id: "navios",
     nome: "Navios ao vivo (AIS)",
     dica: "AISStream.io · transponders ao redor do mapa (chave do servidor ou pessoal em Ajustes)",

@@ -11,7 +11,17 @@
  *  · limpar a memória quando quiser — os dados são só do aparelho.
  */
 import { useEffect, useState } from "react";
-import { Bot, Brain, ExternalLink, KeyRound, Plus, Sparkles, Trash2, Users } from "lucide-react";
+import {
+  Bot,
+  Brain,
+  ExternalLink,
+  KeyRound,
+  Pencil,
+  Plus,
+  Sparkles,
+  Trash2,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +33,8 @@ import {
   configTemChave,
   lerConfigIA,
   modeloPadrao,
+  PROMPT_PADRAO_ID,
+  SKILL_PADRAO_ID,
   salvarConfigIA,
   urlCriacaoChave,
   type ProvedorIA,
@@ -31,6 +43,7 @@ import { instrucoesProvedor } from "@/lib/assistente/config";
 import { carregarPersonas, personaAtiva } from "@/lib/assistente/persona";
 import { limparMemoria, lerMemoria } from "@/lib/assistente/memoria";
 import type { Personagem } from "@/lib/personagens";
+import type { PromptCustom } from "@/lib/assistente/config";
 
 const PROVEDORES: Array<{ id: ProvedorIA; rotulo: string; dica: string }> = [
   { id: "local", rotulo: "IA local", dica: "Sem chave — sobrevivência, app, clima e notícias" },
@@ -39,6 +52,100 @@ const PROVEDORES: Array<{ id: ProvedorIA; rotulo: string; dica: string }> = [
   { id: "compat", rotulo: "Compatível OpenAI", dica: "Qualquer endpoint /v1/chat/completions" },
 ];
 
+/**
+ * Linha editável de prompt/skill — o item vem pré-preenchido (padrão) ou é
+ * criado pelo operador; ambos se EDITAM no lugar, além de poderem ser
+ * removidos. O key do pai remonta o componente ao alternar edição, então o
+ * estado local nasce sempre do item salvo.
+ */
+function ItemConfiguravel(props: {
+  armario: "prompt" | "skill";
+  item: PromptCustom;
+  padrao: boolean;
+  editando: boolean;
+  onEditar: () => void;
+  onCancelar: () => void;
+  onSalvar: (titulo: string, texto: string) => void;
+  onRemover: () => void;
+}) {
+  const { t } = useI18n();
+  const [titulo, setTitulo] = useState(props.item.titulo);
+  const [texto, setTexto] = useState(props.item.texto);
+  const valido = titulo.trim().length >= 3 && texto.trim().length >= 4;
+
+  if (!props.editando) {
+    return (
+      <div
+        className="flex items-start gap-1 rounded border border-border p-2"
+        data-test={`ia-${props.armario}-${props.item.id}`}
+      >
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs font-bold">
+            {props.item.titulo}
+            {props.padrao && (
+              <span className="bg-tactical-orange/15 text-tactical-orange mono ml-1.5 rounded px-1 py-0.5 align-middle text-[8px] font-bold uppercase tracking-wider">
+                {t("padrão")}
+              </span>
+            )}
+          </p>
+          <p className="text-muted-foreground line-clamp-2 text-[10px]">{props.item.texto}</p>
+        </div>
+        <button
+          type="button"
+          onClick={props.onEditar}
+          aria-label={t("Editar")}
+          title={t("Editar")}
+          className="text-muted-foreground hover:text-foreground p-1"
+        >
+          <Pencil className="h-3 w-3" />
+        </button>
+        <button
+          type="button"
+          onClick={props.onRemover}
+          aria-label={t(props.armario === "prompt" ? "Remover prompt" : "Remover skill")}
+          className="text-muted-foreground hover:text-destructive p-1"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-1.5 rounded border border-tactical-orange/60 p-2">
+      <Input
+        value={titulo}
+        onChange={(e) => setTitulo(e.target.value)}
+        className="h-8 text-xs"
+        placeholder={t("Título")}
+        aria-label={t("Título")}
+        maxLength={60}
+      />
+      <textarea
+        value={texto}
+        onChange={(e) => setTexto(e.target.value)}
+        rows={4}
+        className="bg-input text-foreground w-full rounded-md border border-border px-2 py-1.5 text-xs"
+        placeholder={t("Instrução que a IA vai seguir")}
+        aria-label={t("Instrução que a IA vai seguir")}
+      />
+      <div className="flex justify-end gap-1">
+        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={props.onCancelar}>
+          {t("Cancelar")}
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="h-7 px-2 text-xs"
+          disabled={!valido}
+          onClick={() => props.onSalvar(titulo.trim(), texto.trim())}
+        >
+          {t("Salvar")}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function ConfigAssistente() {
   const { t } = useI18n();
   const [config, setConfig] = useState(CONFIG_PADRAO_IA);
@@ -46,6 +153,7 @@ export function ConfigAssistente() {
   const [novaPrompt, setNovaPrompt] = useState("");
   const [novaSkill, setNovaSkill] = useState("");
   const [personas, setPersonas] = useState<Personagem[]>([]);
+  const [editando, setEditando] = useState<{ tipo: "prompt" | "skill"; id: string } | null>(null);
 
   useEffect(() => {
     setConfig(lerConfigIA());
@@ -59,6 +167,18 @@ export function ConfigAssistente() {
     const nova = { ...config, ...mudancas };
     setConfig(nova);
     salvarConfigIA(nova);
+  };
+
+  const salvarEdicao = (tipo: "prompt" | "skill", id: string, titulo: string, texto: string) => {
+    if (tipo === "prompt") {
+      atualizar({
+        prompts: config.prompts.map((x) => (x.id === id ? { ...x, titulo, texto } : x)),
+      });
+    } else {
+      atualizar({ skills: config.skills.map((x) => (x.id === id ? { ...x, titulo, texto } : x)) });
+    }
+    setEditando(null);
+    toast.success(t(tipo === "prompt" ? "Prompt atualizado" : "Skill atualizada"));
   };
 
   return (
@@ -228,22 +348,20 @@ export function ConfigAssistente() {
               <Sparkles className="h-3.5 w-3.5" /> {t("Prompts do operador")}
             </Label>
             {config.prompts.map((p) => (
-              <div key={p.id} className="flex items-start gap-1 rounded border border-border p-2">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-bold">{p.titulo}</p>
-                  <p className="text-muted-foreground line-clamp-2 text-[10px]">{p.texto}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    atualizar({ prompts: config.prompts.filter((x) => x.id !== p.id) })
-                  }
-                  aria-label={t("Remover prompt")}
-                  className="text-muted-foreground p-1 hover:text-destructive"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
+              <ItemConfiguravel
+                key={`${p.id}-${editando?.tipo === "prompt" && editando.id === p.id ? "edit" : "view"}`}
+                armario="prompt"
+                item={p}
+                padrao={p.id === PROMPT_PADRAO_ID}
+                editando={editando?.tipo === "prompt" && editando.id === p.id}
+                onEditar={() => setEditando({ tipo: "prompt", id: p.id })}
+                onCancelar={() => setEditando(null)}
+                onSalvar={(titulo, texto) => salvarEdicao("prompt", p.id, titulo, texto)}
+                onRemover={() => {
+                  if (editando?.id === p.id) setEditando(null);
+                  atualizar({ prompts: config.prompts.filter((x) => x.id !== p.id) });
+                }}
+              />
             ))}
             <div className="flex gap-1">
               <Input
@@ -281,20 +399,20 @@ export function ConfigAssistente() {
               <Brain className="h-3.5 w-3.5" /> {t("Skills (especialidades)")}
             </Label>
             {config.skills.map((s) => (
-              <div key={s.id} className="flex items-start gap-1 rounded border border-border p-2">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-bold">{s.titulo}</p>
-                  <p className="text-muted-foreground line-clamp-2 text-[10px]">{s.texto}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => atualizar({ skills: config.skills.filter((x) => x.id !== s.id) })}
-                  aria-label={t("Remover skill")}
-                  className="text-muted-foreground p-1 hover:text-destructive"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
+              <ItemConfiguravel
+                key={`${s.id}-${editando?.tipo === "skill" && editando.id === s.id ? "edit" : "view"}`}
+                armario="skill"
+                item={s}
+                padrao={s.id === SKILL_PADRAO_ID}
+                editando={editando?.tipo === "skill" && editando.id === s.id}
+                onEditar={() => setEditando({ tipo: "skill", id: s.id })}
+                onCancelar={() => setEditando(null)}
+                onSalvar={(titulo, texto) => salvarEdicao("skill", s.id, titulo, texto)}
+                onRemover={() => {
+                  if (editando?.id === s.id) setEditando(null);
+                  atualizar({ skills: config.skills.filter((x) => x.id !== s.id) });
+                }}
+              />
             ))}
             <div className="flex gap-1">
               <Input

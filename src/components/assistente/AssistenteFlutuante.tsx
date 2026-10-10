@@ -113,10 +113,30 @@ export default function AssistenteFlutuante() {
   const [falando, setFalando] = useState(false);
   const [global, setGlobal] = useState<EntradaConhecimento[]>([]);
   const [personas, setPersonas] = useState<Personagem[]>([]);
+  const [modoBussola, setModoBussola] = useState<"mini" | "panel" | "full">("mini");
   const fimRef = useRef<HTMLDivElement>(null);
   const arquivoRef = useRef<HTMLInputElement>(null);
   const gravadorRef = useRef<MediaRecorder | null>(null);
   const pedacosRef = useRef<Blob[]>([]);
+
+  // A bússola mini do mapa mora no mesmo canto inferior direito que o orbe.
+  // Para NUNCA cobrir um ao outro, o orbe empilha ACIMA dela quando a bússola
+  // mini está à vista (mesma condição do MapShell). O modo da bússola muda
+  // dentro do próprio mapa — acompanhamos pelo evento que o MapShell dispara
+  // (storage event não dispara na mesma aba) e ao voltar para o mapa.
+  useEffect(() => {
+    const ler = () => {
+      try {
+        const salvo = localStorage.getItem("tgis:compass-mode");
+        setModoBussola(salvo === "panel" || salvo === "full" ? salvo : "mini");
+      } catch {
+        setModoBussola("mini");
+      }
+    };
+    ler();
+    window.addEventListener("tgis:compass-mode", ler);
+    return () => window.removeEventListener("tgis:compass-mode", ler);
+  }, []);
 
   // Estado inicial: chat da sessão anterior (contexto persiste no reload)
   // e a configuração mais recente (localStorage só existe no navegador).
@@ -342,6 +362,17 @@ export default function AssistenteFlutuante() {
   const rumo = sensor.rumoAparelho;
   const corProvedor = useMemo(() => (provedorNuvem ? "#FF6B35" : "#34D399"), [provedorNuvem]);
 
+  // Bússola mini à vista no mapa tático? O orbe sobe para a própria coluna
+  // dela (tab bar → bússola → orbe) — nada sobrepõe nada. Sem bússola, o
+  // orbe volta para o canto junto à barra. No desktop a bússola fica à
+  // ESQUERDA: orbe permanece à direita, um pouco acima da atribuição.
+  const bussolaMiniNoMapa =
+    path === "/" &&
+    !prefs.telaLimpa &&
+    prefs.mapMode === "tatico" &&
+    prefs.telaVis?.bussola !== false &&
+    modoBussola === "mini";
+
   // Modo mapa limpo: o orbe some junto com todo o HUD.
   if (prefs.telaLimpa && path === "/") return null;
 
@@ -354,7 +385,11 @@ export default function AssistenteFlutuante() {
           data-test="assistente-orbe"
           onClick={() => setAberto(true)}
           aria-label={t("Abrir assistente IA")}
-          className="glove-tap fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-3 z-40 flex h-14 w-14 items-center justify-center rounded-full border-2 border-border bg-card shadow-lg md:bottom-6 md:right-6"
+          className={`glove-tap fixed right-3 z-40 flex h-14 w-14 items-center justify-center rounded-full border-2 border-border bg-card shadow-lg md:bottom-10 md:right-6 ${
+            bussolaMiniNoMapa
+              ? "bottom-[calc(11.5rem+env(safe-area-inset-bottom))]"
+              : "bottom-[calc(4.75rem+env(safe-area-inset-bottom))]"
+          }`}
         >
           <svg viewBox="0 0 56 56" className="absolute inset-0 h-full w-full">
             {/* Anel externo: roda com o rumo do aparelho (como a mini bússola) */}

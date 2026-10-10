@@ -1183,4 +1183,49 @@ export const DIC_EN: Record<string, string> = {
   Parar: "Stop",
   "Centralizar no mapa": "Center on the map",
   "Parar navegação": "Stop navigation",
+  "Estilo de campo": "Field style",
+  "Responda sempre como um instrutor de campo: passos numerados e curtos, linguagem simples, e termine cada resposta com uma dica de segurança prática.":
+    "Always answer like a field instructor: short numbered steps, plain language, and end every answer with a practical safety tip.",
+  "Kit 72 horas": "72-hour kit",
+  "Quando eu pedir ajuda com mochila ou kit de emergência, monte a lista de 72 horas: 3 litros de água por pessoa por dia, alimentos não perecíveis, documentos protegidos, rádio, lanterna, pilhas, primeiros socorros, ferramenta multiuso, agasalho e higiene — adaptada ao meu perfil.":
+    "When I ask for help with a backpack or emergency kit, build the 72-hour list: 3 liters of water per person per day, non-perishable food, protected documents, radio, flashlight, batteries, first aid, multi-tool, warm layer and hygiene — adapted to my profile.",
+  padrão: "default",
+  "Instrução que a IA vai seguir": "Instruction the AI will follow",
+  "Prompt atualizado": "Prompt updated",
+  "Skill atualizada": "Skill updated",
+  "Autenticação (Google e e-mail)": "Authentication (Google and e-mail)",
+  "Reconsultar estado": "Recheck status",
+  "Consultando o painel…": "Checking the dashboard…",
+  "Não consegui consultar o estado da autenticação agora — tente novamente.":
+    "Couldn't check the authentication status right now — try again.",
+  "E-mail e senha: ativo — o cadastro autentica na hora (a conta nasce confirmada pelo servidor, sem depender de e-mail).":
+    "E-mail and password: active — signup authenticates instantly (the account is born confirmed by the server, no e-mail needed).",
+  "Confirmação de e-mail: desligada no painel — cadastro autentica na hora.":
+    "E-mail confirmation: off in the dashboard — signup authenticates instantly.",
+  "Confirmação de e-mail: ligada no painel — o app contorna criando a conta já confirmada; ninguém fica preso em “confira seu e-mail”.":
+    "E-mail confirmation: on in the dashboard — the app works around it by creating the account already confirmed; nobody gets stuck on “check your e-mail”.",
+  "Login com Google: ATIVO — o botão “Continuar com Google” aparece no login sozinho.":
+    "Google sign-in: ACTIVE — the “Continue with Google” button appears on the login by itself.",
+  "Login com Google: ainda não ativado no painel — siga o passo a passo abaixo.":
+    "Google sign-in: not enabled in the dashboard yet — follow the steps below.",
+  "Para ativar o Google (5 minutos):": "To enable Google (5 minutes):",
+  "Em console.cloud.google.com → APIs e serviços → Credenciais → Criar credencial → ID do cliente OAuth → Aplicativo da Web.":
+    "In console.cloud.google.com → APIs & Services → Credentials → Create credentials → OAuth client ID → Web application.",
+  "Em “URI de redirecionamento autorizado”, cole exatamente:":
+    "In “Authorized redirect URI”, paste exactly:",
+  "Copie o ID do cliente e o client secret gerados.":
+    "Copy the generated client ID and client secret.",
+  "No painel do Supabase → Authentication → Sign In / Providers → Google: cole as duas credenciais e salve.":
+    "In the Supabase dashboard → Authentication → Sign In / Providers → Google: paste both credentials and save.",
+  "Ainda no painel → Authentication → URL Configuration: Site URL https://manualdosobrevivente.vercel.app e Redirect URLs incluindo este endereço.":
+    "Still in the dashboard → Authentication → URL Configuration: Site URL https://manualdosobrevivente.vercel.app and Redirect URLs including this address.",
+  "Volte aqui e toque em reconsultar — o botão do Google aparece no login sozinho.":
+    "Come back here and tap recheck — the Google button appears on the login by itself.",
+  "Abrir provedores no painel do Supabase": "Open providers in the Supabase dashboard",
+  "Sobre o SMTP:": "About SMTP:",
+  "O app funciona sem SMTP (o cadastro não depende de e-mail). Se quiser enviar e-mails próprios no futuro — recuperação de senha, avisos — configure Project Settings → Authentication → SMTP com um provedor gratuito (Resend, Brevo, SES).":
+    "The app works without SMTP (signup doesn't depend on e-mail). If you want to send your own e-mails later — password recovery, alerts — configure Project Settings → Authentication → SMTP with a free provider (Resend, Brevo, SES).",
+  "Este e-mail já tem conta — entre com a sua senha.":
+    "This e-mail already has an account — sign in with your password.",
+  "umidade {v}%": "humidity {v}%",
 };

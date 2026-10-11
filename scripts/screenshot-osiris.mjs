@@ -34,10 +34,7 @@ console.log("passo: painel aberto");
 await page.getByText("MODO DE VISUALIZAÇÃO").first().waitFor({ state: "visible" });
 console.log("passo: seção modo visível");
 await page.screenshot({ path: "/tmp/osiris-2-painel.png" });
-await page
-  .locator('[role="dialog"] button[title="Alternar para o modo Osiris"]')
-  .first()
-  .click();
+await page.locator('[role="dialog"] button[title="Alternar para o modo Osiris"]').first().click();
 console.log("passo: clique Osiris");
 await page.getByText("Camadas de inteligência", { exact: true }).waitFor({ state: "visible" });
 console.log("passo: seção inteligência visível");

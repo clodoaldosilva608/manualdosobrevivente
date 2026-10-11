@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240">
+<defs>
+  <pattern id="grade" width="20" height="20" patternUnits="userSpaceOnUse">
+    <path d="M20 0H0V20" fill="none" stroke="#2a3a20" stroke-width="0.6"/>
+  </pattern>
+</defs>
+<rect width="320" height="240" fill="#141c10"/>
+<rect width="320" height="240" fill="url(#grade)"/>
+
+  <text x="12" y="22" font-family="monospace" font-weight="bold" fill="#f97316" font-size="11">TERREMOTO — AGACHAR, COBRIR, ESPERAR</text>
+  <circle cx="60" cy="92" r="12" stroke="#d6c9a3" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M60 104 v26 M60 130 l-14 18 M60 130 l14 18 M60 112 l-16 -10 M60 112 l16 -10" stroke="#d6c9a3" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M44 108 Q60 96 78 108" stroke="#f97316" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M24 70 l-10 8 m10 -8 l-2 10 m2 -10 l-10 -2" stroke="#7d9b5a" fill="none" stroke-width="1.6" stroke-linecap="round"/>
+  <text x="20" y="168" fill="#d6c9a3" font-size="9" font-family="monospace">AGACHAR</text>
+  <circle cx="160" cy="92" r="12" stroke="#d6c9a3" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M160 104 v26 M160 130 l-14 18 M160 130 l14 18" stroke="#d6c9a3" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="140" y="78" width="40" height="28" stroke="#f97316" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" rx="4"/>
+  <text x="138" y="168" fill="#d6c9a3" font-size="9" font-family="monospace">COBRIR</text>
+  <circle cx="256" cy="92" r="12" stroke="#d6c9a3" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M256 104 v26 M256 130 l-14 18 M256 130 l14 18" stroke="#d6c9a3" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M238 96 q18 -14 36 0" stroke="#7d9b5a" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="3 3"/>
+  <text x="232" y="168" fill="#d6c9a3" font-size="9" font-family="monospace">ESPERAR</text>
+  <path d="M12 196 h296" stroke="#7d9b5a" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="2 4"/>
+  <text x="12" y="226" fill="#d6c9a3" font-size="9" font-family="monospace">longe de vidros · 3 mergulhos após parar · chegue gás</text>
+  
+</svg>

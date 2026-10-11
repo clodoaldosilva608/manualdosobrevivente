@@ -18,12 +18,16 @@ import { AppNav } from "@/components/AppNav";
 import { AutoCloudSync } from "@/components/AutoCloudSync";
 import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
 import { SplashAbertura } from "@/components/SplashAbertura";
+<<<<<<< HEAD
 import { PortaoAuth } from "@/components/PortaoAuth";
 import AssistenteFlutuante from "@/components/assistente/AssistenteFlutuante";
+=======
+import { MiniaturaAssistente } from "@/components/assistente/AssistenteIA";
+>>>>>>> 4e0e365 (feat: lote de campo — assistente IA arrastável, CAPE no boletim, 78 colaboradores, visão noturna a 4 cores, +5 mapas, sinais sonoros no SOS, abertura com áudio e manual expandido a 29 verbetes com passo a passo)
 import { registerServiceWorker, useNovaVersao } from "@/lib/pwa";
 import { iniciarAutoBackup } from "@/lib/auto-backup";
 import { ProvedorIdioma } from "@/lib/i18n";
-import { SCRIPT_PRE_HIDRATACAO, aplicarVisaoNoturna } from "@/lib/visao-noturna";
+import { SCRIPT_PRE_HIDRATACAO, aplicarVisaoNoturna, corNoturnaValida } from "@/lib/visao-noturna";
 import { getSetting } from "@/lib/db";
 import { iniciarAnalytics, registrarPageview } from "@/lib/analytics";
 import type { Preferences } from "@/hooks/usePreferences";
@@ -207,6 +211,7 @@ function SincronizadorNoturno() {
         if (!alive) return;
         aplicarVisaoNoturna({
           ativa: v?.visaoNoturna ?? false,
+          cor: corNoturnaValida(v?.noturnoCor),
           vermelho: v?.noturnoVermelho ?? 0.85,
           escurecer: v?.noturnoEscurecer ?? 0.2,
         });
@@ -254,6 +259,7 @@ function RootComponent() {
         <SplashAbertura />
         <PortaoAuth />
         <WelcomeOnboarding />
+        <MiniaturaAssistente />
         <div className="flex min-h-screen flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0 md:pt-14">
           <main className="flex-1 relative">
             <Outlet />

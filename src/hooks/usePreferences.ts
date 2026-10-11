@@ -8,6 +8,8 @@ import {
 } from "@/lib/intel.types";
 import { VIS_OSIRIS_PADRAO, type VisOsiris } from "@/components/map/visao-osiris-camadas";
 import { TELA_VIS_PADRAO, type TelaVisibilidade } from "@/components/map/tela-elementos";
+import type { CorNoturna } from "@/lib/visao-noturna";
+import { PROMPT_PADRAO, SKILL_PADRAO_ID } from "@/lib/assistente";
 
 export type ModoMapa = "tatico" | "osiris";
 
@@ -34,12 +36,15 @@ export interface Preferences {
   posicaoTravada: { lat: number; lng: number } | null;
   /** Projeção do mapa tático: plana (mercator) ou globo 3D. */
   projecao: "mercator" | "globe";
-  /** Modo noturno: visão vermelha que preserva a adaptação ao escuro. */
+  /** Modo noturno: visão monocromática que preserva a adaptação ao escuro. */
   visaoNoturna: boolean;
-  /** Intensidade da tinta vermelha (0–1). */
+  /** Tinta da visão noturna (vermelho padrão; também âmbar, verde, ciano). */
+  noturnoCor: CorNoturna;
+  /** Intensidade da tinta (0–1). */
   noturnoVermelho: number;
   /** Escurecimento adicional da tela (0–0,75). */
   noturnoEscurecer: number;
+<<<<<<< HEAD
   /** Perfil de prontidão do wizard (curadoria de mochila, manual e depósito). */
   perfil: PerfilProntidao;
   /** Wizard de perfil já concluído (não re-oferecer automaticamente). */
@@ -54,6 +59,18 @@ export interface Preferences {
   telaLimpa: boolean;
   /** Versão das preferências (migrações aplicadas a quem já usava o app). */
   versaoPrefs: number;
+=======
+  /** Personagem escolhido como assistente (slug de PERSONAGENS). */
+  assistentePersonagem: string;
+  /** Prompt do assistente — pré-preenchido e editável. */
+  assistentePrompt: string;
+  /** Skills ativadas — a de narração vem pré-ativada. */
+  assistenteSkills: Record<string, boolean>;
+  /** Chave de API do operador (Google AI Studio/compatível) — só no aparelho. */
+  assistenteChave: string;
+  /** Assistente habilitado na tela (miniatura arrastável visível). */
+  assistenteAtivo: boolean;
+>>>>>>> 4e0e365 (feat: lote de campo — assistente IA arrastável, CAPE no boletim, 78 colaboradores, visão noturna a 4 cores, +5 mapas, sinais sonoros no SOS, abertura com áudio e manual expandido a 29 verbetes com passo a passo)
 }
 
 export const DEFAULT_PREFERENCES: Preferences = {
@@ -69,13 +86,22 @@ export const DEFAULT_PREFERENCES: Preferences = {
   posicaoTravada: null,
   projecao: "mercator",
   visaoNoturna: false,
+  noturnoCor: "vermelho",
   noturnoVermelho: 0.85,
   noturnoEscurecer: 0.2,
+<<<<<<< HEAD
   perfil: "nenhum",
   wizardPerfilFeito: false,
   pro: false,
   telaLimpa: false,
   versaoPrefs: 2,
+=======
+  assistentePersonagem: "prepper-urbano",
+  assistentePrompt: PROMPT_PADRAO,
+  assistenteSkills: { [SKILL_PADRAO_ID]: true },
+  assistenteChave: "",
+  assistenteAtivo: true,
+>>>>>>> 4e0e365 (feat: lote de campo — assistente IA arrastável, CAPE no boletim, 78 colaboradores, visão noturna a 4 cores, +5 mapas, sinais sonoros no SOS, abertura com áudio e manual expandido a 29 verbetes com passo a passo)
 };
 
 /** Versão atual das migrações de preferências (ver aplicarMigracoes). */
@@ -114,11 +140,20 @@ export function usePreferences() {
         const salvas = aplicarMigracoes(v);
         setPrefs({
           ...DEFAULT_PREFERENCES,
+<<<<<<< HEAD
           ...(salvas ?? {}),
           intelVis: { ...INTEL_VIS_PADRAO, ...(salvas?.intelVis ?? {}) },
           intelKeys: { ...INTEL_CHAVES_PADRAO, ...(salvas?.intelKeys ?? {}) },
           osirisVis: { ...VIS_OSIRIS_PADRAO, ...(salvas?.osirisVis ?? {}) },
           telaVis: { ...TELA_VIS_PADRAO, ...(salvas?.telaVis ?? {}) },
+=======
+          ...(v ?? {}),
+          intelVis: { ...INTEL_VIS_PADRAO, ...(v?.intelVis ?? {}) },
+          intelKeys: { ...INTEL_CHAVES_PADRAO, ...(v?.intelKeys ?? {}) },
+          osirisVis: { ...VIS_OSIRIS_PADRAO, ...(v?.osirisVis ?? {}) },
+          telaVis: { ...TELA_VIS_PADRAO, ...(v?.telaVis ?? {}) },
+          assistenteSkills: { [SKILL_PADRAO_ID]: true, ...(v?.assistenteSkills ?? {}) },
+>>>>>>> 4e0e365 (feat: lote de campo — assistente IA arrastável, CAPE no boletim, 78 colaboradores, visão noturna a 4 cores, +5 mapas, sinais sonoros no SOS, abertura com áudio e manual expandido a 29 verbetes com passo a passo)
         });
         setLoaded(true);
       })

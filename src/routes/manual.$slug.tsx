@@ -102,6 +102,27 @@ function Entry() {
         <ReactMarkdown>{entry.body}</ReactMarkdown>
       </article>
 
+      {entry.passos && entry.passos.length > 0 && (
+        <div
+          className="mt-8 rounded-md border border-tactical-orange/40 p-4 bg-card"
+          data-test="manual-passos"
+        >
+          <h2 className="mono text-tactical-orange text-sm font-bold mb-3 tracking-widest">
+            {t("PASSO A PASSO DE EXECUÇÃO")}
+          </h2>
+          <ol className="space-y-2.5">
+            {entry.passos.map((passo: string, i: number) => (
+              <li key={i} className="flex items-start gap-3">
+                <span className="mono mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-tactical-orange/60 text-[11px] font-bold text-tactical-orange">
+                  {i + 1}
+                </span>
+                <span className="text-sm leading-relaxed">{passo.replace(/^\d+\.\s*/, "")}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
       {entry.checklist && (
         <div className="mt-8 rounded-md border border-border p-4 bg-card">
           <h2 className="mono text-tactical-orange text-sm font-bold mb-3 tracking-widest">

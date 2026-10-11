@@ -39,7 +39,7 @@ export const fetchWeather = createServerFn({ method: "POST" })
       `https://api.open-meteo.com/v1/forecast?latitude=${data.lat.toFixed(4)}` +
       `&longitude=${data.lng.toFixed(4)}` +
       `&current=temperature_2m,apparent_temperature,relative_humidity_2m,pressure_msl,wind_speed_10m,wind_direction_10m,weather_code` +
-      `&wind_speed_unit=ms&timezone=auto`;
+      `&hourly=cape&forecast_days=2&wind_speed_unit=ms&timezone=auto`;
     try {
       const res = await fetch(url);
       if (!res.ok) return null;
@@ -53,9 +53,23 @@ export const fetchWeather = createServerFn({ method: "POST" })
           wind_direction_10m?: number;
           weather_code?: number;
         };
+        hourly?: { cape?: Array<number | null>; time?: string[] };
       };
       const c = json.current;
       if (!c) return null;
+      // CAPE (J/kg) nas próximas 6 horas — energia disponível para tempestades.
+      // Referência: <300 estável · 300–1000 instabilidade moderada ·
+      // 1000–2500 tempestades prováveis · >2500 ambiente severo.
+      const agora = Date.now();
+      const cape = json.hourly?.cape ?? [];
+      const tempos = json.hourly?.time ?? [];
+      let capeMax: number | null = null;
+      for (let i = 0; i < cape.length && i < tempos.length; i++) {
+        const t = Date.parse(tempos[i]);
+        if (Number.isNaN(t) || t < agora - 3_600_000 || t > agora + 6 * 3_600_000) continue;
+        const v = cape[i];
+        if (v != null) capeMax = capeMax == null ? v : Math.max(capeMax, v);
+      }
       return {
         temperature: c.temperature_2m ?? null,
         apparent: c.apparent_temperature ?? null,
@@ -64,6 +78,7 @@ export const fetchWeather = createServerFn({ method: "POST" })
         windSpeed: c.wind_speed_10m ?? null,
         windDirection: c.wind_direction_10m ?? null,
         condition: WEATHER_TEXT[c.weather_code ?? -1] ?? "Sem dados",
+        capeMax,
       };
     } catch {
       return null;

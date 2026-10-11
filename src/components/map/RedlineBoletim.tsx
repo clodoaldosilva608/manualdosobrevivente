@@ -4,9 +4,14 @@
  * passando em rotação contínua (estilo ticker de agência):
  *
  * rumo verdadeiro · rumo magnético · declinação · correção do sensor ·
- * azimute p/ waypoint · temperatura e céu · vento · dia (nascer/pôr) ·
- * sol · lua · Cruzeiro do Sul/Polaris · sentido do mar e litoral ·
- * nível do mar (altitude) · nível do aparelho · hemisfério · coordenadas.
+ * azimute p/ waypoint · temperatura e céu · vento · CAPE (tempestade) ·
+ * dia (nascer/pôr) · sol · lua · Cruzeiro do Sul/Polaris · sentido do mar ·
+ * litoral · nível do mar · nível do aparelho · hemisfério · coordenadas ·
+ * colaboradores da plataforma.
+ *
+ * Aviso de CAPE alto: quando a energia convectiva das próximas horas
+ * (Open-Meteo) cruza o limiar, o aviso "ATENÇÃO, TEMPESTADE SE FORMANDO
+ * PERTO DE VOCÊ" entra em destaque no letreiro.
  *
  * Usa os MESMOS cálculos e a MESMA chave de cache do clima da Rosa dos
  * Ventos — nada é buscado duas vezes, e as leituras batem entre si.
@@ -19,6 +24,8 @@ import { nearestCoast, compassPoint } from "@/lib/coast";
 import { useSensorBussola } from "@/lib/bussola-sensor";
 import { nivelUniversal } from "@/lib/nivel";
 import { fetchWeather } from "@/lib/weather.functions";
+import { avisoCape, nivelCape } from "@/lib/cape";
+import { segmentoColaboradores } from "@/lib/colaboradores";
 import {
   formatDegrees,
   formatSignedDegrees,
@@ -79,6 +86,7 @@ export default function RedlineBoletim({
 
   const rumoVerdadeiro = norm(rumoAparelho ?? heading);
   const rumoMagnetico = norm(rumoVerdadeiro - declination);
+  const avisoTempestade = avisoCape(weather?.capeMax);
 
   // Nível do aparelho no letreiro (sem depender do painel da bússola).
   const inclinacao = nivel ?? null;
@@ -113,6 +121,12 @@ export default function RedlineBoletim({
         ? `de ${compassPoint(weather.windDirection)} (${formatDegrees(weather.windDirection)})`
         : undefined,
     ),
+    entrada(
+      "CAPE",
+      weather?.capeMax != null ? `${formatNumber(weather.capeMax, 0)} J/KG` : "—",
+      weather?.capeMax != null ? nivelCape(weather.capeMax).rotulo : undefined,
+    ),
+    ...(avisoTempestade ? [avisoTempestade] : []),
     entrada(
       celestial.isDay ? "DIA" : "NOITE",
       celestial.phaseLabel,
@@ -158,6 +172,7 @@ export default function RedlineBoletim({
     ),
     entrada("HEMISFÉRIO", celestial.hemisphereLabel.toUpperCase()),
     `${formatDecimalDegrees(lat)}, ${formatDecimalDegrees(lng)}`,
+    segmentoColaboradores(now),
   ];
 
   const texto = linhas.join("  •••  ");

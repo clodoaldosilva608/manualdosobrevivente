@@ -15,6 +15,18 @@ import disciplinaImg from "@/assets/manual/disciplina-gera-resultados.jpg";
 import sobreviverEscolhaImg from "@/assets/manual/sobreviver-e-uma-escolha.jpg";
 import equipamentoVidaImg from "@/assets/manual/equipamento-e-vida.jpg";
 import sobrevivenciaNaoSorteImg from "@/assets/manual/sobrevivencia-nao-e-sorte.jpg";
+import sinalizacaoResgateImg from "@/assets/manual/sinalizacao-resgate.svg";
+import aguaNaturezaImg from "@/assets/manual/agua-natureza.svg";
+import fogoLocalImg from "@/assets/manual/fogo-local.svg";
+import abrigoLocalImg from "@/assets/manual/abrigo-local.svg";
+import forrageamentoImg from "@/assets/manual/forrageamento.svg";
+import edc72hImg from "@/assets/manual/edc-72h.svg";
+import enchenteImg from "@/assets/manual/enchente.svg";
+import incendioFlorestalImg from "@/assets/manual/incendio-florestal.svg";
+import terremotoImg from "@/assets/manual/terremoto.svg";
+import radioEmergenciaImg from "@/assets/manual/radio-emergencia.svg";
+import higieneCampoImg from "@/assets/manual/higiene-campo.svg";
+import apagaoUrbanoImg from "@/assets/manual/apagao-urbano.svg";
 
 export interface ManualEntry {
   slug: string;
@@ -28,11 +40,19 @@ export interface ManualEntry {
     | "navigation"
     | "fundamentos"
     | "mentalidade"
-    | "equipamento";
+    | "equipamento"
+    | "sinalizacao"
+    | "alimentos"
+    | "desastres"
+    | "comunicacao"
+    | "higiene"
+    | "urbano";
   summary: string;
   image: string;
   imageAlt: string;
   body: string;
+  /** Passo a passo de execução — a sequência operacional do verbete. */
+  passos?: string[];
   checklist?: string[];
 }
 
@@ -70,6 +90,15 @@ export const MANUAL: ManualEntry[] = [
 Vermelhidão em expansão, inchaço, calor, pus, febre e estrias vermelhas subindo o membro. Evacue imediatamente.
 
 > **Atenção**: qualquer mordida de animal, ferida perfurante profunda ou corte com mais de 2 cm de profundidade exige avaliação médica e reforço antitetânico.`,
+    passos: [
+      "Avalie a segurança da cena e proteja-se (luvas ou plástico)",
+      "Aplique pressão direta firme por 5–10 min sem espiar",
+      "Eleve o membro (se sem fratura suspeita)",
+      "Fixe curativo compressivo e confira pulso/cor abaixo",
+      "Irrigue com água limpa e remova detritos visíveis",
+      "Cubra com curativo estéril e registre o horário",
+      "Torniquete só em hemorragia grave de membro — anote a hora",
+    ],
     checklist: [
       "Cena segura e barreira de proteção usada",
       "Pressão direta aplicada por 5–10 min",
@@ -110,6 +139,15 @@ Vermelhidão em expansão, inchaço, calor, pus, febre e estrias vermelhas subin
 ## Prevenção
 
 Mantenha-se seco, coma com frequência, use camadas e troque as meias ao fim do dia. Em grupo, verifique uns aos outros a cada hora quando estiver frio e úmido.`,
+    passos: [
+      "Retire a vítima do vento, chuva e contato com o solo",
+      "Remova TODA roupa molhada (corte se preciso)",
+      "Monte o envelope: plástico → isolante seco → camada externa",
+      "Cubra cabeça e pescoço",
+      "Calor suave no tronco: garrafas mornas em axilas/virilha",
+      "Líquidos quentes açucarados SÓ se alerta e engolindo bem",
+      "Manuseio suave sempre — brusquidão provoca parada",
+    ],
     checklist: [
       "Vítima abrigada do vento e da chuva",
       "Roupas molhadas removidas",
@@ -155,6 +193,15 @@ Mantenha-se seco, coma com frequência, use camadas e troque as meias ao fim do 
 - **Fogo longo (nodding fire)**: aquece um abrigo de meia-água a noite inteira.
 
 > **Segurança**: limpe 1 m ao redor até o solo mineral, tenha água por perto e nunca faça fogo dentro de abrigo fechado sem ventilação.`,
+    passos: [
+      "Colete três tamanhos de isca e mantenha secos",
+      "Monte ninho de isca em plataforma protegida do solo",
+      "Prepare gravetos e lenha ANTES de acender",
+      "Puxe a faísca do ferro rod EM DIREÇÃO a você",
+      "Sopro longo e suave na base da brasa",
+      "Alimente por tamanho crescente até a chama sustentar",
+      "Apague com água + mexer + água; confira ao toque",
+    ],
     checklist: [
       "Plataforma seca montada",
       "Isca preparada em ninho",
@@ -194,6 +241,15 @@ Coe com bandana, meia ou filtro de papel e deixe decantar. Filtro e químico fun
 - Consumo mínimo: 3 a 4 litros por dia em atividade moderada.
 
 > **Aviso**: fervura e filtro não removem contaminação química ou metais pesados. Nesses casos, mude de fonte.`,
+    passos: [
+      "Filtre o grosso (pano/coffee filter) antes de tudo",
+      "Ferva 1 min (3 min acima de 2.000 m) OU",
+      "Trate com pastilha de cloro seguindo o tempo do rótulo",
+      "Alternativa: filtro de cerâmica/bomba de campo",
+      "Guarde o purificado em recipiente LIMPO e rotulado",
+      "Separe sempre suja e limpa (duas garrafas)",
+      "Repurifique qualquer água armazenada há dias",
+    ],
     checklist: [
       "Fonte avaliada e escolhida",
       "Água pré-filtrada e decantada",
@@ -235,6 +291,15 @@ Um único ponto alto amarrado a uma árvore e três cantos estacados. É a monta
 - Faça o beiral avançar sobre a entrada para a chuva não entrar.
 - Cave uma pequena vala de drenagem no perímetro em solo encharcado.
 - Isole o chão com 20 cm de galhos, folhas secas ou capim — o frio vem de baixo.`,
+    passos: [
+      "Estique a corda entre dois pontos firmes (A-frame)",
+      "Fixe a lona com a abertura contra o vento dominante",
+      "Deixe um lado baixo para bloquear vento e chuva",
+      "Instale o isolamento do solo (folhagem/manta) antes de deitar",
+      "Cave micro-dreno lateral se o solo estiver úmido",
+      "Confira ângulo: chuva escorre, não acumula",
+      "Teste à noite: deite e verifique cobertura e ventilação",
+    ],
     checklist: [
       "Local sem riscos verificado",
       "Cumeeira esticada e tensionada",
@@ -274,6 +339,15 @@ Une duas cordas de mesmo diâmetro. Uso: amarrados e curativos — **nunca** par
 ## Treino
 
 Pratique cada nó cinco vezes por dia durante uma semana, depois de olhos fechados e com luvas. Nó que você não faz no escuro não é nó que você tem.`,
+    passos: [
+      "Bowline: faça o coelho sair do buraco, contornar a árvore e voltar",
+      "Treine bowline 10× com um olho fechado",
+      "Taut-line hitch: laços de ajuste — teste puxando a corda",
+      "Prussik: laço duplo no cabo — teste a subida",
+      "Clove hitch: fixação rápida em poste/tronco",
+      "Confira cada nó puxando antes de carregar peso",
+      "Regra: nó que não confia, refaz — nó nunca é 'quase'",
+    ],
     checklist: [
       "Lais-de-guia (praticar 5x)",
       "Volta do fiel ajustável (praticar 5x)",
@@ -317,6 +391,15 @@ Para retornar, use o azimute de ida ± 180°. Anote sempre o azimute de saída d
 - **Sombra do sol**: marque a ponta da sombra, espere 15 minutos, marque de novo — a linha entre as marcas aponta aproximadamente leste-oeste.
 - **Noite, hemisfério sul**: prolongue 4,5 vezes o eixo maior do Cruzeiro do Sul e desça ao horizonte para achar o sul.
 - **Noite, hemisfério norte**: Polaris marca o norte verdadeiro.`,
+    passos: [
+      "Oriente o mapa: norte do mapa alinhado com o norte real",
+      "Compense a declinação magnética da região no rumo",
+      "Identifique 3 referências visíveis (crista, rio, estrada)",
+      "Rume com azimute: bússola apontada, ponto à frente, caminhe até ele",
+      "Repita o azimute a cada referência alcançada",
+      "Meça passos (contagem dupla) para estimar distância",
+      "Em área fechada: azimute + contagem de passos vence o 'achismo'",
+    ],
     checklist: [
       "Mapa orientado ao norte",
       "Declinação aplicada",
@@ -350,6 +433,15 @@ No Centro de Sobrevivência você aprende as habilidades que realmente importam 
 ## Mais do que cursos: preparação real
 
 Preparação real é medida em repetição, não em certificados. Treine cada habilidade em condições fáceis, depois em chuva, à noite e cansado. Registre o que falhou. O dia em que você precisar de verdade não pode ser o primeiro dia de prática.`,
+    passos: [
+      "Escolha UMA habilidade da lista por semana",
+      "Leia o verbete completo antes de tentar",
+      "Treine em casa/terreno seguro 3×",
+      "Treine a 4ª vez em condição adversa (noite, chuva)",
+      "Anote no caderno o que falhou e o ajuste",
+      "Ensaie o roteiro de verificação com o kit real",
+      "Repita o ciclo com a próxima habilidade",
+    ],
     checklist: [
       "Cinco nós essenciais praticados nesta semana",
       "Fogueira acendida com ferro rod e isca própria",
@@ -390,6 +482,15 @@ Esterilize a rosca e o bico com um pouco da água já tratada, marque o que est�
 ## Economize cada gota
 
 Trabalhe ao amanhecer e ao entardecer, respire pelo nariz, fique à sombra, não coma sem beber (digerir consome água), e beba em goles distribuídos em vez de um litro de uma vez. Se a fonte é distante, carregue o recipiente cheio até o acampamento em vez de ir até a água duas vezes.`,
+    passos: [
+      "Calcule a necessidade: 3 L/pessoa/dia (mais em calor)",
+      "Confira as três peças: recipiente cheio, filtro, fervura",
+      "Defina rotação de stock a cada 6 meses",
+      "Treine a purificação uma vez por estação",
+      "Monte dois pontos de água: casa e mochila",
+      "Sinalize data em cada recipiente",
+      "Refaça o cálculo quando a família mudar",
+    ],
     checklist: [
       "Fonte avaliada (corrente, clara, limpa de origem)",
       "Pré-filtragem e decantação feitas",
@@ -431,6 +532,15 @@ Saber se orientar pode salvar sua vida: use a bússola, leia o terreno e entenda
 ## Como treinar os pilares
 
 Um pilar por semana, em ciclos: semana do kit (inventário e pesos), semana do fogo (três acendimentos), semana do abrigo (um pernoite), semana da orientação (rota com azimutes), semana do bushcraft (nós + faca). Depois, o teste final: 24 h usando só o kit.`,
+    passos: [
+      "Avalie cada pilar (água, comida, abrigo, energia, segurança) com nota 0–5",
+      "Comece pelo pilar com MENOR nota",
+      "Compre/organize em três estágios: 72 h, 2 semanas, 1 mês",
+      "Teste um pilar por mês com apagão simulado de 12 h",
+      "Documente o que faltou no teste",
+      "Reponha e rode o estoque (primeiro que entra, primeiro que sai)",
+      "Refaça a avaliação a cada trimestre",
+    ],
     checklist: [
       "Kit de sobrevivência conferido na mochila",
       "Ferro rod + isca alternativa testados",
@@ -467,6 +577,15 @@ Monte o seu ciclo de preparação em três camadas: o EDC (o que está com você
 ## A régua da adaptação
 
 Adaptação se treina mudando uma variável por vez: mesma rota com chuva, mesmo acampamento sem fogueira, mesmo trecho sem GPS. Quem já se virou sob controle ganha calma quando não há controle — e é essa calma que salva.`,
+    passos: [
+      "Liste os 5 riscos reais da sua região (enchente, seca, apagão…)",
+      "Priorize o risco mais provável e mais impactante",
+      "Monte plano escrito para cada um dos 3 primeiros",
+      "Compartilhe o plano com quem mora com você",
+      "Marque data anual de revisão do plano",
+      "Exercite a evacuação uma vez por ano",
+      "Guarde cópia dos documentos no plano",
+    ],
     checklist: [
       "Um verbete novo estudado e praticado na semana",
       "Kit de 24 h conferido e seco",
@@ -502,6 +621,15 @@ Liberdade é escolher: ficar ou voltar, ajudar ou pedir ajuda, esperar ou evacua
 ## Comece pelo mais frágil
 
 Faça um inventário honesto das três moedas e reforce a mais fraca primeiro: sem conhecimento, equipamento é peso; sem prática, conhecimento é teoria; sem equipamento mínimo, a prática tropeça. Um mês focado na fraqueza vale mais que um ano reforçando o que já é forte.`,
+    passos: [
+      "Mapeie dependências críticas: energia, água, comida, comunicação",
+      "Escolha UMA dependência para reduzir este mês",
+      "Implante a redução (ex.: filtro em vez de galão)",
+      "Meça o custo e a autonomia ganha",
+      "Ensine alguém da casa a operar a solução",
+      "Registre o progresso no caderno",
+      "Repita com a próxima dependência",
+    ],
     checklist: [
       "Inventário de conhecimento/prática/equipamento feito",
       "Ponto mais fraco identificado e treinado",
@@ -541,6 +669,15 @@ O maior desafio nem sempre é o terreno — é a sua própria mente. Manter a ca
 ## Treino mental de campo
 
 Treine de propósito: perca-se de mentira num lugar seguro e aplique o STOP; acampe sozinho uma noite; caminhe no escuro com luz fraca. O medo que você domina em treino é o medo que não te domina de verdade.`,
+    passos: [
+      "Treine a regra do PARAR: pare, respire, observe, planeje",
+      "Ensaie a respiração 4-4-6 em situações de stress leve",
+      "Divida o problema grande em três passos pequenos",
+      "Defina meta da próxima hora (não da semana)",
+      "Mantenha rotina mínima: hidratação, comida, anotações",
+      "Fale alto o plano — a voz organiza o pensamento",
+      "Reveja decisões só em paradas planejadas",
+    ],
     checklist: [
       "STOP aplicado antes de qualquer movimento",
       "Respiração 4-4-4 feita em três ciclos",
@@ -577,6 +714,15 @@ Escolha um dia fixo e crie o ritual: conferir a mochila (15 min), afiar a faca (
 ## Disciplina é sobrevivência
 
 Em campo, a disciplina aparece como checklist: antes de sair (kit completo), antes de dormir (fogo apagado, água tratada, abrigo firme), antes de mover (azimute anotado, grupo combinado). O sobrevivente disciplinado não é o mais forte — é o que não esquece o básico.`,
+    passos: [
+      "Escolha o hábito de preparação mais pequeno possível",
+      "Fixe horário fixo (ex.: domingo, 10 min de kit)",
+      "Use checklist impresso na porta",
+      "Registre em sequência (não quebre a corrente)",
+      "Recompense a corrente, não o episódio",
+      "Quando falhar, retome no dia seguinte sem drama",
+      "Suba o grau só após 30 dias de corrente",
+    ],
     checklist: [
       "Ritual semanal cumprido no dia fixo",
       "Mochila conferida item por item",
@@ -618,6 +764,15 @@ Não é sobre ter tudo, mas sobre ter o que realmente importa: escolha com intel
 ## Lembrete 5 — Comece pequeno, comece agora
 
 A escolha acontece no cotidiano: a garrafa cheia na mochila, a isqueira no bolso, o ponto de encontro combinado, o verbete lido da noite. Trinta dias de decisões pequenas constroem o hábito que não falha quando tudo o mais falha.`,
+    passos: [
+      "Reconheça o momento de decisão e nomeie-o alto",
+      "Avalie: água, abrigo, sinal — em 60 segundos",
+      "Escolha UMA ação e execute",
+      "Reavalie após cada ação executada",
+      "Registre a decisão e o resultado no caderno",
+      "Ensaie decisões em treino (a cabeça repete o que treinou)",
+      "Compartilhe o caso com o grupo — decisão ensina",
+    ],
     checklist: [
       "Água tratada e reserva intocada",
       "Kit essencial conferido e dominado",
@@ -655,6 +810,15 @@ Prioridade não é marca, é adequação: clima do seu cenário, duração da sa
 ## Manutenção é sobrevivência
 
 Equipe-se e mantenha: seque tudo antes de guardar, areje a barraca, lubrifique zíperes, teste o filtro, rode as pilhas, confira o kit a cada estação. Equipamento negligenciado falha no pior momento — a manutenção é o treino invisível que nunca falha.`,
+    passos: [
+      "Confira os cinco itens: mochila, barraca, lanterna, canivete, água",
+      "Teste cada um em uso real (não na prateleira)",
+      "Seque tudo antes de guardar",
+      "Rode pilhas e confira carga antes de sair",
+      "Lubrifique zíperes e afie lâminas por estação",
+      "Verifique peso total (≤20% do corpo)",
+      "Anote o que faltou na última saída",
+    ],
     checklist: [
       "Mochila conferida e dentro do peso",
       "Barraca esticada e teto de chuva OK",
@@ -692,6 +856,15 @@ Nenhuma habilidade está "pronta" antes de três acertos em três dias diferente
 ## Da dependência à autonomia
 
 Cada repetição troca uma dose de sorte por um grau de autonomia: a isqueira acaba, a bateria morre, o fósforo molha — a técnica fica. Sobrevivência não é sorte: é o acúmulo silencioso de práticas que você esperou nunca precisar, mas levou sempre.`,
+    passos: [
+      "Estude o verbete da habilidade alvo",
+      "Monte o kit mínimo da tríade (conhecimento, item, prática)",
+      "Acerte a habilidade 3× em 3 dias diferentes",
+      "Faça uma execução em condição adversa",
+      "Registre os 3 acertos no caderno",
+      "Ensine alguém — ensinar fixa",
+      "Programe a revisão em 90 dias",
+    ],
     checklist: [
       "Ferro rod + isca estanque no kit",
       "Três acendimentos em três dias feitos",
@@ -699,6 +872,477 @@ Cada repetição troca uma dose de sorte por um grau de autonomia: a isqueira ac
       "Iscas naturais identificadas na sua região",
       "Facão/faca afiada e segura",
       "Verbete de fogo (condições úmidas) estudado",
+    ],
+  },
+  {
+    slug: "sinalizacao-resgate",
+    title: "Sinalização e Chamada de Resgate",
+    category: "sinalizacao",
+    summary:
+      "Faça quem procura você achar: espelho, fumaça, SOS no chão e os três toques do apito.",
+    image: sinalizacaoResgateImg,
+    imageAlt:
+      "Ilustração tática de sinalização de resgate: espelho refletindo sol, três símbolos SOS desenhados no chão e colunas de fumaça",
+    body: `## A lógica de ser encontrado
+
+Resgate é um problema de probabilidade: quanto mais você sinaliza, por mais meios e por mais tempo, maior a chance de alguém perceber. A regra dos três (três toques, três fumaças, três marcas) é o idioma universal de socorro — qualquer equipage de busca entende. Sinalize em Local aberto e ALTO: crista, clareira, margem. Sinal que ninguém vê vale zero.
+
+## Os meios, em ordem de alcance
+
+- **Apito**: três toques longos, pausa, repetição. Vai mais longe que a voz e não cansa o operador. Traga no cordão do zíper — é o item de melhor custo-benefício do kit.
+- **Espelho de sinalização** (ou tela de celular): um clarão refletido visível a dezenas de quilômetros em dia claro. Aponte pelo "V" dos dedos: um dedo para o alvo, o reflexo no outro.
+- **Fumaça**: fogueira preparada com galhada verde para fumaça branca de dia; chama alta e gasolina controlada para luz de noite. Três colunas em linha são reconhecidas como socorro.
+- **SOS no chão**: pedras, galhos ou raspar o solo. Cada letra com no mínimo 6 metros de altura — legível de avião. Longe de árvores que escondam a marca.
+- **Cor**: poncho laranja, capa de emergência, bandeja invertida — contraste com a mata é avistado por helicóptero.
+
+## Radioescuta e previsão
+
+Sinalize PERTO de onde você está, não onde "achou que seria melhor": quem busca volta ao último ponto conhecido. Deixe marcas de progresso (flechas de fita) na direção real do movimento. Se ouvir aeronave, economize o espelho para o momento em que ela vem à sua direção — o clarão perde força contra o sol baixo.`,
+    passos: [
+      "1. Escolha o ponto de sinalização: local aberto, alto e visível de vários ângulos",
+      "2. Monte a fogueira de fumaça com galhada verde ao lado, pronta para acender rápido",
+      "3. Desenhe SOS no chão com material contrastante, letras de 6 m ou mais",
+      "4. Toque o apito: 3 toques longos, pause 30 s, repita — sempre no mesmo ritmo",
+      "5. No avistamento de aeronave, use o espelho: reflexo estável e direcionado",
+      "6. Deixe fita/flecha indicando a direção real do seu deslocamento",
+      "7. Repita todo o ciclo de sinalização a cada mudança de luz (manhã/tarde)",
+    ],
+    checklist: [
+      "Apito no corpo (não na mochila)",
+      "Espelho ou tela de celular funcional",
+      "Fogueira de fumaça preparada",
+      "SOS no chão com 6 m de letra",
+      "Local alto e aberto escolhido",
+      "Marcas de direção deixadas na trilha",
+    ],
+  },
+  {
+    slug: "agua-natureza",
+    title: "Encontrar e Coletar Água na Natureza",
+    category: "water",
+    summary:
+      "Onde procurar, como coletar com saco de transpiração e destilador solar — e por que TODA água de campo é purificada.",
+    image: aguaNaturezaImg,
+    imageAlt:
+      "Ilustração tática de coleta de água: saco de transpiração em galho, destilador solar no solo e rio com barras de fluxo",
+    body: `## Onde a água se esconde
+
+Comece pelo relevo: água escorre para baixo e se acumula onde o terreno aperta. Vales com vegetação densa, leitos de rio secos (cave na curva externa, lado oposto à corrente), rochas côncavas ao amanhecer e a base de falésias sombrias guardam água. Animais apontam: trilhas convergindo ao anoitecer, abelhas a menos de 1 km, aves voando baixo e direto ao entardecer. Cactos e bambus guardam água potável na polpa — o bambu oco cheio é o achado mais seguro da mata tropical.
+
+## Coleta sem fonte visível
+
+- **Saco de transpiração**: saco plástico bem fechado em galho folhado e ensolarado. A planta transpira água limpa — 200 a 500 ml por dia por saco, sem filtro, sem fervura.
+- **Destilador solar**: buraco no solo, recipiente no centro, plástico selado com pedra no meio. Sol destila água do solo (e purifica a suja que você despeja ao redor) — lento, mas funciona em areia úmida.
+- **Condensação da manhã**: pano embebido no orvalho da vegetação alta antes do sol; esprema em recipientes.
+- **Chuva**: qualquer superfície limpa é telhado — poncho esticado em vale, capa de emergência.
+
+## Purificação não é opcional
+
+Giardia, E. coli e hepatite A não dão aviso. Fervura por 1 minuto (3 min acima de 2.000 m) é o método infalível; filtro de cerâmica/sarjeta com pastilha de cloro cobre o dia a dia. Água de aparência cristalina mata tanto quanto a turva — o critério é o TRATAMENTO, não o visual.`,
+    passos: [
+      "1. Leia o terreno: procure vales fechados, leitos secos e curvas de rio (cave na curva externa)",
+      "2. Procure indicadores de vida: trilhas de animais convergindo, abelhas, aves ao entardecer",
+      "3. Colete de imediato: monte 2 a 4 sacos de transpiração em galhos ensolarados",
+      "4. Monte o destilador solar no solo úmido antes do meio-dia (sol alto = mais produção)",
+      "5. Recolha orvalho com pano na vegetação alta ao amanhecer",
+      "6. Purifique TUDO que coletar de fonte natural: fervura 1 min ou filtro + pastilha",
+      "7. Estoque o purificado em recipiente fechado e identifique qual é o limpo",
+    ],
+    checklist: [
+      "Fonte encontrada ou coletores instalados",
+      "Fervura/filtro/pastilha disponíveis",
+      "Recipientes limpos e tampados",
+      "Sacos de transpiração rodando ao sol",
+      "Destilador solar montado em solo úmido",
+      "Água suja e limpa separadas",
+    ],
+  },
+  {
+    slug: "fogo-local",
+    title: "Escolher o Local e Montar a Fogueira",
+    category: "fire",
+    summary:
+      "Local seguro, três arranjos de fogueira e a ordem dos três tamanhos de combustível — a anatomia do fogo que não falha.",
+    image: fogoLocalImg,
+    imageAlt:
+      "Ilustração tática dos três arranjos de fogueira (teepee, cabana, estrela), três tamanhos de lenha e parede de vento",
+    body: `## O local decide metade do resultado
+
+Escolha chão plano, a 2 m ou mais de rochas que possam estourar, longe de galhos secos pendurados e de raízes (o fogo corre por raiz). Limpe um círculo de 1 m até a terra nua; em vento, cave a fogueira levemente ou monte parede de pedra/madeira no lado do vento. Em solo úmido ou nevado, plataforma de troncos evita que o fogo afunde e morra.
+
+## Os três arranjos e o que cada um faz
+
+- **Teepee (conico)**: isca no centro, gravetos em cone ao redor. Chama vertical rápida — é o arranjo para ACENDER, e o primeiro estágio de qualquer fogueira.
+- **Cabana (log cabin)**: gravetos empilhados em quadrado sobre as brasas do teepee. Brasas abundantes para cozinhar — o arranjo de trabalho.
+- **Estrela**: troncos longos empurrados para o centro. Queima lenta, dura a noite, gasta pouco — o arranjo de pernoite; empurre conforme precise.
+
+## A ordem que nunca falha
+
+Três tamanhos preparados ANTES de acender: isca (que pega de faísca), gravetos finos (groselha de fósforo), e lenha crescente. Acenda contra o vento, de baixo, e adicione tamanho só quando a camada anterior sustenta chama. Na chuva: isca debaixo do poncho, gravetos do interior de troncos caídos, e paciência — um fogo de chuva se constrói em camadas pequenas e persistentes. Apagar é técnica: água, mexer, água de novo, mão no chão fria antes de sair.`,
+    passos: [
+      "1. Escolha o local: chão plano, longe de galhos secos, raízes e rochas soltas",
+      "2. Limpe círculo de 1 m até a terra nua; monte parede de vento se necessário",
+      "3. Prepare os três tamanhos: isca, gravetos finos e lenha crescente (mão no kit, não na mata)",
+      "4. Monte o teepee com a isca no centro e acenda contra o vento, de baixo para cima",
+      "5. Sopre longo e suave na base da brasa — nunca de perto nem rápido",
+      "6. Transite para cabana (cozinhar) ou estrela (pernoite) conforme a necessidade",
+      "7. Para apagar: água, mexa as brasas, água de novo — só saia com tudo frio ao toque",
+    ],
+    checklist: [
+      "Círculo de segurança de 1 m limpo",
+      "Isca seca em recipiente estanque",
+      "Três tamanhos de lenha separados",
+      "Parede de vento (se vento)",
+      "Água/areia para apagar ao alcance",
+      "Fogo morto confirmado ao toque",
+    ],
+  },
+  {
+    slug: "abrigo-local",
+    title: "Escolher o Local do Abrigo",
+    category: "shelter",
+    summary:
+      "As cinco regras do terreno que valem antes de qualquer técnica de construção — onde você dorme decide como você acorda.",
+    image: abrigoLocalImg,
+    imageAlt:
+      "Ilustração tática de escolha de local de abrigo: abrigo baixo protegido do vento, checagem de leito de rio e árvores mortas",
+    body: `## O terreno vem antes da técnica
+
+Um abrigo mal localizado falha mesmo bem construído. As cinco regras de campo: **1)** leito de rio é proibido — a enxurrada não avisa; **2)** nunca embaixo de árvore morta ou galho pendurado ("widow makers" derrubam sem vento); **3)** longe de cristas expostas (vento e frio) e do fundo de vales (poço de ar frio e umidade); **4)** perto de água, não EM cima dela — 30 a 60 m de distância evita insetos, animais e subida repentina de nível; **5)** meio de ladeira, terreno plano e drenável, com o rabo do abrigo contra o vento dominante.
+
+## Ler o que o local conta
+
+Solo que afunda sob o calcanhar retém chuva — teste com o pé, não com o olho. Cheque o teto: o que cai de árvore à noite (galho, fruto, seiva) vira problema. Procure sinais de água parada recente (lama seca, folhas aderidas em troncos) — linha de chegada da última chuva. Conte folhas caídas ao redor: material de isolamento abundante no local vale mais que abrigo bonito longe dele.
+
+## Orientação e microclima
+
+Nas latitudes do Brasil, orientar a abertura para leste pega o sol cedo e escapa do sol da tarde; no calor extremo, a prioridade inverte — sombra o dia inteiro. Em campo aberto, o abrigo baixo (60–90 cm de altura) vence o vento; na mata, o deformado de folhagem esconde e isola. Faça a cama antes do teto: o solo rouba calor 25× mais rápido que o ar — 20 cm de isolamento abaixo do corpo não é luxo, é o próprio abrigo.`,
+    passos: [
+      "1. Aplique as cinco regras: fora de leito, longe de árvore morta, meio de ladeira, 30–60 m de água, plano",
+      "2. Teste o solo com o calcanhar: firme e drenável, sem depressão que acumule água",
+      "3. Cheque o teto contra galhos pendurados e colmeias",
+      "4. Identifique a direção do vento dominante e planeje o abrigo com o rabo contra ele",
+      "5. Conte o material de isolamento ao redor (folhagem seca, folhas de palmeira)",
+      "6. Monte primeiro o isolamento do solo (20 cm), depois o teto",
+      "7. Antes de dormir, confirme rota de saída rápida e sinal de emergência à mão",
+    ],
+    checklist: [
+      "Fora de leito de rio e de vaso de enxurrada",
+      "Nenhum galho morto sobre o local",
+      "Meio de ladeira, terreno plano",
+      "30–60 m da fonte de água",
+      "Isolamento do solo de 20 cm",
+      "Ventilação mantida (CO não acumula)",
+    ],
+  },
+  {
+    slug: "forrageamento-basico",
+    title: "Forrageamento Seguro e Alimentos de Campo",
+    category: "alimentos",
+    summary:
+      "O teste universal de comestibilidade, as plantas brasileiras mais confiáveis e as regras que mantêm o intestino fechado.",
+    image: forrageamentoImg,
+    imageAlt:
+      "Ilustração tática de forrageamento: três plantas identificadas, etapas do teste universal de comestibilidade e avisos",
+    body: `## A regra que primeiro protege
+
+Ninguém morre de fome em uma semana; morre de intoxicação em um prato. Forrageamento suplementa — não substitui — a reserva de comida. A prioridade real em emergência curta é água e abrigo; coma da mata com MARGEM de segurança: identifique 100% da planta (folha, caule, flor, raiz), e em caso de dúvida, a dúvida é não.
+
+## O teste universal (uma planta por vez)
+
+1. Separe uma parte jovem e sadia; cozinhe se possível (cozinhar neutraliza muitos compostos).
+2. Esfregue o suco no antebraço e espere 8 horas: ardência, vermelhidão ou coceira eliminam a planta.
+3. Toque nos lábios 15 minutos; depois mastigue uma porção mínima sem engolir — queimação, amargor agressivo ou dormência eliminam.
+4. Engula uma porção pequena e aguarde 8 horas. Só então coma uma porção normal, da MESMA parte preparada do MESMO jeito.
+
+## Os mais confiáveis no Brasil
+
+Bananeira-brava (fruto e coração, cozidos), taiá/taro (folha e rizoma SEMPRE cozidos — cru arde), pinhão na serra, araçá, jabuticaba, guabiroba, romã (casca e sementes), capim-limão (chá), pequiá e piqui (cuidado com espinhos). **Regras duras**: cogumelos ficam FORA do cardápio de campo (nem com teste — sem antídoto, erro é fatal); plantas de seiva leitosa branca geralmente irritam; frutos de mimeira-de-pecado não existem — se todo animal come, avalie; se nenhum come, desconfie.`,
+    passos: [
+      "1. Identifique a planta com absoluta certeza (folha, caule, flor, fruto e habitat conferidos)",
+      "2. Separe apenas uma parte jovem; prefira cozida a crua",
+      "3. Aplique o teste no antebraço e espere 8 horas",
+      "4. Toque nos lábios (15 min) e mastigue sem engolir — rejeite amargor agressivo",
+      "5. Engule porção mínima e espere outras 8 horas",
+      "6. Coma porção normal só da mesma parte, mesmo preparo",
+      "7. Registre no caderno a planta testada e o resultado — o conhecimento acumula",
+    ],
+    checklist: [
+      "Identificação 100% confirmada",
+      "Teste de 8 h no braço feito",
+      "Teste de lábios e mastigação feito",
+      "Porção mínima engolida sem reação",
+      "Cozimento aplicado quando indicado",
+      "Cogumelos descartados por padrão",
+    ],
+  },
+  {
+    slug: "mochila-72h",
+    title: "Mochila 72 Horas e EDC — o que Carregar",
+    category: "equipamento",
+    summary:
+      "A arquitetura da mochila de emergência: camadas, pesos, os seis sistemas e a regra das duas fontes para tudo que é crítico.",
+    image: edc72hImg,
+    imageAlt:
+      "Ilustração tática de mochila 72h com camadas de organização (topo: socorro e chuva; meio: água, fogo, luz; base: abrigo e comida) e limite de peso",
+    body: `## Filosofia: sistemas, não itens
+
+A mochila 72 h carrega os seis sistemas de sobrevivência, em camadas que refletem a urgência de acesso: **água** (3 L por pessoa/dia + filtro + pastilhas), **abrigo** (tarp/poncho + manta térmica + corda), **fogo** (duas fontes: isqueira + ferro rod), **luz** (headlamp + backup), **primeiros socorros** (trauma básico + remédios pessoais) e **comida** (3 dias de itens que não precisam de fogo). EDC (everyday carry) é o núcleo que anda no bolso: canivete, apito, isqueira, lanterna pequena, dinheiro e cópia de documento.
+
+## Organização que funciona sob estresse
+
+Topo da mochila: o que você usa PRIMEIRO no problema — socorro, capa de chuva, lanterna. Meio: água e cozinha. Base: abrigo e reserva de comida — o que você abre uma vez por dia. Bolsos externos: mapas, documentos, kit de higiene compacto. Nada crítico dentro de compartimento duplo: sob estresse, você não vai desmontar a mochila para achar o torniquete. Etiquete por cor ou posição e treine pegar às cegas.
+
+## Peso e manutenção
+
+Limite clássico: 20% do peso corporal com água — acima disso a mobilidade cai e o risco de lesão sobe. Para 72 h urbanas, 8–12 kg bem divididos vencem 6 kg mal distribuídos. Rode o estoque a cada 6 meses (comida, pilhas, remédios) e use a manutenção como treino: abrir, conferir, recolocar é o ensaio que faz a mochila responder quando a cabeça não responde.`,
+    passos: [
+      "1. Liste os seis sistemas: água, abrigo, fogo, luz, socorro, comida",
+      "2. Duplique as fontes críticas: duas de fogo, duas de luz, duas de purificação",
+      "3. Organize por urgência de acesso: topo (socorro/chuva), meio (água/fogo), base (abrigo/comida)",
+      "4. Monte o EDC de bolso: canivete, apito, isqueira, lanterna, documento, dinheiro",
+      "5. Pese a mochila completa: ajuste até 20% do peso corporal",
+      "6. Faça o teste das cegas: ache socorro e lanterna sem olhar",
+      "7. Agende a revisão semestral: comida, pilhas, remédios e roupas",
+    ],
+    checklist: [
+      "Seis sistemas presentes e completos",
+      "Fontes críticas duplicadas",
+      "Peso dentro dos 20%",
+      "Itens de urgência no topo",
+      "Documentos e dinheiro em bolsos",
+      "Revisão semestral agendada",
+    ],
+  },
+  {
+    slug: "enchente",
+    title: "Enchente: Antes, Durante e Depois",
+    category: "desastres",
+    summary:
+      "A água viva derruba adulto em 15 cm — leia os níveis, evacue no tempo certo e volte só com a alça desligada.",
+    image: enchenteImg,
+    imageAlt:
+      "Ilustração tática de enchente: níveis de água marcados, pessoa subindo ao telhado com seta e aviso de correnteza",
+    body: `## Antes: o aviso existe
+
+Enchente tem palestrantes de plantão: chuva forte e contínua por horas, rio turvo e subindo, cheiro de terra lavada. Quem mora em área de risco já sabe qual é o ponto de corte do bairro — defina em família o nível que dispara a saída, e o ponto alto de encontro. Kit de mão pronto: documentos em saco plástico, água, remédios, lanterna, rádio a pilha, dinheiro trocado e carregador externo. Desligue a chave geral ANTES da água chegar à instalação.
+
+## Durante: subir, não atravessar
+
+15 cm de água em movimento derrubam um adulto; 60 cm levam um carro — "atravessar rapidinho" é a causa clássica de vítima fatal. Suba em vez de fugir: telhado, laje, morro. Nunca use elevador. Na água, ande de lado, com vara à frente testando o piso; buracos de bocas de lobo são invisíveis. Sinalize do alto com pano colorido e apito — 3 toques. Se estiver em veículo e a água subir, saia pelo vidro/porta IMEDIATAMENTE: o carro flutua e vira.
+
+## Depois: a água que fica
+
+Volte só com aviso da defesa civil. A energia só religa após eletricista conferir a instalação — água e fiação matam por contato dias depois. Água de poço e da torneira só depois de ferver/desinfetar; descarte alimento que tocou a lama (não confie em "só a embalagem"). Fotografe os danos para o seguro/defesa civil, limpe com água e sabão + solução desinfetante, e cuide da leptospirose: luvas e botas em qualquer contato com lama, e febre nos 14 dias seguintes pede médico e a menção EXPLÍCITA de contato com enchente.`,
+    passos: [
+      "1. Defina em família o nível de disparo da evacuação e o ponto alto de encontro",
+      "2. Monte o kit de mão: documentos em plástico, água, remédios, lanterna, rádio, dinheiro",
+      "3. Com chuva contínua, acompanhe o nível do rio e a previsão — saia DE DIA e a seco",
+      "4. Desligue chave geral e gás antes da água chegar",
+      "5. Na água viva: não atravesse a pé nem de carro — suba (telhado, laje, morro)",
+      "6. Do ponto alto, sinalize com pano colorido e apito (3 toques)",
+      "7. Volte só com liberação; elétrica conferida, água fervida, alimentos tocados descartados",
+    ],
+    checklist: [
+      "Ponto de corte e encontro definidos",
+      "Documentos embalados em plástico",
+      "Energia e gás desligados (antes da água)",
+      "Nenhuma travessia de água viva",
+      "Sinalização do ponto alto ativa",
+      "Retorno só após liberação oficial",
+    ],
+  },
+  {
+    slug: "incendio-florestal",
+    title: "Incêndio Florestal: Escape e Proteção",
+    category: "desastres",
+    summary:
+      "O fogo sobe morro mais rápido que você corre — leia o vento, busque o queimado e proteja as vias aéreas.",
+    image: incendioFlorestalImg,
+    imageAlt:
+      "Ilustração tática de incêndio florestal: frentes de fogo, área queimada como refúgio, seta de fuga a favor do vento e aviso de subida",
+    body: `## Física que decide a fuga
+
+O fogo corre 2 a 3× mais rápido morro acima; cristas e canhões (vales estreitos) funcionam como chaminas e são proibidos como rota. A frente principal avança A FAVOR do vento — fuga é na direção oposta à inclinação da fumaça e para LADO, não para cima. Observe a fumaça: vertical = fogo calmo; deitada e escura = fogo acelerando com vento.
+
+## Onde se refugiar
+
+A área JÁ QUEIMADA é o refúgio clássico: não há combustível à frente. Rios, lagos, estradas de terra larga, clareiras e plantações verdes (baixo combustível) são alternativas. Se o fogo fechar: deite no queimado ou em clareira baixa, proteja vias aéreas com pano úmido, cubra o corpo, e espere a frente passar — ela passa em minutos onde já queimou. NUNCA tente vencer a frente em descida livre por mata fechada.
+
+## Proteção e prevenção
+
+Roupas de algodão/lã (sintético derrete na pele), mangas compridas, óculos, lenço no nariz. Molhe roupas e cabeça se houver água. Em casa: limpe faixa de 10 m sem material seco, mangueira pronta, e evacue ANTES do aviso — o pânico da saída mata tanto quanto a chama. Nada de fogueira em dia de vento e seca; vidro e estilhaço de vidro também acendem.`,
+    passos: [
+      "1. Leia a fumaça: direção e cor indicam vento e velocidade do fogo",
+      "2. Rota de fuga LATERAL e morro abaixo — nunca crista, canhão ou subida em mata fechada",
+      "3. Vá para área queimada, rio, estrada larga ou clareira (pouco combustível)",
+      "4. Vista algodão/lã, cubra cabeça; molhe roupa e pano de vias aéreas se possível",
+      "5. Se a frente fechar: deite no queimado/clareira, proteja respiração, espere passar",
+      "6. Em casa, evacue antes do aviso com kit e documentos; deixe portas fechadas (segura chama)",
+      "7. Avise o 193 com ponto de referência visível — informação cedo vale brigada cedo",
+    ],
+    checklist: [
+      "Direção do vento confirmada",
+      "Rota lateral e baixa definida",
+      "Refúgio de baixo combustível escolhido",
+      "Vias aéreas protegidas com pano úmido",
+      "Sintéticos fora do corpo",
+      "Bombeiros avisados (193)",
+    ],
+  },
+  {
+    slug: "terremoto",
+    title: "Terremoto: Agachar, Cobrir, Esperar",
+    category: "desastres",
+    summary:
+      "Os três verbos que valem no mundo inteiro, os lugares que matam e o protocolo dos três mergulhos depois que para.",
+    image: terremotoImg,
+    imageAlt:
+      "Ilustração tática de terremoto: três figuras demonstrando agachar, cobrir com mesa e esperar em local seguro",
+    body: `## Os três verbos, sem exceção
+
+Tremendo: AGACHAR (joelhos no chão, centro de massa baixo), COBRIR (sob mesa firme ou contra parede estrutural interna, protegendo cabeça e nuca com braços), ESPERAR (até o tremor parar — não tente correr nem sair de escada/elevador em movimento). Quem corre durante o tremor é atingido por vidro, fachada e objetos — o lugar mais seguro do prédio é DENTRO dele, agachado. Longe de: janelas, espelhos, armários altos, luminárias penduradas.
+
+## Depois que para
+
+Aguarde os AFTERSHOCKS: o primeiro mergulho é o aviso, os seguintes derrubam o que ficou solto. Cheque gás (cheiro = feche o registro e saia), eletricidade e rachaduras estruturais. Saia pelas ESCADAS com calma, levando calçados e kit. Fique longe de fachadas, vidros e fiação ao ar livre. Telefones: prefira mensagens (SMS/WhatsApp) — chamadas lotam a rede; reserve ligações para emergência real. Pontos de encontro e o nome de contato fora da cidade devem estar combinados ANTES.
+
+## Preparação antecipada
+
+Prenda à parede estantes, água quente e armários altos (o que cai mata mais que o prédio). Identifique a mesa firme de cada cômodo. Kit de mão e sapatos firmes ao lado da cama — vidro no chão é o primeiro ferimento da noite. Quem vive em prédio: conheça as duas rotas de escada e o ponto de encontro do condomínio.`,
+    passos: [
+      "1. Durante o tremor: agache, cubra sob mesa firme, espere — longe de vidro e armários",
+      "2. Proteja cabeça e nuca com os braços em qualquer posição",
+      "3. Não use escada nem elevador DURANTE o tremor",
+      "4. Parado: calce sapatos, cheque gás (cheiro = feche registro), luz e rachaduras",
+      "5. Desça por escada com kit; fique longe de fachadas e fiação na rua",
+      "6. Comunique por mensagem, não por chamada; reservas 190/193/199 para urgência",
+      "7. Espere aftershocks longe do prédio; volte só com vistoria",
+    ],
+    checklist: [
+      "Mesa firme identificada em cada cômodo",
+      "Móveis altos presos à parede",
+      "Sapatos e lanterna ao lado da cama",
+      "Gás e eletricidade conferidos após tremor",
+      "Rotas de escada conhecidas",
+      "Contato fora da cidade combinado",
+    ],
+  },
+  {
+    slug: "radio-emergencia",
+    title: "Rádio de Emergência e Comunicação",
+    category: "comunicacao",
+    summary:
+      "Frequências que salvam, disciplina de mensagem e o rádio a pilha que vale mais que cem teorias quando a rede cai.",
+    image: radioEmergenciaImg,
+    imageAlt:
+      "Ilustração tática de rádio de emergência com antenas, faixas AM/FM/VHF anotadas e disciplina de mensagem",
+    body: `## O rádio é o último offline
+
+Celular depende de torre e energia — exatamente o que falta em desastre. Um rádio AM/FM a pilha ou manivela mantém o operador informado com avisos oficiais (defesa civil e rádios públicas transmitem em AM/FM) e é item obrigatório da mochila 72 h. Ouça nos horários de boletim; anote instruções num caderno — memória sob estresse falha.
+
+## Frequências que valem memorizar
+
+- **VHF marítimo canal 16 (156,8 MHz)**: socorro marítimo internacional — monitorado por guardas e embarcações; funciona de costa e barco.
+- **Aviação 121,5 MHz**: emergência aeronáutica; qualquer rádio VHF sintonizável capta e reporta.
+- **AM 520–1710 kHz e FM 87,5–108 MHz**: boletins civis.
+- **Rádio amador (HF/VHF)**: redes de emergência organizadas por radioamadores operam em desastre com prioridade de tráfego — se um rádio amador estiver no grupo, você tem canal direto com o mundo.
+
+## Disciplina de mensagem
+
+Mensagem de socorro tem formato: **QUEM** (nome/grupo), **ONDE** (referência e coordenadas), **O QUÊ** (número de pessoas, estado, necessidade), **QUANTOS** (quanto tempo aguenta). Fale devagar, soletração clara, repita 3×, aguarde resposta (radioescuta 30 s antes de transmitir para não pisar em tráfego de terceiros). Em grupo, defina um operador — rádio é fila única: quem fala em cima não é ouvido.`,
+    passos: [
+      "1. Monte o rádio da mochila: pilhas novas + manivela/carregador solar de backup",
+      "2. Anote as frequências-chave no corpo do rádio ou no caderno do kit",
+      "3. Ouça boletins nos horários fixos e anote instruções",
+      "4. Para chamar socorro: QUEM, ONDE, O QUÊ, QUANTOS — nessa ordem, sem pressa",
+      "5. Repita a mensagem 3× e faça radioescuta de 30 s entre transmissões",
+      "6. Em grupo, um único operador mantém a fila organizada",
+      "7. Combine horário de radioescuta familiar (ex.: 12 h e 18 h) quando separados",
+    ],
+    checklist: [
+      "Rádio a pilha/manivela no kit",
+      "Pilhas de reserva rodadas",
+      "Frequências anotadas",
+      "Caderno e lápis junto",
+      "Horário de escuta combinado",
+      "Formato QUEM-ONDE-O QUÊ-QUANTOS treinado",
+    ],
+  },
+  {
+    slug: "higiene-campo",
+    title: "Higiene e Saúde em Campo",
+    category: "higiene",
+    summary:
+      "A sanitária que evita o hospital: banheiro, mãos, água, pés e o lixo — oitenta por cento das doenças de campo vêm daqui.",
+    image: higieneCampoImg,
+    imageAlt:
+      "Ilustração tática de higiene em campo: buraco sanitário a 60 m da água, lavagem de mãos e cuidados com os pés",
+    body: `## O banheiro decide a saúde do acampamento
+
+Fezes contêm a bactéria que envenena o acampamento inteiro via lençol e mosca. Buraco sanitário: 20 cm de diâmetro, 20 cm de profundidade, NO MÍNIMO 60 m de qualquer água, trilha e acampamento; tampe com terra a cada uso e RECOLHA o local ao final (tampa de terra compacta + marcador). Papel vai no buraco ou volta com você — nunca enterrado superficial. Urina longe do banheiro e da água. Em grupo, banheiro único e definido: banheiro disperso é contaminação dispersa.
+
+## Mãos e água
+
+Lavar as mãos com sabão (20 s) antes de comer, depois do banheiro e após manusear animal — sabão compacto ou álcool gel 70% no bolso resolve. A água para beber, escovar e lavar louça é a MESMA purificada; água "só para escovar" é a porta da diarreia. Louça: raspe, lave com água quente, enxágue purificada, seque ao ar. Comida coberta em todas as refeições — a mosca é o garçom da disenteria.
+
+## Pés, lixo e dentes
+
+Pé de campo que não falha: meia limpa e seca ao fim do dia, bolha tratada na hora (furado no chão com agulha esterilizada, mantida limpa), sapato seco à noite. Lixo: embalagens voltam com o grupo; cinzas de fogueira frias se espalham; restos de comida NUNCA enterrados (animal desenterra e aprende a procurar acampamento). Dentes e boca não tiram férias — a escovação com água purificada previne problema que imobiliza em trilha.`,
+    passos: [
+      "1. Escolha o banheiro único: 60 m de água/trilha/campamento, solo firme",
+      "2. Cave buraco de 20 cm por uso; tampe sempre e recolha ao fim",
+      "3. Lave as mãos (20 s, sabão) antes de comer, após o banheiro e após animal",
+      "4. Use a MESMA água purificada para beber, escovar e lavar louça",
+      "5. Trate bolha imediatamente e troque meia seca ao fim do dia",
+      "6. Todo lixo volta; restos de comida nunca enterrados",
+      "7. Ao sair: nada visível do acampamento além de folhas alisadas",
+    ],
+    checklist: [
+      "Banheiro único a 60 m da água",
+      "Buracos tampados e recolhidos",
+      "Sabão/álcool no bolso",
+      "Água purificada para tudo",
+      "Meia seca trocada à noite",
+      "Lixo embalado para levar",
+    ],
+  },
+  {
+    slug: "apagao-urbano",
+    title: "Apagão Urbano: Sem Luz, Sem Água, Sem Elevador",
+    category: "urbano",
+    summary:
+      "Blackout residencial com método: luz por cômodo, água estocada, comida fria segura e o rádio que mantém a família informada.",
+    image: apagaoUrbanoImg,
+    imageAlt:
+      "Ilustração tática de apagão urbano: prédio escuro com um ponto de luz, estoque de água e geladeira fechada",
+    body: `## Primeiros 10 minutos
+
+Confirme se o apagão é do prédio ou da rua (olhe a janela, a rua, chame a companhia). Desligue aparelhos e a chave geral dos circuitos de uso pesado — a Onda de retorno quando a luz volta queima eletrônicos e reinicia incêndio. Uma fonte de luz por cômodo (lanterna de cabeça vence celular: mão livre). Velas só com supervisão e longe de cortina; fósforos à prova de vento no kit.
+
+## Água e comida
+
+Torre e bomba morrem com a luz: estanque uma panela grande nos primeiros minutos (a água do encanamento de cima ainda vem) e feche o registro se houver suspeita de contaminação. Regra de estoca: 4 L por pessoa por dia (beber + cozinhar + higiene mínima). Geladeira fechada aguenta 4 h; freezer cheio 48 h — coma primeiro os perecíveis, e nada de testar "se ainda está bom": em dúvida, fora. Cozinha de apagão: fogão a gás ou de campismo FORA do ambiente fechado (CO mata silenciosamente).
+
+## Confinamento e informação
+
+Rádio a pilha nas horas de boletim — o apagão pode ser regional e a informação oficial chega por ele. Eleve o ponto de luz para iluminar o corredor; marque degraus de escada com fita refletiva. Chegue os vizinhos de idade e quem mora sozinho — prédio que se organiza em apagão é o que dura. Elevador: proibido por definição; escada com lanterna e companhia.`,
+    passos: [
+      "1. Confirme a extensão do apagão (prédio × rua × cidade) e acione a companhia",
+      "2. Desligue aparelhos e circuitos pesados — protege contra a onda de retorno",
+      "3. Distribua uma luz por cômodo; headlamp para as mãos",
+      "4. Estoque água imediato (panela/balde fechado) e confira o estoque de 4 L/pessoa/dia",
+      "5. Geladeira/freezer fechados; coma perecíveis primeiro, descarte na dúvida",
+      "6. Cozinhe com gás/campismo FORA de ambiente fechado",
+      "7. Rádio a pilha nos boletins; cheque vizinhos de idade e marque escada",
+    ],
+    checklist: [
+      "Onda de retorno neutralizada (aparelhos desligados)",
+      "Uma luz por cômodo funcionando",
+      "Água de consumo garantida",
+      "Geladeira fechada e ordem de consumo definida",
+      "Rádio a pilha no ar",
+      "Vizinhos vulneráveis conferidos",
     ],
   },
 ];
@@ -718,4 +1362,10 @@ export const CATEGORY_LABELS: Record<ManualEntry["category"], string> = {
   fundamentos: "Fundamentos",
   mentalidade: "Mentalidade",
   equipamento: "Equipamento",
+  sinalizacao: "Sinalização e Resgate",
+  alimentos: "Alimentos e Forrageamento",
+  desastres: "Desastres Naturais",
+  comunicacao: "Comunicação",
+  higiene: "Higiene e Saúde",
+  urbano: "Meio Urbano",
 };

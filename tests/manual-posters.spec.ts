@@ -46,11 +46,11 @@ async function abrirManual(browser: Browser): Promise<Page> {
 }
 
 describe("manual de sobrevivência — todos os pôsteres enviados com ensino", () => {
-  it("o índice lista os 17 verbetes (7 técnicos + 10 dos pôsteres) com miniatura", async () => {
+  it("o índice lista os 29 verbetes (17 originais + 12 novos com ilustração e passo a passo) com miniatura", async () => {
     const page = await abrirManual(browser);
     const cartoes = page.locator('a[href^="/manual/"]');
     await cartoes.first().waitFor({ state: "visible", timeout: 15_000 });
-    expect(await cartoes.count()).toBe(17);
+    expect(await cartoes.count()).toBe(29);
 
     // Cada cartão traz imagem com texto alternativo descritivo.
     const semAlt = await cartoes.evaluateAll(

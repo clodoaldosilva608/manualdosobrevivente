@@ -1,6 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Siren, Flashlight, Share2, Antenna, Volume2, VolumeX } from "lucide-react";
+import {
+  Siren,
+  Flashlight,
+  Share2,
+  Antenna,
+  Volume2,
+  VolumeX,
+  Megaphone,
+  Square,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatDD, formatDMS, formatMGRS } from "@/lib/coords";
@@ -9,6 +18,7 @@ import { toast } from "sonner";
 import { ShareSheet } from "@/components/ShareSheet";
 import { MENSAGENS_PRE_DEFINIDAS, padraoMorse, textoParaMorse, type PassoMorse } from "@/lib/morse";
 import { MorseSom } from "@/lib/morse-audio";
+import { ORDEM_SINAIS, SINAIS, SinalSonoro, type SinalId } from "@/lib/sinais-sonoros";
 
 export const Route = createFileRoute("/sos")({
   head: () => ({
@@ -69,6 +79,8 @@ function SOS() {
   const somRef = useRef(som);
   somRef.current = som;
   const audioRef = useRef<MorseSom | null>(null);
+  const sinalRef = useRef<SinalSonoro | null>(null);
+  const [sinalAtivo, setSinalAtivo] = useState<SinalId | null>(null);
   const torchTrackRef = useRef<MediaStreamTrack | null>(null);
   const timerRef = useRef<number | null>(null);
 
@@ -81,6 +93,26 @@ function SOS() {
     );
     return () => navigator.geolocation.clearWatch(id);
   }, []);
+
+  const pararSinal = useCallback(() => {
+    sinalRef.current?.parar();
+    sinalRef.current = null;
+    setSinalAtivo(null);
+  }, []);
+
+  const tocarSinal = (id: SinalId) => {
+    if (sinalAtivo === id) {
+      pararSinal();
+      return;
+    }
+    pararSinal();
+    const sinal = new SinalSonoro();
+    sinal.tocar(id, padraoMorse("SOS", 200));
+    sinalRef.current = sinal;
+    setSinalAtivo(id);
+  };
+
+  useEffect(() => () => pararSinal(), [pararSinal]);
 
   const aplicarTocha = useCallback((aceso: boolean) => {
     const track = torchTrackRef.current;
@@ -387,6 +419,68 @@ function SOS() {
               ? "TRANSMITINDO em Morse — a lanterna do celular pisca, a tela inteira pisca junto e o tom de 600 Hz soa no ritmo dos pulsos."
               : "Ponto, traço e pausas seguem o padrão internacional. Use a tocha à noite e a tela de dia — o som ajuda a ser encontrado na neblina ou mata fechada."}
           </p>
+        </div>
+
+        {/* ---- Sinais sonoros de emergência ---- */}
+        <div className="rounded-md border border-border bg-card p-4 md:p-5 mt-3">
+          <div className="mono text-xs uppercase tracking-widest text-tactical-orange flex items-center gap-2 mb-1">
+            <Megaphone className="h-4 w-4" /> Sinais sonoros
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            Tocam em loop até você parar. À noite e na mata, o som alcança mais longe que a luz — o
+            apito de socorro (3 toques) é o sinal internacional reconhecido por resgatistas.
+          </p>
+          <div className="grid grid-cols-1 gap-2" data-test="sinais-sonoros">
+            {ORDEM_SINAIS.map((id) => {
+              const s = SINAIS[id];
+              const ativo = sinalAtivo === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  data-test={`sinal-${id}`}
+                  aria-pressed={ativo}
+                  onClick={() => tocarSinal(id)}
+                  className={`glove-tap flex items-start gap-3 rounded-md border p-3 text-left transition-colors ${
+                    ativo
+                      ? "border-tactical-orange bg-tactical-orange/15"
+                      : "border-border hover:border-tactical-orange/50"
+                  }`}
+                >
+                  <span
+                    className={`mono mt-0.5 shrink-0 rounded border px-2 py-1 text-[10px] uppercase tracking-wider ${
+                      ativo
+                        ? "border-tactical-orange text-tactical-orange"
+                        : "border-border text-muted-foreground"
+                    }`}
+                  >
+                    {ativo ? (
+                      <Square className="h-3.5 w-3.5" />
+                    ) : (
+                      <Volume2 className="h-3.5 w-3.5" />
+                    )}
+                  </span>
+                  <span className="min-w-0">
+                    <span
+                      className={`block text-sm font-bold mono uppercase tracking-wide ${
+                        ativo ? "text-tactical-orange" : "text-foreground"
+                      }`}
+                    >
+                      {s.nome}
+                    </span>
+                    <span className="block text-xs text-muted-foreground leading-relaxed">
+                      {s.descricao}
+                    </span>
+                  </span>
+                  {ativo && (
+                    <span className="mono ml-auto shrink-0 text-[10px] uppercase tracking-widest text-tactical-orange">
+                      tocando…
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <ShareSheet

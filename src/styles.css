@@ -161,46 +161,60 @@
 }
 
 /*
- * MODO NOTURNO (visão noturna vermelha) — aplicado via .modo-noturno no
+ * MODO NOTURNO (visão noturna) — aplicado via .modo-noturno no
  * <html> por src/lib/visao-noturna.ts. Troca os tokens do design system
- * para tons de vermelho profundo (hierarquia preservada: fundo quase preto,
- * texto vermelho médio, destaques vermelhos vivos). Os overlays (tinta
- * multiply + dimmer) que convertem mapa/marcadores/gráficos são criados
- * pelo próprio módulo — aqui só garantimos transições suaves.
+ * para tons monocromáticos (hierarquia preservada: fundo quase preto,
+ * texto médio, destaques vivos). A matiz vem do data-noturno-cor:
+ * vermelho (padrão), âmbar, verde e ciano — mesma matiz da tinta multiply
+ * que cobre mapa/marcadores/gráficos. Os overlays são criados pelo
+ * próprio módulo — aqui só garantimos transições suaves.
  */
 .modo-noturno {
-  --background: oklch(0.09 0.03 27);
-  --foreground: oklch(0.55 0.19 27);
+  --noturno-h: 27;
+}
+.modo-noturno[data-noturno-cor="ambar"] {
+  --noturno-h: 70;
+}
+.modo-noturno[data-noturno-cor="verde"] {
+  --noturno-h: 145;
+}
+.modo-noturno[data-noturno-cor="ciano"] {
+  --noturno-h: 200;
+}
 
-  --card: oklch(0.13 0.035 27);
-  --card-foreground: oklch(0.58 0.19 27);
+.modo-noturno {
+  --background: oklch(0.09 0.03 var(--noturno-h));
+  --foreground: oklch(0.55 0.19 var(--noturno-h));
 
-  --popover: oklch(0.12 0.035 27);
-  --popover-foreground: oklch(0.58 0.19 27);
+  --card: oklch(0.13 0.035 var(--noturno-h));
+  --card-foreground: oklch(0.58 0.19 var(--noturno-h));
 
-  --primary: oklch(0.48 0.16 27);
-  --primary-foreground: oklch(0.62 0.2 27);
+  --popover: oklch(0.12 0.035 var(--noturno-h));
+  --popover-foreground: oklch(0.58 0.19 var(--noturno-h));
 
-  --secondary: oklch(0.18 0.045 27);
-  --secondary-foreground: oklch(0.58 0.19 27);
+  --primary: oklch(0.48 0.16 var(--noturno-h));
+  --primary-foreground: oklch(0.62 0.2 var(--noturno-h));
 
-  --muted: oklch(0.15 0.03 27);
-  --muted-foreground: oklch(0.45 0.15 27);
+  --secondary: oklch(0.18 0.045 var(--noturno-h));
+  --secondary-foreground: oklch(0.58 0.19 var(--noturno-h));
 
-  --accent: oklch(0.55 0.2 27);
-  --accent-foreground: oklch(0.12 0.03 27);
+  --muted: oklch(0.15 0.03 var(--noturno-h));
+  --muted-foreground: oklch(0.45 0.15 var(--noturno-h));
 
-  --destructive: oklch(0.52 0.2 27);
-  --destructive-foreground: oklch(0.1 0.03 27);
+  --accent: oklch(0.55 0.2 var(--noturno-h));
+  --accent-foreground: oklch(0.12 0.03 var(--noturno-h));
 
-  --border: oklch(0.24 0.06 27);
-  --input: oklch(0.22 0.055 27);
-  --ring: oklch(0.55 0.2 27);
+  --destructive: oklch(0.52 0.2 var(--noturno-h));
+  --destructive-foreground: oklch(0.1 0.03 var(--noturno-h));
 
-  --tactical-olive: oklch(0.48 0.15 27);
-  --tactical-orange: oklch(0.58 0.2 27);
-  --tactical-red: oklch(0.52 0.2 27);
-  --tactical-amber: oklch(0.58 0.19 30);
+  --border: oklch(0.24 0.06 var(--noturno-h));
+  --input: oklch(0.22 0.055 var(--noturno-h));
+  --ring: oklch(0.55 0.2 var(--noturno-h));
+
+  --tactical-olive: oklch(0.48 0.15 var(--noturno-h));
+  --tactical-orange: oklch(0.58 0.2 var(--noturno-h));
+  --tactical-red: oklch(0.52 0.2 var(--noturno-h));
+  --tactical-amber: oklch(0.58 0.19 calc(var(--noturno-h) + 3));
 }
 
 /* Transição suave ao ligar/desligar (respeita quem reduz movimento). */

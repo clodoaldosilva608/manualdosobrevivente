@@ -180,6 +180,9 @@ import { CABOS } from "@/lib/intel-cables";
 import { tleServidor } from "@/lib/satelite.functions";
 import { propagarSatelites, type TleSatelite } from "@/lib/satelite-propagacao";
 import { MapModeSwitch, type ModoMapa } from "@/components/map/MapModeSwitch";
+import { definirPerna, falar, fraseNavegacao, reiniciarNarracao } from "@/lib/narracao-navegacao";
+import { SKILL_PADRAO_ID } from "@/lib/assistente";
+import type { AcaoAssistente } from "@/lib/assistente";
 import { VisaoOsiris } from "@/components/map/VisaoOsiris";
 import type { VisOsiris } from "@/components/map/visao-osiris-camadas";
 import { OsirisHub } from "@/components/map/OsirisHub";
@@ -195,10 +198,11 @@ import { useI18n, tGlobal, localeAtivo } from "@/lib/i18n";
 
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 
-type BaseLayerId = "satellite" | "topo" | "streets" | "dark";
+type BaseLayerId =
+  "satellite" | "topo" | "streets" | "dark" | "oceano" | "relevo" | "trilhas" | "claro" | "natgeo";
 const BASE_LAYERS: Record<
   BaseLayerId,
-  { label: string; tiles: string; attribution: string; maxzoom?: number }
+  { label: string; tiles: string; attribution: string; maxzoom?: number; referencia?: string }
 > = {
   satellite: {
     label: "Satélite",
@@ -231,6 +235,50 @@ const BASE_LAYERS: Record<
       "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
     attribution: "Esri, HERE, Garmin, FAO, NOAA, USGS",
     maxzoom: 16,
+    referencia:
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
+  },
+  oceano: {
+    label: "Oceano",
+    // Basemap náutico da Esri: batimetria, relevo submarino e litoral —
+    // leitura de profundidade, correntes e abrigo de costa.
+    tiles:
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Esri, GEBCO, NOAA, National Geographic, DeLorme",
+    maxzoom: 13,
+    referencia:
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}",
+  },
+  relevo: {
+    label: "Relevo",
+    // Relevo sombreado puro — leitura de rampas, cristas e vales sem rótulos.
+    tiles:
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Esri, Airbus DS, USGS, NGA, NASA, CGIAR",
+    maxzoom: 16,
+  },
+  trilhas: {
+    label: "Trilhas",
+    // CyclOSM — trilhas, estradas rurais e uso do solo sobre OSM (sem chave).
+    tiles: "https://a.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png",
+    attribution: "© CyclOSM, © OpenStreetMap",
+    maxzoom: 18,
+  },
+  claro: {
+    label: "Claro",
+    tiles:
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Esri, HERE, Garmin, FAO, NOAA, USGS",
+    maxzoom: 16,
+    referencia:
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
+  },
+  natgeo: {
+    label: "NatGeo",
+    tiles:
+      "https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}",
+    attribution: "National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA",
+    maxzoom: 16,
   },
 };
 
@@ -241,6 +289,7 @@ type StatusIntel = "idle" | "carregando" | "ok" | "erro";
 
 const styleFor = (layer: BaseLayerId): maplibregl.StyleSpecification => {
   const l = BASE_LAYERS[layer];
+<<<<<<< HEAD
   // O Tático Escuro soma uma camada de referência (rótulos de cidades/ruas).
   const referencia =
     layer === "dark"
@@ -258,6 +307,16 @@ const styleFor = (layer: BaseLayerId): maplibregl.StyleSpecification => {
   // · "relevo" (Esri World Hillshade): sombreamento transparente que dá
   //   profundidade ao Ruas e ao Tático Escuro (o Topográfico já traz o seu).
   const querRelevo = layer === "streets" || layer === "dark";
+=======
+  // Camadas com referência (rótulos de cidades/ruas sobrepostos ao raster base):
+  // Tático Escuro, Claro e Oceano.
+  const referencia = l.referencia
+    ? {
+        source: "ref",
+        tiles: [l.referencia],
+      }
+    : null;
+>>>>>>> 4e0e365 (feat: lote de campo — assistente IA arrastável, CAPE no boletim, 78 colaboradores, visão noturna a 4 cores, +5 mapas, sinais sonoros no SOS, abertura com áudio e manual expandido a 29 verbetes com passo a passo)
   return {
     version: 8,
     sources: {
@@ -683,6 +742,10 @@ export default function MapShell() {
 
   // ---- Modo Osiris (inteligência global) ----
   const { prefs, update: updatePrefs } = usePreferences();
+  // Espelho das preferências para handlers que nascem uma vez (watch GPS,
+  // eventos do assistente) — leitura sempre fresca sem recriar os efeitos.
+  const prefsRef = useRef(prefs);
+  prefsRef.current = prefs;
   const navegar = useNavigate();
   const modoMapa = prefs.mapMode;
   const intelVis = prefs.intelVis;
@@ -1431,6 +1494,17 @@ export default function MapShell() {
               : null);
           const st = statusNavegacao({ pos: p, rota: n.rota, indice, rumoOperador });
           setNavStatus(st);
+          // Narração Waze da skill do assistente (pré-ativada, editável em Ajustes).
+          if (prefsRef.current.assistenteSkills?.[SKILL_PADRAO_ID]) {
+            definirPerna(indice);
+            const frase = fraseNavegacao({
+              distanciaM: st.distanciaM,
+              correcao: st.correcao,
+              foraDaRota: st.foraDaRota,
+              chegou: false,
+            });
+            if (frase) falar(frase);
+          }
           if (st.chegou) {
             if (indice < n.rota.pontos.length - 1) {
               const proximo = indice + 1;
@@ -2008,6 +2082,39 @@ export default function MapShell() {
     void salvarNavegacao(nova ? { rota: nova, indice } : null);
   };
 
+  // Ações do assistente que precisam do mapa: "trace uma rota para X".
+  // Cria a rota (posição atual → destino, quando há GPS), centraliza no
+  // destino e avisa o operador — o guia de navegação segue o fluxo normal.
+  useEffect(() => {
+    const acaoAssistente = (ev: Event) => {
+      const acao = (ev as CustomEvent<AcaoAssistente & { tipo: string }>).detail;
+      if (acao?.tipo !== "rota") return;
+      const destino = {
+        lat: (acao as { lat: number }).lat,
+        lng: (acao as { lng: number }).lng,
+        nome: (acao as { label: string }).label || "Destino do assistente",
+      };
+      const pontos = userPos
+        ? [{ lat: userPos.lat, lng: userPos.lng, nome: "Posição atual" }, destino]
+        : [destino];
+      const nova: RotaSalva = {
+        id: crypto.randomUUID(),
+        nome: `Rota do assistente — ${destino.nome}`,
+        pontos,
+        criada_em: new Date().toISOString(),
+      };
+      persistirRota(nova, 0);
+      setIndiceRota(0);
+      mapRef.current?.flyTo({ center: [destino.lng, destino.lat], zoom: 14, duration: 1200 });
+      toast.success("Rota traçada pelo assistente", {
+        description: `${destino.nome}: ${formatDecimalDegrees(destino.lat)}, ${formatDecimalDegrees(destino.lng)}. Toque INICIAR para navegar com narração.`,
+      });
+    };
+    window.addEventListener("tgis:assistente-acao", acaoAssistente);
+    return () => window.removeEventListener("tgis:assistente-acao", acaoAssistente);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userPos]);
+
   const adicionarPosicaoNaRota = () => {
     if (!userPos) return toast.error("Sem localização disponível");
     const ponto = {
@@ -2073,7 +2180,11 @@ export default function MapShell() {
     setIndiceRota(0);
     setNavegando(true);
     setNavStatus(null);
+    reiniciarNarracao();
     void salvarNavegacao({ rota, indice: 0 });
+    if (prefsRef.current.assistenteSkills?.[SKILL_PADRAO_ID]) {
+      falar("Navegação iniciada. Siga o painel e eu aviso as viradas.");
+    }
     setOpenSheet(null);
     toast.success("Navegação iniciada", {
       description: `Alvo atual: ${rota.pontos[0].nome}. Siga o painel superior.`,
@@ -2083,6 +2194,7 @@ export default function MapShell() {
   const pararNavegacao = () => {
     setNavegando(false);
     setNavStatus(null);
+    reiniciarNarracao();
     void salvarNavegacao(null);
     toast.message("Navegação encerrada");
   };

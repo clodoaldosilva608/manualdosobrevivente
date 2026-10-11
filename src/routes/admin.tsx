@@ -1368,6 +1368,7 @@ const APOIADOR_VAZIO: Apoiador = {
   nivel: "apoiador",
   ativo: true,
   ordem: 0,
+  valor: null,
   created_at: "",
 };
 
@@ -1459,6 +1460,14 @@ function SecaoApoiadores() {
               <span className="text-muted-foreground truncate text-[11px]">
                 {apoiador.cidade ?? "—"}
               </span>
+              {apoiador.valor != null && Number(apoiador.valor) > 0 && (
+                <span
+                  className="mono rounded bg-emerald-500/15 px-1.5 text-[10px] font-bold text-emerald-400"
+                  title={t("Valor já arrecadado (R$, opcional)")}
+                >
+                  {formatMoeda(Number(apoiador.valor))}
+                </span>
+              )}
               <span
                 className={`mono rounded px-1.5 text-[10px] font-bold ${
                   apoiador.ativo
@@ -1522,6 +1531,9 @@ function FormularioApoiador({
   const [nome, setNome] = useState(apoiador.nome);
   const [cidade, setCidade] = useState(apoiador.cidade ?? "");
   const [ordem, setOrdem] = useState(String(apoiador.ordem));
+  const [valor, setValor] = useState(
+    apoiador.valor != null && Number(apoiador.valor) > 0 ? String(apoiador.valor) : "",
+  );
   const [ativo, setAtivo] = useState(apoiador.ativo);
   const [ocupado, setOcupado] = useState(false);
 
@@ -1530,6 +1542,17 @@ function FormularioApoiador({
       toast.error(t("Informe o nome do apoiador"));
       return;
     }
+    // Valor já arrecadado: aceita vírgula decimal (pt-BR); vazio = não informado.
+    const valorTexto = valor.trim().replace(",", ".");
+    let valorNovo: number | null = null;
+    if (valorTexto !== "") {
+      const v = Number(valorTexto);
+      if (!Number.isFinite(v) || v <= 0) {
+        toast.error(t("Valor inválido — use um número maior que zero"));
+        return;
+      }
+      valorNovo = v;
+    }
     setOcupado(true);
     try {
       if (apoiador.id) {
@@ -1537,6 +1560,7 @@ function FormularioApoiador({
           nome: nome.trim(),
           cidade: cidade.trim() || null,
           ordem: Number(ordem) || 0,
+          valor: valorNovo,
           ativo,
         });
       } else {
@@ -1544,6 +1568,7 @@ function FormularioApoiador({
           nome: nome.trim(),
           cidade: cidade.trim() || null,
           ordem: Number(ordem) || 0,
+          valor: valorNovo,
           ativo,
         });
       }
@@ -1589,6 +1614,16 @@ function FormularioApoiador({
             inputMode="numeric"
             value={ordem}
             onChange={(e) => setOrdem(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="apoiador-valor">{t("Valor já arrecadado (R$, opcional)")}</Label>
+          <Input
+            id="apoiador-valor"
+            inputMode="decimal"
+            value={valor}
+            onChange={(e) => setValor(e.target.value)}
+            placeholder={t("ex.: 25,00")}
           />
         </div>
         <div className="flex items-end gap-2 pb-1">

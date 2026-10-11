@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   COLABORADORES,
   TOTAL_COLABORADORES,
+  rotuloApoiador,
   segmentoColaboradores,
   segmentoDeNomes,
 } from "@/lib/colaboradores";
@@ -49,5 +50,23 @@ describe("Colaboradores da Redline", () => {
 
   it("segmentoDeNomes com lista vazia devolve vazio (chamador decide o fallback)", () => {
     expect(segmentoDeNomes([], new Date())).toBe("");
+  });
+
+  it("rotuloApoiador junta o nome ao valor já arrecadado", () => {
+    const rotulo = rotuloApoiador("Ricardo Menezes", 25);
+    expect(rotulo).toContain("Ricardo Menezes");
+    expect(rotulo).toContain("25");
+    expect(rotulo).toContain("R$");
+  });
+
+  it("rotuloApoiador sem valor (null, 0 ou lixo) devolve só o nome", () => {
+    expect(rotuloApoiador("Ana Duarte", null)).toBe("Ana Duarte");
+    expect(rotuloApoiador("Ana Duarte", 0)).toBe("Ana Duarte");
+    expect(rotuloApoiador("Ana Duarte", undefined)).toBe("Ana Duarte");
+    expect(rotuloApoiador("Ana Duarte", Number.NaN)).toBe("Ana Duarte");
+  });
+
+  it("rotuloApoiador aceita centavos", () => {
+    expect(rotuloApoiador("Ana Duarte", 25.5)).toContain("25,50");
   });
 });

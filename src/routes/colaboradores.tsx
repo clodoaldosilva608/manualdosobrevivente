@@ -5,7 +5,7 @@ import { HeartHandshake, Landmark, ShieldCheck, Users } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { formatMoeda, formatDateTime } from "@/lib/format";
 import { listarApoiadores, type Apoiador } from "@/lib/apoiadores";
-import { segmentoDeNomes } from "@/lib/colaboradores";
+import { segmentoDeNomes, rotuloApoiador } from "@/lib/colaboradores";
 import {
   listarParceirosPublicos,
   listarRedline,
@@ -62,12 +62,19 @@ function Colaboradores() {
     })();
   }, []);
 
-  const total = redline ? somarRedline(redline) : 0;
+  /**
+   * Total já arrecadado: contribuições PIX aprovadas + os valores registrados
+   * de cada apoiador do mural (a dinheiro vivo, fora do fluxo do app).
+   */
+  const total = redline
+    ? somarRedline(redline) + apoiadores.reduce((soma, a) => soma + Number(a.valor ?? 0), 0)
+    : 0;
   const carregando = redline === null;
 
   /**
    * Letreiro: contribuições aprovadas (com valor) + mural de apoiadores do
-   * banco, girado a cada carregamento — a redline nunca fica vazia enquanto
+   * banco — cada nome seguido do valor já arrecadado quando registrado —
+   * girados a cada carregamento. A redline nunca fica vazia enquanto
    * houver apoiadores cadastrados.
    */
   const textoRedline = useMemo(() => {
@@ -77,7 +84,7 @@ function Colaboradores() {
     const mural =
       apoiadores.length > 0
         ? segmentoDeNomes(
-            apoiadores.map((apoiador) => apoiador.nome),
+            apoiadores.map((apoiador) => rotuloApoiador(apoiador.nome, apoiador.valor)),
             new Date(),
             "APOIADORES",
           )
@@ -209,7 +216,16 @@ function Colaboradores() {
             {apoiadores.map((apoiador) => (
               <span
                 key={apoiador.id}
-                title={apoiador.cidade ?? undefined}
+                title={
+                  [
+                    apoiador.cidade ?? undefined,
+                    apoiador.valor != null && Number(apoiador.valor) > 0
+                      ? `${t("Já arrecadou")} ${formatMoeda(Number(apoiador.valor))}`
+                      : undefined,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || undefined
+                }
                 className="rounded-full border border-border bg-background px-2.5 py-1 text-[11px]"
               >
                 <span className="text-tactical-orange mr-1">◆</span>

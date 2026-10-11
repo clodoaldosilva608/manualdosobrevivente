@@ -8,7 +8,8 @@
  * dia (nascer/pôr) · sol · lua · Cruzeiro do Sul/Polaris · sentido do mar ·
  * litoral · nível do mar · nível do aparelho · hemisfério · coordenadas ·
  * apoiadores da plataforma (do banco manual_apoiadores; offline cai para a
- * semente estática — o letreiro nunca fica sem nomes).
+ * semente estática — o letreiro nunca fica sem nomes) e o total já
+ * ARRECADADO com o projeto.
  *
  * Aviso de CAPE alto: quando a energia convectiva das próximas horas
  * (Open-Meteo) cruza o limiar, o aviso "ATENÇÃO, TEMPESTADE SE FORMANDO
@@ -32,6 +33,7 @@ import {
   formatDegrees,
   formatSignedDegrees,
   formatDistance,
+  formatMoeda,
   formatNumber,
   formatTime,
   formatPercent,
@@ -66,7 +68,7 @@ export default function RedlineBoletim({
   waypointLabel,
 }: RedlineBoletimProps) {
   const { rumoAparelho, calibracao, nivel } = useSensorBussola();
-  const nomesApoiadores = useApoiadoresRedline();
+  const { nomes: nomesApoiadores, arrecadado } = useApoiadoresRedline();
   const [now, setNow] = useState(() => new Date());
   const [pausado, setPausado] = useState(false);
 
@@ -175,6 +177,9 @@ export default function RedlineBoletim({
     ),
     entrada("HEMISFÉRIO", celestial.hemisphereLabel.toUpperCase()),
     `${formatDecimalDegrees(lat)}, ${formatDecimalDegrees(lng)}`,
+    ...(arrecadado != null
+      ? [entrada("ARRECADADO", formatMoeda(arrecadado), "apoio voluntário ao Manual")]
+      : []),
     segmentoDeNomes(nomesApoiadores ?? COLABORADORES, now),
   ];
 

@@ -126,6 +126,7 @@ export const DIC_JA: Record<string, string> = {
   "Estreitos estratégicos e maiores portos — referência curada":
     "戦略海峡と主要港——精選リファレンス",
   "Eventos naturais": "自然事象",
+  "ex.: 25,00": "例: 25.00",
   "Ex.: kit que fica pronto no porta-malas para emergências na estrada":
     "例：車のトランクに常備する緊急キット",
   "Ex.: mochila do carro": "例：車載バックパック",
@@ -186,6 +187,7 @@ export const DIC_JA: Record<string, string> = {
   "Itens da mochila": "バックパックのアイテム",
   "Itens vencidos ou chegando ao prazo — troque, reabasteça e atualize a data antes de viajar.":
     "期限切れ・期限間近のアイテム——出発前に交換・補充・日付更新を。",
+  "Já arrecadou": "支援済み",
   Latitude: "緯度",
   "Lembretes de validade": "期限リマインダー",
   Leste: "東",
@@ -376,6 +378,9 @@ export const DIC_JA: Record<string, string> = {
   "USGS · M2,5+ nas últimas 24 horas": "USGS · 直近24時間のM2.5以上",
   Unidades: "単位",
   "Validade (opcional)": "期限（任意）",
+  "Valor já arrecadado (R$, opcional)": "すでに集めた金額（R$、任意）",
+  "Valor inválido — use um número maior que zero":
+    "無効な金額です — ゼロより大きい数値を入力してください",
   "Veja os lembretes de validade e troque antes de viajar.":
     "期限リマインダーを確認し、出発前に交換を。",
   "Vence em {n} dia": "{n} 日後に期限切れ",

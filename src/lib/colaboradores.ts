@@ -12,6 +12,7 @@
  * lista, mas a leitura começa em pontos diferentes a cada carregamento
  * (rotação pelo índice do ciclo).
  */
+import { formatMoeda } from "@/lib/format";
 
 /** Lista dos 78 colaboradores em ordem embaralhada (não alfabética). */
 export const COLABORADORES: string[] = [
@@ -114,6 +115,15 @@ export function segmentoDeNomes(
   const rotacao = agora.getDay() * 7 + agora.getHours();
   const girada = [...nomes.slice(rotacao % total), ...nomes.slice(0, rotacao % total)];
   return `${rotulo} (${total}) ${girada.join(" • ")}`;
+}
+
+/**
+ * Rótulo do apoiador no letreiro: "Nome · R$ 25,00" quando existe valor já
+ * arrecadado registrado; só o nome quando o valor não foi informado.
+ */
+export function rotuloApoiador(nome: string, valor: number | null | undefined): string {
+  const v = Number(valor);
+  return valor != null && Number.isFinite(v) && v > 0 ? `${nome} · ${formatMoeda(v)}` : nome;
 }
 
 /** Segmento da lista semente — fallback offline da Redline do mapa. */

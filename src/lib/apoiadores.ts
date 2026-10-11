@@ -17,6 +17,8 @@ export interface Apoiador {
   nivel: string;
   ativo: boolean;
   ordem: number;
+  /** Valor total já arrecadado deste apoiador (opcional; null = não informado). */
+  valor: number | null;
   created_at: string;
 }
 
@@ -24,7 +26,7 @@ export interface Apoiador {
 export async function listarApoiadores(): Promise<Apoiador[]> {
   const { data, error } = await supabase
     .from("manual_apoiadores")
-    .select("id, nome, cidade, nivel, ativo, ordem, created_at")
+    .select("id, nome, cidade, nivel, ativo, ordem, valor, created_at")
     .eq("ativo", true)
     .order("ordem", { ascending: true })
     .limit(500);
@@ -36,7 +38,7 @@ export async function listarApoiadores(): Promise<Apoiador[]> {
 export async function listarApoiadoresAdmin(): Promise<Apoiador[]> {
   const { data, error } = await supabase
     .from("manual_apoiadores")
-    .select("id, nome, cidade, nivel, ativo, ordem, created_at")
+    .select("id, nome, cidade, nivel, ativo, ordem, valor, created_at")
     .order("ordem", { ascending: true })
     .limit(1000);
   if (error) throw error;
@@ -49,6 +51,7 @@ export interface NovoApoiador {
   nivel?: string;
   ativo?: boolean;
   ordem?: number;
+  valor?: number | null;
 }
 
 export async function criarApoiador(novo: NovoApoiador): Promise<Apoiador> {
@@ -60,8 +63,12 @@ export async function criarApoiador(novo: NovoApoiador): Promise<Apoiador> {
       nivel: novo.nivel ?? "apoiador",
       ativo: novo.ativo ?? true,
       ordem: novo.ordem ?? 0,
+      valor:
+        novo.valor != null && Number.isFinite(Number(novo.valor)) && Number(novo.valor) > 0
+          ? Number(novo.valor)
+          : null,
     })
-    .select("id, nome, cidade, nivel, ativo, ordem, created_at")
+    .select("id, nome, cidade, nivel, ativo, ordem, valor, created_at")
     .single();
   if (error) throw error;
   return data as Apoiador;
@@ -69,7 +76,7 @@ export async function criarApoiador(novo: NovoApoiador): Promise<Apoiador> {
 
 export async function atualizarApoiador(
   id: string,
-  mudancas: Partial<Pick<Apoiador, "nome" | "cidade" | "nivel" | "ativo" | "ordem">>,
+  mudancas: Partial<Pick<Apoiador, "nome" | "cidade" | "nivel" | "ativo" | "ordem" | "valor">>,
 ): Promise<void> {
   const { error } = await supabase.from("manual_apoiadores").update(mudancas).eq("id", id);
   if (error) throw error;

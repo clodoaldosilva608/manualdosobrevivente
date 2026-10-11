@@ -127,6 +127,7 @@ export const DIC_RU: Record<string, string> = {
   "Estreitos estratégicos e maiores portos — referência curada":
     "Стратегические проливы и крупные порты — отобранный справочник",
   "Eventos naturais": "Природные события",
+  "ex.: 25,00": "напр. 25,00",
   "Ex.: kit que fica pronto no porta-malas para emergências na estrada":
     "Напр.: набор в багажнике для ЧС в дороге",
   "Ex.: mochila do carro": "Напр.: автомобильный рюкзак",
@@ -188,6 +189,7 @@ export const DIC_RU: Record<string, string> = {
   "Itens da mochila": "Предметы рюкзака",
   "Itens vencidos ou chegando ao prazo — troque, reabasteça e atualize a data antes de viajar.":
     "Просроченные или истекающие предметы — замените, пополните и обновите даты перед поездкой.",
+  "Já arrecadou": "Уже внёс",
   Latitude: "Широта",
   "Lembretes de validade": "Напоминания о сроках",
   Leste: "Восток",
@@ -380,6 +382,8 @@ export const DIC_RU: Record<string, string> = {
   "USGS · M2,5+ nas últimas 24 horas": "USGS · M2,5+ за последние 24 часа",
   Unidades: "Единицы",
   "Validade (opcional)": "Срок годности (необязательно)",
+  "Valor já arrecadado (R$, opcional)": "Уже собранная сумма (R$, необязательно)",
+  "Valor inválido — use um número maior que zero": "Неверная сумма — укажите число больше нуля",
   "Veja os lembretes de validade e troque antes de viajar.":
     "Проверьте напоминания о сроках и замените перед поездкой.",
   "Vence em {n} dia": "Истекает через {n} день",

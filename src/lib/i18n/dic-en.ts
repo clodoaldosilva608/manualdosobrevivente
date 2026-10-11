@@ -127,6 +127,7 @@ export const DIC_EN: Record<string, string> = {
   "Estreitos estratégicos e maiores portos — referência curada":
     "Strategic straits and major ports — curated reference",
   "Eventos naturais": "Natural events",
+  "ex.: 25,00": "e.g. 25.00",
   "Ex.: kit que fica pronto no porta-malas para emergências na estrada":
     "e.g. kit kept in the trunk for roadside emergencies",
   "Ex.: mochila do carro": "e.g. car pack",
@@ -187,6 +188,7 @@ export const DIC_EN: Record<string, string> = {
   "Itens da mochila": "Pack items",
   "Itens vencidos ou chegando ao prazo — troque, reabasteça e atualize a data antes de viajar.":
     "Expired or expiring items — replace, restock and update dates before travelling.",
+  "Já arrecadou": "Has raised",
   Latitude: "Latitude",
   "Lembretes de validade": "Expiry reminders",
   Leste: "East",
@@ -378,6 +380,9 @@ export const DIC_EN: Record<string, string> = {
   "USGS · M2,5+ nas últimas 24 horas": "USGS · M2.5+ in the last 24 hours",
   Unidades: "Units",
   "Validade (opcional)": "Expiry (optional)",
+  "Valor já arrecadado (R$, opcional)": "Amount raised so far (R$, optional)",
+  "Valor inválido — use um número maior que zero":
+    "Invalid amount — use a number greater than zero",
   "Veja os lembretes de validade e troque antes de viajar.":
     "Check the expiry reminders and replace before travelling.",
   "Vence em {n} dia": "Expires in {n} day",

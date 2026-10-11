@@ -124,6 +124,7 @@ export const DIC_ZH: Record<string, string> = {
   Estimativa: "预计",
   "Estreitos estratégicos e maiores portos — referência curada": "战略海峡与主要港口——精选参考",
   "Eventos naturais": "自然事件",
+  "ex.: 25,00": "如：25.00",
   "Ex.: kit que fica pronto no porta-malas para emergências na estrada":
     "例：放在后备箱、随时可用的公路应急包",
   "Ex.: mochila do carro": "例：车载背包",
@@ -184,6 +185,7 @@ export const DIC_ZH: Record<string, string> = {
   "Itens da mochila": "背包物品",
   "Itens vencidos ou chegando ao prazo — troque, reabasteça e atualize a data antes de viajar.":
     "已过期或临期物品——出发前请更换、补充并更新日期。",
+  "Já arrecadou": "已捐助",
   Latitude: "纬度",
   "Lembretes de validade": "有效期提醒",
   Leste: "东",
@@ -370,6 +372,8 @@ export const DIC_ZH: Record<string, string> = {
   "USGS · M2,5+ nas últimas 24 horas": "USGS · 最近 24 小时 M2.5+",
   Unidades: "单位",
   "Validade (opcional)": "有效期（可选）",
+  "Valor já arrecadado (R$, opcional)": "已筹集金额（R$，可选）",
+  "Valor inválido — use um número maior que zero": "金额无效 — 请输入大于零的数字",
   "Veja os lembretes de validade e troque antes de viajar.": "查看有效期提醒，出发前更换。",
   "Vence em {n} dia": "{n} 天后到期",
   "Vence em {n} dias": "{n} 天后到期",

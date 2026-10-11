@@ -23,6 +23,7 @@ import {
   deleteArea,
   type DownloadProgress,
 } from "@/lib/offline-tiles";
+import { EVENTO_AREAS } from "@/lib/offline-map-protocol";
 import type { CachedArea } from "@/lib/db";
 import { listManualAssets, saveManualAsset, deleteManualAssets } from "@/lib/db";
 import { MANUAL } from "@/lib/manual-content";
@@ -173,6 +174,8 @@ function OfflinePage() {
       );
       toast.success(t("Área salva para uso offline"));
       setName("");
+      // O mapa vivo (se montado) ressincroniza os raster sources na hora.
+      window.dispatchEvent(new Event(EVENTO_AREAS));
       void refresh();
     } catch (e) {
       toast.error(t("Falha ao baixar a área"), {
@@ -430,6 +433,8 @@ function OfflinePage() {
                 onClick={async () => {
                   await deleteArea(a.id);
                   toast.success(t("Área apagada"));
+                  // Retira os raster sources da área do mapa vivo.
+                  window.dispatchEvent(new Event(EVENTO_AREAS));
                   void refresh();
                 }}
                 className="glove-tap text-destructive shrink-0"

@@ -550,4 +550,28 @@ export const DIC_JA: Record<string, string> = {
   "Som ligado": "サウンドON",
   "Desativar som": "サウンドを無効にする",
   "Ativar som da abertura": "オープニングの音を有効にする",
+  "Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente de novo.":
+    "短時間に試行回数が多すぎます。数分待ってからもう一度お試しください。",
+  "E-mail ou senha incorretos.": "メールアドレスまたはパスワードが違います。",
+  "Confirme seu e-mail pelo link que enviamos antes de entrar.":
+    "ログイン前に、送信したリンクでメールアドレスを確認してください。",
+  "Este e-mail já tem conta. Entre com a sua senha.":
+    "このメールアドレスには既にアカウントがあります。パスワードでログインしてください。",
+  "A senha precisa de pelo menos 6 caracteres.": "パスワードは 6 文字以上必要です。",
+  "E-mail inválido. Confira o endereço digitado.":
+    "メールアドレスが無効です。入力したアドレスを確認してください。",
+  "Sem conexão com o servidor. Verifique o sinal e tente de novo.":
+    "サーバーに接続できません。通信状況を確認して再試行してください。",
+  "Cadastro desativado no servidor — fale com a administração do projeto.":
+    "サーバーで新規登録が無効です — プロジェクト管理者にご連絡ください。",
+  "Verificação de segurança pendente — tente de novo em instantes.":
+    "セキュリティ確認が未完了です — しばらくしてから再試行してください。",
+  "Digite seu e-mail para receber o link de recuperação":
+    "復旧リンクを受け取るにはメールアドレスを入力してください",
+  "Link de recuperação enviado": "復旧リンクを送信しました",
+  "Abra o link no e-mail para definir uma nova senha.":
+    "メール内のリンクを開いて新しいパスワードを設定してください。",
+  "Enviando link…": "リンクを送信中…",
+  "Esqueci minha senha": "パスワードをお忘れですか",
+  "Área offline salva no aparelho": "オフライン領域を端末に保存しました",
 };

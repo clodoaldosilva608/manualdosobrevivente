@@ -536,4 +536,24 @@ export const DIC_ZH: Record<string, string> = {
   "Som ligado": "声音已开启",
   "Desativar som": "关闭声音",
   "Ativar som da abertura": "开启开场音效",
+  "Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente de novo.":
+    "短时间内尝试次数过多。请等待几分钟后再试。",
+  "E-mail ou senha incorretos.": "邮箱或密码不正确。",
+  "Confirme seu e-mail pelo link que enviamos antes de entrar.":
+    "登录前请先通过我们发送的链接确认您的邮箱。",
+  "Este e-mail já tem conta. Entre com a sua senha.": "该邮箱已有账户。请使用密码登录。",
+  "A senha precisa de pelo menos 6 caracteres.": "密码至少需要 6 个字符。",
+  "E-mail inválido. Confira o endereço digitado.": "邮箱无效。请检查输入的地址。",
+  "Sem conexão com o servidor. Verifique o sinal e tente de novo.":
+    "无法连接服务器。请检查信号后重试。",
+  "Cadastro desativado no servidor — fale com a administração do projeto.":
+    "服务器已停用注册 — 请联系项目管理员。",
+  "Verificação de segurança pendente — tente de novo em instantes.":
+    "安全验证未完成 — 请稍后重试。",
+  "Digite seu e-mail para receber o link de recuperação": "输入您的邮箱以接收恢复链接",
+  "Link de recuperação enviado": "恢复链接已发送",
+  "Abra o link no e-mail para definir uma nova senha.": "打开邮件中的链接以设置新密码。",
+  "Enviando link…": "正在发送链接…",
+  "Esqueci minha senha": "我忘记了密码",
+  "Área offline salva no aparelho": "离线区域已保存在设备上",
 };

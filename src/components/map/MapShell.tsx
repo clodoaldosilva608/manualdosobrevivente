@@ -109,6 +109,11 @@ import {
 import { tracarRotaRuas as tracarRotaRuasServidor } from "@/lib/rota-ruas.functions";
 import { falarTexto, pararVoz, vozNavegacaoAtiva, definirVozNavegacao } from "@/lib/voz";
 import { geoBuscar } from "@/lib/assistente/geocode.functions";
+import {
+  EVENTO_AREAS,
+  registrarProtocoloOffline,
+  sincronizarAreasOffline,
+} from "@/lib/offline-map-protocol";
 import CompassRose from "@/components/map/CompassRose";
 import RedlineBoletim from "@/components/map/RedlineBoletim";
 import MapaControles, { MapaControlesComSensor } from "@/components/map/mapa-controles";
@@ -1027,6 +1032,8 @@ export default function MapShell() {
     (async () => {
       const ml = await import("maplibre-gl");
       if (cancelled || !containerRef.current) return;
+      // Tiles OFFLINE (áreas baixadas em /offline) passam a alimentar o mapa.
+      registrarProtocoloOffline(ml);
       const map = new ml.Map({
         container: containerRef.current,
         style: styleFor(baseEfetiva),
@@ -1067,6 +1074,9 @@ export default function MapShell() {
         // pode liberar o app antes do load e o styledata já ter criado tudo)
         adicionarFontesDesenho(map);
         sincronizarDesenho(map);
+        // Áreas de mapa baixadas para offline: raster sources no pé da pilha
+        // (idempotente — refaz no styledata e no evento de mudança de áreas).
+        void sincronizarAreasOffline(map);
         // Detalhamento progressivo: aplica a opacidade HD do zoom inicial e
         // passa a conduzi-la a cada mudança de zoom (pinça, botões, flyTo).
         atualizarDetalheHd(map);
@@ -1146,6 +1156,8 @@ export default function MapShell() {
           ciclonesRef.current?.sincronizar();
           // Vento em canvas não depende do estilo — nada a reapresentar.
           ventoRef.current?.sincronizar();
+          // A troca de estilo limpa os sources das áreas offline — refaz.
+          void sincronizarAreasOffline(map);
         } catch {
           /* estilo interim — a próxima emissão de styledata refaz */
         }
@@ -1236,6 +1248,21 @@ export default function MapShell() {
       /* estilo ainda não assentado — o styledata reaplica */
     }
   }, [projecao, ready]);
+
+  // Áreas offline mudaram (download/exclusão em /offline) ou o sinal voltou:
+  // ressincroniza os raster sources das áreas baixadas no mapa vivo.
+  useEffect(() => {
+    const ressincronizar = () => {
+      const map = mapRef.current;
+      if (map) void sincronizarAreasOffline(map);
+    };
+    window.addEventListener(EVENTO_AREAS, ressincronizar);
+    window.addEventListener("online", ressincronizar);
+    return () => {
+      window.removeEventListener(EVENTO_AREAS, ressincronizar);
+      window.removeEventListener("online", ressincronizar);
+    };
+  }, []);
 
   // Radar de chuva (RainViewer): liga/desliga com a camada de inteligência.
   // O controlador nasce uma vez e sobrevive às trocas de camada base via

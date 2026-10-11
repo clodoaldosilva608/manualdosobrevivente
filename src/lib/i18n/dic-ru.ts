@@ -555,4 +555,28 @@ export const DIC_RU: Record<string, string> = {
   "Som ligado": "Звук включён",
   "Desativar som": "Выключить звук",
   "Ativar som da abertura": "Включить звук заставки",
+  "Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente de novo.":
+    "Слишком много попыток за короткое время. Подождите несколько минут и попробуйте снова.",
+  "E-mail ou senha incorretos.": "Неверная электронная почта или пароль.",
+  "Confirme seu e-mail pelo link que enviamos antes de entrar.":
+    "Подтвердите свою почту по ссылке, которую мы отправили, прежде чем войти.",
+  "Este e-mail já tem conta. Entre com a sua senha.":
+    "На эту почту уже зарегистрирован аккаунт. Войдите с паролем.",
+  "A senha precisa de pelo menos 6 caracteres.": "Пароль должен содержать минимум 6 символов.",
+  "E-mail inválido. Confira o endereço digitado.":
+    "Неверная электронная почта. Проверьте введённый адрес.",
+  "Sem conexão com o servidor. Verifique o sinal e tente de novo.":
+    "Нет связи с сервером. Проверьте сигнал и попробуйте снова.",
+  "Cadastro desativado no servidor — fale com a administração do projeto.":
+    "Регистрация отключена на сервере — обратитесь к администрации проекта.",
+  "Verificação de segurança pendente — tente de novo em instantes.":
+    "Проверка безопасности не завершена — попробуйте снова через минуту.",
+  "Digite seu e-mail para receber o link de recuperação":
+    "Введите свою почту, чтобы получить ссылку для восстановления",
+  "Link de recuperação enviado": "Ссылка для восстановления отправлена",
+  "Abra o link no e-mail para definir uma nova senha.":
+    "Откройте ссылку в письме, чтобы задать новый пароль.",
+  "Enviando link…": "Отправляем ссылку…",
+  "Esqueci minha senha": "Я забыл пароль",
+  "Área offline salva no aparelho": "Автономная область сохранена на устройстве",
 };

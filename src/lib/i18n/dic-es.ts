@@ -555,4 +555,27 @@ export const DIC_ES: Record<string, string> = {
   "Som ligado": "Sonido activado",
   "Desativar som": "Desactivar sonido",
   "Ativar som da abertura": "Activar sonido de apertura",
+  "Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente de novo.":
+    "Demasiados intentos en poco tiempo. Espere unos minutos e intente de nuevo.",
+  "E-mail ou senha incorretos.": "Correo o contraseña incorrectos.",
+  "Confirme seu e-mail pelo link que enviamos antes de entrar.":
+    "Confirme su correo con el enlace que enviamos antes de entrar.",
+  "Este e-mail já tem conta. Entre com a sua senha.":
+    "Este correo ya tiene cuenta. Entre con su contraseña.",
+  "A senha precisa de pelo menos 6 caracteres.": "La contraseña necesita al menos 6 caracteres.",
+  "E-mail inválido. Confira o endereço digitado.": "Correo inválido. Revise la dirección escrita.",
+  "Sem conexão com o servidor. Verifique o sinal e tente de novo.":
+    "Sin conexión con el servidor. Verifique la señal e intente de nuevo.",
+  "Cadastro desativado no servidor — fale com a administração do projeto.":
+    "Registro desactivado en el servidor — hable con la administración del proyecto.",
+  "Verificação de segurança pendente — tente de novo em instantes.":
+    "Verificación de seguridad pendiente — intente de nuevo en un momento.",
+  "Digite seu e-mail para receber o link de recuperação":
+    "Escriba su correo para recibir el enlace de recuperación",
+  "Link de recuperação enviado": "Enlace de recuperación enviado",
+  "Abra o link no e-mail para definir uma nova senha.":
+    "Abra el enlace en el correo para definir una nueva contraseña.",
+  "Enviando link…": "Enviando enlace…",
+  "Esqueci minha senha": "Olvidé mi contraseña",
+  "Área offline salva no aparelho": "Área sin conexión guardada en el aparato",
 };

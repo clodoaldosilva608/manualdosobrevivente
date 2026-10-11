@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
+import { mensagemAmigavelAuth } from "@/lib/auth-erros";
 
 interface FormularioLoginProps {
   /** Login concluído (sessão ativa). */
@@ -40,6 +41,15 @@ export function FormularioLogin({
   const [email, setEmail] = useState(emailInicial);
   const [senha, setSenha] = useState("");
   const [ocupado, setOcupado] = useState(false);
+  const [recuperando, setRecuperando] = useState(false);
+
+  /** Erro do Supabase → mensagem humana (padrão reconhecido) ou original. */
+  const avisarErro = (err: unknown) => {
+    const original = err instanceof Error ? err.message : "";
+    const amigavel = mensagemAmigavelAuth(original);
+    if (amigavel) toast.error(t(amigavel));
+    else toast.error(original || t("Falha na autenticação"));
+  };
 
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,9 +102,31 @@ export function FormularioLogin({
         aoCadastrou?.(true, email);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("Falha na autenticação"));
+      avisarErro(err);
     } finally {
       setOcupado(false);
+    }
+  };
+
+  /** Recuperação de senha: e-mail com link para definir nova senha. */
+  const esqueciSenha = async () => {
+    if (!email.trim()) {
+      toast.error(t("Digite seu e-mail para receber o link de recuperação"));
+      return;
+    }
+    setRecuperando(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/login`,
+      });
+      if (error) throw error;
+      toast.success(t("Link de recuperação enviado"), {
+        description: t("Abra o link no e-mail para definir uma nova senha."),
+      });
+    } catch (err) {
+      avisarErro(err);
+    } finally {
+      setRecuperando(false);
     }
   };
 
@@ -108,7 +140,7 @@ export function FormularioLogin({
       options: { redirectTo: window.location.origin },
     });
     if (error) {
-      toast.error(t("Falha ao entrar com Google"));
+      avisarErro(error);
       setOcupado(false);
     }
   };
@@ -189,6 +221,17 @@ export function FormularioLogin({
         >
           {modo === "signin" ? t("Entrar") : t("Criar conta")}
         </Button>
+        {modo === "signin" && (
+          <button
+            type="button"
+            onClick={esqueciSenha}
+            disabled={recuperando}
+            data-test="login-esqueci"
+            className="w-full text-center text-xs text-muted-foreground hover:text-foreground glove-tap"
+          >
+            {recuperando ? t("Enviando link…") : t("Esqueci minha senha")}
+          </button>
+        )}
       </form>
       {googleAtivo !== false && (
         <>

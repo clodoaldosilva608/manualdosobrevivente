@@ -47,8 +47,20 @@ const NOVAS = {
     zh: "重新发送邮件",
     ja: "メールを再送信",
   },
-  "Reenviando…": { en: "Resending…", es: "Reenviando…", ru: "Отправка…", zh: "正在重新发送…", ja: "再送信中…" },
-  "Já confirmei": { en: "I've confirmed", es: "Ya confirmé", ru: "Я подтвердил", zh: "我已确认", ja: "確認しました" },
+  "Reenviando…": {
+    en: "Resending…",
+    es: "Reenviando…",
+    ru: "Отправка…",
+    zh: "正在重新发送…",
+    ja: "再送信中…",
+  },
+  "Já confirmei": {
+    en: "I've confirmed",
+    es: "Ya confirmé",
+    ru: "Я подтвердил",
+    zh: "我已确认",
+    ja: "確認しました",
+  },
   "Ainda não confirmado": {
     en: "Not confirmed yet",
     es: "Aún no confirmado",
@@ -92,8 +104,20 @@ const NOVAS = {
       zh: "此头像代表您在本手册中的形象。请从角色库中选择一个角色，或使用您自己的照片。",
       ja: "このアバターがマニュアルでのあなたを表します。キャストから選ぶか、自分の写真を使ってください。",
     },
-  "Avatar atual": { en: "Current avatar", es: "Avatar actual", ru: "Текущий аватар", zh: "当前头像", ja: "現在のアバター" },
-  "Usar minha foto": { en: "Use my photo", es: "Usar mi foto", ru: "Использовать своё фото", zh: "使用我的照片", ja: "自分の写真を使う" },
+  "Avatar atual": {
+    en: "Current avatar",
+    es: "Avatar actual",
+    ru: "Текущий аватар",
+    zh: "当前头像",
+    ja: "現在のアバター",
+  },
+  "Usar minha foto": {
+    en: "Use my photo",
+    es: "Usar mi foto",
+    ru: "Использовать своё фото",
+    zh: "使用我的照片",
+    ja: "自分の写真を使う",
+  },
   "Personagens disponíveis": {
     en: "Available characters",
     es: "Personajes disponibles",
@@ -186,9 +210,21 @@ const NOVAS = {
     zh: "清空屏幕（仅地图）",
     ja: "画面をクリア（マップのみ）",
   },
-  "Recolher painel": { en: "Collapse panel", es: "Contraer panel", ru: "Свернуть панель", zh: "收起面板", ja: "パネルを折りたたむ" },
+  "Recolher painel": {
+    en: "Collapse panel",
+    es: "Contraer panel",
+    ru: "Свернуть панель",
+    zh: "收起面板",
+    ja: "パネルを折りたたむ",
+  },
   COORDENADA: { en: "COORDINATE", es: "COORDENADA", ru: "КООРДИНАТА", zh: "坐标", ja: "座標" },
-  Personagens: { en: "Characters", es: "Personajes", ru: "Персонажи", zh: "角色", ja: "キャラクター" },
+  Personagens: {
+    en: "Characters",
+    es: "Personajes",
+    ru: "Персонажи",
+    zh: "角色",
+    ja: "キャラクター",
+  },
   "Contas bloqueadas": {
     en: "Blocked accounts",
     es: "Cuentas bloqueadas",
@@ -196,7 +232,13 @@ const NOVAS = {
     zh: "已封禁账户",
     ja: "ブロックされたアカウント",
   },
-  Bloqueado: { en: "Blocked", es: "Bloqueado", ru: "Заблокирован", zh: "已封禁", ja: "ブロック済み" },
+  Bloqueado: {
+    en: "Blocked",
+    es: "Bloqueado",
+    ru: "Заблокирован",
+    zh: "已封禁",
+    ja: "ブロック済み",
+  },
   "Bloquear conta no painel": {
     en: "Block account in the panel",
     es: "Bloquear cuenta en el panel",
@@ -247,7 +289,13 @@ const NOVAS = {
     zh: "尚未登记任何角色——角色库从这里开始。",
     ja: "キャラクターはまだ登録されていません。ここから始めましょう。",
   },
-  "sem descrição": { en: "no description", es: "sin descripción", ru: "без описания", zh: "无描述", ja: "説明なし" },
+  "sem descrição": {
+    en: "no description",
+    es: "sin descripción",
+    ru: "без описания",
+    zh: "无描述",
+    ja: "説明なし",
+  },
   "Excluir o personagem {nome}?": {
     en: "Delete the character {nome}?",
     es: "¿Eliminar el personaje {nome}?",
@@ -320,7 +368,13 @@ const NOVAS = {
     zh: "角色预览",
     ja: "キャラクターのプレビュー",
   },
-  "sem imagem": { en: "no image", es: "sin imagen", ru: "без изображения", zh: "无图片", ja: "画像なし" },
+  "sem imagem": {
+    en: "no image",
+    es: "sin imagen",
+    ru: "без изображения",
+    zh: "无图片",
+    ja: "画像なし",
+  },
   "Prévia do avatar": {
     en: "Avatar preview",
     es: "Vista previa del avatar",
@@ -356,7 +410,13 @@ const NOVAS = {
     zh: "代表您在多台设备间形象的角色和照片。",
     ja: "端末間であなたを表すキャラクターと写真です。",
   },
-  Personalizar: { en: "Personalize", es: "Personalizar", ru: "Настроить", zh: "自定义", ja: "カスタマイズ" },
+  Personalizar: {
+    en: "Personalize",
+    es: "Personalizar",
+    ru: "Настроить",
+    zh: "自定义",
+    ja: "カスタマイズ",
+  },
   Fechar: { en: "Close", es: "Cerrar", ru: "Закрыть", zh: "关闭", ja: "閉じる" },
   Ativo: { en: "Active", es: "Activo", ru: "Активен", zh: "启用", ja: "有効" },
   Inativo: { en: "Inactive", es: "Inactivo", ru: "Неактивен", zh: "停用", ja: "無効" },
@@ -382,7 +442,12 @@ for (const [idioma, caminho] of Object.entries(ARQUIVOS)) {
   const insercoes = [];
   for (const [pt, trs] of Object.entries(NOVAS)) {
     // A chave existe? Formato bare (Mapa:) ou entre aspas ("Mapa":).
-    const bare = new RegExp(`^\\s{2}${JSON.stringify(pt).slice(1, -1).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:`, "m");
+    const bare = new RegExp(
+      `^\\s{2}${JSON.stringify(pt)
+        .slice(1, -1)
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:`,
+      "m",
+    );
     const escapada = pt.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const entreAspas = new RegExp(`^\\s{2}"${escapada}":`, "m");
     if (bare.test(fonte) || entreAspas.test(fonte)) continue;

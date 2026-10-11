@@ -45,7 +45,6 @@ import { BackupFolderCard } from "@/components/BackupFolderCard";
 import { ObsidianCard } from "@/components/ObsidianCard";
 import { ConfigAssistente } from "@/components/assistente/ConfigAssistente";
 import { BotaoConvidar } from "@/components/ConviteSheet";
-import { PERSONAGENS, SKILLS, personagemPorSlug } from "@/lib/assistente";
 import { usePwaInstall } from "@/lib/pwa";
 import { contaAtiva, type ContaLocal } from "@/lib/conta";
 
@@ -115,7 +114,6 @@ function Settings() {
   const [reportHistory, setReportHistory] = useState<ReportHistoryItem[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const { prefs, update } = usePreferences();
-  const personagemSelecionado = personagemPorSlug(prefs.assistentePersonagem);
   const { t, idioma, definir } = useI18n();
   const callPush = useServerFn(pushAll);
   const callPull = useServerFn(pullAll);
@@ -565,98 +563,6 @@ function Settings() {
             </div>
           </>
         )}
-      </Section>
-
-      <Section title={t("Assistente de IA")}>
-        <p className="text-xs text-muted-foreground">
-          {t(
-            "O assistente aparece como miniatura arrastável em todas as telas: toque para abrir o chat e arraste para colocá-lo onde não atrapalhe. Ele executa funções do app (rota, SOS, modo noturno), ensina do manual e narra a navegação.",
-          )}
-        </p>
-        <Choice
-          label={t("Personagem do assistente")}
-          value={prefs.assistentePersonagem}
-          options={PERSONAGENS.map((p) => ({ id: p.slug, label: `${p.emoji} ${p.nome}` }))}
-          onChange={(v) => update({ assistentePersonagem: v })}
-        />
-        <p className="text-xs text-muted-foreground">
-          {personagemSelecionado.frase} — {personagemSelecionado.perfil}
-        </p>
-        <div className="space-y-1">
-          <Label htmlFor="assistente-prompt">
-            {t("Prompt do assistente (pré-preenchido, editável)")}
-          </Label>
-          <textarea
-            id="assistente-prompt"
-            data-test="assistente-prompt"
-            value={prefs.assistentePrompt}
-            onChange={(e) => update({ assistentePrompt: e.target.value })}
-            rows={3}
-            className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground"
-          />
-        </div>
-        <div className="space-y-2">
-          <div className="mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            {t("Skills (a primeira já vem pré-ativada)")}
-          </div>
-          {SKILLS.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              data-test={`assistente-skill-${s.id}`}
-              aria-pressed={!!prefs.assistenteSkills[s.id]}
-              onClick={() =>
-                update({
-                  assistenteSkills: {
-                    ...prefs.assistenteSkills,
-                    [s.id]: !prefs.assistenteSkills[s.id],
-                  },
-                })
-              }
-              className={`glove-tap flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors ${
-                prefs.assistenteSkills[s.id]
-                  ? "border-tactical-orange bg-tactical-orange/10"
-                  : "border-border hover:border-tactical-orange/50"
-              }`}
-            >
-              <span
-                className={`mono mt-0.5 shrink-0 rounded border px-1.5 py-0.5 text-[9px] uppercase ${
-                  prefs.assistenteSkills[s.id]
-                    ? "border-tactical-orange text-tactical-orange"
-                    : "border-border text-muted-foreground"
-                }`}
-              >
-                {prefs.assistenteSkills[s.id] ? "ATIVA" : "OFF"}
-              </span>
-              <span className="min-w-0">
-                <span className="block text-sm font-semibold">{s.nome}</span>
-                <span className="block text-xs text-muted-foreground leading-relaxed">
-                  {s.descricao}
-                </span>
-              </span>
-            </button>
-          ))}
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="assistente-chave">
-            {t("Chave de API (opcional — fica só no aparelho)")}
-          </Label>
-          <Input
-            id="assistente-chave"
-            data-test="assistente-chave"
-            type="password"
-            autoComplete="off"
-            value={prefs.assistenteChave}
-            onChange={(e) => update({ assistenteChave: e.target.value })}
-            placeholder="AIza… (Google AI Studio) ou chave compatível"
-            className="mono"
-          />
-          <p className="text-xs text-muted-foreground">
-            {t(
-              "Com uma chave, as perguntas abertas vão para o modelo de IA com a persona do personagem. Pegue a sua grátis no Google AI Studio: aistudio.google.com → chaves de API → criar chave. Chaves que não começam com AIza são tratadas como endpoints compatíveis (Hugging Face e similares). Sem chave, o assistente responde com o cérebro local offline.",
-            )}
-          </p>
-        </div>
       </Section>
 
       <Section title={t("Chaves de inteligência (opcional)")}>

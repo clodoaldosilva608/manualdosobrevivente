@@ -304,13 +304,14 @@ const NOVAS = {
     zh: "街道路线",
     ja: "街道ルート",
   },
-  "Do seu ponto atual até um endereço ou lugar: o traçado completo aparece no mapa, com setas de direção e a voz guiando cada manobra, como um GPS.": {
-    en: "From your current point to an address or place: the full path appears on the map, with direction arrows and the voice guiding every maneuver, like a GPS.",
-    es: "Desde su punto actual hasta una dirección o lugar: el trazado completo aparece en el mapa, con flechas de dirección y la voz guiando cada maniobra, como un GPS.",
-    ru: "От вашей текущей точки до адреса или места: весь путь на карте, со стрелками направления и голосом, ведущим через каждый манёвр, как GPS.",
-    zh: "从当前位置到地址或地点：完整路径显示在地图上，带方向箭头和语音引导每次转向，如同导航。",
-    ja: "現在地から住所や場所まで：地図に完全な経路が表示され、方向矢印と音声がGPSのようにすべての転回を案内します。",
-  },
+  "Do seu ponto atual até um endereço ou lugar: o traçado completo aparece no mapa, com setas de direção e a voz guiando cada manobra, como um GPS.":
+    {
+      en: "From your current point to an address or place: the full path appears on the map, with direction arrows and the voice guiding every maneuver, like a GPS.",
+      es: "Desde su punto actual hasta una dirección o lugar: el trazado completo aparece en el mapa, con flechas de dirección y la voz guiando cada maniobra, como un GPS.",
+      ru: "От вашей текущей точки до адреса или места: весь путь на карте, со стрелками направления и голосом, ведущим через каждый манёвр, как GPS.",
+      zh: "从当前位置到地址或地点：完整路径显示在地图上，带方向箭头和语音引导每次转向，如同导航。",
+      ja: "現在地から住所や場所まで：地図に完全な経路が表示され、方向矢印と音声がGPSのようにすべての転回を案内します。",
+    },
   "Destino (endereço ou lugar)": {
     en: "Destination (address or place)",
     es: "Destino (dirección o lugar)",

@@ -64,7 +64,6 @@ export type Database = {
         };
         Relationships: [];
       };
-<<<<<<< HEAD
       manual_configuracoes: {
         Row: {
           chave: string;
@@ -128,8 +127,6 @@ export type Database = {
         };
         Relationships: [];
       };
-=======
->>>>>>> 4e0e365 (feat: lote de campo — assistente IA arrastável, CAPE no boletim, 78 colaboradores, visão noturna a 4 cores, +5 mapas, sinais sonoros no SOS, abertura com áudio e manual expandido a 29 verbetes com passo a passo)
       manual_gear_items: {
         Row: {
           category: string;
@@ -172,7 +169,6 @@ export type Database = {
         };
         Relationships: [];
       };
-<<<<<<< HEAD
       manual_parceiros: {
         Row: {
           ativo: boolean;
@@ -242,8 +238,6 @@ export type Database = {
         };
         Relationships: [];
       };
-=======
->>>>>>> 4e0e365 (feat: lote de campo — assistente IA arrastável, CAPE no boletim, 78 colaboradores, visão noturna a 4 cores, +5 mapas, sinais sonoros no SOS, abertura com áudio e manual expandido a 29 verbetes com passo a passo)
       manual_report_delivery_history: {
         Row: {
           checklist_count: number;

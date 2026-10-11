@@ -97,6 +97,72 @@ function lerDataUrl(arquivo: File): Promise<string> {
   });
 }
 
+/** Tamanho do orbe (h-14 w-14 = 56 px). */
+const TAMANHO_ORBE = 56;
+/** Posição gravada do orbe — o operador arrasta e o app lembra. */
+const CHAVE_POS_ORBE = "tgis:ia-orbe-pos";
+
+/** Elemento interativo sob o ponto — o orbe não pode cobrir nada disso. */
+function pontoOcupado(cx: number, cy: number): boolean {
+  const el = document.elementFromPoint(cx, cy);
+  if (!el || el.closest('[data-test="assistente-orbe"]')) return false;
+  return !!el.closest(
+    'button, a, input, select, textarea, label, [role="button"], [role="switch"], [role="option"]',
+  );
+}
+
+/** Limita a posição à viewport. */
+function prenderOrbe(x: number, y: number): { x: number; y: number } {
+  return {
+    x: Math.min(Math.max(8, x), window.innerWidth - TAMANHO_ORBE - 8),
+    y: Math.min(Math.max(8, y), window.innerHeight - TAMANHO_ORBE - 8),
+  };
+}
+
+/** Desvio automático: se qualquer ponto da área cobrir elemento interativo,
+ * procura o ponto livre mais próximo (subindo, depois descendo). */
+function desviarOrbe(x: number, y: number): { x: number; y: number } {
+  const livre = (px: number, py: number) => {
+    const pontos: Array<[number, number]> = [
+      [px + TAMANHO_ORBE / 2, py + TAMANHO_ORBE / 2],
+      [px + 10, py + 10],
+      [px + TAMANHO_ORBE - 10, py + 10],
+      [px + 10, py + TAMANHO_ORBE - 10],
+      [px + TAMANHO_ORBE - 10, py + TAMANHO_ORBE - 10],
+    ];
+    return pontos.every(([cx, cy]) => !pontoOcupado(cx, cy));
+  };
+  if (livre(x, y)) return { x, y };
+  for (let py = y - 28; py >= 8; py -= 28) if (livre(x, py)) return { x, y: py };
+  const limiteInferior = window.innerHeight - TAMANHO_ORBE - 8;
+  for (let py = y + 28; py <= limiteInferior; py += 28) if (livre(x, py)) return { x, y: py };
+  return { x, y };
+}
+
+/** Posição gravada pelo operador (ou null — usa o padrão do app). */
+function carregarPosOrbe(): { x: number; y: number } | null {
+  try {
+    const bruto = localStorage.getItem(CHAVE_POS_ORBE);
+    if (!bruto) return null;
+    const v = JSON.parse(bruto) as { x: number; y: number };
+    return prenderOrbe(v.x, v.y);
+  } catch {
+    return null;
+  }
+}
+
+/** Posição padrão do orbe (o canto que o app sempre usou), em px. */
+function posicaoPadraoOrbe(bussolaMiniNoMapa: boolean): { x: number; y: number } {
+  const desktop = window.innerWidth >= 768;
+  const margemDireita = desktop ? 24 : 12;
+  const fundoBase = desktop ? 40 : 76; // md:bottom-10 · bottom-[4.75rem+safe]
+  const fundo = bussolaMiniNoMapa ? 184 : fundoBase; // 11.5rem ≈ 184 px
+  return prenderOrbe(
+    window.innerWidth - TAMANHO_ORBE - margemDireita,
+    window.innerHeight - TAMANHO_ORBE - fundo,
+  );
+}
+
 export default function AssistenteFlutuante() {
   const { t } = useI18n();
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -114,6 +180,11 @@ export default function AssistenteFlutuante() {
   const [global, setGlobal] = useState<EntradaConhecimento[]>([]);
   const [personas, setPersonas] = useState<Personagem[]>([]);
   const [modoBussola, setModoBussola] = useState<"mini" | "panel" | "full">("mini");
+  // Arraste do orbe: posição livre escolhida pelo operador (persistida) e
+  // desvio automático de colisão — o orbe nunca cobre um botão/link/formulário.
+  const [posOrbe, setPosOrbe] = useState<{ x: number; y: number } | null>(null);
+  const origemArraste = useRef<{ x: number; y: number; px: number; py: number } | null>(null);
+  const moveuOrbe = useRef(false);
   const fimRef = useRef<HTMLDivElement>(null);
   const arquivoRef = useRef<HTMLInputElement>(null);
   const gravadorRef = useRef<MediaRecorder | null>(null);
@@ -143,7 +214,72 @@ export default function AssistenteFlutuante() {
   useEffect(() => {
     setConfig(lerConfigIA());
     setMensagens(carregarChat());
+    setPosOrbe(carregarPosOrbe());
   }, []);
+
+  const bussolaMiniNoMapa =
+    path === "/" &&
+    !prefs.telaLimpa &&
+    prefs.mapMode === "tatico" &&
+    prefs.telaVis?.bussola !== false &&
+    modoBussola === "mini";
+
+  // Sem posição escolhida pelo operador: usa o padrão do app (canto com a
+  // coluna da bússola) e desvia se estiver cobrindo algo interativo.
+  useEffect(() => {
+    if (posOrbe) return;
+    const id = window.setTimeout(() => {
+      const padrao = posicaoPadraoOrbe(bussolaMiniNoMapa);
+      setPosOrbe(desviarOrbe(padrao.x, padrao.y));
+    }, 60);
+    return () => window.clearTimeout(id);
+  }, [bussolaMiniNoMapa, posOrbe]);
+
+  // Desvio contínuo (1,2 s): conteúdo novo (lista, folha, botão) também é
+  // respeitado — o orbe escorrega quando algo interativo fica embaixo dele.
+  useEffect(() => {
+    const desviar = () => setPosOrbe((p) => (p ? desviarOrbe(p.x, p.y) : p));
+    const id = window.setInterval(desviar, 1200);
+    const aoRedimensionar = () => setPosOrbe((p) => (p ? prenderOrbe(p.x, p.y) : p));
+    window.addEventListener("resize", aoRedimensionar);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("resize", aoRedimensionar);
+    };
+  }, []);
+
+  /** Arraste (pointer) — toque curto continua abrindo o chat. */
+  const orbePointerDown = (e: React.PointerEvent) => {
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    const base = posOrbe ?? posicaoPadraoOrbe(bussolaMiniNoMapa);
+    origemArraste.current = { x: e.clientX, y: e.clientY, px: base.x, py: base.y };
+    moveuOrbe.current = false;
+  };
+  const orbePointerMove = (e: React.PointerEvent) => {
+    if (!origemArraste.current) return;
+    const dx = e.clientX - origemArraste.current.x;
+    const dy = e.clientY - origemArraste.current.y;
+    if (Math.abs(dx) > 6 || Math.abs(dy) > 6) moveuOrbe.current = true;
+    if (moveuOrbe.current) {
+      setPosOrbe(prenderOrbe(origemArraste.current.px + dx, origemArraste.current.py + dy));
+    }
+  };
+  const orbePointerUp = () => {
+    if (!origemArraste.current) return;
+    origemArraste.current = null;
+    if (moveuOrbe.current) {
+      setPosOrbe((p) => {
+        if (p) {
+          try {
+            localStorage.setItem(CHAVE_POS_ORBE, JSON.stringify(p));
+          } catch {
+            /* sem armazenamento — vale só na sessão */
+          }
+        }
+        return p;
+      });
+    }
+  };
 
   // Conhecimento global curado pelo admin (cache offline de 6 h) e o
   // catálogo de personagens (qual um deles pode encarnar a IA).
@@ -366,29 +502,32 @@ export default function AssistenteFlutuante() {
   // dela (tab bar → bússola → orbe) — nada sobrepõe nada. Sem bússola, o
   // orbe volta para o canto junto à barra. No desktop a bússola fica à
   // ESQUERDA: orbe permanece à direita, um pouco acima da atribuição.
-  const bussolaMiniNoMapa =
-    path === "/" &&
-    !prefs.telaLimpa &&
-    prefs.mapMode === "tatico" &&
-    prefs.telaVis?.bussola !== false &&
-    modoBussola === "mini";
-
   // Modo mapa limpo: o orbe some junto com todo o HUD.
   if (prefs.telaLimpa && path === "/") return null;
 
   return (
     <>
       {/* Orbe minimizado — anel funcional com o rumo do aparelho */}
-      {!aberto && (
+      {!aberto && posOrbe && (
         <button
           type="button"
           data-test="assistente-orbe"
-          onClick={() => setAberto(true)}
-          aria-label={t("Abrir assistente IA")}
-          className={`glove-tap fixed right-3 z-40 flex h-14 w-14 items-center justify-center rounded-full border-2 border-border bg-card shadow-lg md:bottom-10 md:right-6 ${
-            bussolaMiniNoMapa
-              ? "bottom-[calc(11.5rem+env(safe-area-inset-bottom))]"
-              : "bottom-[calc(4.75rem+env(safe-area-inset-bottom))]"
+          onClick={() => {
+            if (moveuOrbe.current) {
+              moveuOrbe.current = false;
+              return;
+            }
+            setAberto(true);
+          }}
+          onPointerDown={orbePointerDown}
+          onPointerMove={orbePointerMove}
+          onPointerUp={orbePointerUp}
+          onPointerCancel={orbePointerUp}
+          aria-label={t("Abrir assistente IA") + " — " + t("arraste para mover")}
+          title={t("Arraste para mover o assistente")}
+          style={{ left: posOrbe.x, top: posOrbe.y, touchAction: "none" }}
+          className={`glove-tap fixed z-40 flex h-14 w-14 select-none items-center justify-center rounded-full border-2 border-border bg-card shadow-lg ${
+            moveuOrbe.current ? "cursor-grabbing" : "cursor-grab"
           }`}
         >
           <svg viewBox="0 0 56 56" className="absolute inset-0 h-full w-full">

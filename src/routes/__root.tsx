@@ -18,12 +18,8 @@ import { AppNav } from "@/components/AppNav";
 import { AutoCloudSync } from "@/components/AutoCloudSync";
 import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
 import { SplashAbertura } from "@/components/SplashAbertura";
-<<<<<<< HEAD
 import { PortaoAuth } from "@/components/PortaoAuth";
 import AssistenteFlutuante from "@/components/assistente/AssistenteFlutuante";
-=======
-import { MiniaturaAssistente } from "@/components/assistente/AssistenteIA";
->>>>>>> 4e0e365 (feat: lote de campo — assistente IA arrastável, CAPE no boletim, 78 colaboradores, visão noturna a 4 cores, +5 mapas, sinais sonoros no SOS, abertura com áudio e manual expandido a 29 verbetes com passo a passo)
 import { registerServiceWorker, useNovaVersao } from "@/lib/pwa";
 import { iniciarAutoBackup } from "@/lib/auto-backup";
 import { ProvedorIdioma } from "@/lib/i18n";
@@ -259,7 +255,6 @@ function RootComponent() {
         <SplashAbertura />
         <PortaoAuth />
         <WelcomeOnboarding />
-        <MiniaturaAssistente />
         <div className="flex min-h-screen flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0 md:pt-14">
           <main className="flex-1 relative">
             <Outlet />

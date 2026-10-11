@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { COLABORADORES, TOTAL_COLABORADORES, segmentoColaboradores } from "@/lib/colaboradores";
+import {
+  COLABORADORES,
+  TOTAL_COLABORADORES,
+  segmentoColaboradores,
+  segmentoDeNomes,
+} from "@/lib/colaboradores";
 
 describe("Colaboradores da Redline", () => {
   it("tem exatamente 78 colaboradores", () => {
@@ -26,5 +31,23 @@ describe("Colaboradores da Redline", () => {
     const manha = segmentoColaboradores(new Date("2026-10-11T07:00:00"));
     const noite = segmentoColaboradores(new Date("2026-10-11T22:00:00"));
     expect(manha).not.toBe(noite);
+  });
+
+  it("segmentoDeNomes monta o letreiro de qualquer lista com rótulo próprio", () => {
+    const nomes = ["Ana Duarte", "Bia Nunes", "Cado Lima"];
+    const s = segmentoDeNomes(nomes, new Date("2026-10-11T10:00:00"), "APOIADORES");
+    expect(s).toContain("APOIADORES (3)");
+    for (const nome of nomes) expect(s).toContain(nome);
+    // cada nome aparece exatamente uma vez (lista girada, sem repetição)
+    expect(s.split("Ana Duarte")).toHaveLength(2);
+  });
+
+  it("segmentoDeNomes é o mesmo formato da lista semente (compatibilidade)", () => {
+    const s = segmentoDeNomes(COLABORADORES, new Date("2026-10-11T10:00:00"));
+    expect(s).toBe(segmentoColaboradores(new Date("2026-10-11T10:00:00")));
+  });
+
+  it("segmentoDeNomes com lista vazia devolve vazio (chamador decide o fallback)", () => {
+    expect(segmentoDeNomes([], new Date())).toBe("");
   });
 });

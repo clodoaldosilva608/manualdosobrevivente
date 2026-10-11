@@ -7,7 +7,8 @@
  * azimute p/ waypoint · temperatura e céu · vento · CAPE (tempestade) ·
  * dia (nascer/pôr) · sol · lua · Cruzeiro do Sul/Polaris · sentido do mar ·
  * litoral · nível do mar · nível do aparelho · hemisfério · coordenadas ·
- * colaboradores da plataforma.
+ * apoiadores da plataforma (do banco manual_apoiadores; offline cai para a
+ * semente estática — o letreiro nunca fica sem nomes).
  *
  * Aviso de CAPE alto: quando a energia convectiva das próximas horas
  * (Open-Meteo) cruza o limiar, o aviso "ATENÇÃO, TEMPESTADE SE FORMANDO
@@ -25,7 +26,8 @@ import { useSensorBussola } from "@/lib/bussola-sensor";
 import { nivelUniversal } from "@/lib/nivel";
 import { fetchWeather } from "@/lib/weather.functions";
 import { avisoCape, nivelCape } from "@/lib/cape";
-import { segmentoColaboradores } from "@/lib/colaboradores";
+import { COLABORADORES, segmentoDeNomes } from "@/lib/colaboradores";
+import { useApoiadoresRedline } from "@/hooks/useApoiadores";
 import {
   formatDegrees,
   formatSignedDegrees,
@@ -64,6 +66,7 @@ export default function RedlineBoletim({
   waypointLabel,
 }: RedlineBoletimProps) {
   const { rumoAparelho, calibracao, nivel } = useSensorBussola();
+  const nomesApoiadores = useApoiadoresRedline();
   const [now, setNow] = useState(() => new Date());
   const [pausado, setPausado] = useState(false);
 
@@ -172,7 +175,7 @@ export default function RedlineBoletim({
     ),
     entrada("HEMISFÉRIO", celestial.hemisphereLabel.toUpperCase()),
     `${formatDecimalDegrees(lat)}, ${formatDecimalDegrees(lng)}`,
-    segmentoColaboradores(now),
+    segmentoDeNomes(nomesApoiadores ?? COLABORADORES, now),
   ];
 
   const texto = linhas.join("  •••  ");

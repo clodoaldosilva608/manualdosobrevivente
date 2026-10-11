@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { HeartHandshake, Landmark, ShieldCheck, Users } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { formatMoeda, formatDateTime } from "@/lib/format";
 import { listarApoiadores, type Apoiador } from "@/lib/apoiadores";
+import { segmentoDeNomes } from "@/lib/colaboradores";
 import {
   listarParceirosPublicos,
   listarRedline,
@@ -46,29 +47,44 @@ function Colaboradores() {
 
   useEffect(() => {
     void (async () => {
-      try {
-        const [linha, marcas, sessao, mural] = await Promise.all([
-          listarRedline(),
-          listarParceirosPublicos().catch(() => [] as Parceiro[]),
-          perfilAtual().catch(() => null),
-          listarApoiadores().catch(() => [] as Apoiador[]),
-        ]);
-        setRedline(linha);
-        setParceiros(marcas);
-        setPerfil(sessao);
-        setApoiadores(mural);
-      } catch {
-        setRedline([]);
-      }
+      // Cada consulta se protege sozinha: uma falha de rede NUNCA derruba as
+      // demais (antes, um erro na redline esvaziava também o mural).
+      const [linha, marcas, sessao, mural] = await Promise.all([
+        listarRedline().catch(() => [] as ContribuicaoRedline[]),
+        listarParceirosPublicos().catch(() => [] as Parceiro[]),
+        perfilAtual().catch(() => null),
+        listarApoiadores().catch(() => [] as Apoiador[]),
+      ]);
+      setRedline(linha);
+      setParceiros(marcas);
+      setPerfil(sessao);
+      setApoiadores(mural);
     })();
   }, []);
 
   const total = redline ? somarRedline(redline) : 0;
   const carregando = redline === null;
-  const textoRedline =
-    (redline ?? [])
-      .map((item) => `◆ ${item.nome_exibicao} — ${formatMoeda(Number(item.valor))}`)
-      .join("      ") + "      ";
+
+  /**
+   * Letreiro: contribuições aprovadas (com valor) + mural de apoiadores do
+   * banco, girado a cada carregamento — a redline nunca fica vazia enquanto
+   * houver apoiadores cadastrados.
+   */
+  const textoRedline = useMemo(() => {
+    const apoios = (redline ?? []).map(
+      (item) => `◆ ${item.nome_exibicao} — ${formatMoeda(Number(item.valor))}`,
+    );
+    const mural =
+      apoiadores.length > 0
+        ? segmentoDeNomes(
+            apoiadores.map((apoiador) => apoiador.nome),
+            new Date(),
+            "APOIADORES",
+          )
+        : "";
+    return [...apoios, mural].filter(Boolean).join("      ");
+  }, [redline, apoiadores]);
+  const redlineVazia = !carregando && textoRedline === "";
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-5 p-4 pb-10 md:p-8" data-test="colaboradores">
@@ -88,7 +104,7 @@ function Colaboradores() {
         <div className="flex items-center overflow-hidden py-2">
           {carregando ? (
             <span className="mono px-3 text-xs text-white/80">{t("Consultando redline…")}</span>
-          ) : redline.length === 0 ? (
+          ) : redlineVazia ? (
             <span className="mono px-3 text-xs text-white/80">
               {t("Redline vazia — seja o primeiro colaborador do Manual")}
             </span>
@@ -134,7 +150,7 @@ function Colaboradores() {
         <CartaoKpi
           icone={<Users className="h-4 w-4" />}
           rotulo={t("Colaboradores")}
-          valor={carregando ? "—" : String(redline.length)}
+          valor={carregando ? "—" : String(redline.length + apoiadores.length)}
         />
         <CartaoKpi
           icone={<ShieldCheck className="h-4 w-4" />}

@@ -6,6 +6,7 @@ import { useI18n } from "@/lib/i18n";
 import { formatMoeda, formatDateTime } from "@/lib/format";
 import { listarApoiadores, type Apoiador } from "@/lib/apoiadores";
 import { segmentoDeNomes, rotuloApoiador } from "@/lib/colaboradores";
+import { canonicalDo, ogUrlDo } from "@/lib/seo";
 import {
   listarParceirosPublicos,
   listarRedline,
@@ -33,7 +34,9 @@ export const Route = createFileRoute("/colaboradores")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      ogUrlDo("/colaboradores"),
     ],
+    links: [canonicalDo("/colaboradores")],
   }),
   component: Colaboradores,
 });

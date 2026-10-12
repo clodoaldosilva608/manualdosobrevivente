@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Handshake, ImageOff } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { canonicalDo, ogUrlDo } from "@/lib/seo";
 import { listarParceirosPublicos, type Parceiro } from "@/lib/colaboracao";
 
 export const Route = createFileRoute("/parceiros")({
@@ -18,7 +19,9 @@ export const Route = createFileRoute("/parceiros")({
       { property: "og:title", content: "Parceiros — Manual do Sobrevivente" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      ogUrlDo("/parceiros"),
     ],
+    links: [canonicalDo("/parceiros")],
   }),
   component: Parceiros,
 });

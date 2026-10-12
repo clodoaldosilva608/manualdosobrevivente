@@ -12,8 +12,9 @@
  */
 import { createFileRoute } from "@tanstack/react-router";
 import { MANUAL } from "@/lib/manual-content";
+import { URL_CANONICA } from "@/lib/seo";
 
-const BASE = "https://manualdosobrevivente.vercel.app";
+const BASE = URL_CANONICA;
 
 /** Vitrine estática, em ordem de importância para a divulgação. */
 const VITRINE: Array<{ caminho: string; prioridade: string; frequencia: string }> = [

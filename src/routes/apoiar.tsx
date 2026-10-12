@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { canonicalDo, ogUrlDo } from "@/lib/seo";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import QRCode from "qrcode";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,9 @@ export const Route = createFileRoute("/apoiar")({
       { property: "og:title", content: "Apoiar o projeto — Manual do Sobrevivente" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      ogUrlDo("/apoiar"),
     ],
+    links: [canonicalDo("/apoiar")],
   }),
   component: Apoiar,
 });

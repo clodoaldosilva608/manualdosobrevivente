@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import Fuse from "fuse.js";
 import { GraduationCap } from "lucide-react";
 import { MANUAL, MANUAL_BY_CATEGORY, CATEGORY_LABELS } from "@/lib/manual-content";
+import { canonicalDo, ogUrlDo } from "@/lib/seo";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
@@ -23,7 +24,9 @@ export const Route = createFileRoute("/manual/")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      ogUrlDo("/manual"),
     ],
+    links: [canonicalDo("/manual")],
   }),
   component: ManualIndex,
 });

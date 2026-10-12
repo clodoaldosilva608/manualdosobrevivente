@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import TutorialBussola from "@/components/tutorial/TutorialBussola";
+import { canonicalDo, ogUrlDo } from "@/lib/seo";
 
 export const Route = createFileRoute("/tutorial")({
   head: () => ({
@@ -17,7 +18,9 @@ export const Route = createFileRoute("/tutorial")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      ogUrlDo("/tutorial"),
     ],
+    links: [canonicalDo("/tutorial")],
   }),
   component: TutorialBussola,
 });

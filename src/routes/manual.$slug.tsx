@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { ChevronLeft, Check } from "lucide-react";
 import { MANUAL, CATEGORY_LABELS } from "@/lib/manual-content";
+import { canonicalDo, ogUrlDo } from "@/lib/seo";
 import { getChecklist, setChecklist } from "@/lib/db";
 import { useI18n } from "@/lib/i18n";
 
@@ -19,7 +20,9 @@ export const Route = createFileRoute("/manual/$slug")({
         { property: "og:description", content: description },
         { property: "og:type", content: "article" },
         { name: "twitter:card", content: "summary_large_image" },
+        ogUrlDo(`/manual/${params.slug}`),
       ],
+      links: [canonicalDo(`/manual/${params.slug}`)],
     };
   },
   loader: ({ params }) => {

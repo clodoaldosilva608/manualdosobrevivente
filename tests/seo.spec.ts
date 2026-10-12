@@ -16,6 +16,12 @@ const BASE = process.env["TEST_BASE_URL"] ?? "http://localhost:8080";
 /** Vitrine estática — deve bater com VITRINE em src/routes/api/sitemap.ts. */
 const VITRINE = ["/", "/manual", "/tutorial", "/colaboradores", "/apoiar", "/parceiros"];
 
+async function get(caminho: string): Promise<string> {
+  const res = await fetch(`${BASE}${caminho}`);
+  expect(res.status).toBe(200);
+  return await res.text();
+}
+
 describe("robots.txt", () => {
   it("existe, tranca o núcleo e anuncia o sitemap", async () => {
     const res = await fetch(`${BASE}/robots.txt`);
@@ -38,6 +44,26 @@ describe("robots.txt", () => {
       expect(proibicoes).not.toContain(`Disallow: ${rota}`);
     }
   });
+});
+
+describe("canonical no SSR (semana 2)", () => {
+  /** As duas raízes servem o mesmo conteúdo — a canônica deve vencer no HTML. */
+  for (const caminho of [
+    "/",
+    "/manual",
+    "/manual/water-purification",
+    "/tutorial",
+    "/colaboradores",
+    "/apoiar",
+    "/parceiros",
+  ]) {
+    it(`${caminho} declara canonical + og:url no domínio sem hífens`, async () => {
+      const html = await get(caminho);
+      const canônica = `https://manualdosobrevivente.vercel.app${caminho === "/" ? "/" : caminho}`;
+      expect(html).toContain(`<link rel="canonical" href="${canônica}"`);
+      expect(html).toContain(`property="og:url" content="${canônica}"`);
+    });
+  }
 });
 
 describe("sitemap (/api/sitemap)", () => {

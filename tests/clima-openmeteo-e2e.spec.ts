@@ -87,7 +87,9 @@ describe("Vento e temperatura ao vivo (Open-Meteo, sem chave)", () => {
           }
         ).__tacticalMap?.getSource("intel-temperatura"),
       undefined,
-      { timeout: 15_000 },
+      // 30s: o primeiro pedido (e o addSource) pode levar mais que 15s sob
+      // renderização por software; o controlador agora repete falhas a cada 3s.
+      { timeout: 30_000 },
     );
 
     await alvoTemp.click();

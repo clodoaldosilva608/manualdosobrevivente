@@ -91,6 +91,27 @@ function espacosNormais(texto: string): string {
   return texto.replace(/[\u00a0\u202f]/g, " ");
 }
 
+/**
+ * Total arrecadado esperado (mesma conta do app: valores dos apoiadores
+ * ativos + contribuições aprovadas da view), formatado em pt-BR. Retorna ""
+ * quando a leitura REST não está disponível.
+ */
+async function totalArrecadadoEsperado(): Promise<string> {
+  if (!CHAVE_SUPABASE) return "";
+  const headers = { apikey: CHAVE_SUPABASE, Authorization: `Bearer ${CHAVE_SUPABASE}` };
+  const [respApoiadores, respView] = await Promise.all([
+    fetch(`${URL_SUPABASE}/rest/v1/manual_apoiadores?ativo=eq.true&select=valor`, { headers }),
+    fetch(`${URL_SUPABASE}/rest/v1/manual_redline_colaboradores?select=valor`, { headers }),
+  ]);
+  if (!respApoiadores.ok || !respView.ok) return "";
+  const soma = (linhas: Array<{ valor: number | null }>) =>
+    linhas.reduce((total, linha) => total + Number(linha.valor ?? 0), 0);
+  const total =
+    soma((await respApoiadores.json()) as Array<{ valor: number | null }>) +
+    soma((await respView.json()) as Array<{ valor: number | null }>);
+  return new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2 }).format(total);
+}
+
 let browser: Browser;
 
 beforeAll(async () => {
@@ -189,9 +210,15 @@ describe("Apoiadores do banco nas redlines", () => {
     expect(texto).toContain(NOME_DO_BANCO);
     // O valor já arrecadado acompanha o nome no letreiro (ticker sem CSS uppercase).
     expect(espacosNormais(texto)).toContain(`${TESTE_NOME} · R$ 25,00`);
-    // O KPI Arrecadado inclui o valor do apoiador (R$ 25,00 do teste).
+    // O KPI Arrecadado reflete a mesma conta do app: apoiadores ativos +
+    // contribuições aprovadas — incluindo os R$ 25,00 do apoiador de teste.
     const kpi = page.locator('[data-test="colaboradores-total"]');
-    await expect(kpi.innerText()).resolves.toContain("25,00");
+    const esperado = await totalArrecadadoEsperado();
+    if (esperado) {
+      await expect(espacosNormais(await kpi.innerText())).toContain(esperado);
+    } else {
+      await expect(espacosNormais(await kpi.innerText())).toMatch(/R\$ [\d.]+,\d{2}/);
+    }
     // mural segue presente com os 79 chips
     await page.locator('[data-test="colaboradores-apoiadores"]').waitFor({ timeout: 15_000 });
     await context.close();

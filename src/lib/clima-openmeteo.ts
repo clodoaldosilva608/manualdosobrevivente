@@ -480,6 +480,8 @@ export class ControladorTemperatura {
   private destruido = false;
   private timerRefresco: number | null = null;
   private timerDebounce: number | null = null;
+  private timerRepeticao: number | null = null;
+  private tentativasErro = 0;
   /** Últimas leituras — o sincronizar reapresenta sem refetch (o styledata dispara a cada mudança de estilo). */
   private ultimo: LeituraGrade[] | null = null;
   private coletando = false;
@@ -522,6 +524,9 @@ export class ControladorTemperatura {
     this.timerRefresco = null;
     if (this.timerDebounce !== null) window.clearTimeout(this.timerDebounce);
     this.timerDebounce = null;
+    if (this.timerRepeticao !== null) window.clearTimeout(this.timerRepeticao);
+    this.timerRepeticao = null;
+    this.tentativasErro = 0;
     this.map.off("moveend", this.aoMove);
     this.remover();
     this.aoEstado?.("off");
@@ -556,9 +561,22 @@ export class ControladorTemperatura {
       if (!this.ativo || this.destruido) return;
       this.ultimo = leituras;
       this.aplicar(leituras);
+      this.tentativasErro = 0;
       this.aoEstado?.("ativo");
     } catch {
-      if (this.ativo && !this.destruido) this.aoEstado?.("erro");
+      if (this.ativo && !this.destruido) {
+        this.aoEstado?.("erro");
+        // Redes móveis falham no primeiro pedido — repete com backoff curto
+        // (até 3 tentativas) em vez de deixar a camada morta até o refresco.
+        if (this.tentativasErro < 3 && this.timerRepeticao === null) {
+          const atraso = 3_000 * (this.tentativasErro + 1);
+          this.tentativasErro += 1;
+          this.timerRepeticao = window.setTimeout(() => {
+            this.timerRepeticao = null;
+            void this.coletar();
+          }, atraso);
+        }
+      }
     } finally {
       this.coletando = false;
     }

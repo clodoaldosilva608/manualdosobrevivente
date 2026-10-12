@@ -17,20 +17,28 @@ import {
 import {
   ArrowUpRight,
   Bot,
+  CalendarDays,
+  Check,
   CheckCircle2,
+  ClipboardCopy,
   ExternalLink,
+  FileDown,
+  Globe,
   Handshake,
   HeartHandshake,
   KeyRound,
   LayoutDashboard,
+  Link2,
   Loader2,
   Medal,
   Megaphone,
+  MessageCircle,
   Pencil,
   RefreshCw,
   Search,
   Settings,
   ShieldAlert,
+  Target,
   Trash2,
   Upload,
   Users,
@@ -84,6 +92,19 @@ import {
   type EntradaConhecimento,
 } from "@/lib/ia-conhecimento";
 import { lerConfigPopups, type ConfigPopups } from "@/lib/popups";
+import {
+  CRIATIVOS,
+  FUNDACAO_SEMANA1,
+  LINKS_CAMPANHA,
+  METAS_SEMANA2,
+  PASSOS_GSC,
+  PLANO_SEMANA2,
+  POSTS_DIVULGACAO,
+  URL_BING,
+  URL_GSC,
+  URL_SITEMAP,
+  linkCompleto,
+} from "@/lib/divulgacao";
 
 /** Painel administrativo do Centro (outra aplicação do ecossistema). */
 const CENTRO_ADMIN_URL = "https://centrodesobrevivencia.vercel.app/admin";
@@ -106,6 +127,7 @@ type Secao =
   | "personagens"
   | "apoiadores"
   | "ia"
+  | "divulgacao"
   | "config";
 
 const SECOES: { id: Secao; rotulo: string; icone: typeof LayoutDashboard }[] = [
@@ -116,6 +138,7 @@ const SECOES: { id: Secao; rotulo: string; icone: typeof LayoutDashboard }[] = [
   { id: "parceiros", rotulo: "Parceiros", icone: Handshake },
   { id: "personagens", rotulo: "Personagens", icone: VenetianMask },
   { id: "ia", rotulo: "IA · Conhecimento", icone: Bot },
+  { id: "divulgacao", rotulo: "Divulgação", icone: Megaphone },
   { id: "config", rotulo: "Configurações", icone: Settings },
 ];
 
@@ -256,6 +279,7 @@ function Admin() {
       {secao === "personagens" && <SecaoPersonagens />}
       {secao === "apoiadores" && <SecaoApoiadores />}
       {secao === "ia" && <SecaoIA />}
+      {secao === "divulgacao" && <SecaoDivulgacao />}
       {secao === "config" && <SecaoConfig />}
     </div>
   );
@@ -2373,6 +2397,365 @@ function BlocoPopups() {
         {ocupado ? t("Salvando…") : t("Salvar pop-ups")}
       </Button>
     </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Divulgação                                                          */
+/* ------------------------------------------------------------------ */
+
+/** Botão de copiar com confirmação — usado por todo o material. */
+function BotaoCopiar({ texto, rotulo }: { texto: string; rotulo?: string }) {
+  const { t } = useI18n();
+  const [copiado, setCopiado] = useState(false);
+
+  const copiar = async () => {
+    try {
+      await navigator.clipboard.writeText(texto);
+      toast.success(t("Copiado para a área de transferência"));
+      setCopiado(true);
+      window.setTimeout(() => setCopiado(false), 1500);
+    } catch {
+      toast.error(t("Não foi possível copiar — selecione o texto e copie manualmente"));
+    }
+  };
+
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      className="glove-tap h-7 shrink-0 px-2 text-[11px]"
+      onClick={() => void copiar()}
+      data-test="admin-divulgacao-copiar"
+    >
+      {copiado ? (
+        <Check className="h-3.5 w-3.5 text-emerald-400" />
+      ) : (
+        <ClipboardCopy className="h-3.5 w-3.5" />
+      )}
+      {rotulo ?? t("Copiar")}
+    </Button>
+  );
+}
+
+/** Cabeçalho padrão dos blocos da seção. */
+function CabecaBloco({
+  icone: Icone,
+  titulo,
+  teste,
+}: {
+  icone: typeof Globe;
+  titulo: string;
+  teste: string;
+}) {
+  return (
+    <header className="flex items-center gap-2">
+      <Icone className="text-tactical-orange h-4 w-4" />
+      <h2
+        className="mono text-[11px] font-bold uppercase tracking-widest text-tactical-orange"
+        data-test={teste}
+      >
+        {titulo}
+      </h2>
+    </header>
+  );
+}
+
+function BlocoFundacao() {
+  const { t } = useI18n();
+  return (
+    <section
+      className="space-y-3 rounded-md border border-border bg-card p-4"
+      data-test="admin-divulgacao-fundacao"
+    >
+      <CabecaBloco
+        icone={CheckCircle2}
+        titulo={t("Fundação da semana 1 — já no ar")}
+        teste="admin-divulgacao-fundacao-titulo"
+      />
+      <p className="text-muted-foreground text-xs leading-relaxed">
+        {t(
+          "A divulgação tem para onde apontar: descoberta pelos buscadores e vitrine aberta sem login. Não toque em nada aqui — é o alicerce.",
+        )}
+      </p>
+      <div className="space-y-1.5">
+        {FUNDACAO_SEMANA1.map((item) => (
+          <div key={item.texto} className="flex items-start gap-2 text-xs leading-relaxed">
+            <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
+            <span className="text-muted-foreground">{t(item.texto)}</span>
+          </div>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <BotaoCopiar texto={URL_SITEMAP} rotulo={t("Copiar endereço do sitemap")} />
+        <a
+          href={URL_SITEMAP}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-tactical-orange inline-flex items-center gap-1 text-xs underline decoration-dotted"
+        >
+          {t("Abrir o sitemap")} <ExternalLink className="h-3 w-3" />
+        </a>
+      </div>
+    </section>
+  );
+}
+
+function BlocoSearchConsole() {
+  const { t } = useI18n();
+  return (
+    <section
+      className="space-y-3 rounded-md border border-border bg-card p-4"
+      data-test="admin-divulgacao-gsc"
+    >
+      <CabecaBloco
+        icone={Globe}
+        titulo={t("Buscadores — passo a passo de uma vez só")}
+        teste="admin-divulgacao-gsc-titulo"
+      />
+      <p className="text-muted-foreground text-xs leading-relaxed">
+        {t(
+          "Leva cerca de 15 minutos, em ordem. O passo 2 depende de mim: me envie o arquivo googleXXXX.html ou a meta tag de verificação e eu publico no próximo commit.",
+        )}
+      </p>
+      <ol className="space-y-3">
+        {PASSOS_GSC.map((passo) => (
+          <li
+            key={passo.titulo}
+            className="text-muted-foreground rounded-md border border-border bg-background/40 p-3 text-xs leading-relaxed"
+          >
+            <p className="text-foreground font-bold">{t(passo.titulo)}</p>
+            <p className="mt-1">{t(passo.detalhe)}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {passo.copiar && <BotaoCopiar texto={passo.copiar} rotulo={t("Copiar endereço")} />}
+              {passo.link && (
+                <a
+                  href={passo.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-tactical-orange inline-flex items-center gap-1 underline decoration-dotted"
+                >
+                  {t("Abrir o painel")} <ExternalLink className="h-3 w-3" />
+                </a>
+              )}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+function BlocoLinksCampanha() {
+  const { t } = useI18n();
+  return (
+    <section
+      className="space-y-3 rounded-md border border-border bg-card p-4"
+      data-test="admin-divulgacao-links"
+    >
+      <CabecaBloco
+        icone={Link2}
+        titulo={t("Links da campanha")}
+        teste="admin-divulgacao-links-titulo"
+      />
+      <p className="text-muted-foreground text-xs leading-relaxed">
+        {t(
+          "A campanha aponta para a vitrine pública. Copie o endereço certo para cada canal: manual para a maior parte, verbete destaque para conversas, colaboradores como prova social e apoiar para quem já se engajou.",
+        )}
+      </p>
+      <div className="grid gap-2 md:grid-cols-2">
+        {LINKS_CAMPANHA.map((item) => (
+          <div
+            key={item.caminho}
+            className="text-muted-foreground rounded-md border border-border bg-background/40 p-3 text-xs leading-relaxed"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-foreground font-bold">{t(item.rotulo)}</p>
+              <BotaoCopiar texto={linkCompleto(item.caminho)} rotulo={t("Copiar")} />
+            </div>
+            <p className="mt-1">{t(item.descricao)}</p>
+            <p className="mono mt-1 truncate text-[10px] text-muted-foreground">
+              {linkCompleto(item.caminho)}
+            </p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function BlocoPlanoSemanal() {
+  const { t } = useI18n();
+  return (
+    <section
+      className="space-y-3 rounded-md border border-border bg-card p-4"
+      data-test="admin-divulgacao-plano"
+    >
+      <CabecaBloco
+        icone={CalendarDays}
+        titulo={t("Plano da semana 2 — um foco por dia")}
+        teste="admin-divulgacao-plano-titulo"
+      />
+      <div className="grid gap-2 md:grid-cols-2">
+        {PLANO_SEMANA2.map((item) => (
+          <div
+            key={item.dia}
+            className="text-muted-foreground rounded-md border border-border bg-background/40 p-3 text-xs leading-relaxed"
+          >
+            <div className="flex items-center gap-2">
+              <span className="mono bg-tactical-orange rounded px-1.5 py-0.5 text-[10px] font-bold text-background">
+                {item.dia}
+              </span>
+              <span className="text-foreground font-bold">{t(item.foco)}</span>
+              <span className="ml-auto text-[10px] uppercase tracking-wider">{t(item.canal)}</span>
+            </div>
+            <p className="mt-1.5">{t(item.acao)}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function BlocoPosts() {
+  const { t } = useI18n();
+  return (
+    <section
+      className="space-y-3 rounded-md border border-border bg-card p-4"
+      data-test="admin-divulgacao-posts"
+    >
+      <CabecaBloco
+        icone={MessageCircle}
+        titulo={t("Posts prontos — copiar e enviar")}
+        teste="admin-divulgacao-posts-titulo"
+      />
+      <div className="space-y-3">
+        {POSTS_DIVULGACAO.map((post) => (
+          <div
+            key={post.canal}
+            className="text-muted-foreground rounded-md border border-border bg-background/40 p-3 text-xs leading-relaxed"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <span className="mono bg-tactical-orange/15 text-tactical-orange rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                  {t(post.canal)}
+                </span>
+                <span className="text-foreground ml-2 font-bold">{t(post.titulo)}</span>
+              </div>
+              <BotaoCopiar texto={post.corpo} rotulo={t("Copiar post")} />
+            </div>
+            <p className="mt-2 whitespace-pre-wrap">{post.corpo}</p>
+            {post.dica && <p className="mt-2 text-[11px] italic opacity-80">{t(post.dica)}</p>}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function BlocoCriativos() {
+  const { t } = useI18n();
+  return (
+    <section
+      className="space-y-3 rounded-md border border-border bg-card p-4"
+      data-test="admin-divulgacao-criativos"
+    >
+      <CabecaBloco
+        icone={FileDown}
+        titulo={t("Criativos e guia — baixar e usar")}
+        teste="admin-divulgacao-criativos-titulo"
+      />
+      <div className="grid gap-3 md:grid-cols-3">
+        {CRIATIVOS.map((item) => (
+          <div
+            key={item.arquivo}
+            className="text-muted-foreground flex flex-col rounded-md border border-border bg-background/40 p-3 text-xs leading-relaxed"
+          >
+            {item.miniatura ? (
+              <img
+                src={item.arquivo}
+                alt={t(item.rotulo)}
+                loading="lazy"
+                className="mb-2 w-full rounded border border-border object-cover"
+              />
+            ) : (
+              <div className="bg-tactical-orange/10 mb-2 flex h-24 items-center justify-center rounded border border-border">
+                <FileDown className="text-tactical-orange h-8 w-8" />
+              </div>
+            )}
+            <p className="text-foreground font-bold">{t(item.rotulo)}</p>
+            <p className="mt-1 flex-1">{t(item.uso)}</p>
+            <div className="mt-2 flex gap-2">
+              <a
+                href={item.arquivo}
+                download
+                className="glove-tap"
+                data-test="admin-divulgacao-baixar"
+              >
+                <Button size="sm" variant="outline" className="h-7 px-2 text-[11px]">
+                  <FileDown className="h-3.5 w-3.5" /> {t("Baixar")}
+                </Button>
+              </a>
+              <a
+                href={item.arquivo}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-tactical-orange inline-flex items-center gap-1 underline decoration-dotted"
+              >
+                {t("Abrir")} <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function BlocoMetas() {
+  const { t } = useI18n();
+  return (
+    <section
+      className="space-y-3 rounded-md border border-border bg-card p-4"
+      data-test="admin-divulgacao-metas"
+    >
+      <CabecaBloco
+        icone={Target}
+        titulo={t("Metas de medição (conferir no D6)")}
+        teste="admin-divulgacao-metas-titulo"
+      />
+      <div className="grid gap-2 md:grid-cols-2">
+        {METAS_SEMANA2.map((meta) => (
+          <div
+            key={meta.alvo}
+            className="text-muted-foreground rounded-md border border-border bg-background/40 p-3 text-xs leading-relaxed"
+          >
+            <p className="text-tactical-orange font-bold">{t(meta.alvo)}</p>
+            <p className="mt-1">{t(meta.como)}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SecaoDivulgacao() {
+  const { t } = useI18n();
+  return (
+    <div className="space-y-4" data-test="admin-divulgacao">
+      <p className="text-muted-foreground text-xs leading-relaxed">
+        {t(
+          "Tudo que a campanha precisa em um lugar: buscadores, links, plano de 7 dias, posts prontos, criativos e metas. Execute na ordem — o D1 começa no passo a passo dos buscadores, e os criativos abaixo já estão servidos do próprio app.",
+        )}
+      </p>
+      <BlocoFundacao />
+      <BlocoSearchConsole />
+      <BlocoLinksCampanha />
+      <BlocoPlanoSemanal />
+      <BlocoPosts />
+      <BlocoCriativos />
+      <BlocoMetas />
+    </div>
   );
 }
 

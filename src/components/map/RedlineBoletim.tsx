@@ -19,8 +19,9 @@
  * Ventos — nada é buscado duas vezes, e as leituras batem entre si.
  *
  * Velocidade: o texto é medido depois de renderizado e a duração do ciclo
- * vira largura ÷ PIXELS_POR_SEGUNDO — leitura calma (~5 caracteres/s)
- * constante, mesmo quando o boletim cresce (CAPE, apoiadores, arrecadado).
+ * vira largura ÷ PIXELS_POR_SEGUNDO — leitura calma (~2,5 caracteres/s,
+ * pedida pelos operadores: dá para ler cada item com calma), constante
+ * mesmo quando o boletim cresce (CAPE, apoiadores, arrecadado).
  * Toque pausa o letreiro.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -50,12 +51,16 @@ function norm(deg: number) {
   return ((deg % 360) + 360) % 360;
 }
 
-/** Velocidade do letreiro em pixels por segundo — leitura calma, sem pressa. */
-const PIXELS_POR_SEGUNDO = 35;
+/**
+ * Velocidade do letreiro em pixels por segundo — leitura CALMA. Era 35 px/s
+ * (~5 caracteres/s): os operadores reportaram que não dava para ler. 18 px/s
+ * deixa cada item na tela por quase o dobro do tempo.
+ */
+const PIXELS_POR_SEGUNDO = 18;
 /** Piso de segurança: mesmo texto curto nunca passa rápido demais. */
-const DURACAO_MINIMA_S = 60;
+const DURACAO_MINIMA_S = 110;
 /** Fallback calmo usado até a primeira medição (e no CSS). */
-const DURACAO_PADRAO_S = 240;
+const DURACAO_PADRAO_S = 420;
 
 export interface RedlineBoletimProps {
   heading: number;

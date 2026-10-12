@@ -10,7 +10,7 @@
  * Bump de versão: altere VERSAO ao mudar a lógica deste arquivo — os caches
  * antigos são apagados na ativação.
  */
-const VERSAO = "v47";
+const VERSAO = "v48";
 const CACHE_SHELL = `shell-${VERSAO}`;
 const CACHE_ASSETS = `assets-${VERSAO}`;
 const CACHE_RUNTIME = `runtime-${VERSAO}`;
@@ -45,29 +45,77 @@ const HOSTS_DE_TILES = [
  * acertos de cache não entram na fila (são instantâneos).
  */
 const MAX_TILES_SIMULTANEOS = 8;
+/** Profundidade máxima da fila — acima disso, responde 504 para o mapa
+ * refazer depois, em vez de crescer sem fim durante voos longos. */
+const MAX_FILA_TILES = 80;
+/** Tempo máximo de um tile na rede. O fetch abortado pelo mapa (quadro de
+ * animação ultrapassado) pode NUNCA resolver dentro do Service Worker —
+ * cada hang segurava uma vaga da fila para sempre e, depois de 8 hangs,
+ * TODO tile ficava pendente: o mapa chegava preto no destino do voo e não
+ * voltava nem com o radar pausado. O temporizador devolve a vaga sempre. */
+const TEMPO_MAXIMO_TILE_MS = 12000;
 const filaTiles = { ativos: 0, esperando: [] };
 
+/**
+ * Ocupa uma vaga do semáforo.
+ * - Promise  → vaga ocupada; o chamador já pode buscar o tile.
+ * - null     → fila cheia (alívio de carga): o chamador responde 504 sem
+ *              ocupar nada — o MapLibre refaz o pedido ao repintar.
+ * A contagem é conservada na transferência de vaga: quem espera recebe a
+ * vaga do que saiu (o contador não decrementa duas vezes — era o vazamento
+ * que derrubava o limite para zero sob rajada).
+ */
 function pegarVagaTile() {
-  if (filaTiles.ativos < MAX_TILES_SIMULTANEOS) {
+  if (filaTiles.esperando.length === 0 && filaTiles.ativos < MAX_TILES_SIMULTANEOS) {
     filaTiles.ativos++;
     return Promise.resolve();
   }
+  if (filaTiles.esperando.length >= MAX_FILA_TILES) return null;
   return new Promise((liberar) => filaTiles.esperando.push(liberar));
 }
 
 function devolverVagaTile() {
-  filaTiles.ativos--;
   const proximo = filaTiles.esperando.shift();
-  if (proximo) proximo();
+  if (proximo) {
+    proximo(); // a vaga TRANSFERE — a contagem segue a mesma
+  } else {
+    filaTiles.ativos--;
+  }
+}
+
+/** fetch com temporizador próprio — nunca deixa uma vaga presa. */
+function buscarComTempo(request) {
+  return new Promise((resolver, recusar) => {
+    const timer = setTimeout(() => recusar(new Error("tile esgotado")), TEMPO_MAXIMO_TILE_MS);
+    fetch(request).then(
+      (res) => {
+        clearTimeout(timer);
+        resolver(res);
+      },
+      (erro) => {
+        clearTimeout(timer);
+        recusar(erro);
+      },
+    );
+  });
 }
 
 async function cacheFirstComFila(request, nomeCache, limite) {
   const cache = await caches.open(nomeCache);
   const emCache = await cache.match(request, { ignoreVary: true });
   if (emCache) return emCache;
-  await pegarVagaTile();
+  // Pedido já abortado pelo mapa (quadro ultrapassado do voo/da animação):
+  // nem ocupa vaga — responde 504 e o mapa refaz quando repintar.
+  if (request.signal && request.signal.aborted) {
+    return new Response("", { status: 504, statusText: "Pedido cancelado" });
+  }
+  const vaga = pegarVagaTile();
+  if (!vaga) {
+    return new Response("", { status: 504, statusText: "Fila cheia" });
+  }
   try {
-    const res = await fetch(request);
+    await vaga;
+    const res = await buscarComTempo(request);
     if (res && (res.ok || res.type === "opaque")) {
       await cache.put(request, res.clone());
       if (limite) await limitarCache(nomeCache, limite);

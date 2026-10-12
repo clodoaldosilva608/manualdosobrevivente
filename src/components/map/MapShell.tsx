@@ -2007,11 +2007,59 @@ export default function MapShell() {
     };
   }, [tool, ready]);
 
+  /** Limiar de voo longo: além disso o salto é direto, com véu de transição. */
+  const LIMIAR_VOO_LONGO_GRAUS = 15;
+  /** Duração do véu de saída (ms) antes do salto direto. */
+  const VELU_MS = 170;
+
   const flyTo = useCallback(
     (lng: number, lat: number, zoom = 14) => {
       // Voar para outro lugar solta a trava — o usuário pediu outra posição.
       if (travaRef.current) updatePrefs({ posicaoTravada: null });
-      mapRef.current?.flyTo({ center: [lng, lat], zoom });
+      const map = mapRef.current;
+      if (!map) return;
+      const c = map.getCenter();
+      // Diferença angular com volta ao redor do anti-meridiano (179 → -179 = 2°,
+      // não 358° — o arco não deve dar a volta no planeta).
+      const dLng = Math.min(Math.abs(lng - c.lng), 360 - Math.abs(lng - c.lng));
+      const deltaGraus = Math.max(dLng, Math.abs(lat - c.lat));
+      // VOO LONGO (ex.: evento do boletim no outro continente): o arco mundial
+      // do flyTo faz zoom-out até a visão do planeta inteiro — rajada de tiles
+      // que abortam a cada quadro esgota a fila e TRAVA A APRESENTAÇÃO DO
+      // CANVAS (o buffer WebGL fica correto, mas o compositor segura o último
+      // quadro: tela preta até um toque — reproduzido em teste e curado com
+      // jumpTo + re-composição). Curas medidas: jumpTo direto NUNCA trava;
+      // toggling curto de visibility força o compositor a reapresentar.
+      // O véu de opacidade cobre o corte e ainda alimenta a composição.
+      if (deltaGraus > LIMIAR_VOO_LONGO_GRAUS) {
+        const canvas = map.getCanvas();
+        canvas.style.transition = "opacity 160ms ease-out";
+        canvas.style.opacity = "0";
+        window.setTimeout(() => {
+          try {
+            map.jumpTo({ center: [lng, lat], zoom });
+            // Re-composição garantida: dois quadros escondidos são imperceptíveis
+            // sob o véu e desatolam o caso em que o jumpTo sozinho não cura.
+            canvas.style.visibility = "hidden";
+            requestAnimationFrame(() =>
+              requestAnimationFrame(() => {
+                canvas.style.visibility = "";
+                canvas.style.transition = "opacity 240ms ease-in";
+                canvas.style.opacity = "1";
+              }),
+            );
+          } catch {
+            canvas.style.opacity = "1";
+          }
+        }, VELU_MS);
+        return;
+      }
+      // Voo curto: arco suave com teto — na duração PADRÃO do MapLibre, um voo
+      // intercontinental faz um arco de ~10 s até a visão mundial (rajada de
+      // aborts que travava a fila do Service Worker). O teto mantém o voo
+      // fluido; a duração só cresce com a distância.
+      const duracao = Math.min(3500, 900 + deltaGraus * 85);
+      map.flyTo({ center: [lng, lat], zoom, duration: duracao, essential: true });
     },
     [updatePrefs],
   );

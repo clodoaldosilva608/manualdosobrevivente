@@ -28,7 +28,6 @@ import { getSetting } from "@/lib/db";
 import { iniciarAnalytics, registrarPageview } from "@/lib/analytics";
 import type { Preferences } from "@/hooks/usePreferences";
 import { useRouterState } from "@tanstack/react-router";
-import { canonicalDo, ogUrlDo } from "@/lib/seo";
 
 function NotFoundComponent() {
   return (
@@ -120,10 +119,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "https://manual-do-sobrevivente.vercel.app/banner-convite.png",
       },
       { name: "twitter:card", content: "summary_large_image" },
-      ogUrlDo("/"),
     ],
     links: [
-      canonicalDo("/"),
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "icon", type: "image/png", sizes: "32x32", href: "/icons/favicon-32.png" },
       { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.png" },

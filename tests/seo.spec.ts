@@ -47,7 +47,10 @@ describe("robots.txt", () => {
 });
 
 describe("canonical no SSR (semana 2)", () => {
-  /** As duas raízes servem o mesmo conteúdo — a canônica deve vencer no HTML. */
+  /** As duas raízes servem o mesmo conteúdo — a canônica deve vencer no HTML.
+   * Exatamente UMA declaração por página: a head da raiz se MERGEA com a da
+   * rota — uma canonical na raiz vazaria para todas as páginas (bug real
+   * capturado em produção e corrigido: canonical só na rota própria). */
   for (const caminho of [
     "/",
     "/manual",
@@ -57,11 +60,13 @@ describe("canonical no SSR (semana 2)", () => {
     "/apoiar",
     "/parceiros",
   ]) {
-    it(`${caminho} declara canonical + og:url no domínio sem hífens`, async () => {
+    it(`${caminho} declara UMA canonical + um og:url corretos`, async () => {
       const html = await get(caminho);
-      const canônica = `https://manualdosobrevivente.vercel.app${caminho === "/" ? "/" : caminho}`;
-      expect(html).toContain(`<link rel="canonical" href="${canônica}"`);
-      expect(html).toContain(`property="og:url" content="${canônica}"`);
+      const correta = `https://manualdosobrevivente.vercel.app${caminho}`;
+      expect((html.match(/rel="canonical"/g) ?? []).length).toBe(1);
+      expect((html.match(/property="og:url"/g) ?? []).length).toBe(1);
+      expect(html).toContain(`<link rel="canonical" href="${correta}"`);
+      expect(html).toContain(`property="og:url" content="${correta}"`);
     });
   }
 });

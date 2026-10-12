@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
+import { canonicalDo, ogUrlDo } from "@/lib/seo";
 
 const MapShell = lazy(() => import("@/components/map/MapShell"));
 
@@ -20,7 +21,9 @@ export const Route = createFileRoute("/")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      ogUrlDo("/"),
     ],
+    links: [canonicalDo("/")],
   }),
   component: Index,
 });

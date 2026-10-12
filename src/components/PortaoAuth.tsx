@@ -12,7 +12,10 @@
  *  • Reabre automaticamente em SIGNED_OUT e libera em SIGNED_IN;
  *  • Pode ser desligado para desenvolvimento/testes com VITE_PORTAO_AUTH=0
  *    (nunca definido em produção);
- *  • A rota /login permanece acessível sem portão (página própria).
+ *  • A rota /login e a VITRINE pública (/manual, /tutorial, /colaboradores,
+ *    /apoiar, /parceiros) permanecem acessíveis sem portão — é o conteúdo
+ *    que sustenta a divulgação e precisa alcançar quem chega do
+ *    compartilhamento e dos buscadores (robots.txt + sitemap).
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
@@ -26,6 +29,19 @@ import { EscolherAvatar } from "@/components/EscolherAvatar";
 
 type EstadoPortao = "verificando" | "liberado" | "preso";
 type EtapaPortao = "credenciais" | "verificar-email" | "avatar";
+
+/**
+ * Rotas vitrine — abertas ao público sem portão: conteúdo que sustenta a
+ * divulgação (campanha, compartilhamento, buscadores). O núcleo do
+ * aplicativo (mapa, mochila, notas, conta…) continua exigindo autenticação.
+ * Prefixos casam exatamente: /manual cobre /manual e /manual/<slug>, mas
+ * não toca em /manualizar nem em rotas alheias.
+ */
+const ROTAS_VITRINE = ["/manual", "/tutorial", "/colaboradores", "/apoiar", "/parceiros"] as const;
+
+function rotaVitrine(caminho: string): boolean {
+  return ROTAS_VITRINE.some((rota) => caminho === rota || caminho.startsWith(`${rota}/`));
+}
 
 /** Ref simples que acompanha o valor atual sem refazer listeners. */
 function useValorAtual<T>(valor: T) {
@@ -130,8 +146,9 @@ export function PortaoAuth() {
   };
 
   if (estado !== "preso") return null;
-  // A página de login tem vida própria — o portão não precisa cobri-la.
-  if (pathname === "/login") return null;
+  // /login e a vitrine pública têm vida própria — o portão não precisa
+  // cobri-las (isenção da semana 1 do lançamento).
+  if (pathname === "/login" || rotaVitrine(pathname)) return null;
 
   return (
     <div

@@ -124,6 +124,36 @@ describe("portão de autenticação", () => {
     await context.close();
   }, 120_000);
 
+  /**
+   * Isenção da semana 1: a vitrine pública abre sem autenticação — é o
+   * conteúdo que a divulgação compartilha e que os buscadores indexam.
+   */
+  for (const rota of [
+    { caminho: "/colaboradores", prova: '[data-test="colaboradores"]' },
+    { caminho: "/manual", prova: '[data-test="manual-tutorial-banner"]' },
+    { caminho: "/manual/water-purification", prova: "h1" },
+    { caminho: "/apoiar", prova: "main" },
+    { caminho: "/parceiros", prova: "main" },
+  ]) {
+    it(`sem sessão, ${rota.caminho} abre sem o portão (vitrine)`, async () => {
+      const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+      const page = await context.newPage();
+      await page.goto(`${BASE}${rota.caminho}`, { waitUntil: "domcontentloaded" });
+      await page.waitForSelector(rota.prova, { timeout: 30_000 });
+      const portao = await page.locator('[data-test="portao-auth"]').count();
+      expect(portao, `${rota.caminho} deve abrir sem portão`).toBe(0);
+      await context.close();
+    }, 120_000);
+  }
+
+  it("sem sessão, o núcleo continua trancado (/settings cai no portão)", async () => {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await context.newPage();
+    await page.goto(`${BASE}/settings`, { waitUntil: "domcontentloaded" });
+    await page.waitForSelector('[data-test="portao-auth"]', { timeout: 30_000 });
+    await context.close();
+  }, 120_000);
+
   it("com sessão, o portão libera o mapa (persistência da autenticação)", async () => {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
     const page = await context.newPage();

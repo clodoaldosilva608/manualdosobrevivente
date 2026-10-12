@@ -1,0 +1,21 @@
+# Manual do Sobrevivente — https://manualdosobrevivente.vercel.app
+# Vitrine pública aberta a buscadores e divulgação:
+#   /manual (+ 29 verbetes), /tutorial, /colaboradores, /apoiar, /parceiros
+# Núcleo do aplicativo (mapa, mochila, notas, conta) exige autenticação
+# e não faz sentido nos resultados de busca.
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /conta
+Disallow: /perfil
+Disallow: /settings
+Disallow: /dashboard
+Disallow: /inventory
+Disallow: /notas
+Disallow: /deposito
+Disallow: /sos
+Disallow: /offline
+
+Sitemap: https://manualdosobrevivente.vercel.app/api/sitemap

@@ -17,8 +17,13 @@
  *
  * Usa os MESMOS cálculos e a MESMA chave de cache do clima da Rosa dos
  * Ventos — nada é buscado duas vezes, e as leituras batem entre si.
+ *
+ * Velocidade: o texto é medido depois de renderizado e a duração do ciclo
+ * vira largura ÷ PIXELS_POR_SEGUNDO — leitura calma (~5 caracteres/s)
+ * constante, mesmo quando o boletim cresce (CAPE, apoiadores, arrecadado).
+ * Toque pausa o letreiro.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getCelestial } from "@/lib/celestial";
@@ -44,6 +49,13 @@ import {
 function norm(deg: number) {
   return ((deg % 360) + 360) % 360;
 }
+
+/** Velocidade do letreiro em pixels por segundo — leitura calma, sem pressa. */
+const PIXELS_POR_SEGUNDO = 35;
+/** Piso de segurança: mesmo texto curto nunca passa rápido demais. */
+const DURACAO_MINIMA_S = 60;
+/** Fallback calmo usado até a primeira medição (e no CSS). */
+const DURACAO_PADRAO_S = 240;
 
 export interface RedlineBoletimProps {
   heading: number;
@@ -71,6 +83,10 @@ export default function RedlineBoletim({
   const { nomes: nomesApoiadores, arrecadado } = useApoiadoresRedline();
   const [now, setNow] = useState(() => new Date());
   const [pausado, setPausado] = useState(false);
+
+  /** Duração do ciclo medida pela largura real de UMA cópia do texto. */
+  const trilhoRef = useRef<HTMLSpanElement>(null);
+  const [duracao, setDuracao] = useState(DURACAO_PADRAO_S);
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 30_000);
@@ -185,6 +201,16 @@ export default function RedlineBoletim({
 
   const texto = linhas.join("  •••  ");
 
+  // Mede a largura da cópia e calibra a velocidade (re-mede se o texto muda).
+  useEffect(() => {
+    const trilho = trilhoRef.current;
+    if (!trilho) return;
+    const largura = trilho.offsetWidth; // uma cópia completa, com o padding
+    if (largura > 0) {
+      setDuracao(Math.max(DURACAO_MINIMA_S, largura / PIXELS_POR_SEGUNDO));
+    }
+  }, [texto]);
+
   return (
     <div
       data-test="redline"
@@ -197,8 +223,14 @@ export default function RedlineBoletim({
       }`}
     >
       <div className="redline-edge" />
-      <div className="flex w-max items-center py-1">
-        <span className="redline-track mono whitespace-pre text-[11px] font-bold uppercase tracking-wider text-red-400">
+      <div
+        className="redline-marquee flex w-max items-center py-1"
+        style={{ animationDuration: `${duracao}s` }}
+      >
+        <span
+          ref={trilhoRef}
+          className="redline-track mono whitespace-pre text-[11px] font-bold uppercase tracking-wider text-red-400"
+        >
           {texto}
         </span>
         <span

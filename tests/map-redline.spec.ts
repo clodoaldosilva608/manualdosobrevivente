@@ -69,6 +69,38 @@ describe("Redline do boletim (barra inferior)", () => {
     await page.context().close();
   }, 180_000);
 
+  it("velocidade calma e loop sem salto (animação no contêiner)", async () => {
+    const page = await abrirMapaMobile(browser);
+    const redline = page.locator('[data-test="redline"]');
+    await redline.waitFor({ state: "visible", timeout: 15_000 });
+
+    // A animação vive no CONTÊINER das duas cópias: translateX(-50%) cai
+    // exatamente no começo da segunda cópia — loop perfeito, sem salto.
+    const estilo = await redline.locator(".redline-marquee").evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { nome: s.animationName, duracao: parseFloat(s.animationDuration) || 0 };
+    });
+    expect(estilo.nome).toBe("redline-slide");
+    // Leitura com calma: ciclo completo nunca abaixo de 2 minutos.
+    expect(estilo.duracao).toBeGreaterThanOrEqual(120);
+
+    // Os trilhos não se movem por si sós (antes, cada um deslizando metade
+    // de si mesmo provocava um salto visível a cada meio ciclo).
+    const trilhoNome = await redline
+      .locator(".redline-track")
+      .first()
+      .evaluate((el) => getComputedStyle(el).animationName);
+    expect(trilhoNome).toBe("none");
+
+    // Condição do loop perfeito: as duas cópias têm exatamente a mesma largura.
+    const larguras = await redline
+      .locator(".redline-track")
+      .evaluateAll((els) => els.map((el) => (el as HTMLElement).offsetWidth));
+    expect(larguras[0]).toBeGreaterThan(0);
+    expect(larguras[0]).toBe(larguras[1]);
+    await page.context().close();
+  }, 120_000);
+
   it("toque pausa o letreiro e mostra o indicador", async () => {
     const page = await abrirMapaMobile(browser);
     const redline = page.locator('[data-test="redline"]');

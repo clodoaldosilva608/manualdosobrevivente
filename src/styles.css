@@ -397,7 +397,11 @@ html.modo-noturno .compass-card {
   border-bottom-color: #141414 !important;
 }
 
-/* Redline do boletim — letreiro contínuo na barra inferior do mapa tático */
+/* Redline do boletim — letreiro contínuo na barra inferior do mapa tático.
+   A animação vive no CONTÊINER das duas cópias (translateX(-50%) = exatamente
+   uma cópia) para o loop ser perfeito, sem salto. A duração vem do componente
+   (largura real do texto ÷ pixels por segundo) para manter velocidade de
+   leitura constante — fallback calmo enquanto o texto não é medido. */
 @keyframes redline-slide {
   from {
     transform: translateX(0);
@@ -406,29 +410,25 @@ html.modo-noturno .compass-card {
     transform: translateX(-50%);
   }
 }
-.redline-track {
-  animation: redline-slide 90s linear infinite;
-  padding-right: 3rem;
+.redline-marquee {
+  animation: redline-slide 240s linear infinite;
+  will-change: transform;
 }
-.redline-track:first-child {
-  padding-left: 3rem;
+.redline-track {
+  padding-inline: 2rem;
 }
 .redline-edge {
   height: 2px;
   background: linear-gradient(90deg, transparent, oklch(0.55 0.19 25 / 0.85), transparent);
 }
 @media (prefers-reduced-motion: reduce) {
-  .redline-track {
+  .redline-marquee {
     animation: none;
-    padding-left: 0.75rem;
+  }
+  .redline-track {
+    padding-inline: 0.75rem;
   }
 }
-.redline-pausado .redline-track {
-  animation-play-state: paused;
-}
-
-/* Redline da página de colaboradores — mesma linguagem do boletim,
-   com pausa ao passar o cursor para leitura tranquila. */
-.redline-pausa-hover:hover .redline-track {
+.redline-pausado .redline-marquee {
   animation-play-state: paused;
 }

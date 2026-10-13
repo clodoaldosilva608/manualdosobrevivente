@@ -167,6 +167,7 @@ import {
   ControladorRasterSimples,
   urlZoomEarth,
   URL_NUVENS_GOES,
+  URL_FOCO_GIBS,
   type EstadoRadar,
   type InfoQuadro,
 } from "@/lib/radar-clima";
@@ -204,7 +205,15 @@ type BaseLayerId =
   "satellite" | "topo" | "streets" | "dark" | "oceano" | "relevo" | "trilhas" | "claro" | "natgeo";
 const BASE_LAYERS: Record<
   BaseLayerId,
-  { label: string; tiles: string; attribution: string; maxzoom?: number; referencia?: string }
+  {
+    label: string;
+    tiles: string | string[];
+    attribution: string;
+    maxzoom?: number;
+    referencia?: string;
+    /** Cor do fundo enquanto os tiles chegam (evita o "mapa preto"). */
+    fundo: string;
+  }
 > = {
   satellite: {
     label: "Satélite",
@@ -212,22 +221,30 @@ const BASE_LAYERS: Record<
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     attribution: "Esri, Maxar, Earthstar Geographics",
     maxzoom: 19,
+    fundo: "#0A0E14",
   },
   topo: {
     label: "Topográfico",
     // OpenTopoMap de volta — é a base COLORIDA e detalhada (relevo sombreado,
     // curvas de nível, florestas, trilhas). A recusa de rajadas de tiles que
     // motivou a troca por Esri foi resolvida na causa raiz pela fila de
-    // concorrência do Service Worker (máx. 8 tiles simultâneos).
-    tiles: "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
+    // concorrência do Service Worker (máx. 8 tiles simultâneos) e os três
+    // subdomínios distribuem a fila em paralelo.
+    tiles: [
+      "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
+      "https://b.tile.opentopomap.org/{z}/{x}/{y}.png",
+      "https://c.tile.opentopomap.org/{z}/{x}/{y}.png",
+    ],
     attribution: "© OpenTopoMap (CC-BY-SA), © OpenStreetMap",
     maxzoom: 17,
+    fundo: "#E7E2D6",
   },
   streets: {
     label: "Ruas",
     tiles: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     attribution: "© colaboradores do OpenStreetMap",
     maxzoom: 19,
+    fundo: "#E7E2D6",
   },
   dark: {
     label: "Tático Escuro",
@@ -237,6 +254,7 @@ const BASE_LAYERS: Record<
       "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
     attribution: "Esri, HERE, Garmin, FAO, NOAA, USGS",
     maxzoom: 16,
+    fundo: "#0B0B0B",
     referencia:
       "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
   },
@@ -248,6 +266,7 @@ const BASE_LAYERS: Record<
       "https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}",
     attribution: "Esri, GEBCO, NOAA, National Geographic, DeLorme",
     maxzoom: 13,
+    fundo: "#081420",
     referencia:
       "https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Reference/MapServer/tile/{z}/{y}/{x}",
   },
@@ -258,13 +277,19 @@ const BASE_LAYERS: Record<
       "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}",
     attribution: "Esri, Airbus DS, USGS, NGA, NASA, CGIAR",
     maxzoom: 16,
+    fundo: "#0B0B0B",
   },
   trilhas: {
     label: "Trilhas",
     // CyclOSM — trilhas, estradas rurais e uso do solo sobre OSM (sem chave).
-    tiles: "https://a.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png",
+    tiles: [
+      "https://a.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png",
+      "https://b.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png",
+      "https://c.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png",
+    ],
     attribution: "© CyclOSM, © OpenStreetMap",
     maxzoom: 18,
+    fundo: "#E7E2D6",
   },
   claro: {
     label: "Claro",
@@ -272,6 +297,7 @@ const BASE_LAYERS: Record<
       "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
     attribution: "Esri, HERE, Garmin, FAO, NOAA, USGS",
     maxzoom: 16,
+    fundo: "#E6E6E6",
     referencia:
       "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
   },
@@ -281,6 +307,7 @@ const BASE_LAYERS: Record<
       "https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}",
     attribution: "National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA",
     maxzoom: 16,
+    fundo: "#E5DCC7",
   },
 };
 
@@ -311,14 +338,14 @@ const styleFor = (layer: BaseLayerId): maplibregl.StyleSpecification => {
     sources: {
       base: {
         type: "raster",
-        tiles: [l.tiles],
+        tiles: Array.isArray(l.tiles) ? l.tiles : [l.tiles],
         tileSize: 256,
         maxzoom: l.maxzoom ?? 19,
         attribution: l.attribution,
       },
       hd: {
         type: "raster",
-        tiles: [BASE_LAYERS.satellite.tiles],
+        tiles: [BASE_LAYERS.satellite.tiles].flat(),
         tileSize: 256,
         maxzoom: BASE_LAYERS.satellite.maxzoom ?? 19,
         attribution: BASE_LAYERS.satellite.attribution,
@@ -349,6 +376,10 @@ const styleFor = (layer: BaseLayerId): maplibregl.StyleSpecification => {
         : {}),
     },
     layers: [
+      // Fundo na cor da base: enquanto os tiles chegam (rede lenta, voo
+      // longo, área fora do cache) o mapa aparece numa cor coerente em vez
+      // do negro absoluto que parecia tela apagada.
+      { id: "fundo", type: "background", paint: { "background-color": l.fundo } },
       { id: "base", type: "raster", source: "base" },
       ...(querRelevo
         ? [
@@ -488,7 +519,10 @@ function adicionarFontesDesenho(map: maplibregl.Map) {
     id: "rota-pontos",
     type: "circle",
     source: "rota",
-    filter: ["all", ["==", ["geometry-type"], "Point"], ["!=", ["get", "alvo"], true]],
+    // Circle só desenha pontos — o filtro do alvo dispensa o geometry-type.
+    // (O "all" com filhos de expressão falhava na validação legada e a
+    // camada inteira deixava de existir: "rota-pontos.filter[2][1]".)
+    filter: ["!=", ["coalesce", ["get", "alvo"], false], true],
     paint: {
       "circle-radius": 6,
       "circle-color": "#FF6B35",
@@ -500,7 +534,7 @@ function adicionarFontesDesenho(map: maplibregl.Map) {
     id: "rota-alvo",
     type: "circle",
     source: "rota",
-    filter: ["all", ["==", ["geometry-type"], "Point"], ["==", ["get", "alvo"], true]],
+    filter: ["==", ["coalesce", ["get", "alvo"], false], true],
     paint: {
       "circle-radius": 13,
       "circle-color": "#FF6728",
@@ -824,6 +858,8 @@ export default function MapShell() {
   const ciclonesRef = useRef<ControladorCiclones | null>(null);
   // Nuvens ao vivo (GOES-Leste/NASA GIBS): raster estático tipo simples.
   const nuvensRef = useRef<ControladorRasterSimples | null>(null);
+  // Focos de calor (VIIRS via WMS do NASA GIBS): raster estático sem chave.
+  const fogoRef = useRef<ControladorRasterSimples | null>(null);
   // Vento e temperatura (Open-Meteo, sem chave): partículas + pontos coloridos.
   const [ventoEstado, setVentoEstado] = useState<EstadoClima>("off");
   const [tempEstado, setTempEstado] = useState<EstadoClima>("off");
@@ -1144,6 +1180,10 @@ export default function MapShell() {
             nuvensRef.current.abaixoDe = ancoraIntel(map);
             nuvensRef.current.sincronizar();
           }
+          if (fogoRef.current) {
+            fogoRef.current.abaixoDe = ancoraIntel(map);
+            fogoRef.current.sincronizar();
+          }
           if (temperaturaRef.current) {
             temperaturaRef.current.abaixoDe = ancoraIntel(map);
             temperaturaRef.current.sincronizar();
@@ -1230,6 +1270,7 @@ export default function MapShell() {
       radarRef.current?.desativar();
       ciclonesRef.current?.desativar();
       nuvensRef.current?.desativar();
+      fogoRef.current?.desativar();
       ventoRef.current?.desativar();
       temperaturaRef.current?.desativar();
       mapRef.current?.remove();
@@ -1318,6 +1359,25 @@ export default function MapShell() {
 
   // Descarte das nuvens na saída da tela.
   useEffect(() => () => nuvensRef.current?.desativar(), []);
+
+  // Focos de calor (NASA GIBS/WMS, sem chave): raster simples com os mesmos
+  // pontos 375 m que o FIRMS distribui — o CSV mundial exigia MAP_KEY e
+  // estourava o tempo do serverless, o que deixava a camada desabilitada.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    if (!fogoRef.current) fogoRef.current = new ControladorRasterSimples(map, "intel-fogo");
+    const ctl = fogoRef.current;
+    ctl.abaixoDe = ancoraIntel(map);
+    if (intelVis.incendios) {
+      ctl.ativar(URL_FOCO_GIBS, "Focos © NASA FIRMS/GIBS (VIIRS)", 0.9, 9);
+    } else {
+      ctl.desativar();
+    }
+  }, [intelVis.incendios, ready]);
+
+  // Descarte dos focos na saída da tela.
+  useEffect(() => () => fogoRef.current?.desativar(), []);
 
   // Vento a 10 m (Open-Meteo, sem chave): partículas animadas em canvas por
   // cima do mapa — a grade é amostrada do retângulo visível e interpolada.
@@ -1767,21 +1827,23 @@ export default function MapShell() {
     };
   }, [intelVis.satelites, tles]);
 
-  // Manchetes globais (GDELT): ciclo lento — a fonte tem limite de requisições.
-  // Primeiro direto do navegador (limite por IP do usuário); o servidor é o
-  // plano B, pois o IP do Vercel vive limitado pela GDELT.
+  // Manchetes globais (GDELT): ciclo lento — a fonte tem limite de requisições
+  // e NÃO manda cabeçalhos CORS (o fetch do navegador falha sempre). O
+  // servidor vem primeiro — a consulta é paciente e a função pode rodar até
+  // 60 s no Vercel — e o navegador é o plano B por cortesia (caso o CORS
+  // seja liberado um dia).
   useEffect(() => {
     if (!algumaIntelAtiva) return;
     let vivo = true;
     const carregar = () => {
-      buscarNoticiasNavegador()
-        .then((ns) => {
-          if (vivo) setNoticias(ns);
+      callNoticias()
+        .then((v) => {
+          if (vivo) setNoticias(v.noticias);
         })
         .catch(() =>
-          callNoticias()
-            .then((v) => {
-              if (vivo) setNoticias(v.noticias);
+          buscarNoticiasNavegador()
+            .then((ns) => {
+              if (vivo) setNoticias(ns);
             })
             .catch(() => {}),
         );
@@ -2482,11 +2544,11 @@ export default function MapShell() {
         .catch(() => {});
     }
     if (!noticias) {
-      buscarNoticiasNavegador()
-        .then(setNoticias)
+      callNoticias()
+        .then((v) => setNoticias(v.noticias))
         .catch(() =>
-          callNoticias()
-            .then((v) => setNoticias(v.noticias))
+          buscarNoticiasNavegador()
+            .then(setNoticias)
             .catch(() => {}),
         );
     }
@@ -3464,8 +3526,6 @@ export default function MapShell() {
               </div>
               <div className="space-y-2">
                 {LINHAS_INTEL.map((linha) => {
-                  const desabilitada =
-                    linha.id === "incendios" && intel !== null && !intel.incendiosDisponivel;
                   return (
                     <div
                       key={linha.id}
@@ -3474,9 +3534,7 @@ export default function MapShell() {
                       <div className="min-w-0">
                         <div className="text-sm">{t(linha.nome)}</div>
                         <div className="truncate text-[10px] text-muted-foreground">
-                          {desabilitada
-                            ? t("Sem dados agora — verifique a chave FIRMS (servidor ou Ajustes)")
-                            : t(linha.dica)}
+                          {t(linha.dica)}
                         </div>
                         {linha.id === "navios" && intelVis.navios && (
                           <div
@@ -3523,7 +3581,6 @@ export default function MapShell() {
                       </div>
                       <Switch
                         checked={intelVis[linha.id]}
-                        disabled={desabilitada}
                         aria-label={t("Ativar camada {n}", { n: linha.nome })}
                         onCheckedChange={(v) => {
                           updatePrefs({ intelVis: { ...intelVis, [linha.id]: v } });

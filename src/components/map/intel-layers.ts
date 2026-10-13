@@ -39,7 +39,6 @@ type ML = maplibregl.Map;
 
 export const FONTES_INTEL = [
   "intel-noite",
-  "intel-fogo",
   "intel-evento",
   "intel-conflito",
   "intel-sismo",
@@ -60,7 +59,6 @@ export const FONTES_INTEL = [
 ] as const;
 
 const CAMADA_NOITE = "intel-noite-fill";
-const CAMADA_FOGO = "intel-fogo-circle";
 const CAMADA_EVENTO = "intel-evento-circle";
 const CAMADA_CONFLITO = "intel-conflito-circle";
 const CAMADA_CONFLITO_LABEL = "intel-conflito-label";
@@ -90,7 +88,6 @@ const CAMADAS_EM_ORDEM = [
   CAMADA_NOITE,
   CAMADA_CABO,
   CAMADA_CABO_PONTO,
-  CAMADA_FOGO,
   CAMADA_ISS_PEGADA,
   CAMADA_EVENTO,
   CAMADA_CONFLITO,
@@ -339,20 +336,6 @@ export function sincronizarCamadasIntel(map: ML, entrada: EntradaSincronizacaoIn
   garantirIcones(map);
 
   garantirFonte(map, "intel-noite", noite ?? fonteVazia());
-  garantirFonte(
-    map,
-    "intel-fogo",
-    snapshot
-      ? {
-          type: "FeatureCollection",
-          features: snapshot.incendios.map((f) => ({
-            type: "Feature" as const,
-            properties: { hora: f.hora, confianca: f.confianca },
-            geometry: { type: "Point" as const, coordinates: [f.lng, f.lat] },
-          })),
-        }
-      : fonteVazia(),
-  );
   garantirFonte(
     map,
     "intel-evento",
@@ -708,18 +691,6 @@ export function sincronizarCamadasIntel(map: ML, entrada: EntradaSincronizacaoIn
         "circle-color": "#67E8F9",
         "circle-stroke-color": "#0B0B0B",
         "circle-stroke-width": 1.2,
-      },
-    });
-  }
-  if (vis.incendios) {
-    map.addLayer({
-      id: CAMADA_FOGO,
-      type: "circle",
-      source: "intel-fogo",
-      paint: {
-        "circle-radius": 2.6,
-        "circle-color": "#FF4D2E",
-        "circle-opacity": 0.72,
       },
     });
   }
@@ -1170,13 +1141,6 @@ export function registrarPopupsIntel(map: ML) {
         );
         break;
       }
-      case CAMADA_FOGO:
-        html = htmlPopup(
-          `<div class="font-bold text-orange-400">FOCO DE CALOR (VIIRS)</div>` +
-            `<div class="text-muted-foreground">Detectado em ${p["hora"] ?? ""} · confiança ${p["confianca"] || "n/d"}</div>` +
-            `<div class="text-muted-foreground">Fonte: NASA FIRMS</div>`,
-        );
-        break;
       case CAMADA_VOO:
       case CAMADA_VOO_MIL: {
         const alt = typeof p["altitude"] === "number" ? (p["altitude"] as number) : null;

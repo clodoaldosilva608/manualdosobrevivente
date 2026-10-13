@@ -366,14 +366,19 @@ const TTL_NOTICIAS = 300_000;
 // Resultado vazio costuma ser transitivo (limite 1 req/5 s por IP do GDELT,
 // ou a peculiaridade da API com consultas só de grupo OR): recolher logo.
 const TTL_NOTICIAS_VAZIAS = 60_000;
+// O GDELT DOC é LENTO (10–20 s por consulta) e o Vercel derruba funções
+// curtas: com maxDuration 60 (nitro vercel.functions) a coleta pode ser
+// paciente — tempo por tentativa e orçamento total compatíveis.
+const TEMPO_TENTATIVA_MS = 25_000;
+const ORCAMENTO_NOTICIAS_MS = 50_000;
 
 async function buscarGdelt(url: string): Promise<GdeltDoc> {
   try {
-    return await buscarJson<GdeltDoc>(url, 15_000);
+    return await buscarJson<GdeltDoc>(url, TEMPO_TENTATIVA_MS);
   } catch {
-    // A GDELT limita 1 req/5 s por IP: uma única retentativa após 7 s.
-    await new Promise((r) => setTimeout(r, 7_000));
-    return buscarJson<GdeltDoc>(url, 15_000);
+    // A GDELT limita 1 req/5 s por IP: uma única retentativa após 6 s.
+    await new Promise((r) => setTimeout(r, 6_000));
+    return buscarJson<GdeltDoc>(url, TEMPO_TENTATIVA_MS);
   }
 }
 
@@ -424,15 +429,12 @@ export const fetchNoticias = createServerFn({ method: "GET" }).handler(
       "noticias",
       TTL_NOTICIAS,
       async () => {
-        // Orçamento de tempo: serverless tem teto — só tenta a variante
-        // seguinte se ainda houver folga antes de mais uma retentativa.
+        // Orçamento de tempo: a 1ª variante sempre roda (com retentativa);
+        // a 2ª só se ainda houver folga no orçamento total.
         const comeco = Date.now();
         let doc: GdeltDoc | null = null;
         for (const variante of VARIANTES_GDELT) {
-          // 1ª variante sempre roda; as seguintes só se ainda houver folga
-          // (serverless tem teto de tempo e cada tentativa pode custar ~37 s
-          // no pior caso: timeout 15 s + espera 7 s + timeout 15 s).
-          if (Date.now() - comeco > 6_000) break;
+          if (Date.now() - comeco > ORCAMENTO_NOTICIAS_MS - TEMPO_TENTATIVA_MS) break;
           try {
             const d = await buscarGdelt(urlGdelt(variante));
             doc = d;

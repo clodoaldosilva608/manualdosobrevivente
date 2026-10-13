@@ -7,14 +7,13 @@
  */
 import type { IntelNoticia } from "./intel.types";
 
-export const CONSULTA_GDELT =
-  '("earthquake" OR "earthquake" OR "volcanic eruption" OR "eruption" OR "volcano" OR "wildfire" OR "wildfire" OR "forest fire" OR "flood" OR "flood" OR "evacuation" OR "evacuation" OR "typhoon" OR "hurricane" OR "cyclone" OR "airstrike" OR "armed clash")';
-
 // A API DOC 2.0 é volátil em parâmetros (medido em produção, out/2026):
 // — "timespan=24h" devolve {"articles":[]} SEM EXCEÇÃO (o mesmo pedido sem
 //   timespan devolve artigos) — por isso NENHUMA variante manda timespan;
 // — consultas só de grupo OR também podem devolver vazio: um qualificador
-//   obrigatório (sourcelang) ajuda.
+//   obrigatório (sourcelang) ajuda;
+// — termos duplicados dentro do OR engessam a consulta e a deixam mais lenta
+//   (o GDELT processa o texto inteiro) — a lista é deduplicada e curta.
 // A 1ª variante tenta ordenar por data; a 2ª usa só os parâmetros mínimos
 // (formato comprovadamente estável) — a primeira que trouxer artigos vence.
 export interface VarianteGdelt {
@@ -24,13 +23,16 @@ export interface VarianteGdelt {
 
 const QUALIFICADOR = "sourcelang:por";
 
+export const CONSULTA_ENXUTA =
+  '("earthquake" OR "volcano" OR "eruption" OR "wildfire" OR "flood" OR "evacuation" OR "typhoon" OR "hurricane" OR "airstrike" OR "armed clash")';
+
 export const VARIANTES_GDELT: VarianteGdelt[] = [
   {
-    consulta: `${CONSULTA_GDELT} ${QUALIFICADOR}`,
+    consulta: `${CONSULTA_ENXUTA} ${QUALIFICADOR}`,
     extra: "&mode=ArtList&maxrecords=40&format=json&sort=datedesc",
   },
   {
-    consulta: `${CONSULTA_GDELT} ${QUALIFICADOR}`,
+    consulta: `${CONSULTA_ENXUTA} ${QUALIFICADOR}`,
     extra: "&mode=ArtList&maxrecords=40&format=json",
   },
 ];

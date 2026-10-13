@@ -67,7 +67,17 @@ export default defineConfig(({ command, mode }) => {
       viteReact(),
       // Build de deploy apenas no comando build. Preset padrão: Vercel.
       // Para outro alvo, defina NITRO_PRESET (ex.: NITRO_PRESET=cloudflare-module).
-      ...(command === "build" ? [nitro({ preset: process.env.NITRO_PRESET || "vercel" })] : []),
+      ...(command === "build"
+        ? [
+            nitro({
+              preset: process.env.NITRO_PRESET || "vercel",
+              // Fontes lentas (GDELT, TLE) precisam de mais que os 10 s
+              // padrão do serverless — a função única do nitro roda até 60 s
+              // (teto do plano Hobby). Válido só no preset vercel.
+              ...(process.env.NITRO_PRESET ? {} : { vercel: { functions: { maxDuration: 60 } } }),
+            }),
+          ]
+        : []),
     ],
   };
 });

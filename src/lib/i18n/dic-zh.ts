@@ -230,7 +230,8 @@ export const DIC_ZH: Record<string, string> = {
   Médico: "医疗",
   Métrico: "公制",
   "NASA EONET · ciclones, vulcões, gelo": "NASA EONET · 气旋、火山、冰川",
-  "NASA FIRMS · satélite VIIRS, últimas 24 horas": "NASA FIRMS · VIIRS 卫星，最近 24 小时",
+  "NASA GIBS/FIRMS · anomalias térmicas VIIRS — sem chave":
+    "NASA GIBS/FIRMS · VIIRS 热异常 — 无需密钥",
   "NASA FIRMS — focos de calor": "NASA FIRMS — 热点",
   "NENHUMA AMEAÇA NO RADAR": "雷达上无威胁",
   "NOVO WAYPOINT": "新建航点",

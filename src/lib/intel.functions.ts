@@ -2,26 +2,20 @@
  * Server functions das camadas de inteligência (modo Osiris).
  *
  * Reúne fontes públicas oficiais e keyless — USGS (sismos), NASA EONET
- * (eventos naturais), NASA FIRMS (focos de calor, requer chave gratuita
- * opcional — do servidor ou do usuário, salva no aparelho) e NOAA SWPC
- * (clima espacial/Kp) — em um único instantâneo JSON com cache em memória
- * (60 s) e fallback para os últimos dados bons em caso de falha upstream.
- * O cliente nunca acessa as fontes diretamente.
+ * (eventos naturais) e NOAA SWPC (clima espacial/Kp) — em um único
+ * instantâneo JSON com cache em memória (60 s) e fallback para os últimos
+ * dados bons em caso de falha upstream. O cliente nunca acessa as fontes
+ * diretamente. Os focos de calor migraram para uma camada raster direta
+ * (NASA GIBS/WMS, sem chave) no cliente — o CSV mundial do FIRMS exigia
+ * chave e estourava o tempo do serverless.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import type {
-  IntelClimaEspacial,
-  IntelEvento,
-  IntelIncendio,
-  IntelSismo,
-  IntelSnapshot,
-} from "./intel.types";
+import type { IntelClimaEspacial, IntelEvento, IntelSismo, IntelSnapshot } from "./intel.types";
 
 const TTL_SNAPSHOT = 60_000;
 const MAX_SISMOS = 500;
 const MAX_EVENTOS = 80;
-const MAX_INCENDIOS = 3000;
 
 interface EstadoCache {
   ultimo: IntelSnapshot | null;
@@ -31,7 +25,6 @@ interface EstadoCache {
   bons: {
     sismos?: IntelSismo[];
     eventos?: IntelEvento[];
-    incendios?: IntelIncendio[];
     climaEspacial?: IntelClimaEspacial | null;
   };
 }
@@ -152,61 +145,6 @@ async function buscarEventos(): Promise<IntelEvento[]> {
   return eventos;
 }
 
-interface FirmsResultado {
-  disponivel: boolean;
-  pontos: IntelIncendio[];
-}
-
-/** CSV do FIRMS (VIIRS SNPP, últimas 24 h, mundo). Requer chave gratuita. */
-async function buscarIncendios(chavePessoal?: string): Promise<FirmsResultado> {
-  const chave = (chavePessoal ?? "").trim() || process.env["FIRMS_MAP_KEY"];
-  if (!chave) return { disponivel: false, pontos: [] };
-  const url =
-    `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${encodeURIComponent(chave)}` +
-    `/VIIRS_SNPP_NRT/-180,-90,180,90/1`;
-  const ctl = new AbortController();
-  const t = setTimeout(() => ctl.abort(), 20_000);
-  let texto: string;
-  try {
-    const res = await fetch(url, { signal: ctl.signal });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    texto = await res.text();
-  } finally {
-    clearTimeout(t);
-  }
-  const linhas = texto.trim().split("\n");
-  if (linhas.length < 2 || /invalid|error/i.test(linhas[0])) {
-    return { disponivel: false, pontos: [] };
-  }
-  const cab = linhas[0].split(",").map((c) => c.trim());
-  const iLat = cab.indexOf("latitude");
-  const iLng = cab.indexOf("longitude");
-  const iData = cab.indexOf("acq_date");
-  const iHora = cab.indexOf("acq_time");
-  const iConf = cab.indexOf("confidence");
-  if (iLat < 0 || iLng < 0) return { disponivel: false, pontos: [] };
-
-  const pontos: IntelIncendio[] = [];
-  // Subamostragem por passo quando exceder o limite (mantém a distribuição global).
-  const total = linhas.length - 1;
-  const passo = Math.max(1, Math.ceil(total / MAX_INCENDIOS));
-  for (let i = 1; i < linhas.length; i += passo) {
-    const c = linhas[i].split(",");
-    const lat = Number(c[iLat]);
-    const lng = Number(c[iLng]);
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-    const hhmm = (c[iHora] ?? "").padStart(4, "0");
-    pontos.push({
-      id: `f-${i}`,
-      lng,
-      lat,
-      hora: `${c[iData]}T${hhmm.slice(0, 2)}:${hhmm.slice(2, 4)}:00Z`,
-      confianca: (c[iConf] ?? "").trim(),
-    });
-  }
-  return { disponivel: true, pontos };
-}
-
 /** A NOAA devolve um array cru: [[time_tag, Kp, a_running, station_count], …]. */
 async function buscarClimaEspacial(): Promise<IntelClimaEspacial | null> {
   const bruto = await buscarJson<unknown[][]>(
@@ -237,18 +175,17 @@ const SnapInputSchema = z.object({ firmsKey: z.string().max(200).optional() }).d
 export const fetchIntelSnapshot = createServerFn({ method: "GET" })
   .inputValidator((input) => SnapInputSchema.parse(input))
   .handler(async ({ data }): Promise<IntelSnapshot> => {
-    const chaveFirms = (data?.firmsKey ?? "").trim();
+    void data; // firmsKey mantido por compatibilidade — focos agora vêm do GIBS no cliente.
     const agora = Date.now();
-    if (cache.ultimo && agora - cache.em < TTL_SNAPSHOT && cache.chaveFirms === chaveFirms) {
+    if (cache.ultimo && agora - cache.em < TTL_SNAPSHOT) {
       return cache.ultimo;
     }
 
     const falhas: string[] = [];
 
-    const [sismosR, eventosR, incendiosR, climaR] = await Promise.allSettled([
+    const [sismosR, eventosR, climaR] = await Promise.allSettled([
       buscarSismos(),
       buscarEventos(),
-      buscarIncendios(chaveFirms || undefined),
       buscarClimaEspacial(),
     ]);
 
@@ -270,18 +207,6 @@ export const fetchIntelSnapshot = createServerFn({ method: "GET" })
       falhas.push("Eventos naturais indisponíveis — exibindo os últimos dados salvos");
     }
 
-    let incendios: IntelIncendio[];
-    let incendiosDisponivel: boolean;
-    if (incendiosR.status === "fulfilled") {
-      incendios = incendiosR.value.pontos;
-      incendiosDisponivel = incendiosR.value.disponivel;
-      cache.bons.incendios = incendios;
-    } else {
-      incendios = cache.bons.incendios ?? [];
-      incendiosDisponivel = true;
-      falhas.push("Focos de calor indisponíveis — exibindo os últimos dados salvos");
-    }
-
     let climaEspacial: IntelClimaEspacial | null;
     if (climaR.status === "fulfilled") {
       climaEspacial = climaR.value;
@@ -293,15 +218,18 @@ export const fetchIntelSnapshot = createServerFn({ method: "GET" })
     const snapshot: IntelSnapshot = {
       sismos,
       eventos,
-      incendios,
-      incendiosDisponivel,
+      // Focos de calor são uma camada raster agora (NASA GIBS/WMS, sem
+      // chave): o CSV mundial do FIRMS demorava demais e derrubava a
+      // disponibilidade da camada inteira.
+      incendios: [],
+      incendiosDisponivel: true,
       climaEspacial,
       atualizadoEm: agora,
       falhas,
     };
     cache.ultimo = snapshot;
     cache.em = agora;
-    cache.chaveFirms = chaveFirms;
+    cache.chaveFirms = "";
     return snapshot;
   });
 

@@ -233,7 +233,8 @@ export const DIC_EN: Record<string, string> = {
   Médico: "Medical",
   Métrico: "Metric",
   "NASA EONET · ciclones, vulcões, gelo": "NASA EONET · cyclones, volcanoes, ice",
-  "NASA FIRMS · satélite VIIRS, últimas 24 horas": "NASA FIRMS · VIIRS satellite, last 24 hours",
+  "NASA GIBS/FIRMS · anomalias térmicas VIIRS — sem chave":
+    "NASA GIBS/FIRMS · VIIRS thermal anomalies — no key",
   "NASA FIRMS — focos de calor": "NASA FIRMS — heat spots",
   "NENHUMA AMEAÇA NO RADAR": "NO THREATS ON RADAR",
   "NOVO WAYPOINT": "NEW WAYPOINT",

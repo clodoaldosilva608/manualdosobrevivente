@@ -233,7 +233,8 @@ export const DIC_JA: Record<string, string> = {
   Médico: "医療",
   Métrico: "メートル法",
   "NASA EONET · ciclones, vulcões, gelo": "NASA EONET · サイクロン・火山・氷",
-  "NASA FIRMS · satélite VIIRS, últimas 24 horas": "NASA FIRMS · VIIRS衛星、直近24時間",
+  "NASA GIBS/FIRMS · anomalias térmicas VIIRS — sem chave":
+    "NASA GIBS/FIRMS · VIIRS熱異常 — キー不要",
   "NASA FIRMS — focos de calor": "NASA FIRMS — 熱スポット",
   "NENHUMA AMEAÇA NO RADAR": "レーダーに脅威なし",
   "NOVO WAYPOINT": "新規ウェイポイント",

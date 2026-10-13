@@ -235,7 +235,8 @@ export const DIC_RU: Record<string, string> = {
   Médico: "Медицина",
   Métrico: "Метрическая",
   "NASA EONET · ciclones, vulcões, gelo": "NASA EONET · циклоны, вулканы, лёд",
-  "NASA FIRMS · satélite VIIRS, últimas 24 horas": "NASA FIRMS · спутник VIIRS, последние 24 часа",
+  "NASA GIBS/FIRMS · anomalias térmicas VIIRS — sem chave":
+    "NASA GIBS/FIRMS · термические аномалии VIIRS — без ключа",
   "NASA FIRMS — focos de calor": "NASA FIRMS — очаги жара",
   "NENHUMA AMEAÇA NO RADAR": "УГРОЗ НА РАДАРЕ НЕТ",
   "NOVO WAYPOINT": "НОВАЯ ПУТЕВАЯ ТОЧКА",

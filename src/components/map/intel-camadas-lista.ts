@@ -25,7 +25,7 @@ export const LINHAS_INTEL: LinhaIntel[] = [
   {
     id: "incendios",
     nome: "Focos de calor",
-    dica: "NASA FIRMS · satélite VIIRS, últimas 24 horas",
+    dica: "NASA GIBS/FIRMS · anomalias térmicas VIIRS — sem chave",
     cor: "#F97316",
   },
   {

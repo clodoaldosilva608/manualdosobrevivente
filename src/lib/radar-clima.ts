@@ -104,6 +104,18 @@ export const URL_NUVENS_GOES =
   "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GOES-East_ABI_GeoColor/default/default/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png";
 
 /**
+ * Focos de calor — anomalias térmicas VIIRS (Suomi NPP) via WMS do NASA GIBS,
+ * SEM CHAVE (o CSV do FIRMS exigia MAP_KEY e estourava o tempo do serverless).
+ * TIME=default devolve o dia mais recente disponível do produto diário;
+ * o placeholder {bbox-epsg-3857} é nativo do MapLibre para fontes raster WMS.
+ * O mapa de pixels é o mesmo dado 375 m que o FIRMS distribui.
+ */
+export const URL_FOCO_GIBS =
+  "https://gibs.earthdata.nasa.gov/wms/epsg3857/best/wms.cgi?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap" +
+  "&LAYERS=VIIRS_SNPP_Thermal_Anomalies_375m_All&STYLES=&FORMAT=image%2Fpng&TRANSPARENT=true" +
+  "&HEIGHT=256&WIDTH=256&SRS=EPSG%3A3857&TIME=default&BBOX={bbox-epsg-3857}";
+
+/**
  * Rótulo do quadro relativo a agora: "-30 min" (passado), "AGORA" (±2 min)
  * ou "+10 min" (previsão da nowcast). Agradável de ler no HUD.
  */

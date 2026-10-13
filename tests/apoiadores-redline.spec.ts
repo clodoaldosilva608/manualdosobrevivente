@@ -29,15 +29,21 @@ function lerEnv(chave: string): string {
     const linha = readFileSync(join(process.cwd(), ".env"), "utf-8")
       .split("\n")
       .find((l) => l.startsWith(`${chave}=`));
-    return linha ? linha.slice(chave.length + 1).trim() : "";
+    // remove aspas envolventes (dotenv strip; leitura manual não) e brancos.
+    return linha
+      ? linha
+          .slice(chave.length + 1)
+          .trim()
+          .replace(/^"(.*)"$/, "$1")
+      : "";
   } catch {
     return "";
   }
 }
 const CHAVE_SUPABASE =
-  process.env["SUPABASE_SECRET_KEY"] ??
-  process.env["SUPABASE_SERVICE_ROLE_KEY"] ??
-  lerEnv("SUPABASE_SECRET_KEY") ??
+  process.env["SUPABASE_SECRET_KEY"] ||
+  process.env["SUPABASE_SERVICE_ROLE_KEY"] ||
+  lerEnv("SUPABASE_SECRET_KEY") ||
   lerEnv("SUPABASE_SERVICE_ROLE_KEY");
 const URL_SUPABASE = process.env["VITE_SUPABASE_URL"] ?? "https://mbterwktxczsyevcudoz.supabase.co";
 const TESTE_NOME = "Operador Teste Redline";

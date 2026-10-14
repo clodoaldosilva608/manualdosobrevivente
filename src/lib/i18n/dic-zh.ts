@@ -6,6 +6,8 @@ export const DIC_ZH: Record<string, string> = {
   "+ {n} no radar completo": "完整雷达中还有 {n} 项",
   "A Visão Osiris abre o globo 3D de inteligência global (OSIRIS self-hosted) em tela cheia, com painel de camadas próprio — o mapa tático continua intacto atrás do botão de voltar.":
     "奥西里斯视图以全屏打开全球情报 3D 地球仪（自托管 OSIRIS），并带独立图层面板——返回按钮后战术地图保持不变。",
+  "Abrir carta embutida": "打开内嵌地图",
+  "Abrir app oficial": "打开官方应用",
   "AISStream.io · transponders ao redor do mapa (chave do servidor ou pessoal em Ajustes)":
     "AISStream.io · 地图周围的转发器（服务器密钥或在设置中添加个人密钥）",
   "AISStream.io — navios ao vivo": "AISStream.io — 实时船舶",
@@ -39,6 +41,7 @@ export const DIC_ZH: Record<string, string> = {
   "Ativar elemento {n}": "启用元素 {n}",
   "Ativar relatório semanal": "启用每周报告",
   Atualizar: "刷新",
+  "BDGEx — Banco de Dados Geográficos do Exército": "BDGEx — 陆军地理数据库",
   "BOLETIM DE INTELIGÊNCIA": "情报简报",
   "Backup completo": "完整备份",
   "Baixar manual completo": "下载完整手册",
@@ -49,6 +52,8 @@ export const DIC_ZH: Record<string, string> = {
   "Buscar técnicas, condições, equipamentos...": "搜索技巧、状况、装备…",
   Bússola: "罗盘",
   "CAMADAS DO MAPA": "地图图层",
+  "Carta do Exército": "陆军地形图",
+  "Carta do Exército indisponível no mapa": "陆军地形图在地图上不可用",
   "CHECKLIST DE CAMPO": "野外清单",
   "Cabos submarinos": "海底电缆",
   Cache: "缓存点",
@@ -91,6 +96,7 @@ export const DIC_ZH: Record<string, string> = {
   "Critérios do radar: focos de calor NASA FIRMS até 50 km (crítico até 15 km) · sismos USGS M4+ até 600 km (crítico M5,5+ até 300 km ou aviso de tsunami) · alertas oficiais GDACS até 1000 km (vermelho/laranja) e verdes até 300 km · eventos NASA EONET até 500 km · tempestade geomagnética NOAA (global). Coleta a cada 90 s com cache offline.":
     "雷达标准：NASA FIRMS 热区 50 公里内（15 公里内为危急）· USGS M4+ 地震 600 公里内（M5.5+ 300 公里内或海啸预警为危急）· GDACS 官方警报 1000 公里内（红/橙）、绿色 300 公里内 · NASA EONET 事件 500 公里内 · NOAA 地磁暴（全球）。每 90 秒采集并带离线缓存。",
   "Câmeras ao vivo": "实时摄像头",
+  Dispensar: "关闭",
   "DOWNLOADS OFFLINE": "离线下载",
   "Dados no aparelho": "设备上的数据",
   "Dentro da validade": "在有效期内",
@@ -138,6 +144,8 @@ export const DIC_ZH: Record<string, string> = {
   "Falha ao baixar a área": "下载区域失败",
   "Falha na conexão AIS — nova tentativa em instantes": "AIS 连接失败——稍后自动重试",
   Falhou: "失败",
+  "Fechar carta do Exército": "关闭陆军地图",
+  Fechar: "关闭",
   "Ferramenta de marcador desativada": "标记工具已关闭",
   Ferramentas: "工具",
   "Ferramentas do mapa": "地图工具",
@@ -234,6 +242,7 @@ export const DIC_ZH: Record<string, string> = {
     "NASA GIBS/FIRMS · VIIRS 热异常 — 无需密钥",
   "NASA FIRMS — focos de calor": "NASA FIRMS — 热点",
   "NENHUMA AMEAÇA NO RADAR": "雷达上无威胁",
+  "Nova aba": "新标签页",
   "NOVO WAYPOINT": "新建航点",
   "Nada sincronizado ainda.": "尚未同步任何内容。",
   Navegação: "导航",
@@ -273,6 +282,8 @@ export const DIC_ZH: Record<string, string> = {
     "地球仪以球体呈现行星——适合长航线与观察昼夜；平面地图则保留街道与本地坐标的易读性。",
   "O padrão é o português do Brasil. A escolha fica guardada neste aparelho — conteúdo de fontes externas pode continuar no idioma original.":
     "默认为巴西葡萄牙语。选择保存在本设备——外部来源的内容可能保持原语言。",
+  "O servidor do BDGEx recusou o carregamento direto (bloqueio de rede ou CORS). Use a carta no aplicativo oficial do Exército com a mesma visão atual.":
+    "BDGEx服务器拒绝了直接加载（网络封锁或CORS）。请在陆军官方应用中查看同一视野的地图。",
   Oeste: "西",
   Offline: "离线",
   "Orientação e declinação": "方位与磁偏角",

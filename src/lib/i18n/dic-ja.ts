@@ -6,6 +6,8 @@ export const DIC_JA: Record<string, string> = {
   "+ {n} no radar completo": "完全レーダーに他 {n} 件",
   "A Visão Osiris abre o globo 3D de inteligência global (OSIRIS self-hosted) em tela cheia, com painel de camadas próprio — o mapa tático continua intacto atrás do botão de voltar.":
     "Osirisビューは全球インテリジェンスの3Dグローブ（セルフホストOSIRIS）を全画面で開き、独自のレイヤーパネルを持ちます——戻るボタンの奥にタクティカルマップはそのまま残ります。",
+  "Abrir carta embutida": "埋め込み地図を開く",
+  "Abrir app oficial": "公式アプリを開く",
   "AISStream.io · transponders ao redor do mapa (chave do servidor ou pessoal em Ajustes)":
     "AISStream.io · マップ周辺のトランスポンダー（サーバーキーまたは設定の個人キー）",
   "AISStream.io — navios ao vivo": "AISStream.io — 実時間の船舶",
@@ -39,6 +41,7 @@ export const DIC_JA: Record<string, string> = {
   "Ativar elemento {n}": "要素 {n} を有効化",
   "Ativar relatório semanal": "週次レポートを有効化",
   Atualizar: "更新",
+  "BDGEx — Banco de Dados Geográficos do Exército": "BDGEx — 陸軍地理データベース",
   "BOLETIM DE INTELIGÊNCIA": "インテリジェンス速報",
   "Backup completo": "完全バックアップ",
   "Baixar manual completo": "マニュアル全文をダウンロード",
@@ -49,6 +52,8 @@ export const DIC_JA: Record<string, string> = {
   "Buscar técnicas, condições, equipamentos...": "テクニック・状況・装備を検索…",
   Bússola: "コンパス",
   "CAMADAS DO MAPA": "マップレイヤー",
+  "Carta do Exército": "陸軍の地形図",
+  "Carta do Exército indisponível no mapa": "陸軍の地形図は地図上で利用できません",
   "CHECKLIST DE CAMPO": "フィールドチェックリスト",
   "Cabos submarinos": "海底ケーブル",
   Cache: "キャッシュ",
@@ -92,6 +97,7 @@ export const DIC_JA: Record<string, string> = {
   "Critérios do radar: focos de calor NASA FIRMS até 50 km (crítico até 15 km) · sismos USGS M4+ até 600 km (crítico M5,5+ até 300 km ou aviso de tsunami) · alertas oficiais GDACS até 1000 km (vermelho/laranja) e verdes até 300 km · eventos NASA EONET até 500 km · tempestade geomagnética NOAA (global). Coleta a cada 90 s com cache offline.":
     "レーダー基準：NASA FIRMS 熱スポット 50 km 以内（15 km 以内で危険）· USGS M4+ の地震 600 km 以内（M5.5+ 300 km 以内または津波警報で危険）· GDACS 公式警報 1000 km 以内（赤／橙）、緑は 300 km 以内 · NASA EONET 事象 500 km 以内 · NOAA 地磁気嵐（全球）。90 秒ごとにオフラインキャッシュ付きで収集。",
   "Câmeras ao vivo": "ライブカメラ",
+  Dispensar: "解除",
   "DOWNLOADS OFFLINE": "オフラインダウンロード",
   "Dados no aparelho": "端末内のデータ",
   "Dentro da validade": "期限内",
@@ -140,6 +146,8 @@ export const DIC_JA: Record<string, string> = {
   "Falha ao baixar a área": "エリアのダウンロードに失敗",
   "Falha na conexão AIS — nova tentativa em instantes": "AIS接続に失敗——まもなく再試行",
   Falhou: "失敗",
+  "Fechar carta do Exército": "陸軍の地図を閉じる",
+  Fechar: "閉じる",
   "Ferramenta de marcador desativada": "マーカーツールを無効化しました",
   Ferramentas: "道具",
   "Ferramentas do mapa": "マップツール",
@@ -237,6 +245,7 @@ export const DIC_JA: Record<string, string> = {
     "NASA GIBS/FIRMS · VIIRS熱異常 — キー不要",
   "NASA FIRMS — focos de calor": "NASA FIRMS — 熱スポット",
   "NENHUMA AMEAÇA NO RADAR": "レーダーに脅威なし",
+  "Nova aba": "新しいタブ",
   "NOVO WAYPOINT": "新規ウェイポイント",
   "Nada sincronizado ainda.": "まだ同期されていません。",
   Navegação: "ナビゲーション",
@@ -277,6 +286,8 @@ export const DIC_JA: Record<string, string> = {
     "グローブは地球を球体として表示——長距離ルートや昼夜の確認に便利。平面マップは街路やローカル座標の視認性を保ちます。",
   "O padrão é o português do Brasil. A escolha fica guardada neste aparelho — conteúdo de fontes externas pode continuar no idioma original.":
     "既定はブラジルポルトガル語。選択はこの端末に保存されます——外部ソースの内容は元の言語のままの場合があります。",
+  "O servidor do BDGEx recusou o carregamento direto (bloqueio de rede ou CORS). Use a carta no aplicativo oficial do Exército com a mesma visão atual.":
+    "BDGExサーバーが直接読み込みを拒否しました（ネットワークブロックまたはCORS）。現在の表示のまま、陸軍の公式アプリで地図をご利用ください。",
   Oeste: "西",
   Offline: "オフライン",
   "Orientação e declinação": "方位と偏角",

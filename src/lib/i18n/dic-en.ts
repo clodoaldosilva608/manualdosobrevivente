@@ -6,6 +6,8 @@ export const DIC_EN: Record<string, string> = {
   "+ {n} no radar completo": "+ {n} in full radar",
   "A Visão Osiris abre o globo 3D de inteligência global (OSIRIS self-hosted) em tela cheia, com painel de camadas próprio — o mapa tático continua intacto atrás do botão de voltar.":
     "Osiris View opens the global intelligence 3D globe (self-hosted OSIRIS) fullscreen, with its own layer panel — the tactical map stays intact behind the back button.",
+  "Abrir carta embutida": "Open embedded map sheet",
+  "Abrir app oficial": "Open official app",
   "AISStream.io · transponders ao redor do mapa (chave do servidor ou pessoal em Ajustes)":
     "AISStream.io · transponders around the map (server or personal key in Settings)",
   "AISStream.io — navios ao vivo": "AISStream.io — live ships",
@@ -39,6 +41,7 @@ export const DIC_EN: Record<string, string> = {
   "Ativar elemento {n}": "Enable element {n}",
   "Ativar relatório semanal": "Enable weekly report",
   Atualizar: "Refresh",
+  "BDGEx — Banco de Dados Geográficos do Exército": "BDGEx — Brazilian Army Geographic Database",
   "BOLETIM DE INTELIGÊNCIA": "INTELLIGENCE BULLETIN",
   "Backup completo": "Full backup",
   "Baixar manual completo": "Download full manual",
@@ -50,6 +53,8 @@ export const DIC_EN: Record<string, string> = {
   "Buscar técnicas, condições, equipamentos...": "Search techniques, conditions, equipment…",
   Bússola: "Compass",
   "CAMADAS DO MAPA": "MAP LAYERS",
+  "Carta do Exército": "Army Map Sheet",
+  "Carta do Exército indisponível no mapa": "Army map sheet unavailable on the map",
   "CHECKLIST DE CAMPO": "FIELD CHECKLIST",
   "Cabos submarinos": "Submarine cables",
   Cache: "Cache",
@@ -93,6 +98,7 @@ export const DIC_EN: Record<string, string> = {
   "Critérios do radar: focos de calor NASA FIRMS até 50 km (crítico até 15 km) · sismos USGS M4+ até 600 km (crítico M5,5+ até 300 km ou aviso de tsunami) · alertas oficiais GDACS até 1000 km (vermelho/laranja) e verdes até 300 km · eventos NASA EONET até 500 km · tempestade geomagnética NOAA (global). Coleta a cada 90 s com cache offline.":
     "Radar criteria: NASA FIRMS heat spots up to 50 km (critical up to 15 km) · USGS M4+ quakes up to 600 km (critical M5.5+ up to 300 km or tsunami warning) · official GDACS alerts up to 1000 km (red/orange) and green up to 300 km · NASA EONET events up to 500 km · NOAA geomagnetic storm (global). Collected every 90 s with offline cache.",
   "Câmeras ao vivo": "Live cameras",
+  Dispensar: "Dismiss",
   "DOWNLOADS OFFLINE": "OFFLINE DOWNLOADS",
   "Dados no aparelho": "Data on device",
   "Dentro da validade": "Within validity",
@@ -141,6 +147,8 @@ export const DIC_EN: Record<string, string> = {
   "Falha ao baixar a área": "Failed to download area",
   "Falha na conexão AIS — nova tentativa em instantes": "AIS connection failed — retrying shortly",
   Falhou: "Failed",
+  "Fechar carta do Exército": "Close Army map sheet",
+  Fechar: "Close",
   "Ferramenta de marcador desativada": "Marker tool deactivated",
   Ferramentas: "Tools",
   "Ferramentas do mapa": "Map tools",
@@ -237,6 +245,7 @@ export const DIC_EN: Record<string, string> = {
     "NASA GIBS/FIRMS · VIIRS thermal anomalies — no key",
   "NASA FIRMS — focos de calor": "NASA FIRMS — heat spots",
   "NENHUMA AMEAÇA NO RADAR": "NO THREATS ON RADAR",
+  "Nova aba": "New tab",
   "NOVO WAYPOINT": "NEW WAYPOINT",
   "Nada sincronizado ainda.": "Nothing synced yet.",
   Navegação: "Navigation",
@@ -277,6 +286,8 @@ export const DIC_EN: Record<string, string> = {
     "The globe shows the planet as a sphere — useful for long routes and seeing day and night; the flat map keeps street-level and local coordinate reading.",
   "O padrão é o português do Brasil. A escolha fica guardada neste aparelho — conteúdo de fontes externas pode continuar no idioma original.":
     "The default is Brazilian Portuguese. Your choice is stored on this device — content from external sources may remain in its original language.",
+  "O servidor do BDGEx recusou o carregamento direto (bloqueio de rede ou CORS). Use a carta no aplicativo oficial do Exército com a mesma visão atual.":
+    "The BDGEx server refused direct loading (network block or CORS). View the map sheet in the official Army app with the same current view.",
   Oeste: "West",
   Offline: "Offline",
   "Orientação e declinação": "Orientation and declination",

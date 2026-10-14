@@ -179,6 +179,12 @@ import {
   type EstadoClima,
 } from "@/lib/clima-openmeteo";
 import { geoReverso } from "@/lib/geo-reverso.functions";
+import {
+  URL_WMS_BDGEX,
+  urlAppOficialBdgex,
+  urlIframeBdgex,
+  falhaDefinitivaBdgex,
+} from "@/lib/bdgex";
 import { registrarHabilidade } from "@/lib/assistente/habilidades";
 import PopupsCrescimento from "@/components/map/PopupsCrescimento";
 import { CAMERAS } from "@/lib/intel-cameras";
@@ -202,7 +208,16 @@ import { useI18n, tGlobal, localeAtivo } from "@/lib/i18n";
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 
 type BaseLayerId =
-  "satellite" | "topo" | "streets" | "dark" | "oceano" | "relevo" | "trilhas" | "claro" | "natgeo";
+  | "satellite"
+  | "topo"
+  | "streets"
+  | "dark"
+  | "oceano"
+  | "relevo"
+  | "trilhas"
+  | "claro"
+  | "natgeo"
+  | "bdgex";
 const BASE_LAYERS: Record<
   BaseLayerId,
   {
@@ -308,6 +323,18 @@ const BASE_LAYERS: Record<
     attribution: "National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA",
     maxzoom: 16,
     fundo: "#E5DCC7",
+  },
+  bdgex: {
+    label: "Carta do Exército",
+    // Carta topográfica oficial do Exército Brasileiro (BDGEx) via WMS do
+    // MapCache — camada multi-escala já projetada em Mercator. O MapLibre
+    // injeta o bbox de cada tile em {bbox-epsg-3857}. O servidor militar
+    // pode recusar IPs estrangeiros ou não enviar CORS: o mapa detecta a
+    // falha e oferece o app oficial (ver aviso BDGEx no HUD).
+    tiles: URL_WMS_BDGEX,
+    attribution: "Exército Brasileiro — BDGEx",
+    maxzoom: 18,
+    fundo: "#EAE4D5",
   },
 };
 
@@ -659,6 +686,16 @@ export default function MapShell() {
   const [ready, setReady] = useState(false);
   const [baseLayer, setBaseLayer] = useState<BaseLayerId>("topo");
   const [center, setCenter] = useState<[number, number]>([-47.8822, -15.7942]);
+
+  // ---- BDGEx (Carta do Exército): falha de tiles + app oficial embutido ----
+  // O servidor militar pode recusar IPs de fora do Brasil ou não enviar
+  // cabeçalhos CORS — sem CORS o navegador não vira os tiles em textura e a
+  // base fica vazia. Contamos erros da fonte "base" enquanto a BDGEx está
+  // ativa: passando do limiar, o HUD oferece o app oficial (nova aba ou
+  // embutido) com a mesma visão (centro/zoom preservados).
+  const [falhaBdgex, setFalhaBdgex] = useState(false);
+  const errosBdgexRef = useRef(0);
+  const [appBdgexAberto, setAppBdgexAberto] = useState(false);
 
   const [heading, setHeading] = useState(0);
   // Sensor do aparelho: se o usuário já habilitou antes, religa sozinho ao
@@ -1699,6 +1736,32 @@ export default function MapShell() {
       sincronizarDesenho(map);
     });
   }, [baseEfetiva, ready, sincronizarDesenho]);
+
+  // ---- BDGEx: detecção de falha de tiles (bloqueio/CORS do servidor militar) ----
+  // Erros chegam por tile ("error" com sourceId "base"); rajadas isoladas são
+  // normais até em serviço sadio, então só tratamos como falha definitiva
+  // depois do limiar. Trocar de base zera o contador e o aviso.
+  useEffect(() => {
+    if (baseEfetiva !== "bdgex") {
+      errosBdgexRef.current = 0;
+      setFalhaBdgex(false);
+      return;
+    }
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const aoErro = (e: maplibregl.ErrorEvent) => {
+      // O tipo público do ErrorEvent nem sempre expõe sourceId nesta versão;
+      // o runtime traz. Filtramos por fonte para contar só tiles da base.
+      const origem = (e as unknown as { sourceId?: string }).sourceId;
+      if (origem && origem !== "base") return;
+      errosBdgexRef.current += 1;
+      if (falhaDefinitivaBdgex(errosBdgexRef.current)) setFalhaBdgex(true);
+    };
+    map.on("error", aoErro);
+    return () => {
+      map.off("error", aoErro);
+    };
+  }, [baseEfetiva, ready]);
 
   // Liga/desliga e alimenta as camadas de inteligência conforme a
   // visibilidade — no tático e no Osiris (por trás do globo quando ele carrega).
@@ -2962,11 +3025,60 @@ export default function MapShell() {
   const polyArea = polygonAreaSqMeters(drawCoords);
   const areaFmt = formatArea(polyArea);
 
+  /** Zoom atual do mapa (para deep-links do app oficial do BDGEx). */
+  const mapaZoomAtual = () => {
+    const map = mapRef.current;
+    if (!map) return 11;
+    const z = map.getZoom();
+    return Number.isFinite(z) ? z : 11;
+  };
+
   return (
     <div className="absolute inset-0 bg-background">
       <div className="absolute inset-0">
         <div ref={containerRef} className="h-full w-full" />
       </div>
+
+      {/* BDGEx: aviso de falha de tiles (bloqueio/CORS do servidor militar) —
+          oferece a carta no app oficial, mesma visão, sem perder o contexto. */}
+      {falhaBdgex && baseEfetiva === "bdgex" && (
+        <div
+          data-test="bdgex-aviso"
+          className="absolute left-1/2 top-4 z-40 w-[min(92vw,26rem)] -translate-x-1/2 rounded-md border border-tactical-orange/60 bg-background/95 p-3 shadow-lg backdrop-blur"
+        >
+          <div className="mono text-[10px] uppercase tracking-widest text-tactical-orange">
+            {t("Carta do Exército indisponível no mapa")}
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {t(
+              "O servidor do BDGEx recusou o carregamento direto (bloqueio de rede ou CORS). Use a carta no aplicativo oficial do Exército com a mesma visão atual.",
+            )}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              data-test="bdgex-abrir-embutido"
+              onClick={() => setAppBdgexAberto(true)}
+              className="bg-tactical-orange text-background hover:bg-tactical-orange/90"
+            >
+              {t("Abrir carta embutida")}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              data-test="bdgex-abrir-aba"
+              onClick={() =>
+                window.open(urlAppOficialBdgex(center[0], center[1], mapaZoomAtual()), "_blank")
+              }
+            >
+              {t("Abrir app oficial")}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setFalhaBdgex(false)}>
+              {t("Dispensar")}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Visão Osiris — globo 3D de inteligência global em tela cheia,
           mesma apresentação da visão-osiris do Centro de Sobrevivência */}
@@ -4228,6 +4340,47 @@ export default function MapShell() {
         }}
         onAtualizar={carregarBoletim}
       />
+
+      {/* BDGEx — app oficial do Exército embutido em tela cheia.
+          "Da maneira que está, com todas as funcionalidades": o iframe
+          carrega o BDGEx Mobile na MESMA visão (centro/zoom) que o
+          operador tinha no mapa tático. Se o Exército bloquear o
+          enquadramento, o botão de nova aba continua como saída. */}
+      {appBdgexAberto && (
+        <div className="absolute inset-0 z-50 bg-background" data-test="bdgex-app-embutido">
+          <div className="flex items-center justify-between gap-2 border-b border-border bg-card px-3 py-2">
+            <div className="mono text-[11px] uppercase tracking-widest text-tactical-orange">
+              {t("BDGEx — Banco de Dados Geográficos do Exército")}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  window.open(urlAppOficialBdgex(center[0], center[1], mapaZoomAtual()), "_blank")
+                }
+              >
+                {t("Nova aba")}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setAppBdgexAberto(false)}
+                aria-label={t("Fechar carta do Exército")}
+              >
+                {t("Fechar")}
+              </Button>
+            </div>
+          </div>
+          <iframe
+            src={urlIframeBdgex(center[0], center[1], mapaZoomAtual())}
+            title={t("BDGEx — Banco de Dados Geográficos do Exército")}
+            className="h-[calc(100%-2.75rem)] w-full border-0 bg-[#EAE4D5]"
+            referrerPolicy="no-referrer-when-downgrade"
+            allow="geolocation"
+          />
+        </div>
+      )}
 
       {/* Menu geral — botão hambúrguer com submenu do Osiris */}
       <MenuApp

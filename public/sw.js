@@ -10,7 +10,7 @@
  * Bump de versão: altere VERSAO ao mudar a lógica deste arquivo — os caches
  * antigos são apagados na ativação.
  */
-const VERSAO = "v49";
+const VERSAO = "v50";
 const CACHE_SHELL = `shell-${VERSAO}`;
 const CACHE_ASSETS = `assets-${VERSAO}`;
 const CACHE_RUNTIME = `runtime-${VERSAO}`;
@@ -35,6 +35,10 @@ const HOSTS_DE_TILES = [
   // Imagem GeoColor do GOES-Leste (nuvens ao vivo): URL estável "default" —
   // o último quadro visto fica disponível offline.
   "gibs.earthdata.nasa.gov",
+  // Carta topográfica do Exército (BDGEx, WMS MapCache): tiles maiores que os
+  // demais (uma imagem por tile 256) — com cache, a carta consultada fica
+  // disponível offline como as outras bases.
+  "bdgex.eb.mil.br",
 ];
 
 /**

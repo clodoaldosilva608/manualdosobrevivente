@@ -6,6 +6,8 @@ export const DIC_RU: Record<string, string> = {
   "+ {n} no radar completo": "+ {n} в полном радаре",
   "A Visão Osiris abre o globo 3D de inteligência global (OSIRIS self-hosted) em tela cheia, com painel de camadas próprio — o mapa tático continua intacto atrás do botão de voltar.":
     "Представление Osiris открывает 3D-глобус глобальной разведки (собственный OSIRIS) на весь экран со своей панелью слоёв — тактическая карта сохраняется за кнопкой возврата.",
+  "Abrir carta embutida": "Открыть встроенную карту",
+  "Abrir app oficial": "Открыть официальное приложение",
   "AISStream.io · transponders ao redor do mapa (chave do servidor ou pessoal em Ajustes)":
     "AISStream.io · транспондеры вокруг карты (ключ сервера или личный в Настройках)",
   "AISStream.io — navios ao vivo": "AISStream.io — суда в реальном времени",
@@ -39,6 +41,7 @@ export const DIC_RU: Record<string, string> = {
   "Ativar elemento {n}": "Включить элемент {n}",
   "Ativar relatório semanal": "Включить еженедельный отчёт",
   Atualizar: "Обновить",
+  "BDGEx — Banco de Dados Geográficos do Exército": "BDGEx — Географическая база данных армии",
   "BOLETIM DE INTELIGÊNCIA": "РАЗВЕДЫВАТЕЛЬНАЯ СВОДКА",
   "Backup completo": "Полная резервная копия",
   "Baixar manual completo": "Скачать весь справочник",
@@ -50,6 +53,8 @@ export const DIC_RU: Record<string, string> = {
   "Buscar técnicas, condições, equipamentos...": "Поиск техник, условий, снаряжения…",
   Bússola: "Компас",
   "CAMADAS DO MAPA": "СЛОИ КАРТЫ",
+  "Carta do Exército": "Карта армии",
+  "Carta do Exército indisponível no mapa": "Карта армии недоступна на карте",
   "CHECKLIST DE CAMPO": "ПОЛЕВОЙ ЧЕК-ЛИСТ",
   "Cabos submarinos": "Подводные кабели",
   Cache: "Тайник",
@@ -93,6 +98,7 @@ export const DIC_RU: Record<string, string> = {
   "Critérios do radar: focos de calor NASA FIRMS até 50 km (crítico até 15 km) · sismos USGS M4+ até 600 km (crítico M5,5+ até 300 km ou aviso de tsunami) · alertas oficiais GDACS até 1000 km (vermelho/laranja) e verdes até 300 km · eventos NASA EONET até 500 km · tempestade geomagnética NOAA (global). Coleta a cada 90 s com cache offline.":
     "Критерии радара: очаги жара NASA FIRMS до 50 км (критично до 15 км) · землетрясения USGS M4+ до 600 км (критично M5,5+ до 300 км или предупреждение о цунами) · официальные оповещения GDACS до 1000 км (красный/оранжевый), зелёные до 300 км · события NASA EONET до 500 км · геомагнитная буря NOAA (глобально). Сбор каждые 90 с с офлайн-кэшем.",
   "Câmeras ao vivo": "Камеры в реальном времени",
+  Dispensar: "Скрыть",
   "DOWNLOADS OFFLINE": "ОФЛАЙН-ЗАГРУЗКИ",
   "Dados no aparelho": "Данные на устройстве",
   "Dentro da validade": "Срок в норме",
@@ -142,6 +148,8 @@ export const DIC_RU: Record<string, string> = {
   "Falha na conexão AIS — nova tentativa em instantes":
     "Ошибка соединения AIS — повтор через мгновение",
   Falhou: "Ошибка",
+  "Fechar carta do Exército": "Закрыть карту армии",
+  Fechar: "Закрыть",
   "Ferramenta de marcador desativada": "Инструмент метки выключен",
   Ferramentas: "Инструменты",
   "Ferramentas do mapa": "Инструменты карты",
@@ -239,6 +247,7 @@ export const DIC_RU: Record<string, string> = {
     "NASA GIBS/FIRMS · термические аномалии VIIRS — без ключа",
   "NASA FIRMS — focos de calor": "NASA FIRMS — очаги жара",
   "NENHUMA AMEAÇA NO RADAR": "УГРОЗ НА РАДАРЕ НЕТ",
+  "Nova aba": "Новая вкладка",
   "NOVO WAYPOINT": "НОВАЯ ПУТЕВАЯ ТОЧКА",
   "Nada sincronizado ainda.": "Пока ничего не синхронизировано.",
   Navegação: "Навигация",
@@ -280,6 +289,8 @@ export const DIC_RU: Record<string, string> = {
     "Глобус показывает планету как сферу — удобно для дальних маршрутов и наблюдения дня и ночи; плоская карта сохраняет детальное чтение улиц и локальных координат.",
   "O padrão é o português do Brasil. A escolha fica guardada neste aparelho — conteúdo de fontes externas pode continuar no idioma original.":
     "По умолчанию — бразильский португальский. Выбор сохраняется на этом устройстве — содержимое внешних источников может оставаться на исходном языке.",
+  "O servidor do BDGEx recusou o carregamento direto (bloqueio de rede ou CORS). Use a carta no aplicativo oficial do Exército com a mesma visão atual.":
+    "Сервер BDGEx отклонил прямую загрузку (сетевая блокировка или CORS). Откройте карту в официальном приложении армии с тем же текущим видом.",
   Oeste: "Запад",
   Offline: "Офлайн",
   "Orientação e declinação": "Ориентация и склонение",

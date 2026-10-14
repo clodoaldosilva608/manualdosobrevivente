@@ -10,14 +10,27 @@
  * Bump de versão: altere VERSAO ao mudar a lógica deste arquivo — os caches
  * antigos são apagados na ativação.
  */
-const VERSAO = "v50";
+const VERSAO = "v51";
 const CACHE_SHELL = `shell-${VERSAO}`;
 const CACHE_ASSETS = `assets-${VERSAO}`;
 const CACHE_RUNTIME = `runtime-${VERSAO}`;
 const OFFLINE_URL = "/offline.html";
 const SHELL_URL = "/";
-/** Arquivos da abertura em vídeo — cacheados no shell para tocar offline. */
-const ABERTURA_URLS = ["/abertura.mp4", "/abertura.webm", "/abertura-poster.jpg"];
+/** Arquivos da abertura em vídeo (briefing + marca) — cacheados no shell para tocar offline. */
+const ABERTURA_URLS = [
+  "/abertura.mp4",
+  "/abertura.webm",
+  "/abertura-poster.jpg",
+  "/abertura-marca.mp4",
+  "/abertura-marca.webm",
+  "/abertura-marca-poster.jpg",
+];
+/** Briefings em vídeo da equipe — cacheados no shell (offline a partir da 1ª vista). */
+const BRIEFING_URLS = [
+  "/briefing-preparador-urbano.mp4",
+  "/briefing-sobrevivente-mato.mp4",
+  "/briefing-operadora-tatica.mp4",
+];
 /** Banner do convite — pré-cacheado para o operador divulgar até sem rede. */
 const BANNER_CONVITE_URLS = ["/banner-convite.png"];
 const MAX_ASSETS = 120;
@@ -247,11 +260,13 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Abertura em vídeo e banner do convite: cache-first no shell (funcionam
-  // offline na próxima vez).
+  // Abertura/briefings em vídeo e banner do convite: cache-first no shell
+  // (funcionam offline na próxima vez).
   if (
     url.origin === self.location.origin &&
-    (ABERTURA_URLS.includes(url.pathname) || BANNER_CONVITE_URLS.includes(url.pathname))
+    (ABERTURA_URLS.includes(url.pathname) ||
+      BRIEFING_URLS.includes(url.pathname) ||
+      BANNER_CONVITE_URLS.includes(url.pathname))
   ) {
     event.respondWith(cacheFirst(request, CACHE_SHELL));
     return;

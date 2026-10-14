@@ -8,3 +8,7 @@ pnpm-lock.yaml
 package-lock.json
 bun.lock
 routeTree.gen.ts
+.vercel
+
+# Arquivo de verificação do Search Console — conteúdo exato exigido pelo Google
+/public/google*.html

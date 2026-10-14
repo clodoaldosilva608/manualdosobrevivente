@@ -2,23 +2,28 @@
  * Splash de abertura em vídeo — a primeira coisa que o operador vê ao
  * lançar o aplicativo, como num briefing de missão.
  *
+ * Sequência em duas fases:
+ *  1. "tocando" — o briefing tático atual (/abertura.mp4, a 0,6×);
+ *  2. "marca"   — o vídeo de marca do Manual do Sobrevivente
+ *                 (/abertura-marca.mp4), que fecha com "CARREGAMENTO
+ *                 CONCLUÍDO 100%" — só entra quando a abertura termina
+ *                 naturalmente; "Pular" dispensa as duas.
+ *
  * Regras profissionais embutidas:
- *  - Autoplay mudo + playsinline (exigência de iOS/Android/Chrome) —
- *    TODOS os navegadores bloqueiam vídeo com som sem gesto do usuário;
- *  - Botão de som dedicado: dá para ligar a trilha num toque (o gesto
- *    autoriza o áudio); quando o navegador permite, o som é religado
- *    sozinho logo após o play;
+ *  - Autoplay mudo + playsinline (exigência de iOS/Android/Chrome);
  *  - Botão "Pular" sempre visível e toque em qualquer lugar dispensa;
- *  - Fim do vídeo dispensa sozinho, com fade curto;
- *  - Se o vídeo falhar ou travar, a abertura se auto-dissolve (nunca
- *    prende o operador fora do app);
+ *  - Fim da sequência dispensa sozinho, com fade curto;
+ *  - Se qualquer vídeo falhar ou travar, a abertura se auto-dissolve
+ *    (nunca prende o operador fora do app);
  *  - prefers-reduced-motion e Save-Data pulam direto (ver lib/abertura.ts);
  *  - Toca uma vez por sessão de arranque (sessionStorage).
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Volume2, VolumeX } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import {
+  ABERTURA_MARCA_MP4_URL,
+  ABERTURA_MARCA_POSTER_URL,
+  ABERTURA_MARCA_WEBM_URL,
   ABERTURA_POSTER_URL,
   ABERTURA_WEBM_URL,
   CHAVE_ABERTURA_URL,
@@ -29,11 +34,12 @@ import {
 
 // Vídeo de 10 s a 0,6× ≈ 17 s reais; folga para redes lentas e arranque frio.
 const DURACAO_SAUDE_MS = 26_000;
+// Vídeo de marca: 10 s a 1× + folga para a carga sob rede fraca.
+const DURACAO_MARCA_MS = 15_000;
 
 export function SplashAbertura() {
   const { t } = useI18n();
-  const [fase, setFase] = useState<"fechado" | "tocando" | "saindo">("fechado");
-  const [comSom, setComSom] = useState(false);
+  const [fase, setFase] = useState<"fechado" | "tocando" | "marca" | "saindo">("fechado");
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -44,53 +50,18 @@ export function SplashAbertura() {
 
   const fechar = useCallback(() => {
     registrarAberturaVista();
-    try {
-      videoRef.current?.pause();
-    } catch {
-      /* vídeo já encerrado */
-    }
     setFase("saindo");
     // Tempo do fade — remove depois da transição.
     window.setTimeout(() => setFase("fechado"), 450);
   }, []);
 
-  // Failsafe: vídeo ausente/travado nunca prende o operador.
+  // Failsafe por fase: vídeo ausente/travado nunca prende o operador.
   useEffect(() => {
-    if (fase !== "tocando") return;
-    const id = window.setTimeout(fechar, DURACAO_SAUDE_MS);
+    if (fase !== "tocando" && fase !== "marca") return;
+    const limite = fase === "tocando" ? DURACAO_SAUDE_MS : DURACAO_MARCA_MS;
+    const id = window.setTimeout(fechar, limite);
     return () => window.clearTimeout(id);
   }, [fase, fechar]);
-
-  /** Play resolveu — tenta religar o som (nem todo navegador permite). */
-  const aoComecar = () => {
-    const v = videoRef.current;
-    if (!v || v.muted === false) return;
-    v.muted = false;
-    v.volume = 0.8;
-    v.play()
-      .then(() => setComSom(true))
-      .catch(() => {
-        // Sem gesto, sem som: volta a mudo e mantém o botão de áudio.
-        v.muted = true;
-        setComSom(false);
-      });
-  };
-
-  /** Botão de som: o toque do usuário autoriza o áudio no navegador. */
-  const alternarSom = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const v = videoRef.current;
-    if (!v) return;
-    if (v.muted) {
-      v.muted = false;
-      v.volume = 0.8;
-      v.play().catch(() => setComSom(false));
-      setComSom(true);
-    } else {
-      v.muted = true;
-      setComSom(false);
-    }
-  };
 
   if (fase === "fechado") return null;
 
@@ -104,33 +75,59 @@ export function SplashAbertura() {
       role="button"
       aria-label={t("Pular abertura")}
     >
-      <video
-        ref={(v) => {
-          // React não garante o atributo muted no HTML — a propriedade
-          // precisa estar em `true` antes do autoplay (iOS exige).
-          if (v) v.muted = true;
-          // Briefing em câmera lenta: 0,6× dá tempo de ler os textos e
-          // analisar as imagens (o botão Pular continua a um toque).
-          if (v) v.playbackRate = VELOCIDADE_ABERTURA;
-          videoRef.current = v;
-        }}
-        poster={ABERTURA_POSTER_URL}
-        autoPlay
-        muted
-        playsInline
-        preload="auto"
-        disablePictureInPicture
-        onEnded={fechar}
-        onError={fechar}
-        onPlaying={aoComecar}
-        className="h-full w-full object-cover"
-      >
-        {/* Duas fontes: H.264 (celulares/Safari) e WebM (Chromium/Linux).
-            Cada navegador baixa apenas a que sabe tocar. Agora COM trilha
-            sonora (drone + vento + pings) embutida em ambos os arquivos. */}
-        <source src={CHAVE_ABERTURA_URL} type="video/mp4" />
-        <source src={ABERTURA_WEBM_URL} type="video/webm" />
-      </video>
+      {fase === "tocando" && (
+        <video
+          ref={(v) => {
+            // React não garante o atributo muted no HTML — a propriedade
+            // precisa estar em `true` antes do autoplay (iOS exige).
+            if (v) v.muted = true;
+            // Briefing em câmera lenta: 0,6× dá tempo de ler os textos e
+            // analisar as imagens (o botão Pular continua a um toque).
+            if (v) v.playbackRate = VELOCIDADE_ABERTURA;
+            videoRef.current = v;
+          }}
+          poster={ABERTURA_POSTER_URL}
+          autoPlay
+          muted
+          playsInline
+          preload="auto"
+          disablePictureInPicture
+          // Fim natural do briefing encadeia o vídeo de marca. "Pular" e o
+          // toque em qualquer lugar dispensam a sequência inteira.
+          onEnded={() => setFase("marca")}
+          onError={fechar}
+          className="h-full w-full object-cover"
+        >
+          {/* Duas fontes: H.264 (celulares/Safari) e WebM (Chromium/Linux).
+              Cada navegador baixa apenas a que sabe tocar. */}
+          <source src={CHAVE_ABERTURA_URL} type="video/mp4" />
+          <source src={ABERTURA_WEBM_URL} type="video/webm" />
+        </video>
+      )}
+
+      {fase === "marca" && (
+        <video
+          ref={(v) => {
+            if (v) v.muted = true;
+            videoRef.current = v;
+          }}
+          data-test="splash-marca"
+          poster={ABERTURA_MARCA_POSTER_URL}
+          autoPlay
+          muted
+          playsInline
+          preload="auto"
+          disablePictureInPicture
+          // Fim da marca = "CARREGAMENTO CONCLUÍDO" → entra no app.
+          onEnded={fechar}
+          onError={fechar}
+          className="h-full w-full object-cover"
+        >
+          <source src={ABERTURA_MARCA_MP4_URL} type="video/mp4" />
+          <source src={ABERTURA_MARCA_WEBM_URL} type="video/webm" />
+        </video>
+      )}
+
       <button
         type="button"
         onClick={(e) => {
@@ -141,21 +138,6 @@ export function SplashAbertura() {
         className="glove-tap absolute right-3 top-[max(0.75rem,env(safe-area-inset-top))] mono rounded-md border border-white/25 bg-black/40 px-3 py-1.5 text-[11px] uppercase tracking-widest text-white/90 backdrop-blur-sm hover:border-tactical-orange/70 hover:text-tactical-orange"
       >
         {t("Pular")}
-      </button>
-      <button
-        type="button"
-        onClick={alternarSom}
-        data-test="splash-som"
-        aria-pressed={comSom}
-        title={comSom ? t("Desativar som") : t("Ativar som da abertura")}
-        className={`glove-tap absolute left-1/2 bottom-[max(1.5rem,env(safe-area-inset-bottom))] flex -translate-x-1/2 items-center gap-2 rounded-full border px-4 py-2 mono text-[11px] uppercase tracking-widest backdrop-blur-sm transition-colors ${
-          comSom
-            ? "border-tactical-orange/80 bg-tactical-orange/20 text-tactical-orange"
-            : "border-white/25 bg-black/40 text-white/90 hover:border-tactical-orange/70 hover:text-tactical-orange"
-        }`}
-      >
-        {comSom ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-        {comSom ? t("Som ligado") : t("Ativar som")}
       </button>
     </div>
   );

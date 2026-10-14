@@ -7,6 +7,7 @@ import { canonicalDo, ogUrlDo } from "@/lib/seo";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { BriefingsVideo } from "@/components/manual/BriefingsVideo";
 
 export const Route = createFileRoute("/manual/")({
   head: () => ({
@@ -78,6 +79,9 @@ function ManualIndex() {
           </div>
         </div>
       </Link>
+
+      {/* Briefings em vídeo — os perfis da equipe, com áudio original e legenda */}
+      <BriefingsVideo />
 
       {q.trim() ? (
         <ul className="space-y-2">

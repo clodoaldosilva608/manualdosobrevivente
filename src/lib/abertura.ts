@@ -1,9 +1,11 @@
 /**
  * Abertura cinematográfica do aplicativo.
  *
- * O vídeo toca uma vez por inicialização do app (cada arranjo a frio ou
- * nova sessão de navegação), sempre com botão de pulo. Regras de educação:
- * quem pediu menos movimento (prefers-reduced-motion) ou está com economia
+ * A sequência toca uma vez por inicialização do app (cada arranjo a frio ou
+ * nova sessão de navegação): primeiro o briefing tático (/abertura.mp4) e,
+ * só se ele terminar naturalmente, o vídeo de marca (/abertura-marca.mp4).
+ * "Pular" dispensa a sequência inteira. Regras de educação: quem pediu
+ * menos movimento (prefers-reduced-motion) ou está com economia
  * de dados (Save-Data) entra direto no app sem vídeo. A marcação "já viu
  * nesta sessão" vive no sessionStorage — cada lançamento do PWA recomeça
  * a sessão e mostra a abertura de novo.
@@ -18,6 +20,13 @@ export const CHAVE_ABERTURA_URL = "/abertura.mp4";
 export const ABERTURA_WEBM_URL = "/abertura.webm";
 /** Poster estático do primeiro frame — pinta antes do vídeo carregar. */
 export const ABERTURA_POSTER_URL = "/abertura-poster.jpg";
+
+/** Segunda fase da abertura: vídeo de marca (fecha com "CARREGAMENTO CONCLUÍDO"). */
+export const ABERTURA_MARCA_MP4_URL = "/abertura-marca.mp4";
+/** Alternativa WebM do vídeo de marca. */
+export const ABERTURA_MARCA_WEBM_URL = "/abertura-marca.webm";
+/** Poster do vídeo de marca — pinta enquanto o vídeo carrega. */
+export const ABERTURA_MARCA_POSTER_URL = "/abertura-marca-poster.jpg";
 
 /**
  * Velocidade de reprodução da abertura. O briefing tem ~10 s de vídeo e o

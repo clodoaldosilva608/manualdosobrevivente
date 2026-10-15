@@ -81,6 +81,8 @@ export interface IntelVisibilidade {
   ciclones: boolean;
   /** Nuvens ao vivo — imagem GeoColor do GOES-Leste (NASA GIBS). */
   nuvens: boolean;
+  /** Relâmpagos ao vivo — densidade de descargas de 15 min (NOAA nowCOAST). */
+  raios: boolean;
   /** Vento a 10 m com partículas animadas (Open-Meteo — keyless). */
   vento: boolean;
   /** Temperatura a 2 m em cores (Open-Meteo — keyless). */
@@ -116,6 +118,7 @@ export const INTEL_VIS_PADRAO: IntelVisibilidade = {
   radar: true,
   ciclones: true,
   nuvens: false,
+  raios: false,
   vento: false,
   temperatura: false,
   tempestades: false,

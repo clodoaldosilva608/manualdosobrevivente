@@ -591,4 +591,12 @@ export const DIC_JA: Record<string, string> = {
   "Enviando link…": "リンクを送信中…",
   "Esqueci minha senha": "パスワードをお忘れですか",
   "Área offline salva no aparelho": "オフライン領域を端末に保存しました",
+  "Relâmpagos ao vivo": "リアルタイムの落雷",
+  "NOAA nowCOAST · densidade de descargas dos últimos 15 minutos — Américas e Pacífico":
+    "NOAA nowCOAST · 過去15分間の雷放電密度 — 南北アメリカと太平洋",
+  "Conectando ao rastreio de satélites…": "衛星トラッキングに接続中…",
+  "Próxima passagem sobre você": "次にあなたの上空を通過",
+  "{sat} sobe {hora} — pico de {graus}°": "{sat} が{hora}に昇る — 最高{graus}°",
+  "visível a olho nu": "肉眼で見える",
+  "Sem passagens nas próximas 24 horas": "今後24時間の通過はありません",
 };

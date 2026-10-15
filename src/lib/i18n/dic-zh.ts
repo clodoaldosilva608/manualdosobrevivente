@@ -572,4 +572,12 @@ export const DIC_ZH: Record<string, string> = {
   "Enviando link…": "正在发送链接…",
   "Esqueci minha senha": "我忘记了密码",
   "Área offline salva no aparelho": "离线区域已保存在设备上",
+  "Relâmpagos ao vivo": "实时闪电",
+  "NOAA nowCOAST · densidade de descargas dos últimos 15 minutos — Américas e Pacífico":
+    "NOAA nowCOAST · 最近15分钟的闪电密度 — 美洲和太平洋",
+  "Conectando ao rastreio de satélites…": "正在连接卫星跟踪…",
+  "Próxima passagem sobre você": "下次从你头顶经过",
+  "{sat} sobe {hora} — pico de {graus}°": "{sat} 于{hora}升起 — 最高{graus}°",
+  "visível a olho nu": "肉眼可见",
+  "Sem passagens nas próximas 24 horas": "未来24小时没有经过",
 };

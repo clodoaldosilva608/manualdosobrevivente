@@ -167,10 +167,16 @@ import {
   ControladorRasterSimples,
   urlZoomEarth,
   URL_NUVENS_GOES,
+  URL_RAIOS_NOWCOAST,
   URL_FOCO_GIBS,
   type EstadoRadar,
   type InfoQuadro,
 } from "@/lib/radar-clima";
+import {
+  melhorProximaPassagem,
+  horaPassagem,
+  type PassagemSatelite,
+} from "@/lib/satelite-passagem";
 import { ControladorCiclones, type EstadoCiclones } from "@/lib/ciclones";
 import {
   ControladorTemperatura,
@@ -322,7 +328,13 @@ const BASE_LAYERS: Record<
     tiles:
       "https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}",
     attribution: "National Geographic, Esri, DeLorme, NAVTEQ, UNEP-WCMC, USGS, NASA",
-    maxzoom: 16,
+    // O Esri cortou os níveis reais do NatGeo_World_Map: acima do zoom 12 o
+    // serviço responde com o placeholder cinza "Map data not yet available"
+    // (HTTP 200, imagem única repetida) — pintava o mapa de cinza chapado na
+    // maior parte do Brasil e parecia "não renderizar". Com maxzoom 12 o
+    // MapLibre sobre-amplia os tiles reais (13-15 levemente suaves) e o
+    // detalhe volta pelo cross-fade de satélite (base-hd) a partir do 15.
+    maxzoom: 12,
     fundo: "#E5DCC7",
   },
   bdgex: {
@@ -905,6 +917,8 @@ export default function MapShell() {
   const ciclonesRef = useRef<ControladorCiclones | null>(null);
   // Nuvens ao vivo (GOES-Leste/NASA GIBS): raster estático tipo simples.
   const nuvensRef = useRef<ControladorRasterSimples | null>(null);
+  // Relâmpagos ao vivo (NOAA nowCOAST/WMS): raster estático sem chave.
+  const raiosRef = useRef<ControladorRasterSimples | null>(null);
   // Focos de calor (VIIRS via WMS do NASA GIBS): raster estático sem chave.
   const fogoRef = useRef<ControladorRasterSimples | null>(null);
   // Vento e temperatura (Open-Meteo, sem chave): partículas + pontos coloridos.
@@ -917,7 +931,14 @@ export default function MapShell() {
   const [statusAis, setStatusAis] = useState<StatusAis | "off">("off");
   // Satélites de observação (TLE do servidor + propagação SGP4 no aparelho).
   const [tles, setTles] = useState<TleSatelite[]>([]);
+  const [tleIss, setTleIss] = useState<TleSatelite | null>(null);
   const [satelites, setSatelites] = useState<IntelSatelite[]>([]);
+  // Próxima passagem de satélite sobre o operador (nascer/pico/pôr + visibilidade
+  // a olho nu — algoritmo do God's Eye View, propagado localmente por SGP4).
+  const [passagem, setPassagem] = useState<{
+    tle: TleSatelite;
+    passagem: PassagemSatelite;
+  } | null>(null);
   // Chave AIS do servidor (usada quando o usuário não cadastrou a própria).
   const [chaveAisServidor, setChaveAisServidor] = useState("");
   const [boletimEm, setBoletimEm] = useState(0);
@@ -1230,6 +1251,10 @@ export default function MapShell() {
             nuvensRef.current.abaixoDe = ancoraIntel(map);
             nuvensRef.current.sincronizar();
           }
+          if (raiosRef.current) {
+            raiosRef.current.abaixoDe = ancoraIntel(map);
+            raiosRef.current.sincronizar();
+          }
           if (fogoRef.current) {
             fogoRef.current.abaixoDe = ancoraIntel(map);
             fogoRef.current.sincronizar();
@@ -1320,6 +1345,7 @@ export default function MapShell() {
       radarRef.current?.desativar();
       ciclonesRef.current?.desativar();
       nuvensRef.current?.desativar();
+      raiosRef.current?.desativar();
       fogoRef.current?.desativar();
       ventoRef.current?.desativar();
       temperaturaRef.current?.desativar();
@@ -1409,6 +1435,24 @@ export default function MapShell() {
 
   // Descarte das nuvens na saída da tela.
   useEffect(() => () => nuvensRef.current?.desativar(), []);
+
+  // Relâmpagos ao vivo (NOAA nowCOAST/WMS, sem chave): densidade de descargas
+  // de 15 minutos — Américas e Pacífico. Raster simples, igual às nuvens.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    if (!raiosRef.current) raiosRef.current = new ControladorRasterSimples(map, "intel-raios");
+    const ctl = raiosRef.current;
+    ctl.abaixoDe = ancoraIntel(map);
+    if (intelVis.raios) {
+      ctl.ativar(URL_RAIOS_NOWCOAST, "Descargas © NOAA/NWS nowCOAST (NLDN/GLD360)", 0.9, 8);
+    } else {
+      ctl.desativar();
+    }
+  }, [intelVis.raios, ready]);
+
+  // Descarte dos relâmpagos na saída da tela.
+  useEffect(() => () => raiosRef.current?.desativar(), []);
 
   // Focos de calor (NASA GIBS/WMS, sem chave): raster simples com os mesmos
   // pontos 375 m que o FIRMS distribui — o CSV mundial exigia MAP_KEY e
@@ -1915,14 +1959,20 @@ export default function MapShell() {
     let vivo = true;
     void callTle()
       .then((c) => {
-        if (vivo) setTles(c.tles);
+        if (vivo) {
+          setTles(c.tles);
+          setTleIss(c.tleIss);
+        }
       })
       .catch(() => {});
     const timer = window.setInterval(
       () => {
         void callTle()
           .then((c) => {
-            if (vivo) setTles(c.tles);
+            if (vivo) {
+              setTles(c.tles);
+              setTleIss(c.tleIss);
+            }
           })
           .catch(() => {});
       },
@@ -1949,6 +1999,39 @@ export default function MapShell() {
       window.clearInterval(timer);
     };
   }, [intelVis.satelites, tles]);
+
+  // Próxima passagem de satélite sobre o operador (God's Eye View): a ISS
+  // e os rastreados são propagados localmente; a passagem que nasce primeiro
+  // vence. Recalcula a cada 10 min e quando a folha de camadas abre — SGP4
+  // é barato, mas a varredura de 24 h não precisa rodar a cada tique do GPS.
+  const userPosRef = useRef(userPos);
+  const centerRef = useRef(center);
+  useEffect(() => {
+    userPosRef.current = userPos;
+  }, [userPos]);
+  useEffect(() => {
+    centerRef.current = center;
+  }, [center]);
+  useEffect(() => {
+    if (!intelVis.satelites) return;
+    let vivo = true;
+    const calcular = () => {
+      const u = userPosRef.current;
+      const c = centerRef.current;
+      const obs = u ? { lat: u.lat, lng: u.lng } : { lat: c[1], lng: c[0] };
+      const candidatos = tleIss ? [tleIss, ...tles] : tles;
+      const achado = candidatos.length
+        ? melhorProximaPassagem(candidatos, obs.lat, obs.lng, Date.now())
+        : null;
+      if (vivo) setPassagem(achado);
+    };
+    calcular();
+    const timer = window.setInterval(calcular, 10 * 60_000);
+    return () => {
+      vivo = false;
+      window.clearInterval(timer);
+    };
+  }, [intelVis.satelites, tles, tleIss, openSheet]);
 
   // Manchetes globais (GDELT): ciclo lento — a fonte tem limite de requisições
   // e NÃO manda cabeçalhos CORS (o fetch do navegador falha sempre). O
@@ -3736,6 +3819,29 @@ export default function MapShell() {
                               : radarEstado === "erro"
                                 ? t("Sem conexão ao radar — nova tentativa ao reabrir")
                                 : t("Conectando ao radar…")}
+                          </div>
+                        )}
+                        {linha.id === "satelites" && intelVis.satelites && (
+                          <div
+                            className="mono mt-1 text-[10px] text-tactical-orange"
+                            data-test="passagem-status"
+                          >
+                            {!tles.length && !tleIss
+                              ? t("Conectando ao rastreio de satélites…")
+                              : passagem
+                                ? `${t("Próxima passagem sobre você")}: ${t(
+                                    "{sat} sobe {hora} — pico de {graus}°",
+                                    {
+                                      sat: passagem.tle.nome,
+                                      hora: horaPassagem(
+                                        passagem.passagem.inicioMs,
+                                        Date.now(),
+                                        localeAtivo(),
+                                      ),
+                                      graus: String(Math.round(passagem.passagem.picoElevGraus)),
+                                    },
+                                  )}${passagem.passagem.visivel ? ` · ${t("visível a olho nu")}` : ""}`
+                                : t("Sem passagens nas próximas 24 horas")}
                           </div>
                         )}
                         {linha.id === "ciclones" && intelVis.ciclones && (

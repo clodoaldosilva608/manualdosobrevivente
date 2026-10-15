@@ -116,6 +116,20 @@ export const URL_FOCO_GIBS =
   "&HEIGHT=256&WIDTH=256&SRS=EPSG%3A3857&TIME=default&BBOX={bbox-epsg-3857}";
 
 /**
+ * Relâmpagos ao vivo — densidade de descargas atmosféricas de 15 minutos
+ * (rede de solo NLDN/GLD360) via WMS do NOAA nowCOAST, SEM CHAVE e com
+ * CORS aberto. Cobertura: Américas e Pacífico (110°E→0°, 25°S–80°N) — o
+ * Brasil inteiro. Sem parâmetro TIME o GeoServer serve o quadro de 15 min
+ * mais recente; grade de ~8 km — maxzoom 8 na fonte (overzoom acima).
+ * Mesmo produto usado pelo God's Eye View (server/providers/weather.js).
+ */
+export const URL_RAIOS_NOWCOAST =
+  "https://nowcoast.noaa.gov/geoserver/observations/lightning_detection/ows" +
+  "?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=ldn_lightning_strike_density" +
+  "&STYLES=lightning_density&FORMAT=image%2Fpng&TRANSPARENT=true" +
+  "&HEIGHT=256&WIDTH=256&SRS=EPSG%3A3857&BBOX={bbox-epsg-3857}";
+
+/**
  * Rótulo do quadro relativo a agora: "-30 min" (passado), "AGORA" (±2 min)
  * ou "+10 min" (previsão da nowcast). Agradável de ler no HUD.
  */

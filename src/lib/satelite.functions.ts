@@ -47,6 +47,10 @@ const NOMES_PT: Record<number, string> = {
 
 export interface ColetaTle {
   tles: TleSatelite[];
+  /** TLE da ISS (25544) quando presente no grupo stations — NÃO entra em
+   * "tles" para não duplicar o marcador da camada dedicada; serve para a
+   * previsão de passagem sobre o operador (satelite-passagem.ts). */
+  tleIss: TleSatelite | null;
   coletadoEm: number;
   /** Grupos que falharam nesta coleta (parciais são aceitos). */
   falhas: string[];
@@ -84,6 +88,14 @@ function filtrar(todos: TleSatelite[]): TleSatelite[] {
   return Array.from(mapa.values());
 }
 
+/** Extrai o TLE da ISS (25544) de um grupo — ignorado no filtro rastreado. */
+function extrairIss(todos: TleSatelite[]): TleSatelite | null {
+  for (const t of todos) {
+    if (t.norad === 25544) return { ...t, nome: "ISS (ZARYA)" };
+  }
+  return null;
+}
+
 export const tleServidor = createServerFn({ method: "GET" }).handler(
   async (): Promise<ColetaTle> => {
     const hit = G.__msTleCache;
@@ -92,13 +104,18 @@ export const tleServidor = createServerFn({ method: "GET" }).handler(
     const falhas: string[] = [];
     const resultados = await Promise.allSettled(GRUPOS.map((g) => buscarGrupo(g)));
     const filtrados: TleSatelite[] = [];
+    let iss: TleSatelite | null = null;
     resultados.forEach((r, i) => {
-      if (r.status === "fulfilled") filtrados.push(...filtrar(r.value));
-      else falhas.push(GRUPOS[i] as string);
+      if (r.status === "fulfilled") {
+        filtrados.push(...filtrar(r.value));
+        // A ISS só existe no grupo "stations" — a primeira coleta que a trouxer
+        if (GRUPOS[i] === "stations") iss = extrairIss(r.value);
+      } else falhas.push(GRUPOS[i] as string);
     });
 
     const dados: ColetaTle = {
       tles: filtrados.sort((a, b) => a.norad - b.norad),
+      tleIss: iss,
       coletadoEm: Date.now(),
       falhas,
     };

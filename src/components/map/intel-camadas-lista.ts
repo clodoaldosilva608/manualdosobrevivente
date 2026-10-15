@@ -84,6 +84,12 @@ export const LINHAS_INTEL: LinhaIntel[] = [
     cor: "#E2E8F0",
   },
   {
+    id: "raios",
+    nome: "Relâmpagos ao vivo",
+    dica: "NOAA nowCOAST · densidade de descargas dos últimos 15 minutos — Américas e Pacífico",
+    cor: "#FDE047",
+  },
+  {
     id: "vento",
     nome: "Vento (superfície)",
     dica: "Open-Meteo · partículas animadas do vento a 10 m — sem chave",

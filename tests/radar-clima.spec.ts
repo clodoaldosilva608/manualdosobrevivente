@@ -9,8 +9,22 @@ import {
   urlQuadro,
   urlTileOwm,
   urlZoomEarth,
+  URL_RAIOS_NOWCOAST,
 } from "../src/lib/radar-clima";
 import type { QuadroRadar } from "../src/lib/radar-clima";
+
+describe("URL_RAIOS_NOWCOAST (relâmpagos NOAA nowCOAST)", () => {
+  it("aponta para o WMS do produto ldn_lightning_strike_density com tiles Mercator", () => {
+    expect(URL_RAIOS_NOWCOAST).toContain(
+      "https://nowcoast.noaa.gov/geoserver/observations/lightning_detection/ows",
+    );
+    expect(URL_RAIOS_NOWCOAST).toContain("LAYERS=ldn_lightning_strike_density");
+    expect(URL_RAIOS_NOWCOAST).toContain("STYLES=lightning_density");
+    expect(URL_RAIOS_NOWCOAST).toContain("TRANSPARENT=true");
+    expect(URL_RAIOS_NOWCOAST).toContain("SRS=EPSG%3A3857");
+    expect(URL_RAIOS_NOWCOAST).toContain("BBOX={bbox-epsg-3857}");
+  });
+});
 
 describe("urlZoomEarth", () => {
   it("monta o deep link com a visão atual e os overlays do Manual (iguais ao Zoom Earth)", () => {

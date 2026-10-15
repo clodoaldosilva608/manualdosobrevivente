@@ -592,4 +592,12 @@ export const DIC_EN: Record<string, string> = {
   "Enviando link…": "Sending link…",
   "Esqueci minha senha": "I forgot my password",
   "Área offline salva no aparelho": "Offline area saved on the device",
+  "Relâmpagos ao vivo": "Live lightning",
+  "NOAA nowCOAST · densidade de descargas dos últimos 15 minutos — Américas e Pacífico":
+    "NOAA nowCOAST · strike density from the last 15 minutes — Americas and Pacific",
+  "Conectando ao rastreio de satélites…": "Connecting to the satellite tracking…",
+  "Próxima passagem sobre você": "Next pass over you",
+  "{sat} sobe {hora} — pico de {graus}°": "{sat} rises {hora} — peak of {graus}°",
+  "visível a olho nu": "visible to the naked eye",
+  "Sem passagens nas próximas 24 horas": "No passes in the next 24 hours",
 };

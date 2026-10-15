@@ -595,4 +595,12 @@ export const DIC_RU: Record<string, string> = {
   "Enviando link…": "Отправляем ссылку…",
   "Esqueci minha senha": "Я забыл пароль",
   "Área offline salva no aparelho": "Автономная область сохранена на устройстве",
+  "Relâmpagos ao vivo": "Молнии в реальном времени",
+  "NOAA nowCOAST · densidade de descargas dos últimos 15 minutos — Américas e Pacífico":
+    "NOAA nowCOAST · плотность разрядов за последние 15 минут — Америки и Тихий океан",
+  "Conectando ao rastreio de satélites…": "Подключение к спутниковому слежению…",
+  "Próxima passagem sobre você": "Следующий проход над вами",
+  "{sat} sobe {hora} — pico de {graus}°": "{sat} восходит {hora} — максимум {graus}°",
+  "visível a olho nu": "видно невооружённым глазом",
+  "Sem passagens nas próximas 24 horas": "Нет проходов в течение 24 часов",
 };

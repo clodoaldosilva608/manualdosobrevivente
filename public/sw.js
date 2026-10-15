@@ -10,7 +10,7 @@
  * Bump de versão: altere VERSAO ao mudar a lógica deste arquivo — os caches
  * antigos são apagados na ativação.
  */
-const VERSAO = "v52";
+const VERSAO = "v53";
 const CACHE_SHELL = `shell-${VERSAO}`;
 const CACHE_ASSETS = `assets-${VERSAO}`;
 const CACHE_RUNTIME = `runtime-${VERSAO}`;
@@ -52,6 +52,9 @@ const HOSTS_DE_TILES = [
   // Imagem GeoColor do GOES-Leste (nuvens ao vivo): URL estável "default" —
   // o último quadro visto fica disponível offline.
   "gibs.earthdata.nasa.gov",
+  // Relâmpagos ao vivo (NOAA nowCOAST, WMS): quadro de 15 minutos — com
+  // cache, o último quadro visto fica disponível offline como as nuvens.
+  "nowcoast.noaa.gov",
   // Carta topográfica do Exército (BDGEx, WMS MapCache): tiles maiores que os
   // demais (uma imagem por tile 256) — com cache, a carta consultada fica
   // disponível offline como as outras bases.
@@ -154,9 +157,11 @@ self.addEventListener("install", (event) => {
     (async () => {
       const cache = await caches.open(CACHE_SHELL);
       await cache.addAll([OFFLINE_URL]);
-      // Abertura + banner do convite: melhor esforço por arquivo — falha de um
-      // não quebra a instalação.
-      for (const url of [...ABERTURA_URLS, ...BANNER_CONVITE_URLS]) {
+      // Abertura + briefings + banner do convite: melhor esforço por arquivo
+      // — falha de um não quebra a instalação. Os briefings vão junto: o
+      // <video> pede por Range e, sem o arquivo integral no cache, o handler
+      // teria que buscar na rede — pré-cacheados, tocam na hora e offline.
+      for (const url of [...ABERTURA_URLS, ...BRIEFING_URLS, ...BANNER_CONVITE_URLS]) {
         try {
           const res = await fetch(url, { cache: "no-store" });
           if (res && res.ok) await cache.put(url, res.clone());
@@ -230,6 +235,34 @@ async function tratarNavegacao(request) {
   }
 }
 
+/**
+ * Vídeos (abertura e briefings): o elemento <video> pede o arquivo por
+ * PARTES (Range: bytes=0-). Se o handler buscasse com o Range e guardasse,
+ * cache.put rejeita resposta parcial (206) — o catch devolvia 504 e o vídeo
+ * NUNCA tocava (o bug "os vídeos não reproduzem"). Aqui: acerto de cache
+ * devolve o arquivo INTEIRO (o player aceita resposta integral para um
+ * pedido com Range); sem cache, busca SEM Range (resposta 200 completa),
+ * guarda e devolve — o vídeo toca na hora e fica no cache para offline.
+ */
+async function cacheFirstVideo(request, nomeCache) {
+  const cache = await caches.open(nomeCache);
+  const emCache = await cache.match(request, { ignoreVary: true });
+  if (emCache) return emCache;
+  try {
+    const res = await fetch(new Request(request.url, { method: "GET" }));
+    if (res && res.ok && res.status === 200) {
+      try {
+        await cache.put(request, res.clone());
+      } catch {
+        /* cache cheio/quota: o vídeo segue tocando da rede */
+      }
+    }
+    return res;
+  } catch {
+    return new Response("", { status: 504, statusText: "Sem conexão" });
+  }
+}
+
 async function cacheFirst(request, nomeCache, limite) {
   const cache = await caches.open(nomeCache);
   const emCache = await cache.match(request, { ignoreVary: true });
@@ -264,16 +297,17 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Abertura/briefings em vídeo e banner do convite: cache-first no shell
-  // (funcionam offline na próxima vez).
-  if (
-    url.origin === self.location.origin &&
-    (ABERTURA_URLS.includes(url.pathname) ||
-      BRIEFING_URLS.includes(url.pathname) ||
-      BANNER_CONVITE_URLS.includes(url.pathname))
-  ) {
-    event.respondWith(cacheFirst(request, CACHE_SHELL));
-    return;
+  // Abertura/briefings em vídeo: handler próprio (Range do <video>, ver
+  // cacheFirstVideo). Banner do convite: cache-first simples no shell.
+  if (url.origin === self.location.origin) {
+    if (ABERTURA_URLS.includes(url.pathname) || BRIEFING_URLS.includes(url.pathname)) {
+      event.respondWith(cacheFirstVideo(request, CACHE_SHELL));
+      return;
+    }
+    if (BANNER_CONVITE_URLS.includes(url.pathname)) {
+      event.respondWith(cacheFirst(request, CACHE_SHELL));
+      return;
+    }
   }
 
   // Tiles de mapa: cache-first com limite (complementa o armazenamento

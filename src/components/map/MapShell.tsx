@@ -356,7 +356,10 @@ type Tool = "none" | "measure-line" | "measure-area" | "marker";
 /** Estado da coleta de inteligência (camadas nativas do mapa). */
 type StatusIntel = "idle" | "carregando" | "ok" | "erro";
 
-const styleFor = (layer: BaseLayerId): maplibregl.StyleSpecification => {
+const styleFor = (
+  layer: BaseLayerId,
+  projecao?: "mercator" | "globe",
+): maplibregl.StyleSpecification => {
   const l = BASE_LAYERS[layer];
   // Camadas com referência (rótulos de cidades/ruas sobre o raster base):
   // Tático Escuro, Claro e Oceano.
@@ -375,6 +378,13 @@ const styleFor = (layer: BaseLayerId): maplibregl.StyleSpecification => {
   const querRelevo = layer === "streets" || layer === "dark";
   return {
     version: 8,
+    // Projeção NASCENDO no stylesheet: a troca mercator↔globo passa a ser
+    // uma troca de estilo atômica (setStyle reconstrói os cachês de tiles
+    // com a projeção desde o primeiro quadro), em vez de setProjection em
+    // voo — a transição em vivo do MapLibre 5.24 deixa o pipeline de tiles
+    // abortado sem retry quando o operador navega logo depois ("globo
+    // bege": só o fundo do estilo pinta, areTilesLoaded() nunca fecha).
+    ...(projecao ? { projection: { type: projecao } } : {}),
     sources: {
       base: {
         type: "raster",
@@ -892,6 +902,43 @@ export default function MapShell() {
   const projecao = prefs.projecao;
   const projecaoRef = useRef(projecao);
   projecaoRef.current = projecao;
+  /** Última projeção efetivamente aplicada ao mapa pela troca atômica —
+   * distingue a aplicação corrente da hidratação das preferências. */
+  const projecaoAplicadaRef = useRef<string | null>(null);
+  /** VIGIA DE AUTOCURA — o MapLibre 5.24 pode, após rajadas de mudança de
+   * zoom (pinça rápida, botões repetidos), deixar o source-cache da base
+   * sem refazer pedidos abortados: o mapa pinta só o fundo do estilo
+   * ("mundo/globo bege") e nunca mais pede tile — nem pan, nem repaint,
+   * nem clearTiles recuperam; só reaplicar o estilo. Sinais do vigia:
+   * último tile da base recebido e mudança de zoom desde o último
+   * moveend. Em estado saudável os tiles chegam em menos de 5 s (ou já
+   * estão em cache — e aí não há zoom novo a cobrir). */
+  const ultimoTileBaseRef = useRef(Date.now());
+  const ultimoZoomVigiaRef = useRef<number | null>(null);
+  const vigiaTimerRef = useRef<number | null>(null);
+  /** Reaplica o estilo corrente com a projeção cozinhada — recuperação
+   * única comprovada do pipeline de tiles abortado. */
+  const reaplicarEstilo = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    try {
+      map.setStyle(styleFor(estiloBaseRef.current, projecaoRef.current));
+      map.once("styledata", () => {
+        const m = mapRef.current;
+        if (!m) return;
+        try {
+          adicionarFontesDesenho(m);
+          sincronizarDesenho(m);
+        } catch {
+          /* estilo interim — o fluxo do styledata refaz */
+        }
+      });
+    } catch {
+      /* estilo interim — nada a fazer */
+    }
+    // sincronizarDesenho é um useCallback de dependências vazias (estável).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const alternarProjecao = () =>
     updatePrefs({ projecao: projecao === "globe" ? "mercator" : "globe" });
   const [intel, setIntel] = useState<IntelSnapshot | null>(null);
@@ -1137,7 +1184,7 @@ export default function MapShell() {
       registrarProtocoloOffline(ml);
       const map = new ml.Map({
         container: containerRef.current,
-        style: styleFor(baseEfetiva),
+        style: styleFor(baseEfetiva, projecao),
         center,
         zoom: 11,
         attributionControl: { compact: true },
@@ -1178,6 +1225,38 @@ export default function MapShell() {
         }
       });
 
+      // VIGIA DE AUTOCURA (ver comentário nos refs): chegada de tile da base
+      // renova o pulso; moveend com mudança de zoom arma a checagem — se em
+      // 5 s nenhum tile da base chegar (pedidos abortados sem retry),
+      // reaplica o estilo e o pipeline renasce com os tiles do cache HTTP.
+      map.on("data", (e) => {
+        // O payload de tile existe nos eventos de fonte (MapLibre emite
+        // sourceId/tile mesmo sem o tipo declarar — daí o recorte defensivo).
+        const ev = e as unknown as { dataType?: string; sourceId?: string; tile?: unknown };
+        if (ev.dataType === "source" && ev.sourceId === "base" && ev.tile) {
+          ultimoTileBaseRef.current = Date.now();
+        }
+      });
+      const armarVigia = () => {
+        if (vigiaTimerRef.current !== null) window.clearTimeout(vigiaTimerRef.current);
+        vigiaTimerRef.current = window.setTimeout(() => {
+          vigiaTimerRef.current = null;
+          if (cancelled || !mapRef.current || mapRef.current.isMoving()) return;
+          if (Date.now() - ultimoTileBaseRef.current < 5000) return;
+          reaplicarEstilo();
+        }, 5000);
+      };
+      map.on("moveend", () => {
+        const z = map.getZoom();
+        if (
+          ultimoZoomVigiaRef.current !== null &&
+          Math.abs(z - ultimoZoomVigiaRef.current) > 0.01
+        ) {
+          armarVigia();
+        }
+        ultimoZoomVigiaRef.current = z;
+      });
+
       map.on("load", () => {
         // sources for drawing + markers (idempotente: o timer de segurança
         // pode liberar o app antes do load e o styledata já ter criado tudo)
@@ -1190,11 +1269,10 @@ export default function MapShell() {
         // passa a conduzi-la a cada mudança de zoom (pinça, botões, flyTo).
         atualizarDetalheHd(map);
         map.on("zoom", () => atualizarDetalheHd(map));
-        try {
-          map.setProjection({ type: projecaoRef.current });
-        } catch {
-          /* estilo ainda assentando — o styledata reaplica */
-        }
+        // A projeção persistida é aplicada pelo efeito de preferências via
+        // TROCA ATÔMICA (setStyle com projection no stylesheet) — nunca por
+        // setProjection em voo, que corrompe o pipeline de tiles (ver o
+        // comentário do efeito de preferências).
         setReady(true);
       });
       mapRef.current = map;
@@ -1225,12 +1303,10 @@ export default function MapShell() {
           // A troca de estilo recria a camada HD com opacidade 0 — reaplica
           // a opacidade correspondente ao zoom atual (detalhamento progressivo).
           atualizarDetalheHd(map);
-          // A projeção vive no estilo: reapresenta após troca de camada base.
-          try {
-            map.setProjection({ type: projecaoRef.current });
-          } catch {
-            /* estilo interim — a próxima emissão de styledata reaplica */
-          }
+          // A projeção vive no stylesheet: TODA troca de estilo (base, modo,
+          // preferência de projeção) já nasce com projection cozinhada — não
+          // há setProjection em voo neste componente (a transição em vivo
+          // corrompe o pipeline de tiles do globo no MapLibre 5.24).
           const s = intelRef.current;
           sincronizarCamadasIntel(map, {
             snapshot: s.snapshot,
@@ -1365,11 +1441,37 @@ export default function MapShell() {
     const map = mapRef.current;
     if (!map || !ready) return;
     try {
-      map.setProjection({ type: projecao });
+      // Hidratação: o load já aplicou exatamente esta projeção — nada a fazer.
+      if (projecaoAplicadaRef.current === projecao) return;
+      const atual = map.getProjection()?.type;
+      if (atual === projecao) {
+        projecaoAplicadaRef.current = projecao;
+        return;
+      }
+      // TROCA ATÔMICA: re-aplica o estilo com a projeção NASCENDO no
+      // stylesheet. setProjection em voo corrompe o pipeline de tiles do
+      // MapLibre 5.24 quando o operador navega em seguida (globo bege:
+      // pedidos abortados sem retry, areTilesLoaded() nunca fecha — nem
+      // pan, nem repaint, nem clearTiles recuperam; só setStyle). A troca
+      // de estilo reconstrói os cachês com a projeção desde o primeiro
+      // quadro — o mesmo caminho já provado das trocas de camada base —
+      // e o styledata re-sincroniza desenho/intel/overlays normalmente.
+      projecaoAplicadaRef.current = projecao;
+      reaplicarEstilo();
     } catch {
       /* estilo ainda não assentado — o styledata reaplica */
     }
-  }, [projecao, ready]);
+  }, [projecao, ready, reaplicarEstilo]);
+
+  // Descarte do timer do vigia na saída da tela.
+  useEffect(
+    () => () => {
+      if (vigiaTimerRef.current !== null) {
+        window.clearTimeout(vigiaTimerRef.current);
+      }
+    },
+    [],
+  );
 
   // Áreas offline mudaram (download/exclusão em /offline) ou o sinal voltou:
   // ressincroniza os raster sources das áreas baixadas no mapa vivo.
@@ -1817,7 +1919,10 @@ export default function MapShell() {
     let cancelado = false;
     const aplicar = () => {
       if (cancelado) return;
-      map.setStyle(styleFor(baseEfetiva));
+      // A projeção vigente NASCE no stylesheet novo — sem setProjection em
+      // voo (a transição em vivo deixa o pipeline de tiles abortado sem
+      // retry; ver o comentário do efeito de preferências).
+      map.setStyle(styleFor(baseEfetiva, projecaoRef.current));
       // re-add custom sources after style swap — dados e visibilidade juntos,
       // senão medições e waypoints desaparecem ao trocar a camada base
       map.once("styledata", () => {

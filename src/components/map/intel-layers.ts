@@ -147,6 +147,45 @@ function adicionarCamada(map: ML, camada: maplibregl.LayerSpecification, abaixoD
   map.addLayer(camada, antes);
 }
 
+/**
+ * Ids das camadas que DEVEM existir, na ordem de empilhamento — espelha
+ * exatamente os blocos de criação de `sincronizarCamadasIntel`. Usado para
+ * pular a reconstrução quando o estilo já está como desejado.
+ */
+function camadasIntelDesejadas(
+  vis: IntelVisibilidade,
+  temIss: boolean,
+  temSats: boolean,
+): string[] {
+  const ids: string[] = [];
+  const p = (cond: boolean, ...lista: string[]) => {
+    if (cond) ids.push(...lista);
+  };
+  p(vis.noite, CAMADA_NOITE);
+  p(vis.cabos, CAMADA_CABO, CAMADA_CABO_PONTO);
+  p(vis.satelites && temIss, CAMADA_ISS_PEGADA);
+  p(vis.eventos, CAMADA_EVENTO);
+  p(vis.conflitos, CAMADA_CONFLITO, CAMADA_CONFLITO_LABEL);
+  p(vis.alertas, CAMADA_ALERTA);
+  p(vis.nuclear, CAMADA_NUCLEAR);
+  p(
+    vis.maritimo,
+    CAMADA_ESTREITO_ANEL,
+    CAMADA_ESTREITO,
+    CAMADA_ESTREITO_LABEL,
+    CAMADA_PORTO,
+    CAMADA_PORTO_LABEL,
+  );
+  p(vis.sismos, CAMADA_SISMO);
+  p(vis.voos, CAMADA_VOO, CAMADA_VOO_MIL);
+  p(vis.navios, CAMADA_NAVIO);
+  p(vis.cameras, CAMADA_CAMERA);
+  p(vis.noticias, CAMADA_NOTICIA);
+  p(vis.satelites && temSats, CAMADA_SAT, CAMADA_SAT_LABEL);
+  p(vis.satelites && temIss, CAMADA_ISS_TRAJ, CAMADA_ISS, CAMADA_ISS_LABEL);
+  return ids;
+}
+
 // ---------------------------------------------------------------------------
 // Ícones desenhados em canvas (injetados no estilo com addImage)
 // ---------------------------------------------------------------------------
@@ -652,6 +691,20 @@ export function sincronizarCamadasIntel(map: ML, entrada: EntradaSincronizacaoIn
       : fonteVazia(),
   );
 
+  // Reconstrói o bloco de camadas SOMENTE quando o estilo diverge do
+  // desejado (camada ligada/desligada ou ordem trocada — p.ex. após trocar
+  // a camada base). removeLayer/addLayer EMITEM styledata: destruir e
+  // recriar todas as camadas em cada sincronização alimentava uma cascata
+  // auto-sustentada de eventos (medido: ~80 operações de camada por segundo
+  // num mapa PARADO) — o pipeline de render nunca assentava, o globo ficava
+  // preto no zoom baixo e o mapa "demorava muito para renderizar" a 3000 km.
+  // O guard da projeção (MapShell) sozinho não bastava: este loop aqui
+  // sustentava a cascata sozinho.
+  const desejadas = camadasIntelDesejadas(vis, !!iss, satelites.length > 0);
+  const presentes = CAMADAS_EM_ORDEM.filter((id) => map.getLayer(id));
+  const estiloEmDia =
+    presentes.length === desejadas.length && desejadas.every((id, i) => presentes[i] === id);
+  if (estiloEmDia) return;
   // Remove camadas desligadas ou fora de ordem (recria se necessário).
   for (const id of CAMADAS_EM_ORDEM) {
     if (map.getLayer(id)) map.removeLayer(id);

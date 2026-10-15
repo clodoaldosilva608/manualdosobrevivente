@@ -24,6 +24,7 @@ import {
   Menu as MenuIcon,
   NotebookPen,
   Siren,
+  Sun,
   ExternalLink,
   Pause,
   Play,
@@ -50,6 +51,7 @@ import {
 } from "@/lib/geo";
 import { magneticDeclination } from "@/lib/declination";
 import { norm360 } from "@/lib/bussola-calculo";
+import { GRAUS_POR_SEGUNDO, longitudeSubsolar, normalizarLng } from "@/lib/rotacao-terra";
 import {
   reativarSensorSeConfigurado,
   observarSensor,
@@ -703,6 +705,17 @@ function registrarIconeSeta(map: maplibregl.Map, id: string, cor: string, contor
   });
 }
 
+/** Multiplicadores de tempo da rotação real da Terra (Ajustes → Projeção). */
+const VELOCIDADES_ROTACAO: Array<{
+  mult: 1 | 60 | 600 | 3600;
+  rotulo: string;
+}> = [
+  { mult: 1, rotulo: "Tempo real" },
+  { mult: 60, rotulo: "1 min/s" },
+  { mult: 600, rotulo: "10 min/s" },
+  { mult: 3600, rotulo: "1 h/s" },
+];
+
 export default function MapShell() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -941,6 +954,71 @@ export default function MapShell() {
   }, []);
   const alternarProjecao = () =>
     updatePrefs({ projecao: projecao === "globe" ? "mercator" : "globe" });
+  // ROTAÇÃO REAL DA TERRA — com o globo ativo, o meridiano central caminha
+  // para oeste à velocidade angular do planeta (360° por dia sideral):
+  // visto do espaço, o disco avança da esquerda para a direita (oeste →
+  // leste). Qualquer movimento de câmera que não seja o nosso passo
+  // (arrasto, pinça, GPS, flyTo, posição travada) pausa o giro; ele retoma
+  // sozinho após alguns segundos de quietude.
+  const globoGira = prefs.globoGira;
+  const globoGiraVelocidade = prefs.globoGiraVelocidade;
+  const velocidadeGiroRef = useRef(globoGiraVelocidade);
+  velocidadeGiroRef.current = globoGiraVelocidade;
+  const passoDoGiroRef = useRef(false);
+  const ultimaInteracaoGiroRef = useRef(0);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    if (modoMapa !== "tatico" || projecao !== "globe" || !globoGira) return;
+    const PAUSA_MS = 5000;
+    const PASSO_MS = 40; // ~25 fps — movimento lento, custo mínimo.
+    const aoMover = () => {
+      // movestart alheio (operador, GPS, flyTo, trava) reinicia a pausa;
+      // o movestart do nosso próprio jumpTo carrega a marca do passo.
+      // performance.now() compartilha a origem do timestamp do RAF — o
+      // Date.now() aqui misturaria relógios e a pausa nunca expiraria.
+      if (!passoDoGiroRef.current) ultimaInteracaoGiroRef.current = performance.now();
+    };
+    map.on("movestart", aoMover);
+    let raf = 0;
+    let ultimoPasso = performance.now();
+    const tic = (agora: number) => {
+      raf = requestAnimationFrame(tic);
+      const m = mapRef.current;
+      if (!m) return;
+      if (travaRef.current) return; // posição travada manda no centro
+      if (agora - ultimoPasso < PASSO_MS) return;
+      if (m.isMoving()) return; // gesto/inércia em curso — não interferir
+      if (agora - ultimaInteracaoGiroRef.current < PAUSA_MS) return;
+      // Pausa/idle (gesto, aba em segundo plano, retorno ao app): passo
+      // nominal, sem salto. Frames lentos contínuos (máquina carregada)
+      // mantêm o giro no relógio real: dt integral, sem cap.
+      const decorridoMs = agora - ultimoPasso;
+      const dtMs = decorridoMs > PAUSA_MS ? PASSO_MS : decorridoMs;
+      ultimoPasso = agora;
+      const c = m.getCenter();
+      const passoGraus = GRAUS_POR_SEGUNDO * velocidadeGiroRef.current * (dtMs / 1000);
+      passoDoGiroRef.current = true;
+      m.jumpTo({ center: [normalizarLng(c.lng - passoGraus), c.lat] });
+      passoDoGiroRef.current = false;
+    };
+    raf = requestAnimationFrame(tic);
+    return () => {
+      cancelAnimationFrame(raf);
+      map.off("movestart", aoMover);
+    };
+  }, [ready, modoMapa, projecao, globoGira]);
+  // Centrar no lado do dia: pousa o meridiano central no ponto subsolar
+  // (Sol a pino) — o hemisfério diurno fica de frente; a rotação segue
+  // daí, em passo real.
+  const centrarNoDia = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    map.flyTo({
+      center: [longitudeSubsolar(new Date()), map.getCenter().lat],
+      duration: 1200,
+    });
+  }, []);
   const [intel, setIntel] = useState<IntelSnapshot | null>(null);
   const [intelStatus, setIntelStatus] = useState<StatusIntel>("idle");
   const [noite, setNoite] = useState<GeoJSON.Feature | null>(null);
@@ -3881,6 +3959,67 @@ export default function MapShell() {
                       "O globo mostra o planeta como uma esfera — útil para rotas longas e para ver o dia e a noite; o mapa plano mantém a leitura de ruas e coordenadas local.",
                     )}
                   </p>
+                  <div
+                    className="mt-3 flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
+                    data-test="rotacao-terra-linha"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-sm">{t("Rotação da Terra")}</div>
+                      <div className="truncate text-[10px] text-muted-foreground">
+                        {t(
+                          "O globo gira como o planeta: um giro por dia sideral (23 h 56 min), do oeste para o leste",
+                        )}
+                      </div>
+                    </div>
+                    <Switch
+                      checked={globoGira}
+                      aria-label={t("Rotação da Terra")}
+                      data-test="rotacao-terra"
+                      onCheckedChange={(v) => {
+                        updatePrefs({ globoGira: v });
+                        if (v)
+                          toast.message(
+                            t(
+                              "Globo girando como a Terra — o giro pausa quando você move o mapa e retoma sozinho",
+                            ),
+                          );
+                      }}
+                    />
+                  </div>
+                  {globoGira && (
+                    <>
+                      <div className="mt-2 grid grid-cols-4 gap-1" data-test="rotacao-velocidades">
+                        {VELOCIDADES_ROTACAO.map((op) => (
+                          <button
+                            key={op.mult}
+                            type="button"
+                            data-test={`rotacao-vel-${op.mult}`}
+                            onClick={() => updatePrefs({ globoGiraVelocidade: op.mult })}
+                            className={`glove-tap rounded-md border px-1 py-2 mono text-[11px] ${
+                              globoGiraVelocidade === op.mult
+                                ? "border-tactical-orange bg-tactical-orange/10 text-tactical-orange"
+                                : "border-border hover:border-foreground/40"
+                            }`}
+                          >
+                            {op.rotulo === "Tempo real" ? t(op.rotulo) : op.rotulo}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="mt-1 text-[10px] text-muted-foreground">
+                        {t(
+                          "Tempo real é o giro físico exato — imperceptível a olho nu. As acelerações mostram 1 dia em 24 min, 2,4 min ou 24 s.",
+                        )}
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="glove-tap mt-2 w-full"
+                        data-test="rotacao-dia"
+                        onClick={centrarNoDia}
+                      >
+                        <Sun className="mr-1 h-4 w-4" /> {t("Centrar no lado do dia")}
+                      </Button>
+                    </>
+                  )}
                 </>
               )}
             </section>

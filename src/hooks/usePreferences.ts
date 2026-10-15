@@ -35,6 +35,10 @@ export interface Preferences {
   posicaoTravada: { lat: number; lng: number } | null;
   /** Projeção do mapa tático: plana (mercator) ou globo 3D. */
   projecao: "mercator" | "globe";
+  /** Rotação real da Terra: o globo gira no sentido e velocidade do planeta. */
+  globoGira: boolean;
+  /** Multiplicador de tempo da rotação (1 = velocidade física real da Terra). */
+  globoGiraVelocidade: 1 | 60 | 600 | 3600;
   /** Modo noturno: visão monocromática que preserva a adaptação ao escuro. */
   visaoNoturna: boolean;
   /** Tinta da visão noturna (vermelho padrão; também âmbar, verde, ciano). */
@@ -71,6 +75,8 @@ export const DEFAULT_PREFERENCES: Preferences = {
   mapaRotaciona: false,
   posicaoTravada: null,
   projecao: "mercator",
+  globoGira: true,
+  globoGiraVelocidade: 60,
   visaoNoturna: false,
   noturnoCor: "vermelho",
   noturnoVermelho: 0.85,

@@ -185,6 +185,7 @@ import {
   urlIframeBdgex,
   falhaDefinitivaBdgex,
 } from "@/lib/bdgex";
+import { preaquecerTiles, tilesVisiveis } from "@/lib/preaquecer-base";
 import { registrarHabilidade } from "@/lib/assistente/habilidades";
 import PopupsCrescimento from "@/components/map/PopupsCrescimento";
 import { CAMERAS } from "@/lib/intel-cameras";
@@ -420,10 +421,16 @@ const styleFor = (layer: BaseLayerId): maplibregl.StyleSpecification => {
         : []),
       // Camada HD entra invisível — a opacidade é conduzida pelo zoom
       // (efeito de detalhamento progressivo; ver efeito "detalheHd").
+      // O minzoom 15 é indispensável: camada com opacidade 0 mas
+      // "visibility: visible" AINDA dispara download de tiles — sem o
+      // minzoom, TODA troca de camada base baixava satélite invisível
+      // (a curva de opacidade só sobe a partir do zoom 15) e ocupava
+      // metade da fila de tiles do Service Worker à toa.
       {
         id: "base-hd",
         type: "raster",
         source: "hd",
+        minzoom: 15,
         paint: { "raster-opacity": 0, "raster-fade-duration": 300 },
       },
       ...(referencia ? [{ id: "ref", type: "raster" as const, source: "ref" }] : []),
@@ -680,6 +687,9 @@ function registrarIconeSeta(map: maplibregl.Map, id: string, cor: string, contor
 export default function MapShell() {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
+  // Última base aplicada ao estilo do mapa — evita re-trocar o estilo para
+  // a mesma base (o efeito de troca também roda quando "ready" vira true).
+  const estiloBaseRef = useRef<BaseLayerId>("topo");
   const userMovedRef = useRef(false);
   // Espelho de prefs.posicaoTravada para os handlers imperativos do mapa.
   const travaRef = useRef<{ lat: number; lng: number } | null>(null);
@@ -1162,6 +1172,9 @@ export default function MapShell() {
         setReady(true);
       });
       mapRef.current = map;
+      // O estilo inicial já nasce com esta base (styleFor acima): o efeito
+      // de troca não precisa re-aplicá-la quando "ready" virar true.
+      estiloBaseRef.current = baseEfetiva;
 
       // Instância exposta para os testes automatizados (Playwright).
       (window as unknown as { __tacticalMap?: maplibregl.Map }).__tacticalMap = map;
@@ -1723,19 +1736,66 @@ export default function MapShell() {
     }
   }, [ready, userPos, telaVis.pontoPosicao]);
 
-  // Layer swap (troca de camada base / modo)
+  // Layer swap (troca de camada base / modo). Antes de aplicar o estilo
+  // novo, PRÉ-AQUECE os tiles da base escolhida NA VISTA ATUAL: os pedidos
+  // passam pela fila do Service Worker e povoam o cache runtime — o
+  // setStyle acontece quando os tiles já estão em mão (ou no tempo limite
+  // de 1,6 s) e a base nova pinta de imediato, em vez de subir tile a tile
+  // com o mapa vazio (a queixa "não carrega de imediato"). Enquanto
+  // preaquece, a base antiga continua visível — sem flash de cor de fundo.
   useEffect(() => {
-    if (!mapRef.current || !ready) return;
-    mapRef.current.setStyle(styleFor(baseEfetiva));
-    // re-add custom sources after style swap — dados e visibilidade juntos,
-    // senão medições e waypoints desaparecem ao trocar a camada base
-    mapRef.current.once("styledata", () => {
-      const map = mapRef.current;
-      if (!map) return;
-      adicionarFontesDesenho(map);
-      sincronizarDesenho(map);
-    });
-  }, [baseEfetiva, ready, sincronizarDesenho]);
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const garantirFontes = () => {
+      const mapAtual = mapRef.current;
+      if (!mapAtual) return;
+      try {
+        adicionarFontesDesenho(mapAtual);
+        sincronizarDesenho(mapAtual);
+      } catch {
+        /* estilo interim — a próxima emissão de styledata refaz */
+      }
+    };
+    if (estiloBaseRef.current === baseEfetiva) {
+      // Mesma base (efeito rodou no ready→true): o estilo já está certo —
+      // apenas garante as fontes de desenho AGORA (com rede lenta o "load"
+      // pode demorar e os waypoints/medições precisam existir desde já).
+      garantirFontes();
+      map.once("styledata", garantirFontes);
+      return;
+    }
+    estiloBaseRef.current = baseEfetiva;
+    let cancelado = false;
+    const aplicar = () => {
+      if (cancelado) return;
+      map.setStyle(styleFor(baseEfetiva));
+      // re-add custom sources after style swap — dados e visibilidade juntos,
+      // senão medições e waypoints desaparecem ao trocar a camada base
+      map.once("styledata", () => {
+        const mapAtual = mapRef.current;
+        if (!mapAtual) return;
+        adicionarFontesDesenho(mapAtual);
+        sincronizarDesenho(mapAtual);
+      });
+    };
+    if (modoMapa === "osiris") {
+      // No Osiris o globo cobre o mapa: troca direta, sem pré-aquecimento.
+      aplicar();
+    } else {
+      const def = BASE_LAYERS[baseEfetiva];
+      const templates = Array.isArray(def.tiles) ? def.tiles : [def.tiles];
+      const b = map.getBounds();
+      const tiles = tilesVisiveis(
+        { oeste: b.getWest(), sul: b.getSouth(), leste: b.getEast(), norte: b.getNorth() },
+        map.getZoom(),
+        def.maxzoom ?? 19,
+      );
+      void preaquecerTiles(templates, tiles, { tempoLimiteMs: 1600 }).then(aplicar, aplicar);
+    }
+    return () => {
+      cancelado = true;
+    };
+  }, [baseEfetiva, ready, modoMapa, sincronizarDesenho]);
 
   // ---- BDGEx: detecção de falha de tiles (bloqueio/CORS do servidor militar) ----
   // Erros chegam por tile ("error" com sourceId "base"); rajadas isoladas são

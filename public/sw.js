@@ -10,7 +10,7 @@
  * Bump de versão: altere VERSAO ao mudar a lógica deste arquivo — os caches
  * antigos são apagados na ativação.
  */
-const VERSAO = "v51";
+const VERSAO = "v52";
 const CACHE_SHELL = `shell-${VERSAO}`;
 const CACHE_ASSETS = `assets-${VERSAO}`;
 const CACHE_RUNTIME = `runtime-${VERSAO}`;
@@ -34,7 +34,11 @@ const BRIEFING_URLS = [
 /** Banner do convite — pré-cacheado para o operador divulgar até sem rede. */
 const BANNER_CONVITE_URLS = ["/banner-convite.png"];
 const MAX_ASSETS = 120;
-const MAX_RUNTIME = 400;
+/** Runtime generoso: o cache é compartilhado entre TODOS os hosts de tiles
+ * (bases, radar de chuva em 13 quadros, nuvens GIBS, BDGEx). Com 400, uma
+ * única animação de radar evictava as bases vistas — voltar a uma base
+ * recente baixava tudo de novo e a troca "não carregava de imediato". */
+const MAX_RUNTIME = 1200;
 
 const HOSTS_DE_TILES = [
   "tile.opentopomap.org",

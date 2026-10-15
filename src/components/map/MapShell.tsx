@@ -565,9 +565,6 @@ function adicionarFontesDesenho(map: maplibregl.Map) {
     id: "rota-pontos",
     type: "circle",
     source: "rota",
-    // Circle só desenha pontos — o filtro do alvo dispensa o geometry-type.
-    // (O "all" com filhos de expressão falhava na validação legada e a
-    // camada inteira deixava de existir: "rota-pontos.filter[2][1]".)
     filter: ["!=", ["coalesce", ["get", "alvo"], false], true],
     paint: {
       "circle-radius": 6,
@@ -1158,10 +1155,18 @@ export default function MapShell() {
       map.on("dragstart", () => {
         userMovedRef.current = true;
       });
+      // HUD coalescido por quadro: o "move" pode disparar mais de uma vez por
+      // frame renderizado (inércia, pinça) e cada setState re-renderiza este
+      // componente inteiro — o observador só precisa do último estado.
+      let moveFrame: number | null = null;
       map.on("move", () => {
-        const c = map.getCenter();
-        setCenter([c.lng, c.lat]);
-        setHeading(map.getBearing());
+        if (moveFrame !== null) return;
+        moveFrame = requestAnimationFrame(() => {
+          moveFrame = null;
+          const c = map.getCenter();
+          setCenter([c.lng, c.lat]);
+          setHeading(map.getBearing());
+        });
       });
       // Posição travada: qualquer movimento residual devolve ao ponto fixado.
       map.on("moveend", () => {

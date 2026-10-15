@@ -225,17 +225,27 @@ export type EstadoClima = "off" | "carregando" | "ativo" | "erro";
 interface Particula {
   lng: number;
   lat: number;
-  /** Última posição projetada (px) — para desenhar o rastro. */
-  px: number | null;
-  py: number | null;
   idade: number;
   maxIdade: number;
 }
 
 const NX_VENTO = 14;
 const NY_VENTO = 9;
-const FATOR_VELOCIDADE = 22; // estética: partícula ~22× mais rápida que a real
 const MAX_PARTICULAS = 420;
+
+/**
+ * Velocidade VISUAL do rastro: px de tela por segundo, para cada m/s de
+ * vento — constante em QUALQUER zoom. O fator antigo (22× em graus/s)
+ * congelava as partículas na visão mundial (3000 km ≈ zoom 2–3): 5 m/s
+ * viravam ~0,005 px/s de tela — menos que o fade do rastro apagava, e o
+ * canvas ficava vazio com o mapa parado. Normalizando pela escala do mapa
+ * (px por grau do zoom atual) a brisa anda ~30 px/s em qualquer distância.
+ */
+const PX_POR_MS = 6;
+/** Teto do fator geográfico — evita salto entre células da grade no zoom mundial. */
+const FATOR_TETO = 120_000;
+/** Segmento maior que isso é teleporte (respawn/volta do mundo) — não desenha. */
+const SEGMENTO_MAX_PX = 48;
 
 export class ControladorVento {
   private map: ML;
@@ -365,8 +375,6 @@ export class ControladorVento {
     return {
       lng: r.o + Math.random() * (r.l - r.o),
       lat: r.s + Math.random() * (r.n - r.s),
-      px: null,
-      py: null,
       idade: 0,
       maxIdade: 60 + Math.floor(Math.random() * 120),
     };
@@ -396,40 +404,59 @@ export class ControladorVento {
     this.ultimoFrame = t;
     const dtSeg = dt / 1000;
 
-    // Rastro: apaga 12% do quadro anterior em vez de limpar tudo.
-    ctx.globalCompositeOperation = "destination-out";
-    ctx.fillStyle = "rgba(0,0,0,0.12)";
-    ctx.fillRect(0, 0, largura, altura);
-    ctx.globalCompositeOperation = "source-over";
+    const r = this.ret;
+    const mapa = this.map;
+
+    // Câmera em movimento: limpa tudo em vez de fundir — o conteúdo do quadro
+    // anterior ficaria preso na posição antiga da tela enquanto o mapa desliza
+    // por baixo (fantasmas/riscos). Com o canvas limpo a cada quadro, os
+    // traços curtos acompanham as posições geográficas corretas durante o pan.
+    if (mapa.isMoving()) {
+      ctx.clearRect(0, 0, largura, altura);
+    } else {
+      // Rastro: apaga 12% do quadro anterior em vez de limpar tudo.
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.fillStyle = "rgba(0,0,0,0.12)";
+      ctx.fillRect(0, 0, largura, altura);
+      ctx.globalCompositeOperation = "source-over";
+    }
     ctx.lineWidth = 1.4;
     ctx.lineCap = "round";
     ctx.strokeStyle = "rgba(248,250,252,0.75)";
 
-    const r = this.ret;
-    const mapa = this.map;
+    // Fator do quadro: m/s → graus/s ajustado pela escala atual, de modo que
+    // a partícula ande PX_POR_MS px de tela por segundo em qualquer zoom.
+    const pxPorGrau = (512 * Math.pow(2, mapa.getZoom())) / 360;
+    const fator = Math.min(FATOR_TETO, (PX_POR_MS * 111_320) / pxPorGrau);
+
     ctx.beginPath();
     for (const p of this.particulas) {
       const vento = this.grade.buscar(p.lng, p.lat);
       const cosLat = Math.max(0.15, Math.cos((p.lat * Math.PI) / 180));
-      const dLat = (vento.v * dtSeg * FATOR_VELOCIDADE) / 111_320;
-      const dLng = (vento.u * dtSeg * FATOR_VELOCIDADE) / (111_320 * cosLat);
+      const dLat = (vento.v * dtSeg * fator) / 111_320;
+      const dLng = (vento.u * dtSeg * fator) / (111_320 * cosLat);
       const nLng = p.lng + dLng;
       const nLat = p.lat + dLat;
-      const ponto = mapa.project([nLng, nLat]);
-      if (p.px != null && p.py != null) {
-        ctx.moveTo(p.px, p.py);
-        ctx.lineTo(ponto.x, ponto.y);
+      // Os DOIS extremos do segmento são projetados com a transformação
+      // ATUAL da câmera: o traço representa só o deslocamento próprio da
+      // partícula. Pan/zoom/rotação deslocam os dois pontos juntos — o traço
+      // nunca atravessa o mapa (fim dos "vultos riscando").
+      const a = mapa.project([p.lng, p.lat]);
+      const b = mapa.project([nLng, nLat]);
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      if (dx * dx + dy * dy < SEGMENTO_MAX_PX * SEGMENTO_MAX_PX) {
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
       }
-      p.px = ponto.x;
-      p.py = ponto.y;
       p.lng = nLng;
       p.lat = nLat;
       p.idade += 1;
       const dentro =
-        ponto.x > -60 &&
-        ponto.x < largura + 60 &&
-        ponto.y > -60 &&
-        ponto.y < altura + 60 &&
+        b.x > -60 &&
+        b.x < largura + 60 &&
+        b.y > -60 &&
+        b.y < altura + 60 &&
         nLat >= r.s - 4 &&
         nLat <= r.n + 4 &&
         nLng >= r.o - 4 &&
@@ -438,8 +465,6 @@ export class ControladorVento {
         const nova = this.novaParticula();
         p.lng = nova.lng;
         p.lat = nova.lat;
-        p.px = null;
-        p.py = null;
         p.idade = 0;
         p.maxIdade = nova.maxIdade;
       }

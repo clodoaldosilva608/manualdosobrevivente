@@ -381,6 +381,7 @@ export const DIC_EN: Record<string, string> = {
   "Todas as mochilas": "All packs",
   "Todos os modelos já estão na lista": "All templates are already in the list",
   Topográfico: "Topographic",
+  "Topo (comunidade)": "Topo (community)",
   "Toque no mapa para adicionar pontos": "Tap the map to add points",
   "Toque no mapa para desenhar o polígono": "Tap the map to draw the polygon",
   "Toque no mapa para marcar um waypoint": "Tap the map to mark a waypoint",

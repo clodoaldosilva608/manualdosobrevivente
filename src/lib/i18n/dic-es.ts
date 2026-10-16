@@ -383,6 +383,7 @@ export const DIC_ES: Record<string, string> = {
   "Todas as mochilas": "Todas las mochilas",
   "Todos os modelos já estão na lista": "Todos los modelos ya están en la lista",
   Topográfico: "Topográfico",
+  "Topo (comunidade)": "Topo (comunidad)",
   "Toque no mapa para adicionar pontos": "Toque el mapa para añadir puntos",
   "Toque no mapa para desenhar o polígono": "Toque el mapa para dibujar el polígono",
   "Toque no mapa para marcar um waypoint": "Toque el mapa para marcar un waypoint",

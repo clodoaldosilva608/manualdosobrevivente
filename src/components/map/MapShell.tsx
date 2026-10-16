@@ -219,6 +219,7 @@ import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from "rec
 type BaseLayerId =
   | "satellite"
   | "topo"
+  | "topoComunidade"
   | "streets"
   | "dark"
   | "oceano"
@@ -249,11 +250,25 @@ const BASE_LAYERS: Record<
   },
   topo: {
     label: "Topográfico",
-    // OpenTopoMap de volta — é a base COLORIDA e detalhada (relevo sombreado,
-    // curvas de nível, florestas, trilhas). A recusa de rajadas de tiles que
-    // motivou a troca por Esri foi resolvida na causa raiz pela fila de
-    // concorrência do Service Worker (máx. 8 tiles simultâneos) e os três
-    // subdomínios distribuem a fila em paralelo.
+    // Esri World Topo Map — estética topográfica (relevo sombreado, curvas de
+    // nível, trilhas, rótulos) servida por CDN empresarial sem chave. A
+    // OpenTopoMap volta como opção "Topo (comunidade)": mesmo com a fila de
+    // concorrência do Service Worker (máx. 8 tiles), o servidor comunitário
+    // segue recusando operadores intensos por cota de IP (504 "Fila cheia")
+    // e a base padrão não pode depender da boa vontade de um servidor livre —
+    // mapa bege sem aviso era lido como "o app não renderiza".
+    tiles: [
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+    ],
+    attribution: "Esri, HERE, Garmin, FAO, USGS, NGA",
+    maxzoom: 18,
+    fundo: "#E7E2D6",
+  },
+  topoComunidade: {
+    label: "Topo (comunidade)",
+    // OpenTopoMap — a versão comunitária original, mais caprichada no
+    // sombreado do relevo, com cota por IP: boa para uso leve e para quem
+    // prefere o traço; quem bate na cota fica com o Topográfico (Esri).
     tiles: [
       "https://a.tile.opentopomap.org/{z}/{x}/{y}.png",
       "https://b.tile.opentopomap.org/{z}/{x}/{y}.png",

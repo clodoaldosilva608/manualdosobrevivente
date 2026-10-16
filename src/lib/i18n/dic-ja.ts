@@ -379,6 +379,7 @@ export const DIC_JA: Record<string, string> = {
   "Todas as mochilas": "すべてのバックパック",
   "Todos os modelos já estão na lista": "すべてのテンプレートは既にリストにあります",
   Topográfico: "地形図",
+  "Topo (comunidade)": "地形図 (コミュニティ)",
   "Toque no mapa para adicionar pontos": "マップをタップして点を追加",
   "Toque no mapa para desenhar o polígono": "マップをタップしてポリゴンを描画",
   "Toque no mapa para marcar um waypoint": "マップをタップしてウェイポイントを設置",

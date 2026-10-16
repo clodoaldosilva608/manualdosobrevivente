@@ -373,6 +373,7 @@ export const DIC_ZH: Record<string, string> = {
   "Todas as mochilas": "所有背包",
   "Todos os modelos já estão na lista": "所有模板都已在列表中",
   Topográfico: "地形图",
+  "Topo (comunidade)": "地形图（社区）",
   "Toque no mapa para adicionar pontos": "点击地图以添加点",
   "Toque no mapa para desenhar o polígono": "点击地图以绘制多边形",
   "Toque no mapa para marcar um waypoint": "点击地图以标记航点",

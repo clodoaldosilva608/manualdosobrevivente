@@ -383,6 +383,7 @@ export const DIC_RU: Record<string, string> = {
   "Todas as mochilas": "Все рюкзаки",
   "Todos os modelos já estão na lista": "Все шаблоны уже в списке",
   Topográfico: "Топографическая",
+  "Topo (comunidade)": "Топо (сообщество)",
   "Toque no mapa para adicionar pontos": "Коснитесь карты, чтобы добавить точки",
   "Toque no mapa para desenhar o polígono": "Коснитесь карты, чтобы нарисовать полигон",
   "Toque no mapa para marcar um waypoint": "Коснитесь карты, чтобы отметить путевую точку",

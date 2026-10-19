@@ -8,7 +8,7 @@
  * (topo). O overlay noturno é inserido abaixo das camadas de desenho para
  * não escurecer waypoints e medições.
  */
-import type maplibregl from "maplibre-gl";
+import type * as maplibregl from "maplibre-gl";
 import { ROTULO_NIVEL, type IntelConflito, type NivelConflito } from "@/lib/intel-conflicts";
 import { CENTRAIS_NUCLEARES } from "@/lib/intel-nuclear";
 import { ESTREITOS, PORTOS, ROTULO_ESTREITO, type NivelEstreito } from "@/lib/intel-maritimo";

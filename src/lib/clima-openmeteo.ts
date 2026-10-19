@@ -15,7 +15,7 @@
  * congelam após map.remove() e operam em try/catch para sobreviver a trocas
  * de camada base (regressão do crash "getLayer").
  */
-import type maplibregl from "maplibre-gl";
+import type * as maplibregl from "maplibre-gl";
 
 type ML = maplibregl.Map;
 

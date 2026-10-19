@@ -13,7 +13,7 @@
  * outros overlays: `abaixoDe` opcional, `sincronizar()` para o styledata e
  * congelamento após map.remove() (regressão do crash "getLayer").
  */
-import type maplibregl from "maplibre-gl";
+import type * as maplibregl from "maplibre-gl";
 
 type ML = maplibregl.Map;
 

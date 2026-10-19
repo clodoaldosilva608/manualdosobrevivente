@@ -190,7 +190,12 @@ export async function sincronizarAreasOffline(
             if (!map.getLayer(layerId)) {
               const antes = pontoInsercaoBase(map.getStyle()?.layers ?? []);
               map.addLayer(
-                { id: layerId, type: "raster", source: srcId, paint: { "raster-opacity": 1 } },
+                {
+                  id: layerId,
+                  type: "raster",
+                  source: srcId,
+                  paint: { "raster-opacity": 1, "raster-fade-duration": 0 },
+                },
                 antes,
               );
             }

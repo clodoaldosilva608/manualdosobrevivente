@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import type maplibregl from "maplibre-gl";
+import type * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
   Layers,
@@ -370,6 +370,40 @@ const BASE_LAYERS: Record<
 
 type Tool = "none" | "measure-line" | "measure-area" | "marker";
 
+/**
+ * RASTER SEM FADE — coração da correção do "globo bege".
+ *
+ * O fade-in de tiles raster (raster-fade-duration, 300 ms por padrão) quebra
+ * sob projeção globe quando a câmera anda continuamente (rotação da Terra):
+ * cada passo do giro invalida/recarrega o conjunto de tiles cobertos e o
+ * cálculo do fade reinicia com a opacidade presa em 0 — o mapa pinta só o
+ * fundo do estilo (bege) com tiles chegando em 200 OK e areTilesLoaded()
+ * nunca fechando. Reproduzido no MapLibre 5.24 (com crash de render
+ * "reading 'bind'" em tile sem textura) e 6.15 (sem crash, ainda sem pintar);
+ * com o fade em 0 os tiles pintam de imediato e o globo gira preenchido.
+ * O cross-fade cosmético entre níveis de zoom é um preço pequeno.
+ */
+const RASTER_SEM_FADE = { "raster-fade-duration": 0 } as const;
+
+/**
+ * O estilo já pode receber operações (addSource/addLayer/setData)?
+ *
+ * O MapLibre 6 mudou a semântica de isStyleLoaded(): passou a exigir TODOS
+ * os tiles de TODAS as fontes carregados (Style.loaded() percorre os tile
+ * managers) — num mapa com 30+ fontes sob globo, com ciclos de tiles e
+ * imagens se renovando, isso nunca fecha e o sinal fica false para sempre
+ * (no 5.x ele só dizia que o stylesheet foi parseado). O sinal clássico é
+ * mantido quando verdadeiro; o fallback lê o flag interno do estilo parseado
+ * (o mesmo estado que o 5.x reportava) — com os pontos de chamada
+ * idempotentes e o listener de styledata refazendo o que faltar num estilo
+ * interim (try/catch nas chamadas), a combinação é segura nas duas versões.
+ */
+function estiloAceitaOperacoes(map: maplibregl.Map): boolean {
+  if (map.isStyleLoaded()) return true;
+  const estilo = map.style as unknown as { _loaded?: boolean } | undefined;
+  return !!estilo?._loaded;
+}
+
 /** Estado da coleta de inteligência (camadas nativas do mapa). */
 type StatusIntel = "idle" | "carregando" | "ok" | "erro";
 
@@ -447,14 +481,14 @@ const styleFor = (
       // longo, área fora do cache) o mapa aparece numa cor coerente em vez
       // do negro absoluto que parecia tela apagada.
       { id: "fundo", type: "background", paint: { "background-color": l.fundo } },
-      { id: "base", type: "raster", source: "base" },
+      { id: "base", type: "raster", source: "base", paint: RASTER_SEM_FADE },
       ...(querRelevo
         ? [
             {
               id: "relevo",
               type: "raster" as const,
               source: "relevo",
-              paint: { "raster-opacity": 0.55 },
+              paint: { "raster-opacity": 0.55, ...RASTER_SEM_FADE },
             },
           ]
         : []),
@@ -470,9 +504,11 @@ const styleFor = (
         type: "raster",
         source: "hd",
         minzoom: 15,
-        paint: { "raster-opacity": 0, "raster-fade-duration": 300 },
+        paint: { "raster-opacity": 0, ...RASTER_SEM_FADE },
       },
-      ...(referencia ? [{ id: "ref", type: "raster" as const, source: "ref" }] : []),
+      ...(referencia
+        ? [{ id: "ref", type: "raster" as const, source: "ref", paint: RASTER_SEM_FADE }]
+        : []),
     ],
   };
 };
@@ -979,48 +1015,85 @@ export default function MapShell() {
   const globoGiraVelocidade = prefs.globoGiraVelocidade;
   const velocidadeGiroRef = useRef(globoGiraVelocidade);
   velocidadeGiroRef.current = globoGiraVelocidade;
-  const passoDoGiroRef = useRef(false);
   const ultimaInteracaoGiroRef = useRef(0);
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map) return;
     if (modoMapa !== "tatico" || projecao !== "globe" || !globoGira) return;
     const PAUSA_MS = 5000;
-    const PASSO_MS = 40; // ~25 fps — movimento lento, custo mínimo.
-    const aoMover = () => {
-      // movestart alheio (operador, GPS, flyTo, trava) reinicia a pausa;
-      // o movestart do nosso próprio jumpTo carrega a marca do passo.
-      // performance.now() compartilha a origem do timestamp do RAF — o
-      // Date.now() aqui misturaria relógios e a pausa nunca expiraria.
-      if (!passoDoGiroRef.current) ultimaInteracaoGiroRef.current = performance.now();
-    };
-    map.on("movestart", aoMover);
+    // PASSO_MS é o PISO entre passos (a marcha real é ditada pelo portão de
+    // tiles abaixo): 400 ms deixa o pipeline de tiles respirar e corta em 6×
+    // o custo de re-render do HUD (move → setState) que o passo antigo de
+    // 40 ms provocava a cada quadro.
+    const PASSO_MS = 400;
+    // TETO_ESPERA_MS: quanto tempo um passo espera o cachê de tiles assentar
+    // antes de desistir e pizar mesmo assim (provedor engargalado, 504 etc.)
+    // — a marcha nunca congela de vez.
+    const TETO_ESPERA_MS = 2500;
+    // TETO_DT_MS: crédito máximo de tempo por passo. Sem ele, cada retomada
+    // após uma espera longa viraria um salto de "atraso acumulado"; com ele
+    // a marcha perde tempo com calma em vez de pular (é um mostrador da
+    // rotação da Terra, não um relógio).
+    const TETO_DT_MS = 1200;
     let raf = 0;
     let ultimoPasso = performance.now();
+    let esperaDesde = 0;
+    /** O que a câmera deve estar mostrando se ninguém além do giro mexeu:
+     * centro e zoom deixados pelo último passo. Diferença (além de ruído de
+     * ponto flutuante) = movimento externo (operador, GPS, flyTo, trava). */
+    let referencia: { lng: number; lat: number; zoom: number } | null = null;
     const tic = (agora: number) => {
       raf = requestAnimationFrame(tic);
       const m = mapRef.current;
       if (!m) return;
       if (travaRef.current) return; // posição travada manda no centro
       if (agora - ultimoPasso < PASSO_MS) return;
-      if (m.isMoving()) return; // gesto/inércia em curso — não interferir
-      if (agora - ultimaInteracaoGiroRef.current < PAUSA_MS) return;
-      // Pausa/idle (gesto, aba em segundo plano, retorno ao app): passo
-      // nominal, sem salto. Frames lentos contínuos (máquina carregada)
-      // mantêm o giro no relógio real: dt integral, sem cap.
-      const decorridoMs = agora - ultimoPasso;
-      const dtMs = decorridoMs > PAUSA_MS ? PASSO_MS : decorridoMs;
-      ultimoPasso = agora;
+      if (m.isMoving()) return; // gesto/inércia/flyTo em curso — não interferir
       const c = m.getCenter();
+      // PAUSA POR CONSEQUÊNCIA — a câmera difere do que o último passo
+      // deixou? Alguém mais mexeu (arrasto, pinça, GPS, flyTo): rearma a
+      // pausa e adota o centro novo. Detecção pelo RESULTADO e não por
+      // eventos: o movestart do nosso próprio jumpTo chega assíncrono no
+      // MapLibre 6 e não distingue quem moveu — o estado final distingue.
+      if (referencia) {
+        if (
+          Math.abs(c.lng - referencia.lng) > 1e-6 ||
+          Math.abs(c.lat - referencia.lat) > 1e-6 ||
+          Math.abs(m.getZoom() - referencia.zoom) > 1e-9
+        ) {
+          ultimaInteracaoGiroRef.current = agora;
+          referencia = null;
+          ultimoPasso = agora;
+          return;
+        }
+      }
+      if (agora - ultimaInteracaoGiroRef.current < PAUSA_MS) return;
+      // PORTÃO DE TILES — coração da correção do "globo bege" no giro: sob
+      // projeção globe, cada passo muda o conjunto de tiles cobertos e o
+      // MapLibre expulsa os loads em voo antes de terminarem (rede real:
+      // 200–600 ms por tile) — resultado: tiles pedidos, 200 na rede,
+      // textura pronta… e NADA pintado além do fundo do estilo, para sempre.
+      // Reproduzido no 5.24 (com crash "reading 'bind'") e no 6.15. A
+      // marcha só pisa com o cachê quieto; o teto de espera garante que um
+      // provedor caído reduza a velocidade em vez de parar o mundo.
+      if (!m.areTilesLoaded()) {
+        if (esperaDesde === 0) esperaDesde = agora;
+        if (agora - esperaDesde < TETO_ESPERA_MS) return;
+      }
+      esperaDesde = 0;
+      // Pausa/idle (gesto, aba em segundo plano, retorno ao app): passo
+      // nominal, sem salto — o dt é integral mas com teto por passo.
+      const decorridoMs = agora - ultimoPasso;
+      ultimoPasso = agora;
+      const dtMs = Math.min(decorridoMs, TETO_DT_MS);
       const passoGraus = GRAUS_POR_SEGUNDO * velocidadeGiroRef.current * (dtMs / 1000);
-      passoDoGiroRef.current = true;
-      m.jumpTo({ center: [normalizarLng(c.lng - passoGraus), c.lat] });
-      passoDoGiroRef.current = false;
+      const novoLng = normalizarLng(c.lng - passoGraus);
+      m.jumpTo({ center: [novoLng, c.lat] });
+      referencia = { lng: novoLng, lat: c.lat, zoom: m.getZoom() };
     };
     raf = requestAnimationFrame(tic);
     return () => {
       cancelAnimationFrame(raf);
-      map.off("movestart", aoMover);
     };
   }, [ready, modoMapa, projecao, globoGira]);
   // Centrar no lado do dia: pousa o meridiano central no ponto subsolar
@@ -1933,7 +2006,7 @@ export default function MapShell() {
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready || !userPos) return;
-    if (!map.isStyleLoaded()) return; // o styledata do estilo inicial reexecuta via userPos
+    if (!estiloAceitaOperacoes(map)) return; // o styledata do estilo inicial reexecuta via userPos
     const data: GeoJSON.FeatureCollection = {
       type: "FeatureCollection",
       features: [
@@ -2077,21 +2150,27 @@ export default function MapShell() {
     if (!map || !ready) return;
     // Se o estilo ainda está processando (o app já foi liberado pelo timer
     // de segurança), o listener "styledata" sincroniza quando estiver pronto.
-    if (!map.isStyleLoaded()) return;
-    sincronizarCamadasIntel(map, {
-      snapshot: intel,
-      conflitos: CONFLITOS,
-      noite,
-      vis: intelVis,
-      voos,
-      iss,
-      alertas,
-      navios,
-      cameras: CAMERAS,
-      cabos: CABOS,
-      noticias,
-      satelites,
-    });
+    // O isStyleLoaded() puro engana no MapLibre 6 (exige todos os tiles de
+    // todas as fontes — nunca fecha sob globo): ver estiloAceitaOperacoes.
+    if (!estiloAceitaOperacoes(map)) return;
+    try {
+      sincronizarCamadasIntel(map, {
+        snapshot: intel,
+        conflitos: CONFLITOS,
+        noite,
+        vis: intelVis,
+        voos,
+        iss,
+        alertas,
+        navios,
+        cameras: CAMERAS,
+        cabos: CABOS,
+        noticias,
+        satelites,
+      });
+    } catch {
+      /* estilo interim — o styledata refaz */
+    }
   }, [ready, modoMapa, intel, noite, intelVis, voos, iss, alertas, navios, noticias, satelites]);
 
   // Coleta periódica dos dados de inteligência enquanto alguma camada estiver

@@ -10,7 +10,7 @@
  * RainViewer e Open-Meteo são fontes públicas keyless — o aparelho consulta
  * diretamente, no mesmo padrão do AIS e dos TLEs de satélites.
  */
-import type maplibregl from "maplibre-gl";
+import type * as maplibregl from "maplibre-gl";
 
 type ML = maplibregl.Map;
 
@@ -382,7 +382,7 @@ export class ControladorRadar {
           id: ID_CAMADA,
           type: "raster",
           source: ID_FONTE,
-          paint: { "raster-opacity": 0.7, "raster-fade-duration": 300 },
+          paint: { "raster-opacity": 0.7, "raster-fade-duration": 0 },
         },
         this.abaixoDe && map.getLayer(this.abaixoDe) ? this.abaixoDe : undefined,
       );
@@ -518,7 +518,7 @@ export class ControladorRasterSimples {
           id: this.id,
           type: "raster",
           source: this.id,
-          paint: { "raster-opacity": this.opacidade, "raster-fade-duration": 300 },
+          paint: { "raster-opacity": this.opacidade, "raster-fade-duration": 0 },
         },
         this.abaixoDe && map.getLayer(this.abaixoDe) ? this.abaixoDe : undefined,
       );

@@ -5,6 +5,37 @@ const BASE = process.env["TEST_BASE_URL"] ?? "http://localhost:8080";
 
 let browser: Browser;
 
+const CHAVE_SESSAO = "sb-mbterwktxczsyevcudoz-auth-token";
+
+/** Sessão falsa (mas estruturalmente válida) — o portão de operador libera
+ * o mapa; sem ela o overlay intercepta os cliques do rail (padrão do
+ * map-rotacao.spec). */
+function injetarSessao(page: Page) {
+  return page.addInitScript(
+    ({ chave }) => {
+      localStorage.setItem(
+        chave,
+        JSON.stringify({
+          access_token: "sessao-de-teste",
+          refresh_token: "refresh-de-teste",
+          token_type: "bearer",
+          expires_in: 3600,
+          expires_at: Math.floor(Date.now() / 1000) + 3600,
+          user: {
+            id: "usuario-de-teste",
+            aud: "authenticated",
+            email: "teste@local",
+            app_metadata: { provider: "email", providers: ["email"] },
+            user_metadata: { nome: "Operador de Teste" },
+            created_at: new Date().toISOString(),
+          },
+        }),
+      );
+    },
+    { chave: CHAVE_SESSAO },
+  );
+}
+
 beforeAll(async () => {
   browser = await chromium.launch({ channel: "chromium" });
 }, 120_000);
@@ -16,6 +47,7 @@ afterAll(async () => {
 async function measure(width: number, height: number) {
   const context = await browser.newContext({ viewport: { width, height } });
   const page = await context.newPage();
+  await injetarSessao(page);
   await page.goto(BASE, { waitUntil: "domcontentloaded" });
   await page.waitForSelector(".maplibregl-canvas", { timeout: 30_000 });
   const size = await page.evaluate(() => {
@@ -88,6 +120,7 @@ describe("páginas sem estouro horizontal", () => {
   it("mantém os controles da bússola acessíveis no celular", async () => {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
     const page = await context.newPage();
+    await injetarSessao(page);
     await page.goto(BASE, { waitUntil: "domcontentloaded" });
     await page.waitForSelector(".maplibregl-canvas", { timeout: 30_000 });
     // Dispensa o modal de boas-vindas, que abre por cima do HUD.
@@ -121,6 +154,7 @@ describe("aba Camadas (folha inferior)", () => {
   async function abrirCamadas(width: number, height: number) {
     const context = await browser.newContext({ viewport: { width, height } });
     const page = await context.newPage();
+    await injetarSessao(page);
     await page.goto(BASE, { waitUntil: "domcontentloaded" });
     await page.waitForSelector(".maplibregl-canvas", { timeout: 30_000 });
     const pular = page.getByRole("button", { name: "Pular configuração" });

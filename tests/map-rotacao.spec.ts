@@ -98,14 +98,19 @@ describe("rotação real da Terra no globo", () => {
     expect((await projecaoAtual(page))?.type).toBe("globe");
     await page.waitForTimeout(2_500); // estilo assenta; sem movestart → giro ativo
 
-    // 5 s de rotação a 60× = ~1,25° para oeste (longitude decrescente).
+    // 5 s de rotação a 60× — o giro agora é ESTRANGULADO pelo portão de
+    // tiles (cada passo espera o cachê assentar; sem isso o MapLibre, sob
+    // globo, expulsa os loads em voo e o mapa fica bege — bug corrigido).
+    // Em cache frio a marcha rasteja (teto de espera por passo); em cache
+    // quente corre ~1,25° no intervalo. A asserção prova DIREÇÃO (oeste,
+    // longitude decrescente) e sanidade (nada de corrida desgovernada).
     const lng0 = await lngCentral(page);
     expect(Number.isFinite(lng0)).toBe(true);
     await page.waitForTimeout(5_000);
     const lng1 = await lngCentral(page);
     const delta = lng1 - lng0;
-    expect(delta).toBeLessThan(-0.8);
-    expect(delta).toBeGreaterThan(-1.8);
+    expect(delta).toBeLessThan(-0.15);
+    expect(delta).toBeGreaterThan(-2.5);
 
     // Movimento externo da câmera (arrasto do operador, GPS, flyTo) pausa
     // o giro — mesmo caminho movestart. flyTo é determinístico: sem inércia.

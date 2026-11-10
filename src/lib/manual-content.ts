@@ -27,6 +27,13 @@ import terremotoImg from "@/assets/manual/terremoto.svg";
 import radioEmergenciaImg from "@/assets/manual/radio-emergencia.svg";
 import higieneCampoImg from "@/assets/manual/higiene-campo.svg";
 import apagaoUrbanoImg from "@/assets/manual/apagao-urbano.svg";
+import tipoiaBracoImg from "@/assets/manual/tipoia-braco.webp";
+import pegadasAnimaisImg from "@/assets/manual/pegadas-animais.webp";
+import luzDoDiaImg from "@/assets/manual/luz-do-dia.webp";
+import truqueAbracadeiraImg from "@/assets/manual/truque-abracadeira.webp";
+import filtroAguaCamadasImg from "@/assets/manual/filtro-agua-camadas.webp";
+import bombaNuclear1MtImg from "@/assets/manual/bomba-nuclear-1mt.webp";
+import anzolLacreImg from "@/assets/manual/anzol-lacre.webp";
 
 export interface ManualEntry {
   slug: string;
@@ -46,7 +53,10 @@ export interface ManualEntry {
     | "desastres"
     | "comunicacao"
     | "higiene"
-    | "urbano";
+    | "urbano"
+    | "rastreamento"
+    | "truques"
+    | "protecao";
   summary: string;
   image: string;
   imageAlt: string;
@@ -155,6 +165,57 @@ Mantenha-se seco, coma com frequência, use camadas e troque as meias ao fim do 
       "Envelope de hipotermia montado",
       "Cabeça e pescoço cobertos",
       "Líquidos quentes oferecidos (se alerta)",
+    ],
+  },
+  {
+    slug: "tipoia-braco",
+    title: "Tipoia Improvisada para Braço Machucado",
+    category: "first-aid",
+    summary:
+      "Sustente um braço lesionado com um pano quadrado: nó na clavícula, punho elevado e circulação vigiada a cada 10 minutos.",
+    image: tipoiaBracoImg,
+    imageAlt:
+      "Infográfico de tipoia com pano azul em braço lesionado, indicando o nó acima da clavícula, o punho acima do cotovelo, os dedos de fora e a ponta torcida no cotovelo",
+    body: `## Quando usar
+
+Fratura, entorse grave ou deslocamento de mão, punho, antebraço ou cotovelo. A tipoia reduz o movimento, sustenta o peso do braço e diminui o inchaço — é a medida provisória que permite caminhar até a evacuação.
+
+## Material
+
+Qualquer pano quadrado ou retangular com a diagonal maior que a distância punho–ombro: lenço, bandana, camiseta dobrada, capa de chuva, pano de prato.
+
+## Passo a passo
+
+1. **Apoie o braço** contra o peito na posição natural e abra o pano em triângulo sob ele, com uma ponta indo para o ombro do lado lesionado.
+2. **Puxe a ponta inferior** para cima, sobre o ombro oposto, e amarre com **nó firme acima da clavícula**, ao lado do pescoço — nunca sobre a garganta.
+3. **Ajuste a bolsa** de modo que o **punho fique um pouco acima do cotovelo**: isso impede o sangue de se acumular na mão.
+4. **Deixe os dedos de fora** da bolsa — é por eles que você monitora a circulação.
+5. **Torça a ponta restante no cotovelo** e prenda com alfinete, fita ou nó: o cotovelo fica contido e o braço, imobilizado.
+6. **Verifique a cada 10 minutos**: dedos quentes e rosados estão bons; pálidos, azulados ou formigando exigem afrouxar, reajustar e reavaliar.
+
+## Nunca faça
+
+- Não tente alinhar ou "encaixar" o osso — imobilize na posição encontrada.
+- Fratura exposta: cubra com pano limpo e evacue; a tipoia apenas sustenta.
+- Não aperte o nó no pescoço nem deixe a mão escondida dentro do pano.
+
+> **Atenção**: tipoia é medida provisória. Toda suspeita de fratura ou deslocamento exige avaliação médica o quanto antes.
+`,
+    passos: [
+      "1. Abra o pano em triângulo sob o braço lesionado, ponta superior rumo ao ombro do lado lesionado",
+      "2. Puxe a ponta inferior sobre o ombro oposto e amarre com nó firme acima da clavícula, fora do pescoço",
+      "3. Ajuste a bolsa até o punho ficar um pouco acima do cotovelo",
+      "4. Deixe os dedos de fora da bolsa para monitorar a circulação",
+      "5. Torça a ponta restante no cotovelo e prenda com alfinete, fita ou nó",
+      "6. Verifique os dedos a cada 10 minutos: quentes e rosados OK; pálidos ou azulados, afrouxe e reajuste",
+    ],
+    checklist: [
+      "Pano apoiado sob o braço com punho acima do cotovelo",
+      "Nó acima da clavícula, fora do pescoço",
+      "Dedos expostos, quentes e rosados",
+      "Ponta torcida e presa no cotovelo",
+      "Circulação verificada a cada 10 min",
+      "Plano de evacuação avaliado",
     ],
   },
   {
@@ -410,6 +471,53 @@ Para retornar, use o azimute de ida ± 180°. Anote sempre o azimute de saída d
     ],
   },
   {
+    slug: "estimar-luz-do-dia",
+    title: "Estimar a Luz do Dia Restante com a Mão",
+    category: "navigation",
+    summary:
+      "Conte dedos entre o horizonte e o sol: cada um vale cerca de 15 minutos de luz — a mão inteira, uma hora.",
+    image: luzDoDiaImg,
+    imageAlt:
+      "Infográfico de mão estendida com quatro dedos empilhados entre o horizonte e o sol, com a indicação de que 4 dedos equivalem a 1 hora de luz do dia",
+    body: `## A técnica
+
+1. Estenda o braço rumo ao horizonte e vire a mão de lado, dedos empilhados e voltados para baixo.
+2. Alinhe o dedo inferior com a linha do horizonte.
+3. Empilhe os demais dedos até o topo alcançar a parte de baixo do sol.
+4. Conte os dedos usados: **cada dedo ≈ 15 minutos** de luz; **4 dedos ≈ 1 hora**.
+
+## Por que funciona
+
+Com o braço estendido, a largura de cada dedo cobre, para a maioria das mãos, cerca de 15 a 20 minutos da trajetória de descida do sol. Não é cronômetro: é estimativa de campo — e por isso você calibra com a SUA mão.
+
+## Calibre e ajuste
+
+- Meça no fim da tarde, anote quando o sol realmente se põe e memorize o fator da sua mão (algumas pessoas dão 12, outras 18 minutos por dedo).
+- Repita a contagem a cada hora — pequenos erros somam.
+- Em relevo: conte até a crista da montanha, não até a linha do vale — o sol some atrás da serra antes do horizonte real.
+- Nuvens baixas no horizonte escurecem cedo: antecipe a conta em dia encoberto.
+
+## Como usar a informação
+
+Regra de campo: **abrigo montado com 2 horas de luz restantes** (8 dedos); **fogo aceso com 1 hora** (4 dedos) — em condições úmidas, comece antes. Luz que sobra no fim do dia é o troco com que você paga erros do dia inteiro.
+`,
+    passos: [
+      "1. Estenda o braço rumo ao horizonte, mão de lado, dedos empilhados",
+      "2. Alinhe o dedo inferior com a linha do horizonte",
+      "3. Empilhe os demais dedos até alcançar a base do sol",
+      "4. Conte os dedos: cada um vale ≈ 15 minutos; 4 dedos ≈ 1 hora",
+      "5. Converta e planeje: abrigo com 2 h (8 dedos), fogo aceso com 1 h (4 dedos)",
+      "6. Repita a contagem a cada hora; em relevo, conte até a crista",
+    ],
+    checklist: [
+      "Braço estendido e mão alinhada com o horizonte",
+      "Dedos contados do horizonte até a base do sol",
+      "Tempo convertido (cada dedo ≈ 15 min)",
+      "Contagem repetida na última hora de luz",
+      "Abrigo começado com 2+ horas de luz restantes",
+    ],
+  },
+  {
     slug: "conhecimento-salva-vidas",
     title: "Conhecimento Salva Vidas",
     category: "fundamentos",
@@ -498,6 +606,59 @@ Trabalhe ao amanhecer e ao entardecer, respire pelo nariz, fique à sombra, não
       "Rosca e bico esterilizados",
       "Recipiente tratado marcado",
       "Reserva de 1 litro intocada",
+    ],
+  },
+  {
+    slug: "filtro-agua-camadas",
+    title: "Filtro de Água Improvisado com Camadas",
+    category: "water",
+    summary:
+      "Capim, carvão da fogueira e areia em série tornam a água mais limpa — a fervura antes de beber continua obrigatória.",
+    image: filtroAguaCamadasImg,
+    imageAlt:
+      "Infográfico de filtro de água montado em tripé de gravetos com três panos em camadas: capim no topo, carvão da fogueira no meio e areia embaixo, com a recomendação de ferver a água antes de beber",
+    body: `## O princípio
+
+O filtro de camadas é uma triagem física: cada camada retém um tamanho de sujeira. Ele deixa a água clara e menos impura, mas **não elimina micro-organismos** — a última etapa é sempre ferver.
+
+## Materiais
+
+- Garrafa PET cortada e invertida, bambu aberto ou casca de tronco em cone.
+- Capim ou grama seca, limpa e sem mofo.
+- Carvão preto da fogueira (nunca cinzas brancas), quebrado em pedaços pequenos.
+- Areia fina, de preferência lavada.
+- Pano para a saída e recipiente limpo para coletar.
+
+## Montagem (de cima para baixo)
+
+1. **Capim** no topo: retém folhas, insetos e partículas grossas.
+2. **Carvão da fogueira** no meio: absorve odores, sabores e parte dos compostos químicos.
+3. **Areia** embaixo: retém o sedimento fino e deixa a água transparente.
+4. Colete o gotejamento no recipiente limpo.
+
+## Uso
+
+1. Despeje a água **devagar** — fluxo rápido atravessa sem filtrar.
+2. Descarte a primeira passada: ela carrega a sujeira solta das camadas.
+3. Repita as passadas até a água sair limpa e sem cheiro.
+4. **Ferva antes de beber**: 1 minuto em ebulição (3 minutos em altitude elevada).
+
+> **Atenção**: filtro de camadas não substitui fervura, pastilha ou filtro portátil. Ele prepara a água; a fervura é que a torna segura.
+`,
+    passos: [
+      "1. Prepare o recipiente invertido (garrafa cortada, bambu ou casca em cone)",
+      "2. Coloque o capim no topo, o carvão da fogueira no meio e a areia embaixo",
+      "3. Despeje a água devagar e descarte a primeira passada",
+      "4. Repita as passadas até a água sair limpa e sem cheiro",
+      "5. Ferva a água filtrada por 1 minuto (3 minutos em altitude) antes de beber",
+    ],
+    checklist: [
+      "Recipiente com capim no topo",
+      "Carvão da fogueira quebrado no meio",
+      "Areia fina na camada inferior",
+      "Primeira passada descartada",
+      "Água coletada limpa e sem cheiro",
+      "Água fervida por 1–3 min antes de beber",
     ],
   },
   {
@@ -1345,6 +1506,205 @@ Rádio a pilha nas horas de boletim — o apagão pode ser regional e a informa�
       "Vizinhos vulneráveis conferidos",
     ],
   },
+  {
+    slug: "pegadas-animais",
+    title: "Identificar Pegadas de Animais",
+    category: "rastreamento",
+    summary:
+      "Dedos, garras e membranas: os 12 formatos de referência para saber quem passou pelo terreno e decidir se fica ou recua.",
+    image: pegadasAnimaisImg,
+    imageAlt:
+      "Infográfico com 12 pegadas de animais na lama — veado, alce, urso-negro, onça-parda, lince-vermelho, coiote, guaxinim, gambá, castor, coelho, peru-selvagem e pato — com o traço de reconhecimento de cada um",
+    body: `## Os 12 formatos de referência
+
+- **Veado** — 2 dedos em forma de coração partido.
+- **Alce** — como a do veado, mas duas vezes maior.
+- **Urso-negro** — 5 dedos acima de uma almofada larga.
+- **Onça-parda** — 4 dedos redondos, sem marcas de garras.
+- **Lince-vermelho** — como a da onça, com metade do tamanho.
+- **Coiote** — oval estreito com marcas de garras.
+- **Guaxinim** — 5 dedos, como uma mão pequena.
+- **Gambá** — polegar traseiro voltado para fora.
+- **Castor** — patas traseiras com membranas.
+- **Coelho** — patas traseiras grandes caem à frente.
+- **Peru-selvagem** — 3 dedos longos, sem membranas.
+- **Pato** — 3 dedos ligados por membranas.
+
+## Ler uma pegada em 4 perguntas
+
+1. **Quantos dedos?** Dois dedos = herbívoro casqueado (veado, alce). Quatro ou cinco = carnívoro ou onívoro.
+2. **Tem garras?** Marcas de garras à frente dos dedos = cão, coiote, urso. Sem garras = felino — as garras deles são retráteis.
+3. **Tamanho e profundidade?** A profundidade indica o peso; meça com a própria mão como referência e registre o tamanho.
+4. **Que idade tem?** Bordas nítidas e fundo úmido = pegada recente; bordas desmoronando e fundo seco = pegada antiga.
+
+## O que a trilha conta
+
+- Passos em linha reta e espaçados = animal em deslocamento tranquilo; passos alternados e bagunçados = fuga ou caça.
+- Pegada de filhote junto de adulto grande (urso, felino) = **recue com calma pelo mesmo caminho** — mãe com crias é o encontro mais perigoso da mata.
+- Cama de dormir, ossos e fezes frescas = território ativo; mude o acampamento de lugar.
+
+> **Nota**: os 12 formatos vêm da fauna norte-americana, mas os princípios de leitura — número de dedos, garras, membranas, profundidade e frescor — valem para qualquer fauna. Adapte à sua região.
+`,
+    passos: [
+      "1. Meça a pegada com a mão como referência e registre o tamanho",
+      "2. Conte os dedos: 2 = casqueado (veado, alce); 4–5 = carnívoro ou onívoro",
+      "3. Procure garras: com marcas = canídeo ou urso; sem garras = felino",
+      "4. Avalie o frescor pelas bordas (nítidas e úmidas = recente)",
+      "5. Siga a trilha identificando direção e padrão de passos",
+      "6. Pegada de filhote junto de adulto grande: recue pelo mesmo caminho",
+    ],
+    checklist: [
+      "Pegada medida com referência (mão/objeto)",
+      "Número de dedos contado",
+      "Presença de garras verificada",
+      "Frescor estimado (bordas nítidas?)",
+      "Direção de deslocamento identificada",
+      "Risco de predador com crias avaliado",
+    ],
+  },
+  {
+    slug: "romper-abracadeira",
+    title: "Romper uma Abraçadeira de Contenção",
+    category: "truques",
+    summary:
+      "A abraçadeira plástica que prende seus pulsos tem um ponto de falha: a tensão máxima dela mesma. Força no lugar certo estala o nylon.",
+    image: truqueAbracadeiraImg,
+    imageAlt:
+      "Infográfico em dois quadros mostrando pulsos presos por abraçadeira plástica e a abraçadeira rompida em dois pedaços, sob o título Truques inteligentes para sobreviver na natureza",
+    body: `## O cenário
+
+Abraçadeiras de contenção (zip ties) prendem rápido e forte — por isso aparecem em situações de captura. O plástico, porém, tem comportamento previsível: sob tensão extrema e alavanca no ponto certo, ele estala. **Treine apenas com abraçadeiras suas — nunca com outra pessoa presa.**
+
+## Os passos
+
+1. **Tensione ao máximo**: junte os pulsos e aperte a abraçadeira ainda mais, puxando a ponta solta com a mão livre ou os dentes. Contraintuitivo — mas é a tensão que deixa o nylon rígido e quebradiço.
+2. **Posicione o mecanismo**: gire o laço de modo que o fecho (a caixa com a barra dentada) fique entre os pulsos, visível e voltado para fora.
+3. **Prepare a alavanca**: levante os braços acima da cabeça com os pulsos unidos.
+4. **Rompa com explosão**: inspire fundo, expanda o peito e abra os braços com força e velocidade máximas — o laço estala no travamento.
+5. **Se não romper**: serra o nylon em borda áspera (pedra, concreto, cabo de aço) em movimento de vaivém até cortar — leva minutos, não segundos.
+
+## Riscos e limites
+
+- O nylon rompe com bordas afiadas: espere arranhões superficiais nos pulsos.
+- Mão presa incha com o tempo e perde circulação — aja rápido, mas sem desespero.
+- Fecho metálico ou abraçadeira dupla pode resistir: mantenha o plano B (serrar) em mente desde o início.
+
+> **Atenção**: técnica de emergência para cenário real de imobilização. Teste-a uma vez em casa, com sua própria abraçadeira — saber se sua força rompe o tamanho vendido no mercado faz parte do preparo.
+`,
+    passos: [
+      "1. Aperte a abraçadeira ao máximo com a mão livre ou os dentes",
+      "2. Posicione o fecho entre os pulsos, visível e voltado para fora",
+      "3. Levante os braços acima da cabeça com os pulsos unidos",
+      "4. Inspire fundo e abra os braços com força explosiva até o nylon estalar",
+      "5. Se não romper, serra o nylon em borda áspera em vaivém",
+    ],
+    checklist: [
+      "Abraçadeira tensionada ao máximo",
+      "Fecho posicionado entre os pulsos",
+      "Movimento explosivo de abertura executado",
+      "Alternativa de serra em borda áspera conhecida",
+      "Técnica testada previamente em casa",
+    ],
+  },
+  {
+    slug: "anzol-lacre",
+    title: "Anzol Improvisado com o Lacre da Lata",
+    category: "alimentos",
+    summary:
+      "Quatro passos para transformar o lacre de uma lata em anzol de pesca de emergência — eficaz para peixes pequenos.",
+    image: anzolLacreImg,
+    imageAlt:
+      "Infográfico com uma lata amassada, canivete e pedra de amolar sobre pedra molhada, e os quatro estágios do lacre sendo transformado em anzol de pesca",
+    body: `## Material
+
+Lacre de lata de refrigerante ou cerveja, faca ou pedra lascada, pedra áspera para afiar, linha resistente (linha de pesca, fio interno de paracord, cadarço desfiado).
+
+## Os 4 passos
+
+1. **Solte o lacre torcendo-o** até desprender da lata — sem cortá-lo, o metal é fino e rasga fácil.
+2. **Corte um lado do furo maior** com a faca: é por ali que a ponta do anzol vai nascer.
+3. **Lime a ponta até afiar** na pedra áspera — ponta romba não fisga o peixe.
+4. **Amarre a linha no furo menor** (o furo original do lacre) com nó duplo, deixando a curvatura do lacre voltada para cima.
+
+## Pesca de sobrevivência
+
+- **Peixes pequenos são o alvo certo** — o lacre não aguenta peixe grande. Vários anzois pequenos na mesma linha valem mais que um grande.
+- Iscas que funcionam: minhoca, larva, inseto, resto de comida; um pedaço brilhante de embalagem acima do anzol atrai pela reflexão.
+- Monte a linha com flutuação (rolha, graveto oco) e verifique a cada 15–30 minutos.
+- Lacre liso solta nó simples: use nó duplo ou clinch reforçado e teste o puxão antes de lançar.
+
+> **Atenção**: apenas para peixes pequenos. Em pesca recreativa, respeite a legislação local — licenças, tamanhos mínimos e épocas de defeso.
+`,
+    passos: [
+      "1. Solte o lacre da lata torcendo-o, sem cortá-lo",
+      "2. Corte um lado do furo maior com faca ou pedra lascada",
+      "3. Lime a ponta na pedra áspera até afiar",
+      "4. Amarre a linha no furo menor com nó duplo, curva para cima",
+      "5. Monte a linha com flutuação e isca natural; verifique a cada 15–30 min",
+    ],
+    checklist: [
+      "Lacre solto inteiro, sem cortes",
+      "Um lado do furo maior cortado",
+      "Ponta limada e afiada",
+      "Linha amarrada no furo menor com nó duplo",
+      "Iscas naturais coletadas",
+      "Linha verificada a cada 15–30 min",
+    ],
+  },
+  {
+    slug: "bomba-nuclear-1mt",
+    title: "Alcance de uma Bomba Nuclear de 1 Megaton",
+    category: "protecao",
+    summary:
+      "Bola de fogo, desabamento, queimaduras e estilhaços: os quatro raios de dano da explosão de 1 MT e a conduta em cada zona.",
+    image: bombaNuclear1MtImg,
+    imageAlt:
+      "Infográfico de vista aérea de cidade com quatro círculos concêntricos marcando o alcance de uma bomba nuclear de 1 megaton: bola de fogo 1,1 km, casas desabando 7 km, queimaduras de 3º grau 12 km e vidros estilhaçando 20 km",
+    body: `## Os quatro raios de dano (estimativas de referência para 1 MT)
+
+- **Bola de fogo — até ~1,1 km**: tudo nesse raio é destruído pela própria bola de fogo; praticamente sem sobreviventes.
+- **A maioria das casas desaba — ~7 km**: a onda de pressão derruba construções; risco imediato de desabamento e detritos voando.
+- **Queimaduras de 3º grau — ~12 km**: o calor queima a pele em toda a espessura — em partes pode nem doer, porque os nervos são destruídos.
+- **Vidros se estilhaçam — ~20 km**: a onda quebra janelas e transforma vidro em projéteis; o ferimento mais comum de toda a explosão.
+
+Os valores variam com o rendimento do artefato, a altitude do estouro e o ambiente urbano — servem como ordem de grandeza para planejamento, não como régua exata.
+
+## Nos primeiros segundos (o clarão)
+
+1. **Não olhe o clarão** — a luz queima a retina a quilômetros de distância.
+2. **Deite de cara para baixo**, pés apontando para o clarão, e cubra a cabeça e o pescoço com as mãos ou o que tiver.
+3. Fique atrás de qualquer obstáculo sólido: mureta, valeta, carro — a onda de pressão chega segundos depois do clarão.
+
+## Primeiros 10 minutos: fica ou foge
+
+- Se existe abrigo de massa a poucos minutos (subsolo, centro de prédio de concreto): **vá direto para lá e fique**. Abrigo bom a 5 minutos vale mais que abrigo perfeito a 30.
+- Se nada decente está perto: **afaste-se do ponto de queda** antes da chuva radioativa chegar (10–15 minutos após o estouro) e busque abrigo em seguida.
+
+## Dentro do abrigo
+
+1. **Remova a roupa externa** — elimina boa parte do material radioativo depositado; ponha-a em saco plástico longe de você.
+2. Lave pele e cabelo expostos com água e sabão, sem esfregar; **evite condicionador de cabelo** (gruda partículas).
+3. **Fique dentro** e aguarde orientação oficial por pelo menos 24–48 horas: a radiação cai drasticamente nas primeiras horas.
+4. Rádio a pilhas é a sua fonte de informação; não saia para "ver como está".
+
+> **O que reduz o dano**: distância + massa de concreto ou terra entre você e o ponto de queda. Subsolo > térreo > andares altos com janelas. Kit com água, rádio e medicamentos no trabalho e em casa faz parte do planejamento.
+`,
+    passos: [
+      "1. No clarão: não olhe, deite de cara para baixo, pés para o clarão, cabeça coberta",
+      "2. Decida em minutos: abrigo de massa perto — vá e fique; nada perto — afaste-se do ponto de queda",
+      "3. Dentro do abrigo, remova a roupa externa e lave pele e cabelo sem esfregar",
+      "4. Sintonize o rádio a pilhas e aguarde orientação por 24–48 horas",
+      "5. Não saia do abrigo antes da orientação oficial",
+    ],
+    checklist: [
+      "Clarão: deitado, de costas para ele, cabeça coberta",
+      "Decisão fica/foge tomada em minutos",
+      "Abrigo de massa (subsolo/concreto) alcançado",
+      "Roupa externa removida e pele lavada",
+      "Rádio a pilhas disponível",
+      "Permanência de 24–48 h no abrigo planejada",
+    ],
+  },
 ];
 
 export const MANUAL_BY_CATEGORY = MANUAL.reduce<Record<string, ManualEntry[]>>((acc, e) => {
@@ -1368,4 +1728,7 @@ export const CATEGORY_LABELS: Record<ManualEntry["category"], string> = {
   comunicacao: "Comunicação",
   higiene: "Higiene e Saúde",
   urbano: "Meio Urbano",
+  rastreamento: "Rastreamento e Fauna",
+  truques: "Truques de Campo",
+  protecao: "Proteção Civil",
 };

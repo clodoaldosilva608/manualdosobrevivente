@@ -15,7 +15,16 @@ describe("mensagemAmigavelAuth", () => {
     expect(mensagemAmigavelAuth("Unable to validate email address: invalid format")).toMatch(
       /E-mail inválido/,
     );
-    expect(mensagemAmigavelAuth("Failed to fetch")).toMatch(/Sem conexão/);
+    expect(mensagemAmigavelAuth("Failed to fetch")).toMatch(/Servidor de contas fora do ar/);
+    expect(mensagemAmigavelAuth("Failed to fetch", { aparelhoOnline: true })).toMatch(
+      /Servidor de contas fora do ar/,
+    );
+    expect(mensagemAmigavelAuth("Failed to fetch", { aparelhoOnline: false })).toMatch(
+      /Sem internet no aparelho/,
+    );
+    expect(mensagemAmigavelAuth("TypeError: load failed", { aparelhoOnline: false })).toMatch(
+      /Sem internet no aparelho/,
+    );
     expect(mensagemAmigavelAuth("Signups not allowed for this instance")).toMatch(
       /Cadastro desativado/,
     );

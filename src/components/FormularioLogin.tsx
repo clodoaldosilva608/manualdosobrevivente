@@ -46,7 +46,8 @@ export function FormularioLogin({
   /** Erro do Supabase → mensagem humana (padrão reconhecido) ou original. */
   const avisarErro = (err: unknown) => {
     const original = err instanceof Error ? err.message : "";
-    const amigavel = mensagemAmigavelAuth(original);
+    const aparelhoOnline = typeof navigator === "undefined" ? true : navigator.onLine;
+    const amigavel = mensagemAmigavelAuth(original, { aparelhoOnline });
     if (amigavel) toast.error(t(amigavel));
     else toast.error(original || t("Falha na autenticação"));
   };

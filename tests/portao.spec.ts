@@ -154,6 +154,29 @@ describe("portão de autenticação", () => {
     await context.close();
   }, 120_000);
 
+  it("Continuar sem conta libera o mapa e a escolha persiste na recarga", async () => {
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await context.newPage();
+    await page.goto(BASE, { waitUntil: "domcontentloaded" });
+    const portao = page.locator('[data-test="portao-auth"]');
+    await portao.waitFor({ state: "visible", timeout: 30_000 });
+    await page.locator('[data-test="portao-visitante"]').click();
+    // O mapa abre por completo — o visitante usa o app sem conta.
+    await page.waitForSelector(".maplibregl-canvas", { timeout: 45_000 });
+    await page.waitForTimeout(2_500);
+    expect(await portao.count()).toBe(0);
+    // Recarga: a escolha fica no localStorage — nada de portão de novo.
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.waitForSelector(".maplibregl-canvas", { timeout: 45_000 });
+    await page.waitForTimeout(2_500);
+    expect(await portao.count()).toBe(0);
+    // Apagando a escolha, o portão volta a travar o núcleo.
+    await page.evaluate(() => localStorage.removeItem("ms-modo-visitante"));
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await portao.waitFor({ state: "visible", timeout: 30_000 });
+    await context.close();
+  }, 180_000);
+
   it("com sessão, o portão libera o mapa (persistência da autenticação)", async () => {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
     const page = await context.newPage();

@@ -1,6 +1,9 @@
 /**
- * Portão de Autenticação — logo após o vídeo de abertura, o aplicativo só
- * abre para operadores autenticados: quem não tem conta cria a sua na hora.
+ * Portão de Autenticação — logo após o vídeo de abertura, o aplicativo
+ * pergunta quem chega: operadores autenticados entram direto; quem prefere
+ * usar sem conta ativa o MODO VISITANTE e abre o mapa por completo (o app é
+ * local-first — salvar no aparelho não exige conta; a conta serve para
+ * sincronizar na nuvem e levar os dados entre aparelhos).
  *
  * Regras profissionais embutidas:
  *  • Não bloqueia nada enquanto a sessão é verificada (o splash de abertura
@@ -9,7 +12,8 @@
  *  • Cadastro com confirmação de e-mail ativa no projeto: mostra a etapa
  *    "confira seu e-mail" com reenvio — nunca deixa o operador sem caminho;
  *  • Cadastro autenticado na hora: vai direto à escolha de personagem/foto;
- *  • Reabre automaticamente em SIGNED_OUT e libera em SIGNED_IN;
+ *  • Reabre automaticamente em SIGNED_OUT (a menos que o visitante tenha
+ *    escolhido seguir sem conta) e libera em SIGNED_IN;
  *  • Pode ser desligado para desenvolvimento/testes com VITE_PORTAO_AUTH=0
  *    (nunca definido em produção);
  *  • A rota /login e a VITRINE pública (/manual, /tutorial, /colaboradores,
@@ -26,6 +30,7 @@ import { toast } from "sonner";
 import { useI18n } from "@/lib/i18n";
 import { FormularioLogin } from "@/components/FormularioLogin";
 import { EscolherAvatar } from "@/components/EscolherAvatar";
+import { EVENTO_VISITANTE, definirModoVisitante, visitanteAtivo } from "@/lib/modo-visitante";
 
 type EstadoPortao = "verificando" | "liberado" | "preso";
 type EtapaPortao = "credenciais" | "verificar-email" | "avatar";
@@ -70,11 +75,17 @@ export function PortaoAuth() {
     let vivo = true;
     const avaliar = (autenticado: boolean) => {
       if (!vivo) return;
-      setEstado(autenticado ? "liberado" : "preso");
+      // Visitante escolheu usar sem conta: o mapa abre igual (local-first).
+      setEstado(autenticado || visitanteAtivo() ? "liberado" : "preso");
     };
+    if (visitanteAtivo()) {
+      setEstado("liberado");
+    }
     void supabase.auth.getSession().then(({ data }) => avaliar(!!data.session));
     const { data: sub } = supabase.auth.onAuthStateChange((evento, sessao) => {
       if (evento === "SIGNED_IN") {
+        // Conta real em uso: o modo visitante ficou obsoleto.
+        definirModoVisitante(false);
         if (vivo && cadastroRecente.current) {
           // Cadastro acabou de autenticar: oferece a escolha de personagem
           // antes de liberar o mapa (uma única vez por cadastro).
@@ -94,9 +105,14 @@ export function PortaoAuth() {
         avaliar(true);
       }
     });
+    // A escolha de visitante pode mudar em outra aba (ou pela página de
+    // conta) — o portão acompanha em tempo real.
+    const aoMudarVisitante = () => avaliar(false);
+    window.addEventListener(EVENTO_VISITANTE, aoMudarVisitante);
     return () => {
       vivo = false;
       sub.subscription.unsubscribe();
+      window.removeEventListener(EVENTO_VISITANTE, aoMudarVisitante);
     };
   }, [cadastroRecente]);
 
@@ -115,6 +131,17 @@ export function PortaoAuth() {
     },
     [cadastroRecente],
   );
+
+  /** Visitante: abre o app por completo, sem conta (dados ficam no aparelho). */
+  const seguirSemConta = useCallback(() => {
+    definirModoVisitante(true);
+    setEstado("liberado");
+    toast.info(t("Modo visitante ativo"), {
+      description: t(
+        "O mapa funciona por completo e o que você salvar fica no aparelho. Crie sua conta em CONTA para sincronizar na nuvem.",
+      ),
+    });
+  }, [t]);
 
   const reenviar = async () => {
     if (!emailPendente) return;
@@ -166,6 +193,14 @@ export function PortaoAuth() {
               aoCadastrou={aoCadastrou}
               emailInicial={emailPendente}
             />
+            <Button
+              variant="ghost"
+              data-test="portao-visitante"
+              className="glove-tap mt-2 w-full text-muted-foreground hover:text-foreground"
+              onClick={seguirSemConta}
+            >
+              {t("Continuar sem conta")}
+            </Button>
             <p className="mt-4 flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
               <Loader2 className="h-3 w-3" />
               {t("Sua conta sincroniza mochila, notas e rotas entre aparelhos.")}
